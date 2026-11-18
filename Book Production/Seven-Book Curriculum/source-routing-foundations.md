@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 01 From Bits to Running Systems | B1 | **NES-01**, iNES header interpretation, typed errors, tests, bytes and flags. Started and compiled. |
 | 02 Values at Addresses: Layout, Lifetimes, and Representation | B1 | **NES-02 authored; pending canonical insertion**. Owned NROM cartridge, RAM mirroring, PRG mapping, typed missing-device errors, failed-load publication, moved-from safety and strict C++23 tests. Existing original text retained. |
-| 03 Records as Resource Transactions | B1 | Cartridge ownership, constructors, expected failure, strong invariants. |
+| 03 Records as Resource Transactions | B1 | **Pass 03 authored; canonical insertion pending.** NES-02T: staging an owned cartridge, strong exception guarantee, no-throw commit, validated publication, revision identity, simulated allocation failure, typed error translation, rollback witnesses. Original ~1,892-line chapter-edition material preserved. |
 | 04 Prove C++ Ownership with Runnable Experiments | B1 | RAII/move/borrow experiments against a progressively safer cartridge and byte-buffer interface. |
 | 05 Generic Asset Pipelines without Hidden Contracts | B1 | C++23 generic loaders and type-specific cartridge/asset validation; bridge to KairoAssets. |
 | 06 Grow Registries without Invalidating Identity | B1 | Safe generational handles for cartridge/texture registries; later ECS uses same proof. |
@@ -61,3 +61,17 @@ The tested project lab demonstrates a strict legacy iNES layout contract, typed 
 The Book 1 Chapter 02 additional lesson is source-located after the original C++ identity/lifetime route and before "Choose a type for its promise, not its familiar size." No original text is removed. The additive prose and the two self-contained C++23 labs are committed to `curriculum/cpp23-nes-project-pass01`; applying either section inside the **canonical long-form manuscript remains a local, explicit, idempotent operation**. See `tools/apply_cpp23_project_inserts.py`.
 
 The new NES-02 code passed GCC 14 and Clang 17 C++23 strict-warning builds, a local CMake/CTest run, plus an ASan/UBSan build with deterministic RAM/PRG mapping sweeps. No native macOS, current KairoNES integration, full ROM/mapper tests or LaTeX builds have been performed. The next chronological chapter is 03, "Records as Resource Transactions," where ownership, construction, failure guarantees and cartridge publication become the next real system milestone.
+
+
+## Pass 03 — Chapter 03 source-preservation and acceptance note
+
+Existing chapter: "Records as Resource Transactions" (~1,892 lines in the derived Chapter Edition). Its original conceptual sequence includes aggregate and designated initialization, layout/alignment/padding, object and reference lifetime, move permission versus transfer, borrowing, constructors/destructors, copying and move ownership, and exception guarantees. The pass **does not overwrite or regenerate any of those topics**. The new story attaches a real subsystem to the failure-guarantees discussion at the pre-existing exact heading `## Let the compiler compose the operations`.
+
+- Source addition: `Supplementary/C++23 Project Labs/NES-02T - Transactional Cartridge Replacement.md`.
+- Shared engineering core: `tools/labs/nes_course/ines_layout.hpp` and `tools/labs/nes_course/nes_bus_nrom.hpp`.
+- Executable laboratory: `tools/labs/nes_cartridge_transaction_cpp23_lab.cpp`.
+- Preservation path: `tools/apply_cpp23_project_inserts.py` — idempotent NES-01, NES-02 and NES-02T exact sections; refuses an altered prior insertion.
+- Tests: synthetic valid and rejected images, explicit pre/post-staging failure, injected `std::bad_alloc`, old-state witness preservation, CHR ROM/RAM behavior, revision updates, CPU RAM policy, repeated failures. **The newly committed NES-02T executable still requires an actual compiler/CTest run on the target Mac; do not mark it green from review alone.**
+- Scope: a single-threaded, CPU-owned NROM transaction. Not an authenticated file parser, general mapper implementation, CPU execution engine, GPU resource retirement system or concurrency-safe publishing protocol.
+
+The next original chapter, 04 ("Prove C++ Ownership with Runnable Experiments"), should inspect the real C++ witness suite, then test move/copy/exception/noexcept behavior with reproducible compiler configurations and sanitizers. The broader NES-03 CPU execution stage follows once its object lifetime and bus correctness dependencies are satisfied.
