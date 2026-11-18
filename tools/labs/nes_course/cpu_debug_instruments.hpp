@@ -134,6 +134,7 @@ public:
     [[nodiscard]] const CpuRegisters& registers() const noexcept {
         return cpu_.registers();
     }
+    [[nodiscard]] bool cpu_ready() const noexcept { return cpu_.ready(); }
     [[nodiscard]] std::uint64_t cycles() const noexcept { return cpu_.total_cycles(); }
 
     // Ordered set permits exact membership and lower_bound(range probes).
