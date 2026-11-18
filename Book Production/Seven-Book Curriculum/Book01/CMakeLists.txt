@@ -59,6 +59,15 @@ add_executable(nes_work_dependency_graph_cpp23_lab
 )
 target_compile_features(nes_work_dependency_graph_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(nes_work_dependency_graph_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass09: CPU-only device-memory oracle and host atomic release/acquire.
+add_executable(nes_gpu_memory_contract_cpp23_lab
+    ../../../tools/labs/nes_gpu_memory_contract_cpp23_lab.cpp
+)
+target_compile_features(nes_gpu_memory_contract_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(nes_gpu_memory_contract_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+find_package(Threads REQUIRED)
+target_link_libraries(nes_gpu_memory_contract_cpp23_lab PRIVATE Threads::Threads)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -78,8 +87,9 @@ if(MSVC)
     target_compile_options(generational_asset_registry_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_cpu_debugger_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_work_dependency_graph_cpp23_lab PRIVATE /W4)
+    target_compile_options(nes_gpu_memory_contract_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -108,3 +118,6 @@ add_test(NAME nes_07c_6502_subset_debugger_and_data_structures
 
 add_test(NAME nes_08g_dependency_hazards_and_conceptual_gpu_work
          COMMAND nes_work_dependency_graph_cpp23_lab)
+
+add_test(NAME nes_09m_memory_visibility_and_host_atomic_ordering
+         COMMAND nes_gpu_memory_contract_cpp23_lab)
