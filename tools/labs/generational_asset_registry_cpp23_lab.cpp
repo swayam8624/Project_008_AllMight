@@ -190,7 +190,7 @@ void generation_overflow_retires_instead_of_wrapping() {
     const auto maximal = must_import<TextureTag>(registry, texture(7));
     check(maximal.generation == std::numeric_limits<std::uint64_t>::max(),
           "explicit test generation must reach boundary");
-    check(registry.erase(maximal), "last possible generation must be erasable");
+    check(registry.erase(maximal).has_value(), "last possible generation must be erasable");
     check(registry.active_count() == 0 && registry.recycled_slots() == 0 &&
           registry.allocated_slots() == 1,
           "generation-exhausted slot must be retired, not recycled");
