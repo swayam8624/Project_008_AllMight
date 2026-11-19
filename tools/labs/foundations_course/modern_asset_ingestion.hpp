@@ -47,7 +47,7 @@ using Byte = std::uint8_t;
 
 enum class AssetKind { texture_rgba8, triangle_mesh };
 enum class Issue { unsafe_relative_path, symlink, missing_file,
-    not_regular, io_failure, too_large, cancelled, duplicate_request };
+    not_regular, io_failure, too_large, cancelled, duplicate_request, aggregate_budget };
 struct Request {std::string relative; AssetKind kind{}; bool enabled{true};};
 struct OwnedAsset {
     std::string relative;
@@ -211,25 +211,54 @@ class WorkerBatch {
     struct State {
         std::mutex mutex;
         std::vector<Result> results;
+        std::exception_ptr failure;
     };
 public:
-    WorkerBatch(Root root,std::vector<Request> requests)
+    WorkerBatch(Root root,std::vector<Request> requests,
+                std::size_t aggregate_budget=8U*1024U*1024U)
       : state_(std::make_shared<State>()),
-        worker_([state=state_,root=std::move(root),requests=std::move(requests)]
-                (std::stop_token stop) mutable {
-            auto gen=make_batch(std::move(root),std::move(requests),stop);
-            while(auto outcome=gen.next()) {
+        worker_([state=state_,root=std::move(root),requests=std::move(requests),
+                 aggregate_budget](std::stop_token stop) mutable {
+            try {
+                auto gen=make_batch(std::move(root),std::move(requests),stop);
+                std::size_t accumulated=0;
+                while(auto outcome=gen.next()) {
+                    // Budget each owned successful result before retaining
+                    // it; never keep an unlimited quantity of decoded bytes.
+                    if(outcome->has_value()) {
+                        const auto n=outcome->value().bytes.size();
+                        if(n>aggregate_budget-accumulated) {
+                            std::lock_guard lock(state->mutex);
+                            state->results.push_back(
+                                std::unexpected(Issue::aggregate_budget));
+                            break;
+                        }
+                        accumulated+=n;
+                    }
+                    std::lock_guard lock(state->mutex);
+                    state->results.push_back(std::move(*outcome));
+                    if(stop.stop_requested()) break;
+                }
+            } catch(...) {
+                // An exception must NEVER escape a std::jthread function:
+                // doing so would invoke std::terminate for the process.
                 std::lock_guard lock(state->mutex);
-                state->results.push_back(std::move(*outcome));
-                if(stop.stop_requested()) break;
+                state->failure=std::current_exception();
             }
-        }){}
+        }) {
+        if(aggregate_budget==0) {
+            worker_.request_stop();
+            worker_.join();
+            throw std::invalid_argument("zero aggregate byte budget");
+        }
+    }
     WorkerBatch(const WorkerBatch&)=delete;
     WorkerBatch& operator=(const WorkerBatch&)=delete;
     void request_stop() noexcept {worker_.request_stop();}
     [[nodiscard]] std::vector<Result> finish() {
         if(worker_.joinable())worker_.join();
         std::lock_guard lock(state_->mutex);
+        if(state_->failure) std::rethrow_exception(state_->failure);
         return std::move(state_->results);
     }
 private:
