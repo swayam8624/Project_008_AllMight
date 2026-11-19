@@ -613,7 +613,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"\author{Swayam Singal}",
         r"\begin{document}",
         r"\frontmatter",
-        r"\maketitle",
+        r"\BookTitleCover",
         book_imprint(BOOK_TITLE, BOOK_SUBTITLE),
         r"\setcounter{tocdepth}{1}",
         r"\tableofcontents",
