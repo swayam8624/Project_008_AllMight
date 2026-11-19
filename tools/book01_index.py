@@ -66,6 +66,14 @@ def insert_index_tokens(source: str, chapter: int) -> tuple[str, list[dict]]:
             if fragment.lstrip().startswith("<!--"):
                 emitted.append(fragment)
                 continue
+            # Markdown's four-space (or tab) indented code blocks are not
+            # fenced. Never insert an index macro into their source lines.
+            # Pandoc would print the literal "\\index{term}" inside code.
+            nonblank = [line for line in fragment.splitlines() if line.strip()]
+            if nonblank and all(re.match(r"^(?: {4,}|\\t)", line)
+                                for line in nonblank):
+                emitted.append(fragment)
+                continue
             page_terms: list[str] = []
             for term in terms:
                 if term.casefold() in indexed_terms:
@@ -117,6 +125,12 @@ def replace_index_tokens(tex: str, entries: list[dict]) -> str:
     The historical name is retained for the book builder's API. The new
     indexer no longer relies on fragile textual placeholders.
     """
+    # Defense in depth: a corrupted or missed Markdown fence/indent must not
+    # put a raw LaTeX indexing command inside a printable code example.
+    verbatim = re.compile(r"\\\\begin\\{verbatim\\}.*?\\\\end\\{verbatim\\}", re.DOTALL)
+    for listing in verbatim.finditer(tex):
+        if re.search(r"\\\\index\\{[^}]+\\}", listing.group(0)):
+            raise ValueError("Raw index macro leaked into a verbatim listing")
     for item in entries:
         command = item["command"]
         count = tex.count(command)
