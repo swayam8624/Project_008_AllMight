@@ -1,0 +1,79 @@
+% Book Two Pass 2: source-driven derivation, not a claim of full Shewchuk replication.
+\clearpage
+\section*{Research reconstruction: when the sign of a triangle is a theorem}
+\noindent\textbf{Primary lineage:} Jonathan Richard Shewchuk,
+\emph{Adaptive Precision Floating-Point Arithmetic and Fast Robust
+Geometric Predicates}, 1997.
+\href{https://www.cs.cmu.edu/~quake/robust.html}{Author's predicate sources
+and explanatory page}. This laboratory reproduces the \emph{decision
+problem}, error-filter idea and exact sign contract independently.
+It does \textbf{not} implement or benchmark Shewchuk's original
+floating-point expansion-arithmetic implementation.
+
+\paragraph{What the predicate decides.}
+Three planar points \(a,b,c\) define the oriented area of a triangle.
+Twice its signed area is
+\[
+D=(a_x-c_x)(b_y-c_y)-(a_y-c_y)(b_x-c_x).
+\]
+When \(D>0\), the order \(a,b,c\) is counterclockwise; \(D<0\)
+is clockwise, and \(D=0\) means exact collinearity. This sign is a
+\emph{topological decision}: a wrong answer can change an algorithm's
+face ownership, edge intersection, polygon decomposition or
+triangulation, not merely make a drawn line a little blurry.
+
+\paragraph{Where finite arithmetic changes the question.}
+Computers evaluate the expression using binary floating-point numbers.
+Two rounded products may be almost equal even when the exact determinant
+of the stored inputs is nonzero. Their subtraction can then lose
+significant information. For extremely large coordinates, the
+products can overflow independently and a naive calculation of
+\(\infty-\infty\) becomes a NaN. A predicate must therefore distinguish
+a reliable sign, an uncertain sign, a genuinely zero determinant and
+invalid input.
+
+Let \(L=(a_x-c_x)(b_y-c_y)\) and
+\(R=(a_y-c_y)(b_x-c_x)\). A \emph{filtered predicate} computes
+an inexpensive approximation \(d=L-R\), estimates a conservative
+absolute error \(E\) from arithmetic and operand magnitudes,
+and accepts the sign only if \(|d|>E\). Otherwise it switches
+to a more exact computation. The complete proof of a certified
+filter depends on the exact floating-point model, operation ordering,
+underflow, overflow and error-bound derivation. Choosing an arbitrary
+epsilon is \emph{not} such a proof.
+
+\paragraph{Our teaching implementation.}
+The companion \texttt{tools/labs/book02\_papers\_geometry.py} first
+uses a deliberately conservative magnitude-based float filter.
+When that result is uncertain, it converts each original binary64
+coordinate to an exact rational number and evaluates the determinant
+with rational operations. This gives the exact orientation of the
+\emph{stored binary64 inputs}. It does not reconstruct a lost decimal
+digit from an already rounded measurement, and it is slower than
+Shewchuk's adaptive expansions.
+
+For a concrete adversarial witness choose \(a=(0,0)\),
+\(b=(M,M)\), \(c=(M,\operatorname{nextafter}(M,0))\),
+where \(M=10^{308}\) is a finite binary64 number.
+The exact stored-coordinate determinant is negative because
+\(c_y<b_y\); a naive float determinant can become NaN through
+intermediate overflow. The rational fallback still produces
+the correct sign. The sign itself is the ground truth;
+claiming a reliable finite approximate determinant is unnecessary.
+
+\paragraph{Tests that are stronger than a single picture.}
+Check order reversal
+\(\operatorname{orient}(a,b,c)=-\operatorname{orient}(a,c,b)\);
+translation invariance when translated coordinates are exactly
+representable; exact collinearity; nearly collinear representable
+points; enormous coordinates; and explicit rejection of NaNs and
+infinities. Distinguish \emph{wrong arithmetic}, \emph{wrong input
+model} and \emph{wrong geometry convention} in the laboratory log.
+
+\paragraph{What remains for an exact reproduction.}
+Reimplement or integrate the expansion primitives from the original
+paper with licensing and attribution, validate all rounding
+preconditions across compilers/architectures, compare all predicate
+families (orientation, incircle and 3D), and run the paper's data and
+performance protocol. None of those additional achievements is
+implied by this small, independently authored exact-sign witness.
