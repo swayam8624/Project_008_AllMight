@@ -4,11 +4,11 @@
 **Public working title:** From Equations to Geometry  
 **As-of:** 20 November 2026  
 **Source branch:** `curriculum/book02-mathematics-refinement-pass01`  
-**State:** **CONTENT REVIEW OPEN.** No further EPUB/KDP acceptance claims should be made until the original chapter content and every new addition are judged together.
+**State:** **CONTENT REVIEW OPEN; source-level integration of the exact coverage bridge now verified.** The 16 source chapters are preserved, and the 36th teaching section plus its numerical illustration is mapped into print and EPUB. Full original-chapter mathematical/citation acceptance and complete reader proofs still remain open.
 
 ## Why this gate exists
 
-The author wants the **book's knowledge, coherence, exercises, research connections and code** correct before any new format work. Earlier efforts successfully established numerical teaching labs, seven figure exports, 35 add-on TeX fragments and a valid *supplement-only* EPUB proof, but they did **not** complete whole-manuscript mathematical or narrative verification. Those checks must not be misrepresented as final content closure.
+The author wants the **book's knowledge, coherence, exercises, research connections and code** correct before any new format work. Earlier efforts successfully established numerical teaching labs, seven figure exports, 35 earlier add-on TeX fragments and a valid *supplement-only* EPUB proof, but they did **not** complete whole-manuscript mathematical or narrative verification. Those checks must not be misrepresented as final content closure.
 
 All canonical original source files remain protected. The 16 original generated TeX chapters contain approximately **1.75 million Unicode characters**, or approximately **225,000 broad TeX-token words**. A conservative automated inventory found **1,017 section/subsection headings, 3,801 display-math starts, 112 literal code environments and 76 diagram/image inclusions**. These metrics establish that the actual book is substantial. They **do not** prove that every paragraph is clear, every equation is true, or every research claim is traceable. Counts are approximate and depend on the TeX extraction rules.
 
@@ -39,9 +39,9 @@ Original snapshot: `Book Production/AllMight Codex/LaTeX/Generations/.generation
 
 ## Verified content issue and actual revision begun
 
-The transition from sampling contracts into pixel coverage, including the last imported visual-computing chapter, is weak. The new source is staged at:
+The transition from sampling contracts into pixel coverage, including the last imported visual-computing chapter, is weak. The original editorial draft remains at `Supplementary/Book 02 Content Review/36-from-probability-to-pixels.tex`, while its approved additive reader source now resides at:
 
-`Supplementary/Book 02 Content Review/36-from-probability-to-pixels.tex`
+`Book Production/AllMight Codex/LaTeX/Assets/Book02/36-from-probability-to-pixels.tex`
 
 It has a concrete forcing problem: what fraction of one unit-square pixel is covered by an affine triangle? The exact triangle
 (A=(-1/4,1/4), B=(5/4,1/4), C=(1/2,5/4))
@@ -56,7 +56,7 @@ The original source-driven diagram generator is
 `tools/labs/book02_coverage_visual.py`.
 It produces a vector PDF, SVG and PNG plus a 60-replicate CSV and provenance report. This diagram is **content**, not a fabricated performance benchmark.
 
-The content lesson is intentionally **staged outside the 35-section publication inventory** until manuscript review approves its location. It must eventually be integrated into the canonical teaching source—not merely copied into final EPUB or appended as a disconnected PDF chapter. Therefore no EPUB inventory count or KDP proof is changed by this addition today.
+**Integration status:** The mathematical content and source-generated figure are included in the working-copy LaTeX composition immediately after the RANSAC extension and before `03-visual-computing-i-ch012`. The matching semantic Pandoc EPUB mapping, figure alternative text and paper-source manifest are now verified by automated tests. The inventory is **36 additive teaching sections and 13 images**. The original frozen chapter sources remain byte-for-byte unchanged. The separate original Markdown authoring masters must still be reconciled through an explicit authoring-source update; this addendum is not falsely presented as already being in those masters.
 
 ## Important remaining deficiencies
 
@@ -76,10 +76,10 @@ The content lesson is intentionally **staged outside the 35-section publication 
 2. Correct actual wrong derivations in canonical source, add worked examples where concept bridges are insufficient, and preserve every valid explanation/code block.
 3. Inventory algorithms and code blocks with exact compiler/version, source path, expected outputs and negative/adversarial tests; do not claim a pass without execution evidence.
 4. Audit linked primary paper/repository claims against source material and record source sections or exact file SHA where used.
-5. Integrate the staged chapter-transition lesson and its source-generated scientific figure at its pedagogically correct point after the above review.
+5. Verify and propagate the now-integrated chapter-transition lesson and its source-generated figure into the canonical Markdown authoring masters, without duplicating the material or rewriting original chapter text.
 6. Recheck **whole-book** progression and study projects; confirm a reader can explain assumptions, derive the main equation, implement a minimal version, break it and interpret failure.
 7. Only then resume full EPUB and PDF production, actual reader validation and cover placement.
 
-**Author-supplied cover:** The JPEG is on the author's Mac (local Downloads path supplied in conversation). The remote GitHub environment cannot certify the JPEG image from that path; do not mark the cover reviewed or hard-code a personal absolute filesystem path into the public source repository.
+**Author-supplied cover:** The JPEG is on the author's Mac (local Downloads path supplied in conversation). The remote GitHub environment cannot certify the JPEG image from that path. A new explicit `--cover-image` argument accepts the author-local file during Book Two EPUB creation, validates that it is a portrait JPEG and verifies the package includes that exact source image. Do not mark the cover visually reviewed or hard-code a personal absolute filesystem path into the public source repository.
 
 **Do not run Git commands in the user's existing `Master` vault to resolve this branch mismatch while content is still under audit.** Work stays isolated on the remote content branch, then publish the reviewed source through a non-destructive integration strategy.
