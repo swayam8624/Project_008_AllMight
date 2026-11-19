@@ -52,6 +52,7 @@ EXPECTED = (
     ("GPU-14F", "gpu_submit_retire_cpp23_lab", "tools/labs/gpu_submit_retire_cpp23_lab.cpp"),
     ("GPU-15M", "gpu_metal_frame_cpp23_lab", "tools/labs/gpu_metal_frame_cpp23_lab.cpp"),
     ("GPU-16P", "gpu_profile_ownership_cpp23_lab", "tools/labs/gpu_profile_ownership_cpp23_lab.cpp"),
+    ("CPP-18A", "modern_asset_ingestion_cpp23_lab", "tools/labs/modern_asset_ingestion_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -79,6 +80,7 @@ EXTRA_SOURCES = (
     "tools/labs/gpu_course/gpu_profile_ownership.hpp",
     "tools/labs/gpu_course/native_metal_callback_probe.mm",
     "tools/labs/gpu_course/native_metal_callback_unavailable.cpp",
+    "tools/labs/foundations_course/modern_asset_ingestion.hpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -130,6 +132,7 @@ def source_paths() -> tuple[str, ...]:
         "GPU-14F": "GPU-14F - Frame Submission Synchronization and Retirement.md",
         "GPU-15M": "GPU-15M - Execute Verify and Measure a Metal Frame.md",
         "GPU-16P": "GPU-16P - GPU Profiling and Apple Callback Ownership.md",
+        "CPP-18A": "CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
