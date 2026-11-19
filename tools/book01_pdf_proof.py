@@ -66,16 +66,29 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
                         flag("clipped_header", i, f"{txt[:65]!r} touches trim edge")
                 if i > 1 and (bbox.x0 < -1.0 or bbox.x1 > rect.width + 1.0 or bbox.y0 < -1.0 or bbox.y1 > rect.height + 1.0):
                     flag("clipped_text", i, f"{txt[:70]!r} at {tuple(round(t) for t in bbox)}")
-                # Inspect every span, not just the first: PDF extraction can
-                # combine proportional punctuation with monospaced code.
-                for span in line["spans"]:
-                    font = str(span.get("font", ""))
-                    is_mono = any(family in font.casefold() for family in
-                                  ("mono", "menlo", "courier", "consolas",
-                                   "monaco", "inconsolata", "firacode"))
-                    if is_mono and float(span.get("size", 0)) < 7.95:
-                        flag("tiny_code", i, f"Code <8 pt: {txt[:70]!r}; {font} {span.get('size')}")
-                        break
+                # Check *actual baseline glyph size*. A binary numeral such as
+                # 1.00₂ has a conventional 7pt subscript "2" next to 10pt
+                # monospace base glyphs: the subscript is not a 7pt listing.
+                mono_spans = [
+                    span for span in line["spans"]
+                    if any(family in str(span.get("font", "")).casefold()
+                           for family in ("mono", "menlo", "courier", "consolas",
+                                          "monaco", "inconsolata", "firacode"))
+                ]
+                tiny = [span for span in mono_spans
+                        if float(span.get("size", 0)) < 7.95]
+                has_readable_base = any(float(span.get("size", 0)) >= 7.95
+                                        for span in mono_spans)
+                ordinary_subscripts = has_readable_base and all(
+                    span["text"].strip().isdigit()
+                    and len(span["text"].strip()) <= 2
+                    for span in tiny
+                )
+                if tiny and not ordinary_subscripts:
+                    offender = max(tiny, key=lambda span: len(span["text"]))
+                    flag("tiny_code", i,
+                         f"Code <8 pt: {txt[:70]!r}; "
+                         f"{offender['font']} {offender['size']}")
         if len(bottom_nums) > 1:
             # Duplicate footers, not a page number repeated inside a table.
             matched = [v for _,v in bottom_nums]
