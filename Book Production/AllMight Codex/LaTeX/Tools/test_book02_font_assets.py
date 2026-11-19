@@ -101,6 +101,7 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
                 candidates, "source_fingerprint", return_value="f"*64
             ):
                 exported = candidates.export_candidates_to_master(generation, master)
+                self.assertTrue(exported.name.startswith("Book02-From-Equations-to-Geometry-generation-test-"))
                 self.assertTrue((exported / "From Equations to Geometry - Part 1.pdf").is_file())
                 self.assertTrue((exported / "From Equations to Geometry - Part 2.pdf").is_file())
                 self.assertTrue((exported / "From Equations to Geometry.epub").is_file())
