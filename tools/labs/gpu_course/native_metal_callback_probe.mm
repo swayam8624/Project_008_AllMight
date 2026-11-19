@@ -86,7 +86,7 @@ int run_native_gpu_profile_callback_probe() {
         auto safe_callback=mailbox->callback_for(*id);
         auto receipt=std::make_shared<Receipt>();
         [command addCompletedHandler:
-            [safe_callback,receipt,ui_weak](id<MTLCommandBuffer> done) {
+            ^(id<MTLCommandBuffer> done) {
                 p::NativeObservation note;
                 note.terminal=done.status==MTLCommandBufferStatusCompleted?
                     p::Terminal::completed:p::Terminal::failed;
