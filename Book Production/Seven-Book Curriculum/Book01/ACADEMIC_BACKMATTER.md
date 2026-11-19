@@ -118,7 +118,7 @@ cmake --build build/book01-companion --parallel
 ctest --test-dir build/book01-companion --output-on-failure
 ```
 
-A passing CTest run is evidence for these models on that compiler and host. It does not establish compatibility with an actual NES cartridge, correctness of Vulkan or Metal synchronization, or performance on a GPU. Readers should inspect and extend each oracle before treating it as a research benchmark. For the print release, cite the immutable source revision printed on the imprint page rather than assuming the branch head will remain unchanged.
+A passing CTest run is evidence for these models on that compiler and host. It does not establish compatibility with an actual NES cartridge, correctness of Vulkan or Metal synchronization, or performance on a GPU. Readers should inspect and extend each oracle before treating it as a research benchmark. For reproducible software citations, use a specific repository release, archived tag or commit permalink from the release materials. Source hashes remain in the machine-readable provenance manifest, not in the reader-facing copyright page.
 
 
 # Experimental Record and Reproducibility
@@ -139,21 +139,50 @@ A credible experiment records a question, a predicted result, a reference answer
 
 For performance comparisons, distinguish a speedup from a correctness improvement. State the direction of ratios explicitly, report measurement variation rather than only a single favorable run, and separate CPU encoding/submission costs from GPU execution costs when the API permits reliable measurement. Keep both a success case and a counterexample; the latter is often more valuable for understanding a design boundary.
 
-# Primary References and Further Reading
+# References, Standards, and Further Reading
 
-The following are entry points to the normative documents or maintained documentation relevant to the text. Their versions and feature availability should be verified for the reader's actual toolchain. A reading-list entry does not turn an illustrative code sample into an independently verified implementation.
+References are listed where they materially support a language rule, mathematical mechanism, algorithm, measurement method, or practical implementation choice. **Books are normally identified by edition and ISBN; journal papers and some electronic books have DOIs; living specifications need versioned URLs.** No identifier should be invented merely to fill a field. A link to source code is evidence that an implementation exists, not proof that its claims are correct. For a research publication, cite the exact paper, page/section, standard revision, or archived software version supporting the particular claim.
 
-**C++ language and library.** The ISO/IEC 14882 standard defines the C++ language and standard library (consult an official licensed copy where applicable). The [C++ working draft](https://eel.is/c++draft/) provides publicly readable draft wording and may differ from the published standard. The [C++23 feature inventory](https://en.cppreference.com/w/cpp/23) is a navigational secondary reference for feature availability; implementation support must still be checked.
+## Standards and authoritative documentation
 
-**Computer architecture.** The [RISC-V ISA specifications](https://riscv.org/technical/specifications/) provide a freely available example of an instruction-set contract. An ISA specification defines permitted behavior, not the internal pipeline design or cache arrangement of every compatible processor.
+- **[S1] C++23 (Chapters 2–5, 10–12):** ISO/IEC 14882:2024, *Programming languages — C++*, [ISO catalogue](https://www.iso.org/standard/83626.html). The openly readable [C++ working draft](https://eel.is/c++draft/) is a *draft*, not the purchased ISO publication. [cppreference](https://en.cppreference.com/w/cpp/23) is a navigational secondary reference; actual library availability depends on the compiler and standard-library implementation.
+- **[S2] Processor architecture (Chapters 1, 7):** [RISC-V specifications](https://riscv.org/technical/specifications/) provide concrete ISA contracts. Distinguish the abstract instruction set from a particular implementation's cache, pipeline, or memory timings.
+- **[S3] Vulkan (Chapters 9, 12–14):** Khronos, [Vulkan specification](https://docs.vulkan.org/spec/latest/), [Vulkan memory model appendix](https://docs.vulkan.org/spec/latest/appendices/memorymodel.html), and [Vulkan Validation Layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers). Record the specification and device feature set used.
+- **[S4] Metal (Chapters 9, 12, 15–16):** Apple, [Metal API documentation](https://developer.apple.com/documentation/metal), [resource synchronization](https://developer.apple.com/documentation/metal/resource-synchronization), and [Metal 4 core API](https://developer.apple.com/documentation/metal/understanding-the-metal-4-core-api). Do not conflate Metal 3 and Metal 4 guarantees.
+- **[S5] Builds and diagnostics (Chapters 4, 10, 16):** [CMake reference](https://cmake.org/cmake/help/latest/) and [Clang documentation](https://clang.llvm.org/docs/). A particular build must additionally record its compiler, flags, target environment, and test results.
 
-**Vulkan.** The [Vulkan specification](https://docs.vulkan.org/spec/latest/) and [memory model appendix](https://docs.vulkan.org/spec/latest/appendices/memorymodel.html) are primary references for device, resource, ordering and visibility rules. Validate the feature and extension set of the specific device rather than assuming that every published mechanism is available on every installation.
+## Books: editions and persistent identifiers
 
-**Metal.** Apple's [Metal documentation](https://developer.apple.com/documentation/metal), [resource synchronization guidance](https://developer.apple.com/documentation/metal/resource-synchronization) and [Metal 4 core API guide](https://developer.apple.com/documentation/metal/understanding-the-metal-4-core-api) describe versioned Apple-specific execution and resource contracts. Metal 4 examples are not silently interchangeable with Metal 3 code.
+- **[B1]** Bjarne Stroustrup, *A Tour of C++*, 3rd ed., Addison-Wesley Professional, 2022. **ISBN 978-0-13-681648-5.** [Publisher catalogue](https://www.informit.com/store/tour-of-c-plus-plus-9780136816485). Useful for language-level orientation, but its principal presentation is C++20; consult [S1] for specifically C++23 requirements.
+- **[B2]** Scott Meyers, *Effective Modern C++*, O'Reilly Media, 2014. **ISBN 978-1-4919-0399-5.** [Publisher edition](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/). Particularly useful for C++11/14 ownership, move and deduction idioms; do not treat it as a C++23 specification.
+- **[B3]** Marc Gregoire, *Professional C++*, 6th ed., Wiley, 2024. **ISBN 978-1-394-19317-2** (print); **book DOI [10.1002/9781394193202](https://doi.org/10.1002/9781394193202)** (electronic edition). [Publisher edition](https://www.wiley.com/en-in/professional-c-6th-edition-p-9781394193172). Further study of object models, templates, library design, tooling, and engineering practice.
+- **[B4]** Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein, *Introduction to Algorithms*, 4th ed., MIT Press, 2022. **ISBN 978-0-262-04630-5.** [MIT Press edition](https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/). Follow for asymptotic analysis, sorting, graph algorithms and correctness arguments.
+- **[B5]** Tamara Munzner, *Visualization Analysis and Design*, A K Peters/CRC Press, 2014. **DOI [10.1201/B17511](https://doi.org/10.1201/B17511)**. [Author's book resources](https://www.cs.ubc.ca/~tmm/vadbook/). A bridge from numerical results to perceptually and analytically defensible figures; developed substantially in later research-oriented books.
 
-**Build and verification.** The [CMake documentation](https://cmake.org/cmake/help/latest/) explains the configure, build and dependency model. The [Clang documentation](https://clang.llvm.org/docs/) covers compiler diagnostics and sanitizers. The [Khronos Vulkan validation layers repository](https://github.com/KhronosGroup/Vulkan-ValidationLayers) explains what validation can check, but validation success is not a proof of all application behavior.
+## Research articles: DOI-resolved primary literature
 
-**Experimental methods.** Consult a primary paper or standard for a specialized algorithm, specify an independent correctness witness, and describe uncertainty and limitations. Source code can demonstrate an implementation, but the underlying mathematical or API claim must be supported separately.
+- **[P1]** David Goldberg, “What Every Computer Scientist Should Know About Floating-Point Arithmetic,” *ACM Computing Surveys*, 23(1), 1991. **DOI [10.1145/103162.103163](https://doi.org/10.1145/103162.103163)**. Relevant to Chapter 1 numerical representation, rounding and error.
+- **[P2]** Samuel Williams, Andrew Waterman, and David Patterson, “Roofline: An Insightful Visual Performance Model for Multicore Architectures,” *Communications of the ACM*, 52(4), 2009. **DOI [10.1145/1498765.1498785](https://doi.org/10.1145/1498765.1498785)**. Relevant to Chapters 7, 9, 12 and 16, where arithmetic intensity and memory bandwidth limit speed.
+- **[P3]** Hans-J. Boehm and Sarita V. Adve, “Foundations of the C++ Concurrency Memory Model,” *PLDI*, 2008. **DOI [10.1145/1375581.1375591](https://doi.org/10.1145/1375581.1375591)**. Explains motivating concurrency semantics; the current normative wording remains [S1].
+- **[P4]** Victoria Interrante, “Art and Science in Visualization,” in *Visualization Handbook*, 2005, pp. 781–805. **DOI [10.1016/B978-012387582-2/50042-3](https://doi.org/10.1016/B978-012387582-2/50042-3)**. A companion for later chapters on designing convincing *and* faithful scientific views.
+
+## Companion repositories and implementation case studies
+
+[Project AllMight](https://github.com/swayam8624/Project_008_AllMight) is the seven-book curriculum repository. The [Book 1 companion programs](https://github.com/swayam8624/Project_008_AllMight/tree/curriculum/cpp23-nes-project-pass01/Book%20Production/Seven-Book%20Curriculum/Book01/Companion) are distinct from the larger engineering projects below. Their public repositories have been checked for existence, but neither publication nor this index constitutes an audit or endorsement of their current correctness.
+
+| Project repository | What to investigate | Main teaching connection |
+|---|---|---|
+| [NESEmulator](https://github.com/swayam8624/NESEmulator) | Cartridge bytes, instruction execution, state and replay | Book 1: Chapters 1–4, 7, 10 |
+| [MLLibrary](https://github.com/swayam8624/MLLibrary), [KairoMath](https://github.com/swayam8624/KairoMath) | Numerical primitives, data representations, measurement | Books 1–2 |
+| [KairoGeometry](https://github.com/swayam8624/KairoGeometry), [KairoSpatial](https://github.com/swayam8624/KairoSpatial) | Geometric predicates, spatial structures, reproducible queries | Books 2–5 |
+| [KairoRayTracer](https://github.com/swayam8624/KairoRayTracer) | Ray tracing and image synthesis | Book 4 |
+| [KairoECS](https://github.com/swayam8624/KairoECS), [KairoAssets](https://github.com/swayam8624/KairoAssets) | Entity/resource identities and asset life cycles | Books 1 and 5 |
+| [KairoPhysicsEngine](https://github.com/swayam8624/KairoPhysicsEngine), [kyoto-common-contact](https://github.com/swayam8624/kyoto-common-contact) | Physics, contact, collision methods and experimental comparisons | Books 5 and 7 |
+| [KairoRenderer](https://github.com/swayam8624/KairoRenderer), [KairoGameEngine](https://github.com/swayam8624/KairoGameEngine) | Rendering pipelines, Vulkan/Metal integration and engine construction | Books 5–6 |
+| [Maveb](https://github.com/swayam8624/Maveb) | Hybrid scene representation, real-time visual computing and evidence | Books 3–4, 6–7 |
+| [Vulkax](https://github.com/swayam8624/Vulkax), [FoveaBench](https://github.com/swayam8624/FoveaBench) | Research experiments, vision/XR evaluation and reproducibility | Book 7 |
+
+**Attribution rule for every book:** when borrowing a formal result, claim, figure, benchmark, idea or adapted example, identify the original author and source at the point of use, then supply its full reference here or in the relevant book's bibliography. A GitHub URL is not a substitute for the original paper's DOI. Original illustrations should be labelled as original; adapted or reproduced figures need source attribution and appropriate permission or licence, not merely a bibliography entry. For an experimental figure, also preserve the scripts, input data identity, plotting parameters and raw measurements.
 
 # Concept Locator
 
@@ -177,10 +206,10 @@ This is a chapter-based locator, not a full word-level index. It is designed to 
 | Metal command encoding and resource modes | 15–16 |
 | Independent oracles, performance evidence | 4, 10, 16–17 |
 
-# Technical Provenance and Publication Limits
+# Source Integrity, Attribution, and Corrections
 
-The reader edition is derived from the preserved first sixteen Computing Foundations chapter bodies, eighteen reversible project laboratories, and an integrative mastery laboratory. Production changes to typography, chapter headings, figure rendering, code-fence metadata and mathematical escaping do not silently replace the canonical teaching source. The production manifest records source identity and generated artifacts; use it to trace a disputed passage.
+The reader edition is assembled from preserved foundation chapters, reversible C++23 laboratory additions, and a final mastery laboratory. Publisher-facing source tracking, generated-file hashes and build traces are recorded in repository manifests rather than printed on the copyright page. These records assist reproducibility and corrections; they are not a substitute for source-specific citations within a scientific claim.
 
-Named Kairo, Maveb, Vulkax and other project implementations may be discussed as source-reported snapshots. Such claims are not statements about the current behavior of a particular repository without an immutable revision and a reproducible verification record. They are also not statements about what every compliant C++ compiler, Vulkan driver or Metal device must do.
+Named Kairo, Maveb, Vulkax and other implementations are treated as inspectable case studies, not established truths. The links above point to actively changing repositories. Reproduce experiments against an archived release, tag or immutable commit, and independently inspect the relevant behaviour before citing a result.
 
-A complete academic release needs an independent technical review of commands, proof obligations and API examples, a true page-level index, and a successful print preview. This working edition provides the apparatus and acceptance tests needed to carry out that release review without misrepresenting its status.
+Report errors or propose corrections through [Project AllMight's issue tracker](https://github.com/swayam8624/Project_008_AllMight/issues). Include the book and chapter, disputed statement, authoritative source or counterexample, and—when executable code is involved—a minimal reproducer. Research figures and code examples should remain legible, traceable and reproducible even when their visual design is ambitious.
