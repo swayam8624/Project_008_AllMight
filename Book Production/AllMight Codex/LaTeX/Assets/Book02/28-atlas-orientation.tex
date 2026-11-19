@@ -1,0 +1,18 @@
+% Book Two Pass 3: source-derived original scientific plate.
+\clearpage
+\section*{Certified orientation across nearly collinear coordinates}
+\noindent The orientation predicate decides a discrete topology fact: clockwise, counterclockwise or collinear. The exact rational fallback judges the sign of the supplied binary64 coordinates. A perturbation already rounded away at input cannot be recovered by more precise arithmetic.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/figures/orient2d-certification.pdf}
+\caption{Left: the three exact orientation classes. Right: stored binary64 determinant magnitudes as the third point approaches collinearity. Cyan signs are accepted by the conservative filter, gold cases use exact rational fallback, and red cases have already rounded to zero; these are not runtime measurements.}
+\label{fig:book02-atlas-orient2d-certification}
+\end{figure}
+
+\noindent\textbf{Reconstruction experiment.} Change coordinate magnitudes to trigger product overflow. Compare the exact rational sign against the naive floating determinant and the C++23 uncertain output. Never label an uncertified sign as zero.
+
+\noindent\emph{Reproducibility:} The original figure, SVG, print PDF, PNG,
+exact numerical CSV data and machine-readable provenance report are produced
+by \texttt{tools/labs/book02\_visual\_atlas.py}. These are independently
+written educational experiments, not imported research-paper figures.
