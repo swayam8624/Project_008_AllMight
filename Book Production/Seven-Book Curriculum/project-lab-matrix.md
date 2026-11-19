@@ -347,3 +347,28 @@ Book 3 geometry, Book 5 collision and Book 6 GPU, Book 7 XR then consume
 a well-defined artifact/job interface rather than reteaching file
 ownership and coroutine lifetimes in each domain. Final source-routing
 ownership still needs a dedicated editorial release pass.
+
+
+## Pass19 — Cross-pass source-to-evidence capstone
+
+The [CPP-19E lesson](../../Supplementary/C++23%20Project%20Labs/CPP-19E%20-%20A%20Complete%20Asset%20to%20Evidence%20Trace.md)
+connects the previously implemented Pass18 filesystem and worker, Pass05
+real TXR4/MSH1 codec, Pass06 owner-aware registry, Pass08 task DAG, and
+Pass09 CPU memory visibility/retirement oracle in one integrated portable
+C++23 executable: `tools/labs/book01_end_to_end_cpp23_lab.cpp`.
+The six host tasks produce independently checkable weighted RGB sum 297
+and signed twice-area 65,536, a reproducible source-identity receipt,
+and rejection tests for malformed/missing inputs and stale scene revision.
+
+This is a multi-project **foundation**, not an NES-only application or proof
+that engines were modified. In Kairo/Maveb, real scene/renderer submission
+and thread-safe scene lifetime replace the fixture's single-threaded gate.
+In Kyoto, pair-set/solver oracles replace the texture reduction. Vulkax
+requires controlled physical residual validation and independent splits,
+while XR requires measured gaze/render/display clocks and deadlines.
+None of those native/research verification steps happened in this pass.
+
+Eighteen source insertions, CMake targets, CTests and evidence entries
+are now authored. **No full 18-target CTest or native Mac GPU results are
+claimed**; the canonical continuous master, original chapters, and LaTeX
+remain unchanged until the user's consolidated checkpoint.
