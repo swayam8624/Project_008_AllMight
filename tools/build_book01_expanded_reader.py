@@ -55,6 +55,9 @@ ENRICHMENT_FILES = {
         9: "CH09_GPU_MEMORY_VISUAL_LAB.md",
         12: "CH12_GPU_LIFETIME_TIMELINE.md",
         16: "CH16_MEASUREMENT_AND_EVIDENCE.md",
+        13: "CH13_VULKAN_RESOURCE_GRAPH.md",
+        14: "CH14_VULKAN_SYNC_TIMELINE.md",
+        15: "CH15_METAL_EXECUTION_MAP.md",
     }.items()
 }
 # Original foundation master before this branch's additive work. The exact
