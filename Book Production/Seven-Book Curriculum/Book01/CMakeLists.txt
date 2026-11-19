@@ -120,6 +120,41 @@ add_executable(gpu_submit_retire_cpp23_lab
 )
 target_compile_features(gpu_submit_retire_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(gpu_submit_retire_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass15: Maveb Metal frames and Kairo Metal runtime. Portable default tests;
+# optional actual macOS GPU shader/rendering only on explicitly requested probe.
+add_executable(gpu_metal_frame_cpp23_lab
+    ../../../tools/labs/gpu_metal_frame_cpp23_lab.cpp
+)
+target_compile_features(gpu_metal_frame_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(gpu_metal_frame_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+set(ALLMIGHT_METAL_NATIVE_AVAILABLE FALSE)
+if(APPLE)
+    include(CheckLanguage)
+    check_language(OBJCXX)
+    if(CMAKE_OBJCXX_COMPILER)
+        enable_language(OBJCXX)
+        find_library(ALLMIGHT_METAL_FRAMEWORK Metal)
+        find_library(ALLMIGHT_FOUNDATION_FRAMEWORK Foundation)
+        if(ALLMIGHT_METAL_FRAMEWORK AND ALLMIGHT_FOUNDATION_FRAMEWORK)
+            target_sources(gpu_metal_frame_cpp23_lab PRIVATE
+                ../../../tools/labs/gpu_course/native_metal_compute_probe.mm)
+            target_link_libraries(gpu_metal_frame_cpp23_lab PRIVATE
+                "${ALLMIGHT_METAL_FRAMEWORK}" "${ALLMIGHT_FOUNDATION_FRAMEWORK}")
+            set_target_properties(gpu_metal_frame_cpp23_lab PROPERTIES
+                OBJCXX_STANDARD 20 OBJCXX_STANDARD_REQUIRED ON
+                OBJCXX_EXTENSIONS OFF)
+            target_compile_options(gpu_metal_frame_cpp23_lab PRIVATE
+                "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
+            set(ALLMIGHT_METAL_NATIVE_AVAILABLE TRUE)
+        endif()
+    endif()
+endif()
+if(NOT ALLMIGHT_METAL_NATIVE_AVAILABLE)
+    target_sources(gpu_metal_frame_cpp23_lab PRIVATE
+        ../../../tools/labs/gpu_course/native_metal_unavailable.cpp)
+endif()
+
 if(Vulkan_FOUND AND TARGET Vulkan::Vulkan)
     target_link_libraries(gpu_submit_retire_cpp23_lab PRIVATE Vulkan::Vulkan)
     target_compile_definitions(gpu_submit_retire_cpp23_lab PRIVATE ALLMIGHT_COURSE_HAS_VULKAN=1)
@@ -151,8 +186,9 @@ if(MSVC)
     target_compile_options(nes_command_lifecycle_cpp23_lab PRIVATE /W4)
     target_compile_options(gpu_device_resource_cpp23_lab PRIVATE /W4)
     target_compile_options(gpu_submit_retire_cpp23_lab PRIVATE /W4)
+    target_compile_options(gpu_metal_frame_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab gpu_metal_frame_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -166,7 +202,8 @@ foreach(course_lab IN ITEMS
  nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab
  nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab
  nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab
- gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab)
+ gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab
+ gpu_metal_frame_cpp23_lab)
     target_link_libraries(${course_lab} PRIVATE nes_course_public_api)
 endforeach()
 
@@ -215,3 +252,7 @@ add_test(NAME gpu_13d_cross_project_device_memory_contracts_cpu_only
 # success is a separately documented and explicitly requested experiment.
 add_test(NAME gpu_14f_kairo_maveb_submission_retirement_cpu_only
          COMMAND gpu_submit_retire_cpp23_lab)
+
+# Native Metal shader/runtime execution is opt-in; default test is CPU model.
+add_test(NAME gpu_15m_maveb_kairo_metal_frames_cpu_only
+ COMMAND gpu_metal_frame_cpp23_lab)
