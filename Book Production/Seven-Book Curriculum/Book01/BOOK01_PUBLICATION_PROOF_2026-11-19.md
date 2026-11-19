@@ -56,6 +56,17 @@ publication style. The full, unbroken text remains in document metadata and
 the imprint page. A regression test protects this printing-only title break;
 the digital title and chapter contents are unchanged.
 
+A separate title/imprint A/B proof revealed that the intentionally blank
+verso leaf (PDF page 2) contained only a running header and the numeral
+"ii". Including the standard LaTeX `emptypage` package in the Book 1
+reader style leaves the physical blank page in place for duplex printing
+but suppresses that inappropriate furniture. The old output extracted
+36 characters on the empty page; the corrected page extracts **zero**.
+The title and copyright pages compiled unchanged. This behavior was
+confirmed in a three-page LuaLaTeX smoke proof; full Macintosh typography
+and KDP preview remain final release checks.
+
+
 ## Defects identified and permanently guarded
 
 1. Chapter 9 contained `\\texttt{simd_sum}` and `\\texttt{simd_prefix_exclusive_sum}` in source-protected display math. Raw TeX text macros require escaped underscores. The math renderer now escapes text-mode specials while keeping real mathematical subscripts unchanged. Regression tests cover both Chapter 9 expressions.
