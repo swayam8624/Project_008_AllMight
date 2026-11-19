@@ -541,6 +541,16 @@ def generate(output: Path, selected: tuple[str, ...] = FIGURES) -> dict:
     output = Path(output).resolve()
     style()
     records = [PLOTS[name](output) for name in selected]
+    # This eighth *content bridge* plate is analytically checked against
+    # exact rational clipping rather than any GPU rasterization backend.
+    # Generate only for the complete book atlas; subset experiments retain
+    # their established seven-figure CLI semantics.
+    coverage_info = None
+    if set(selected) == set(FIGURES):
+        from book02_coverage_visual import render as render_coverage
+        coverage_info = render_coverage(output / "coverage")
+        if coverage_info["exact_fraction"] != "119/192":
+            raise RuntimeError("Book Two pixel-coverage reference drifted")
     manifest = {
         "schema": "allmight-book02-atlas-1",
         "provenance": "deterministic synthetic/analytic research-method teaching labs",
@@ -548,6 +558,7 @@ def generate(output: Path, selected: tuple[str, ...] = FIGURES) -> dict:
         "scipy": scipy.__version__,
         "matplotlib": matplotlib.__version__,
         "figures": records,
+        "coverage_bridge": coverage_info,
         "limitations": [
             "Figures reproduce tested tutorial algorithms, not published paper benchmarks.",
             "No claims of GPU/CPU speedup, original dataset reproduction or physical measurements.",
