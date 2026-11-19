@@ -264,6 +264,9 @@ def ransac(output: Path) -> dict:
                             "num_points": len(P),
                             "selected_inliers": len(inliers),
                             "iterations": fit.iterations,
+                            "fit_line": {"a": float(fit.line.a),
+                                         "b": float(fit.line.b),
+                                         "c": float(fit.line.c)},
                             "caveat": "Single synthetic scene, not published RANSAC paper camera-localization performance.",
                         })
 
@@ -555,6 +558,10 @@ def generate(output: Path, selected: tuple[str, ...] = FIGURES) -> dict:
     file = output / "manifest.json"
     file.write_text(json.dumps(manifest, indent=2, sort_keys=True,
                                allow_nan=False) + "\n", encoding="utf-8")
+    # Standalone offline interactive atlas is built from those same exact
+    # exported rows, never from a separately invented visualization dataset.
+    from book02_build_viewer import build_viewer
+    build_viewer(output)
     return manifest
 
 
