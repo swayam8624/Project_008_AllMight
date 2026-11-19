@@ -333,6 +333,23 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 12, "Commands, Async Work, and Resource Lifetimes": retain the same ring and add a tested command-state and submission/cancellation lifecycle, with explicit native backend verification boundaries.
 
 
+## Pass 12 — Book 01, Chapter 12: Commands, Async Work, and Resource Lifetimes
+
+**Authoring/command policy:** Continue staged additive manuscript and C++23 work on `curriculum/cpp23-nes-project-pass01`. The user asked for a single consolidated Mac pull, canonical source insertion and native build check at a later requested checkpoint; do not issue intermediate commands, rewrite all pages or compile LaTeX.
+
+**Original material preserved:** Chapter 12's reading copy contains ~3,198 lines / 50.9K characters of established command processor, async compute, upload ring, GPU command and synchronization, GPU profiler and performance methodology. The new long-form [NES-12Q — Command Lifecycles and Uncertain Submission](../../Supplementary/C++23%20Project%20Labs/NES-12Q%20-%20Command%20Lifecycles%20and%20Uncertain%20Submission.md) (~47.0K characters) is staged immediately before the original `### PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN` heading, after the original device submission discussion; no prior material is removed.
+
+**C++23 shared component:** [command_submission_lifecycle.hpp](../../tools/labs/nes_course/command_submission_lifecycle.hpp) integrates the actual Pass08 `DependencyGraph` and Pass11 `FrameUploadRing<Capacity>`. A move-only CommandStream records GPU intents, returns exact graph diagnostics, seals a DAG before publication, and rejects re-recording while queued. The simulated CommandSubmissionQueue supports a definite **pre-submit** rejection without publishing a frame; accepted or uncertain outcomes publish a ring frame and retain the command-control lifetime. Uncertain results stay quarantined until independently accepted; device lost prevents invented recovery. Event records are owned and are issued only once when *modeled* queue stamps reach completion. The actual ring performs retirement after all queue requirements and CPU borrow pins are satisfied. Retired journal entries can be pruned without reusing submission tickets.
+
+**Integrated executable:** [nes_command_lifecycle_cpp23_lab.cpp](../../tools/labs/nes_command_lifecycle_cpp23_lab.cpp) contains ~464 lines of typed fail-closed tests for empty/duplicate/cyclic/missing task graph commands, definite rejection and retry, invalid queue stamps, unknown submission quarantine, device loss, at-most-once completion notices, command wrapper destruction with owned queue state, bounded journal capacity, pinned CPU readers and exact frame retirement. It runs the real previously implemented NROM CPU/PIMPL debugger and TXR4 texture registry and serializes the actual 24-byte NESF overlay before staging it in the earlier frame ring.
+
+**Cumulative wiring:** Book01 CMake/CTest has **12** C++23 targets, including the Pass12 executable and the actual `cpu_debug_session.cpp` translation unit. The staged insertion utility has **12** marker-delimited original-source-preserving sections. Its Python fixture verifies 12-block idempotence, conflict refusal and restoration of every original byte. The source-pinned evidence manifest and negative fixture tests now require 12 labs. Existing GCC/Clang/AppleClang/sanitizer CI definitions cover the new files.
+
+**Evidence limits:** The command journal and device stamps are **single-threaded CPU reference models**, not actual Vulkan/Metal command buffers, synchronization primitives, command callbacks, GPU queues, device loss, swapchain synchronization or verified render results. The model's supplied queue decisions and counter values are not driver observations. Neither the exact 12-target build, end-to-end CI, native Mac compilation nor any GPU performance result is certified until actual runner evidence is observed.
+
+**Next:** Chapter 13, "Open Vulkan Devices and Describe Resources": learn and test native Vulkan loader/adapter/feature and resource contracts as the first concrete device-backed bridge, with fallback behavior when a Vulkan runtime/device is absent and no invented hardware capabilities.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
