@@ -125,7 +125,9 @@ jobs:
 
   macos-apple-clang:
     name: macOS AppleClang C++23 portability
-    runs-on: macos-15
+    # Xcode 16.4's libc++ lacks std::jthread/std::stop_token. The
+    # macOS 26 image defaults to Xcode 26, which supplies both APIs.
+    runs-on: macos-26
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -134,6 +136,11 @@ jobs:
           clang++ --version | head -n 1
           cmake --version | head -n 1
           sw_vers
+      - name: Verify AppleClang std::jthread and stop-token support
+        run: |
+          xcodebuild -version
+          printf '#include <stop_token>\n#include <thread>\nint main(){std::jthread worker([](std::stop_token){});return 0;}\n' |
+            clang++ -std=c++23 -x c++ -fsyntax-only -
       - name: Configure native macOS build without graphics or LaTeX
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-macos \
