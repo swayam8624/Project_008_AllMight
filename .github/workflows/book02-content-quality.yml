@@ -35,7 +35,7 @@ jobs:
         run: python -m pip install numpy==2.2.6 matplotlib==3.10.5
       - name: Check the mathematical teaching source syntax
         run: |
-          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py tools/labs/book02_content_bridge.py tools/labs/book02_coverage_visual.py
+          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py tools/labs/test_book02_content_bridge.py tools/labs/book02_coverage_visual.py
       - name: Execute independent exact-cover and sampling contracts
         working-directory: tools/labs
         run: |
