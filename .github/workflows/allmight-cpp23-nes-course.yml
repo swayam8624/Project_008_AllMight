@@ -88,12 +88,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Record compiler version
-        run: clang++ --version | head -n 1
+      - name: Select C++23-compatible Clang and verify std::expected
+        run: |
+          if ! command -v clang++-19 >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y clang-19
+          fi
+          clang++-19 --version | head -n 1
+          printf '#include <expected>\n#ifndef __cpp_lib_expected\n#error std_expected_unavailable\n#endif\nint main(){std::expected<int,int> x{1};return *x-1;}\n' |
+            clang++-19 -std=c++23 -x c++ -fsyntax-only -
       - name: Configure Clang Debug build
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-clang \
-            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
+            -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug
       - name: Build C++23 teaching labs
         run: cmake --build build/nes-ci-clang --parallel 2
       - name: Execute all tests and capture JUnit
@@ -159,10 +166,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Select C++23-compatible Clang sanitizer toolchain
+        run: |
+          if ! command -v clang++-19 >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y clang-19
+          fi
+          clang++-19 --version | head -n 1
+          printf '#include <expected>\n#ifndef __cpp_lib_expected\n#error std_expected_unavailable\n#endif\nint main(){std::expected<int,int> x{1};return *x-1;}\n' |
+            clang++-19 -std=c++23 -x c++ -fsyntax-only -
       - name: Configure sanitizer-enabled C++23 build
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-sanitizers \
-            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build all sanitizer-instrumented teaching labs
