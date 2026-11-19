@@ -814,6 +814,46 @@ consolidated-only manuscript insertion/release review. One new
 standalone passing program does not certify Book 1 complete.
 
 
+## Pass 19 — Book 1 integrated asset-to-evidence CPU capstone
+
+**A deliberately connected milestone, not another unrelated demo.** The
+[CPP-19E continuous project lesson](../../Supplementary/C++23%20Project%20Labs/CPP-19E%20-%20A%20Complete%20Asset%20to%20Evidence%20Trace.md)
+and [real cross-pass C++23 capstone](../../tools/labs/book01_end_to_end_cpp23_lab.cpp)
+join the existing Pass18 on-disk file reader/worker, Pass05 TXR4/MSH1 codecs,
+Pass06 generational registry, Pass08 task-dependency planner and Pass09
+memory/retirement oracle into **one** portable source->scene->compute->receipt
+trace. The earlier NES emulator is not the focus of this stage: these general
+asset, ownership and evidence contracts carry onward into Kairo, Maveb, Kyoto,
+Vulkax and XR with appropriately different domain oracles.
+
+**What the authored executable checks:** two real temporary binary inputs,
+exact independent weighted pixel sum **297** and mesh signed double-area
+**65536**, reproducible source fingerprints and byte-identical receipt strings
+despite fresh temp paths/registry owners, six declared DAG tasks and
+independent topological edge verification, CPU-only visibility failure before
+explicit memory publication, refusal of premature virtual retirement,
+successful retirement only after modeled completion, rejection of stale
+registry handles, and scene revision 7 accepting once while old version 6
+and repeated version 7 are refused. Missing mesh, malformed mesh and truncated
+texture are independent negative fixtures. Scene commit is *single-threaded*;
+the memory oracle is *not* a native GPU submission.
+
+**Staging and provenance:** eighteenth `add_executable` and eighteenth default
+CTest registered; eighteenth marker-delimited non-destructive insertion
+staged under original Chapter 10, after the earlier Pass10 reproducibility
+addition; source/JUnit checks and byte-preserving insertion fixture expect
+18 rather than 17. The original continuous manuscript was **not rewritten,
+truncated, regenerated or compiled**. For exact source blob IDs and the
+unverified build boundary, consult the
+[Pass19 evidence ledger](Book01/PASS19_END_TO_END_EVIDENCE.md).
+
+**Not certified yet:** A full real 18-target GCC/Clang/AppleClang build,
+sanitizer runs, JUnit source-pinned release proof, native Metal/Vulkan execution,
+concurrent editor publication, and authorized consolidated manuscript insertion
+remain open. Source counts and an authored CTest are not pass results. Continue
+the next verification/editorial pass without asking for a per-pass Mac pull,
+build or LaTeX command.
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
