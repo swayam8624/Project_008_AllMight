@@ -19,12 +19,16 @@
 % An academic print page: dense enough for long mathematical and code examples,
 % with room for a binding and marginal annotations.
 \geometry{
-  paperwidth=7.4in,paperheight=10in,
-  inner=0.88in,outer=0.76in,bindingoffset=0.06in,
+  paperwidth=7in,paperheight=10in,
+  inner=0.94in,outer=0.67in,bindingoffset=0.02in,
   top=0.80in,bottom=0.82in,
   includeheadfoot,headheight=13pt,headsep=0.20in,footskip=0.28in
 }
 \AtBeginDocument{\fontsize{10}{12.8}\selectfont}
+\AtBeginDocument{\setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
+  \setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
+  \setlength{\abovedisplayshortskip}{3pt plus 1pt}
+  \setlength{\belowdisplayshortskip}{4pt plus 1pt}}
 \setlength{\parindent}{1.05em}
 \setlength{\parskip}{0pt}
 \setlength{\emergencystretch}{2.6em}
@@ -34,9 +38,9 @@
 \definecolor{BOneSlate}{HTML}{405A6E}
 \definecolor{BOneMuted}{HTML}{616970}
 \definecolor{BOneRule}{HTML}{C3CAD0}
-\definecolor{BOnePaper}{HTML}{F5F6F7}
-\definecolor{BOneNote}{HTML}{F4F7F8}
-\definecolor{BOnePractice}{HTML}{F8F7F4}
+\definecolor{BOnePaper}{HTML}{E5E7E9}
+\definecolor{BOneNote}{HTML}{E7EAED}
+\definecolor{BOnePractice}{HTML}{E9E7E4}
 \definecolor{BOneString}{HTML}{77523E}
 \definecolor{BOneComment}{HTML}{57695E}
 \colorlet{AMAccent}{BOneSlate}
@@ -63,7 +67,7 @@
   {\normalfont\fontsize{10}{12}\selectfont\scshape\color{BOneMuted}Chapter \thechapter}
   {0.45ex}
   {\fontsize{19}{22}\selectfont\bfseries}
-  [\vspace{0.35ex}{\color{BOneRule}\titlerule[0.55pt]}]
+  [\vspace{0.35ex}{\color{BOneRule}\titlerule[0.75pt]}]
 \titlespacing*{\chapter}{0pt}{-0.8ex}{2.0ex}
 \titleformat{\section}
   {\normalfont\fontsize{12.4}{15}\selectfont\bfseries\color{BOneInk}}
@@ -81,7 +85,7 @@
 \fancyhead[LE]{\footnotesize\color{BOneMuted}\nouppercase{\leftmark}}
 \fancyhead[RO]{\footnotesize\color{BOneMuted}\nouppercase{\rightmark}}
 \fancyfoot[LE,RO]{\footnotesize\thepage}
-\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\headrulewidth}{0.75pt}
 % Serious restrained cover, not a classroom worksheet.
 \makeatletter
 \renewcommand{\maketitle}{%
@@ -104,7 +108,7 @@
 \newtcblisting{BookCode}{
   enhanced,breakable,listing only,listing engine=listings,
   colback=BOnePaper,colframe=BOneRule,
-  boxrule=0.4pt,arc=0pt,
+  boxrule=0.75pt,arc=0pt,
   left=6pt,right=5pt,top=5pt,bottom=5pt,
   before skip=0.55\baselineskip,after skip=0.60\baselineskip,
   listing options={
