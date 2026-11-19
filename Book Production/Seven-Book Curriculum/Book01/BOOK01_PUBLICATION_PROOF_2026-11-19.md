@@ -22,6 +22,28 @@ The generated source artifact was built in the analysis environment using LuaLaT
 
 **The listed counts are first-pass local proof estimates.** The actual release tool runs multiple TeX passes, builds the back-of-book word index, writes publication-proof JSON and enforces the 828-page paperback cap. That may change pagination. The user should validate final KDP interiors with the real MacTeX font installation and the KDP previewer.
 
+## Completed index and final-layout proof
+
+The initial figures above are useful to track first-pass pagination, but
+the **post-index local proofs** are the stronger result. Both paperback
+masters and the complete digital master were passed through `makeindex`
+and two additional LuaLaTeX passes. `makeindex` accepted 242 Volume I
+entries, 273 Volume II entries, and 515 digital-master entries, with zero
+rejections and warnings.
+
+| Indexed master | Post-index proof pages | Embedded images | PDF layout findings |
+|---|---:|---:|---|
+| Complete digital | **1,122** | 41 | No clipped text, misplaced headers, header overlaps, duplicated folios, or undersized code |
+| Paperback Volume I | **533** | 21 | No detected page-geometry, font-size, trim, header, or footer blocker |
+| Paperback Volume II | **605** | 20 | No detected page-geometry, font-size, trim, header, or footer blocker |
+
+The sample print pages and back-of-book index were also rendered as page
+images and visually inspected. These results were produced with locally
+available substitute text fonts; the author's MacTeX/KDP output remains the
+final production proof. Both paperbacks have substantial headroom below
+the 828-page maximum; the digital book is intentionally not forced into
+that paperback limit.
+
 ## Defects identified and permanently guarded
 
 1. Chapter 9 contained `\\texttt{simd_sum}` and `\\texttt{simd_prefix_exclusive_sum}` in source-protected display math. Raw TeX text macros require escaped underscores. The math renderer now escapes text-mode specials while keeping real mathematical subscripts unchanged. Regression tests cover both Chapter 9 expressions.
