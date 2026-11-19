@@ -21,6 +21,7 @@ FATAL = {"trim", "page_limit", "missing_metadata", "duplicate_footers",
 LEAKS = (
     "This addition belongs", "the user has reserved", "Supplementary/Manual Integration",
     "source attachment's central", "the supplied source attachment",
+    "Sources and Code Anchors", "the source attachment",
 )
 
 
@@ -87,6 +88,18 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
                 flag("editorial_leak", i, leak)
         if re.search(r"\b(?:[1-9]|1[0-7])\.0\.[1-9]\d*\b", text):
             flag("bad_section_numbering", i, "Zero-section numbering found")
+        # PDF text extraction may sometimes collapse natural word spacing,
+        # but a suspicious output needs visual confirmation and comparison to
+        # the exact authored Markdown. These are warnings, not hard failures.
+        suspicious_spacing = re.search(
+            r"\bC\+\+23[A-Za-z]|\b\d+(?:bytes|bits|laboratories)\b|"
+            r"\bclang\+\+-std=|\b-Werror-fsanitize",
+            text,
+        )
+        if suspicious_spacing:
+            flag("spacing_or_command_suspect", i,
+                 "Inspect typography at " + repr(suspicious_spacing.group(0)))
+
     if image_count < expect_figures:
         flag("missing_figures", None, f"Only {image_count} PDF image instances; expected at least {expect_figures}")
     report["image_instances"] = image_count
