@@ -6,6 +6,7 @@ on:
       - curriculum/book02-mathematics-refinement-pass01
     paths:
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_epub_supplements.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_mathml_preflight.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_source_preflight.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_original_source_lock.json'
@@ -52,9 +53,13 @@ jobs:
       - name: Run full semantic-source and image tests
         working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
         run: |
-          python -m py_compile book02_epub_supplements.py test_book02_epub_supplements.py build_epubs.py book02_release_candidates.py
+          python -m py_compile book02_epub_supplements.py test_book02_epub_supplements.py build_epubs.py book02_release_candidates.py book02_mathml_preflight.py
           pandoc --version | head -n 1
           python -m unittest -v test_book02_epub_supplements
+      - name: Check every supplemental math expression converts to native MathML
+        working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
+        run: |
+          python book02_mathml_preflight.py --output "${{ runner.temp }}/book02-supplement-mathml.json"
       - name: Install official EPUBCheck 5.4.0
         run: |
           curl -fL --retry 3 -o /tmp/epubcheck.zip https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip
