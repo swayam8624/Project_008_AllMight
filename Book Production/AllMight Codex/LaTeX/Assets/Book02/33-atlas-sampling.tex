@@ -1,0 +1,18 @@
+% Book Two Pass 3: source-derived original scientific plate.
+\clearpage
+\section*{Estimator variance under an equal evaluation budget}
+\noindent For the exact integral of exp(x) over the unit interval, uniform, tilted-density and balanced multiple-importance samplers receive the same integrand-evaluation budget. Independent seeded replications are used to measure their variability.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/figures/mis-variance.pdf}
+\caption{Signed Monte Carlo error distributions and replicate sample variance over equal-cost budgets. These are synthetic numerical experiments, not renderer performance measurements or published MIS figures.}
+\label{fig:book02-atlas-mis-variance}
+\end{figure}
+
+\noindent\textbf{Reconstruction experiment.} Replace exp(x) by a two-peak test function and compare all three methods using the same fixed evaluation budget, then quantify uncertainty over independent replicate streams.
+
+\noindent\emph{Reproducibility:} The original figure, SVG, print PDF, PNG,
+exact numerical CSV data and machine-readable provenance report are produced
+by \texttt{tools/labs/book02\_visual\_atlas.py}. These are independently
+written educational experiments, not imported research-paper figures.
