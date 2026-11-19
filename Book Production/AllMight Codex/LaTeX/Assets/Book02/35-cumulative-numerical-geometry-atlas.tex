@@ -1,0 +1,148 @@
+% Book Two Pass 3 cumulative project, additive after the original final chapter.
+\clearpage
+\section*{Cumulative project: the Numerical Geometry Atlas}
+\addcontentsline{toc}{section}{Cumulative project: the Numerical Geometry Atlas}
+
+\noindent A mathematical idea becomes an engineering capability when we can
+derive its governing equations, implement the algorithm, recognize its
+assumption failures, and explain the numerical answer without exaggeration.
+The Numerical Geometry Atlas is the capstone built from the source-led
+laboratories of this book. Each scientific plate has a program that generated
+its data, mathematical reference where available, units, failure conditions,
+and an independent reader reconstruction exercise. The seven figures are
+not copied from the original research papers.
+
+\paragraph{The source code and evidence chain.}
+The \texttt{tools/labs} directory contains the original small numerical
+implementations used in this course. The geometry laboratory checks
+orientation signs and performs reproducible two-dimensional RANSAC fitting.
+The numerical laboratory assembles triangle stiffness and lumped-mass
+matrices, computes a heat-method distance field, and independently fits
+a nonlinear model under Huber loss. The sampling laboratory uses normalized
+proposal densities to estimate an integral with exact analytical value.
+A C++23 companion checks sign certification, discrete energy, numerical
+conditioning and safe handling of uncertain answers.
+
+The renderer \texttt{book02\_visual\_atlas.py} calls the actual mathematical
+implementations and produces three visual forms: PDF vectors for print, SVG
+for scalable screens and digital publishing, and PNG for previews. It saves
+every figure's underlying numerical rows as CSV, with a JSON manifest
+recording units, independent references, seeded experiments, library versions
+and limits of inference. The companion HTML atlas is generated from exactly
+those exported rows, with all required data embedded. It works offline:
+a control can rotate a known computed surface or change the scalar field
+shown, but does not invent a new solve or silently recalculate a research
+result that was never produced by the source implementation.
+
+\paragraph{Checkpoint I: classify geometric orientation reliably.}
+For planar coordinates \(a,b,c\), derive the oriented-area predicate
+\[
+D=(a_x-c_x)(b_y-c_y)-(a_y-c_y)(b_x-c_x).
+\]
+Test a clockwise triangle, a counterclockwise triangle, exact collinearity
+and a near-collinear binary64 input. Explain when the floating-point filter
+can certify a sign and when the rational exact-sign fallback is needed.
+An uncertain C++23 answer must not silently be classified as zero.
+Reversing vertex order must reverse the sign and a valid translation of
+all three vertices must preserve it. Identify a case in which intermediate
+product overflow makes the naive determinant unusable.
+
+\paragraph{Checkpoint II: consensus under outliers.}
+Create a synthetic scene containing 80 near-line samples and 30 structured
+outliers. Implement minimal two-point line fitting, threshold-based
+consensus and orthogonal total-least-squares refinement. Compare the
+robust result with the all-data TLS fit, and disclose the threshold and seed.
+The offline viewer changes consensus membership against a fixed fitted
+line; an actual refit requires running the numerical source program again.
+Compare false acceptance, false rejection, parameter error, and stability
+over separately seeded experiments. No one plot is evidence of universal
+RANSAC superiority.
+
+\paragraph{Checkpoint III: discretize a continuous geometric field.}
+For linear basis functions \(\phi_i\) on a triangle \(T\), derive
+\[
+u(x)=\sum_i u_i\phi_i(x),\qquad
+(K_T)_{ij}=A_T\nabla\phi_i\cdot\nabla\phi_j,\qquad
+E_T(u)=\tfrac12u^TK_Tu.
+\]
+Assemble the sparse positive-semidefinite stiffness matrix and a diagonal
+lumped mass matrix. Check its symmetry, the constant-vector nullspace,
+total mass and nonnegative energy. A discretization may reduce energy yet
+violate a maximum principle; those are different mathematical properties.
+Document matrix signs, units, boundary assumptions and degeneracy handling.
+
+\paragraph{Checkpoint IV: recover geodesics from heat.}
+Take a backward implicit heat step,
+\[
+(M+tK)u=Mu_0,
+\]
+normalize the negative triangle-wise temperature gradient, then solve
+an anchored Poisson equation for distance. Compare the recovered distances
+against the Euclidean reference on a flat convex square. Save the signed
+field error and absolute error separately. Display computed heat, recovered
+distance and signed error side by side. The additional 3D picture lifts
+distance as a vertical scalar and must explicitly say that the height
+does not represent physical terrain.
+
+Repeat over several grid resolutions on the same physical domain.
+Record vertex and triangle counts, spacing, mean and median absolute
+errors, and maximum absolute error. Since the heat timestep is tied
+to mean edge length squared, its scaling is part of the experiment.
+Explain any nonmonotonic result rather than deleting inconvenient
+points. Move the source and change the triangulation to investigate
+the limitations of the baseline.
+
+\paragraph{Checkpoint V: robust nonlinear fitting and identity.}
+Generate samples of \(y=a e^{bx}+c\) with deterministic perturbations
+and one known gross outlier. Derive the residual Jacobian
+\[
+J_i=\begin{pmatrix}e^{bx_i}&a x_i e^{bx_i}&1\end{pmatrix}.
+\]
+Compare ordinary least squares with a damped Huber method and the
+SciPy robust-loss reference. Record the final parameters, value,
+gradient norm, accepted steps and termination status. Include all
+observations in the visual and residual statistics. The estimator
+with the smallest squared residual is not automatically the method
+that best recovers the generating parameters, because the objective
+functions and contamination assumptions differ.
+
+\paragraph{Checkpoint VI: a sampling study that measures uncertainty.}
+For the exact integral \(\int_0^1 e^x\,dx=e-1\), compare uniform,
+tilted-density and balance-heuristic estimators at equal numbers of
+integrand evaluations. Repeat with distinct pseudorandom streams
+and visualize the distributions of signed errors and their sample
+variance. The purpose is to understand support, measure, weighting,
+bias and cost, not to claim that one sampler dominates for every
+integrand. Then design a two-peak function for which the proposals
+have distinct strengths, and compare over an independently justified
+sample and replication budget.
+
+\paragraph{Scientific figure acceptance.}
+Every exported plate must have readable axes, correct units, a
+declared algorithm and seed, a reference formula or validation
+baseline, and an explicit distinction between synthetic data,
+analytical truth and solver output. A heatmap colour scale must
+say whether it represents signed error or magnitude. A 3D surface
+must identify its vertical variable. Never invent hardware speedups,
+paper-reproduction figures or uncertainty intervals for an attractive
+presentation. When measuring runtime later, record machine, compiler,
+compiler flags, software version, workload, independent repeats,
+hardware state and variance.
+
+A checkpoint is accepted only if its tests pass, its output is
+reproducible, invalid inputs fail explicitly, and the numerical
+results in the CSV match the plotted data. The offline viewer must
+work without a network connection and use the exported tables,
+not a separate visual approximation. The reader must be able
+to reconstruct at least one result by hand and one by code.
+
+\paragraph{Beyond the initial atlas.}
+Extend the heat method to alternative domains and boundaries.
+Compare adaptive floating expansions with the rational sign oracle.
+Test RANSAC with competing structures or very low inlier rates.
+Move nonlinear fitting from a curve to a geometric pose problem with
+explicit gauge freedoms. Every extension should include a new
+derivation, adversarial test, independent reference, reconstructed
+figure and a discussion of limits. The object is not to assemble
+the most colourful demonstration; it is to build numerical software
+whose mathematical meaning can be defended.
