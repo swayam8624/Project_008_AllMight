@@ -80,6 +80,55 @@ class Book01ProductionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             book.replace_math_tokens("missing marker", protected)
 
+    def test_percent_in_math_is_not_latex_comment(self):
+        source = (
+            chr(36) * 2 + "\n"
+            + "\\boxed{\\text{parallelizing 99% does not make "
+              "the remaining serial 1% disappear}.}\n"
+            + chr(36) * 2 + "\n"
+            + chr(36) * 2 + "\n"
+            + "\\text{do identical work 5% faster}.\n"
+            + chr(36) * 2 + "\n"
+        )
+        stats = book.math_preflight(source, "Ch09 and Ch12")
+        protected, entries = book.plan_math(source, 9)
+        converted = book.replace_math_tokens(protected, entries)
+        self.assertIn("99\\%", converted)
+        self.assertIn("1\\%", converted)
+        self.assertIn("5\\%", converted)
+        self.assertNotIn("99\\\\%", converted)
+        book.check_math_rendered(stats, converted, 9)
+        self.assertEqual(
+            book.sanitize_source_math_for_tex(r"99\% and 5%"),
+            r"99\% and 5\%",
+        )
+
+    def test_unsupported_code_fence_metadata_is_normalized_for_pandoc(self):
+        source = (
+            "Serial:\n\n"
+            + f'{TICK}cpp id="x1rcxl"\n'
+              "for each item:\n    if useful:\n        output.push_back(item);\n"
+            + f"{TICK}\n\n"
+            + f'{TICK}text id="0aznm5"\n'
+              "predicate/count\n    ↓\nparallel scan\n"
+            + f"{TICK}\n"
+        )
+        result, count = book.normalize_code_fence_metadata(source)
+        self.assertEqual(count, 2)
+        self.assertIn(f"{TICK}cpp\nfor each item:", result)
+        self.assertIn(f"{TICK}text\npredicate/count", result)
+        self.assertIn("output.push_back(item)", result)
+        self.assertNotIn('id="', result)
+        import shutil
+        import subprocess
+        if shutil.which("pandoc"):
+            pandoc = subprocess.run(
+                ["pandoc", "-f", "markdown", "-t", "latex", "--no-highlight"],
+                input=result, capture_output=True, text=True, check=True,
+            )
+            self.assertEqual(pandoc.stdout.count(r"\begin{verbatim}"), 2)
+            self.assertIn("output.push_back(item)", pandoc.stdout)
+
     def test_empty_display_and_empty_box_are_rejected(self):
         for source in ("$$\n\n$$", "$$\n\\boxed{\n}\n$$"):
             with self.assertRaises(ValueError):
