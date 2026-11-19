@@ -280,7 +280,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                r"\usepackage[ebook]{allmight-book}",
                r"\usepackage{book01-reader}",
                r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
-               r"\title{Bits, Programs, and Reliable Systems — Expanded Reader, Part " + str(part_number) + " of 4}",
+               r"\title{Bits, Programs, and Reliable Systems — Diagnostic Part " + str(part_number) + "}",
                r"\author{Swayam Singal}",
                r"\begin{document}", r"\maketitle",
                r"\tableofcontents", r"\mainmatter",
@@ -305,9 +305,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                 raise RuntimeError(f"Missing/nontext TeX output for chapter {num}")
             tex.append(r"\chapter{" + tex_escape(row["title"]) + "}")
             amend_generated_tex(tex_path)
-            tex.append(r"\BookChapterOrientation")
             tex.append(r"\input{content/" + fragment + "}")
-            tex.append(r"\BookPersonalNotes{" + tex_escape(row["title"]) + "}")
             clean = {k: v for k, v in row.items() if not k.startswith("_")}
             clean.update({"part": name, "markdown_sha256": sha256(payload),
                           "latex_sha256": sha256(tex_path.read_bytes()),
@@ -358,11 +356,70 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         report["parts"].append({"id": name, "chapters": part_rows,
                                 "master_path": (master_path.relative_to(OUTPUT)).as_posix(),
                                 "master_sha256": sha256(master_path.read_bytes())})
+    # An actual single-book LaTeX master: one cover, one continuous
+    # page-number sequence, one complete table of contents, all 16 chapters.
+    # Four part masters remain available for isolation of difficult TeX errors.
+    complete_dir = OUTPUT / "book01-complete"
+    complete_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(style, complete_dir / "allmight-book.sty")
+    shutil.copy2(READER_STYLE, complete_dir / "book01-reader.sty")
+    complete_assets = complete_dir / "Assets"
+    complete_assets.mkdir(exist_ok=True)
+    complete_fonts = complete_assets / "Fonts"
+    if complete_fonts.is_symlink():
+        if complete_fonts.resolve() != fonts.resolve():
+            raise ValueError("Unexpected complete-book font asset symlink")
+    elif complete_fonts.exists():
+        raise ValueError("Refusing to overwrite existing complete-book assets")
+    else:
+        complete_fonts.symlink_to(
+            os.path.relpath(fonts, complete_assets), target_is_directory=True)
+    book = [
+        r"\documentclass[10pt,twoside,openany]{book}",
+        r"\usepackage[ebook]{allmight-book}",
+        r"\usepackage{book01-reader}",
+        r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
+        r"\title{Bits, Programs, and Reliable Systems}",
+        r"\author{Swayam Singal}",
+        r"\begin{document}",
+        r"\frontmatter",
+        r"\maketitle",
+        r"\tableofcontents",
+        r"\BookStudyMethod",
+        r"\mainmatter",
+    ]
+    for row in rows:
+        number = row["number"]
+        part_number = ((number - 1) // 4) + 1
+        book.append(r"\chapter{" + tex_escape(row["title"]) + "}")
+        book.append(
+            r"\input{../book01-expanded-p" + f"{part_number:02d}" +
+            r"/content/chapter-" + f"{number:02d}" + "}"
+        )
+    book.extend([
+        r"\input{../book01-expanded-p04/content/final-mastery}",
+        r"\appendix",
+        r"\chapter{Research Notebook and Reproducibility}",
+        r"\section{Experiment record}",
+        r"Record the question, hypothesis, baseline, input data and version, environment, seeds, measurement units, observations, failed cases, and interpretations.",
+        r"\section{Code review}",
+        r"Review ownership, lifetime, failure handling, concurrent access, input validation, resource limits, reproducibility, and whether the evidence supports the stated conclusion.",
+        r"\section{Personal research notes}",
+        r"Keep open questions, unexpected results, possible alternative explanations, and the next experiments needed to resolve them.",
+        r"\end{document}",
+    ])
+    complete_master = complete_dir / "main.tex"
+    complete_master.write_text("\n".join(book) + "\n", encoding="utf-8")
+    report["complete"] = {
+        "master_path": complete_master.relative_to(OUTPUT).as_posix(),
+        "master_sha256": sha256(complete_master.read_bytes()),
+        "style_sha256": sha256((complete_dir / "book01-reader.sty").read_bytes()),
+    }
     manifest = OUTPUT / "manifest.json"
     manifest.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     verify_prepared(rows, metadata)
     print(f"PREPARED {NUMBER_OF_CHAPTERS} preserved chapters and {EXPECTED_ADDITIONS} additive lessons")
-    print("Four independent LuaLaTeX book parts ready under", OUTPUT)
+    print("Single academic book master prepared; four diagnostic parts retained under", OUTPUT)
     print("No LaTeX engine or PDF compiler has been called.")
 
 
@@ -395,6 +452,15 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
             raise ValueError("Final mastery " + kind + " missing or changed: " + str(path))
     if capstone["markdown_sha256"] != metadata["final_capstone_sha256"]:
         raise ValueError("Final capstone does not match committed source")
+    complete = data.get("complete")
+    if not isinstance(complete, dict):
+        raise ValueError("Missing single-volume source and its provenance")
+    complete_master = OUTPUT / complete["master_path"]
+    if not complete_master.is_file() or sha256(complete_master.read_bytes()) != complete["master_sha256"]:
+        raise ValueError("Complete-book LaTeX master changed or missing")
+    complete_style = complete_master.parent / "book01-reader.sty"
+    if not complete_style.is_file() or sha256(complete_style.read_bytes()) != metadata["reader_style_sha256"]:
+        raise ValueError("Complete-book typography changed since preparation")
     for record in data["parts"]:
         reader_style = OUTPUT / record["id"] / "book01-reader.sty"
         if not reader_style.is_file() or sha256(reader_style.read_bytes()) != metadata["reader_style_sha256"]:
@@ -414,9 +480,15 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
         raise RuntimeError("lualatex unavailable: install a compatible TeX Live/MacTeX distribution")
     # BasicTeX often has LuaLaTeX but not latexmk. Re-run LuaLaTeX itself
     # for cross-references/TOC rather than forcing installation of full MacTeX.
-    selected = [part] if part else range(1, 5)
-    for number in selected:
-        directory = OUTPUT / f"book01-expanded-p{number:02d}"
+    # Default is one continuous TeX book, not four compiled volumes
+    # merged into a PDF with repeated covers and incomplete contents.
+    if part is None:
+        selected = [(OUTPUT / "book01-complete",
+                     OUTPUT / "Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf")]
+    else:
+        selected = [(OUTPUT / f"book01-expanded-p{part:02d}",
+                     OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{part:02d}.pdf")]
+    for directory, destination in selected:
         (directory / "build").mkdir(exist_ok=True)
         if engine:
             commands = [[engine, "-g", "-lualatex", "-interaction=nonstopmode",
@@ -432,46 +504,23 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
             (directory / "build" / f"compile-pass-{pass_number}.txt").write_text(
                 result.stdout, encoding="utf-8")
             if result.returncode:
-                excerpt = "\\n".join(result.stdout.splitlines()[-35:])
+                excerpt = "\n".join(result.stdout.splitlines()[-35:])
                 raise RuntimeError(
                     "LaTeX compilation failed in " + directory.name +
                     " (pass " + str(pass_number) + "); see " +
-                    str(directory / "build/main.log") + "\\n" + excerpt)
-            overfull = result.stdout.count("Overfull \\hbox")
+                    str(directory / "build/main.log") + "\n" + excerpt)
             print("  TeX pass", pass_number, "OK;",
-                  overfull, "overfull line warnings")
+                  result.stdout.count("Overfull \\hbox"), "overfull line warnings")
         if not pdf.is_file() or not pdf.stat().st_size:
-            raise RuntimeError("LaTeX produced no PDF; see " + str(directory / "build/main.log"))
-        destination = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
+            raise RuntimeError("No PDF from " + directory.name + "; see " + str(directory / "build/main.log"))
         shutil.copy2(pdf, destination)
         print("PDF:", destination)
-        if open_pdf and part:
+        if open_pdf:
             opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
             if opener:
                 subprocess.Popen([opener, str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
-                print("PDF opener not available; open manually:", destination)
-
-    if not part:
-        try:
-            from pypdf import PdfWriter
-        except ImportError as exc:
-            raise RuntimeError("Part PDFs built, but merging requires pypdf. Install with: python3 -m pip install pypdf") from exc
-        combined = OUTPUT / "Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf"
-        writer = PdfWriter()
-        for number in range(1, 5):
-            source = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
-            writer.append(str(source), import_outline=True)
-        with combined.open("wb") as handle:
-            writer.write(handle)
-        writer.close()
-        if not combined.is_file() or combined.stat().st_size < 10000:
-            raise RuntimeError("Merged PDF missing or incomplete")
-        print("COMPLETE BOOK PDF:", combined)
-        if open_pdf:
-            opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
-            if opener:
-                subprocess.Popen([opener, str(combined)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print("Open manually:", destination)
 
 
 def main() -> int:
