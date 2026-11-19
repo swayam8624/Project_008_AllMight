@@ -245,9 +245,10 @@ def pandoc_binary() -> str:
     return binary
 
 
-def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stats: dict | None = None, chapter: int = 0) -> None:
+def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stats: dict | None = None, chapter: int = 0, math_entries: list[dict] | None = None) -> None:
     """Correct only generated TeX, never the original teaching Markdown."""
     content = path.read_text("utf-8")
+    content = render.replace_math_tokens(content, math_entries or [])
     def correct(match: re.Match[str]) -> str:
         return r"\texttt{" + re.sub(r"(?<!\\)_", r"\\_", match.group(1)) + "}"
     content = re.sub(r"\\texttt\{([^{}\n]*)\}", correct, content)
@@ -306,8 +307,11 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             math_stats = render.math_preflight(source_text, f"Chapter {num}")
             reading_text, structure = render.prepare_reading_structure(source_text)
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
+            prepared_math, math_entries = render.plan_math(converted, num)
+            if len(math_entries) != math_stats["display_math"]:
+                raise ValueError(f"Chapter {num}: display math count changed during reader reflow")
             render_path = content_dir / (fragment + ".reader.md")
-            render_path.write_text(converted, encoding="utf-8")
+            render_path.write_text(prepared_math, encoding="utf-8")
             report["diagrams"].extend(figures)
             command = [pandoc, "-f",
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
@@ -320,7 +324,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             if not tex_path.is_file() or not tex_path.stat().st_size:
                 raise RuntimeError(f"Missing/nontext TeX output for chapter {num}")
             tex.append(r"\chapter{" + tex_escape(CHAPTER_TITLES[num - 1]) + "}")
-            amend_generated_tex(tex_path, figures, math_stats, num)
+            amend_generated_tex(tex_path, figures, math_stats, num, math_entries)
             tex.append(r"\input{content/" + fragment + "}")
             clean = {k: v for k, v in row.items() if not k.startswith("_")}
             clean.update({"part": name, "markdown_sha256": sha256(payload),
@@ -328,6 +332,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "render_markdown_sha256": sha256(render_path.read_bytes()),
                           "math_preflight": {key: value for key, value in math_stats.items() if not key.startswith("_")},
                           "layout_reflow": structure,
+                          "protected_math_displays": len(math_entries),
                           "figure_count": len(figures),
                           "reader_title": CHAPTER_TITLES[num - 1],
                           "latex_sha256": sha256(tex_path.read_bytes()),
@@ -343,15 +348,23 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             challenge_tex = content_dir / "final-mastery.tex"
             challenge_bytes = CAPSTONE.read_bytes()
             challenge_md.write_bytes(challenge_bytes)
+            challenge_stats = render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone")
+            cap_figured, cap_figures = render.plan_figures(challenge_bytes.decode("utf-8"), 17, part_number, directory, OUTPUT)
+            cap_prepared, cap_math = render.plan_math(cap_figured, 17)
+            if len(cap_math) != challenge_stats["display_math"]:
+                raise ValueError("Final capstone lost display math before Pandoc")
+            cap_reader = content_dir / "final-mastery.reader.md"
+            cap_reader.write_text(cap_prepared, encoding="utf-8")
+            report["diagrams"].extend(cap_figures)
             command = [pandoc, "-f",
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=chapter",
                        "--wrap=none", "--no-highlight",
-                       "-o", str(challenge_tex), str(challenge_md)]
+                       "-o", str(challenge_tex), str(cap_reader)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
                 raise RuntimeError("Pandoc could not render the final capstone: " + run.stderr[:3000])
-            amend_generated_tex(challenge_tex, [], render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone"), 17)
+            amend_generated_tex(challenge_tex, cap_figures, challenge_stats, 17, cap_math)
             tex.append(r"\input{content/final-mastery}")
             tex.append(r"\appendix")
             tex.append(r"\chapter{Learning Journal and Experiment Checklist}")
@@ -369,6 +382,10 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             report["final_capstone"] = {
                 "markdown_path": challenge_md.relative_to(OUTPUT).as_posix(),
                 "markdown_sha256": sha256(challenge_bytes),
+                "render_markdown_path": cap_reader.relative_to(OUTPUT).as_posix(),
+                "render_markdown_sha256": sha256(cap_reader.read_bytes()),
+                "protected_math_displays": len(cap_math),
+                "figure_count": len(cap_figures),
                 "latex_path": challenge_tex.relative_to(OUTPUT).as_posix(),
                 "latex_sha256": sha256(challenge_tex.read_bytes()),
             }
@@ -539,7 +556,7 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
     capstone = data.get("final_capstone")
     if not isinstance(capstone, dict):
         raise ValueError("Missing multi-project final mastery chapter")
-    for kind in ("markdown", "latex"):
+    for kind in ("markdown", "render_markdown", "latex"):
         path = OUTPUT / capstone[kind + "_path"]
         if not path.is_file() or sha256(path.read_bytes()) != capstone[kind + "_sha256"]:
             raise ValueError("Final mastery " + kind + " missing or changed: " + str(path))
@@ -568,7 +585,7 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
         path = OUTPUT / fig["source"]
         if not path.is_file() or sha256(path.read_bytes()) != fig["diagram_sha256"]:
             raise ValueError("Mermaid source missing or modified: " + str(path))
-    if sum(record.get("figure_count", 0) for record in data["chapters"]) != len(data.get("diagrams", [])):
+    if sum(record.get("figure_count", 0) for record in data["chapters"]) + capstone.get("figure_count", 0) != len(data.get("diagrams", [])):
         raise ValueError("Diagram manifest does not account for all figures")
     for record in data["parts"]:
         reader_style = OUTPUT / record["id"] / "book01-reader.sty"
