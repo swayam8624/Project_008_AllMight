@@ -93,6 +93,7 @@ EXTRA_SOURCES = (
     "Book Production/Seven-Book Curriculum/source-routing-foundations.md",
     "Book Production/Seven-Book Curriculum/project-lab-matrix.md",
     "Book Production/Seven-Book Curriculum/Book01/PASS17_COVERAGE_AND_DEPTH_AUDIT.md",
+    "Book Production/Seven-Book Curriculum/Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md",
 )
 
 class EvidenceError(RuntimeError):
