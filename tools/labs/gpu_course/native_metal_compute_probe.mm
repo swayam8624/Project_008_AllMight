@@ -56,7 +56,13 @@ std::vector<Aabb> make_boxes() {
     for(std::size_t i=0;i<kBoxCount;++i) {
         const auto x=static_cast<std::uint32_t>((i*7U)%17U);
         const auto y=static_cast<std::uint32_t>((i*11U)%13U);
-        boxes[i]={x,y,x+3U+(i%2U),y+2U+(i%3U)};
+        // The loop bound is 32; the modulo terms are bounded to 0..1 and
+        // 0..2. Convert those explicit tiny indices before combining with
+        // the uint32 coordinates, rather than narrowing size_t in a braced
+        // initializer (which AppleClang correctly rejects).
+        const auto dx=3U+static_cast<std::uint32_t>(i%2U);
+        const auto dy=2U+static_cast<std::uint32_t>(i%3U);
+        boxes[i]={x,y,x+dx,y+dy};
     }
     return boxes;
 }
