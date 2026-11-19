@@ -70,7 +70,7 @@ def insert_index_tokens(source: str, chapter: int) -> tuple[str, list[dict]]:
             # fenced. Never insert an index macro into their source lines.
             # Pandoc would print the literal "\\index{term}" inside code.
             nonblank = [line for line in fragment.splitlines() if line.strip()]
-            if nonblank and all(re.match(r"^(?: {4,}|\\t)", line)
+            if nonblank and all(re.match(r"^(?: {4,}|\t)", line)
                                 for line in nonblank):
                 emitted.append(fragment)
                 continue
@@ -127,9 +127,9 @@ def replace_index_tokens(tex: str, entries: list[dict]) -> str:
     """
     # Defense in depth: a corrupted or missed Markdown fence/indent must not
     # put a raw LaTeX indexing command inside a printable code example.
-    verbatim = re.compile(r"\\\\begin\\{verbatim\\}.*?\\\\end\\{verbatim\\}", re.DOTALL)
+    verbatim = re.compile(r"\\begin\{verbatim\}.*?\\end\{verbatim\}", re.DOTALL)
     for listing in verbatim.finditer(tex):
-        if re.search(r"\\\\index\\{[^}]+\\}", listing.group(0)):
+        if re.search(r"\\index\{[^}]+\}", listing.group(0)):
             raise ValueError("Raw index macro leaked into a verbatim listing")
     for item in entries:
         command = item["command"]
