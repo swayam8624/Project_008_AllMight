@@ -18,6 +18,7 @@
 #include <expected>
 #include <limits>
 #include <optional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -376,6 +377,7 @@ public:
 private:
     [[nodiscard]] std::expected<Frame*,Error>
     checked(FrameToken t) noexcept {
+        if(lost_) return std::unexpected(Error::device_lost);
         if(t.owner!=owner_) return std::unexpected(Error::wrong_owner);
         if(t.slot>=frames_.size()) return std::unexpected(Error::bad_slot);
         auto& f=frames_[t.slot];
@@ -386,6 +388,7 @@ private:
     }
     [[nodiscard]] std::expected<Resource*,Error>
     checked(ResourceToken t) noexcept {
+        if(lost_) return std::unexpected(Error::device_lost);
         if(t.owner!=owner_) return std::unexpected(Error::wrong_owner);
         if(t.slot>=resources_.size())
             return std::unexpected(Error::bad_resource);
