@@ -923,9 +923,21 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
         qa_path.write_text(json.dumps(qa, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
         if qa["fatal_count"]:
+            offenders = {code: count for code, count in qa["counts"].items()
+                         if code in pdfproof.FATAL}
+            top = ", ".join(f"{name}: {count}" for name, count in
+                            sorted(offenders.items(), key=lambda pair: -pair[1]))
+            examples = []
+            for code in offenders:
+                problem = next((problem for problem in qa["problems"]
+                                if problem["code"] == code), None)
+                if problem:
+                    examples.append(f"{code} on page {problem['page']}: "
+                                    + problem["detail"][:95])
             raise RuntimeError(
                 f"PDF proof found {qa['fatal_count']} publication blockers in "
-                + directory.name + "; see " + str(qa_path)
+                + directory.name + f" ({top}).\nExamples: "
+                + "; ".join(examples[:8]) + "\nFull report: " + str(qa_path)
                 + ". Do not distribute this PDF."
             )
         shutil.copy2(pdf, destination)
