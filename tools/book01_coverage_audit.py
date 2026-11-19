@@ -111,7 +111,7 @@ def audit(allow_applied: bool=False)->dict:
         anchor_count=sum(line==anchor for line in ch.splitlines())
         if anchor_count!=1:
             faults.append("Original chapter anchor not unique: "+lesson.name)
-        if original_bytes.count(lesson.anchor)!=1:
+        if patcher.overlapping_count(original_bytes, lesson.anchor)!=1:
             faults.append("Canonical master anchor not unique: "+lesson.name)
         cf=measure_fences(ch)
         lf=measure_fences(lab)
@@ -163,7 +163,7 @@ def audit(allow_applied: bool=False)->dict:
                 supplement.name+": source anchor is not unique across "
                 "original chapter reading copies"
             )
-        if original_bytes.count(supplement.anchor)!=1:
+        if patcher.overlapping_count(original_bytes, supplement.anchor)!=1:
             faults.append(supplement.name+": canonical master anchor not unique")
         extra.append({
             "lesson_id":supplement.name,
