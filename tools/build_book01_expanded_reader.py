@@ -151,8 +151,15 @@ def audit_sources() -> tuple[list[dict], dict]:
         raw = path.read_bytes()
         raw.decode("utf-8")
         prelude, body, suffix = chapter_regions(raw)
-        if suffix.strip():
-            raise ValueError(path.name + ": unexpected text after source sentinel")
+        # Derived chapter editions append a generated horizontal rule plus
+        # previous/next-reading-map wiki links AFTER the original-source
+        # sentinel. These are navigation chrome, not original teaching.
+        tail = [line.strip() for line in suffix.decode("utf-8").splitlines()
+                if line.strip()]
+        if tail and not (len(tail) == 2 and tail[0] == "---"
+                         and tail[1].startswith("[[Chapter Edition/")
+                         and tail[1].endswith("]]")):
+            raise ValueError(path.name + ": unexpected material after source sentinel")
         expanded, receipts = insert_and_prove(body, mapped[index])
         identities.extend(x["id"] for x in receipts)
         rows.append({
