@@ -444,9 +444,12 @@ class Packager:
         css_text=epub_helpers.FINAL_CSS+"\nspan.diagram-panels { display: block; }\nspan.diagram-panels img { display: block; margin: .8em auto; }\npre > code { display: block; min-width: 0; max-width: 100%; white-space: pre-wrap !important; overflow-wrap: anywhere; }\npre > code.sourceCode { white-space: pre-wrap !important; }\npre > code.sourceCode > span { display: block !important; line-height: 1.25; white-space: inherit; overflow-wrap: anywhere; }\n"
         css.write_text(css_text,encoding="utf-8")
         output=self.out/(label+".epub")
-        title=stage["title"] if stage else "AllMight Codex — Complete Collection"
+        title=("From Equations to Geometry" if stage and stage["id"]==BOOK02_STAGE
+               else stage["title"] if stage else "AllMight Codex — Complete Collection")
         split_level="2" if mode=="collection" else "1"
         cmd=[shutil.which("pandoc") or "pandoc",str(content),"--from=json","--to=epub3","--output",str(output),"--css",str(css),f"--split-level={split_level}","--metadata",f"title={title}","--metadata","author=Swayam Singal","--metadata","lang=en"]
+        if stage and stage["id"]==BOOK02_STAGE:
+            cmd.extend(["--metadata", "subtitle=Mathematics, Numerical Methods, Optimization, and Visual Computing"])
         p=subprocess.run(cmd,cwd=self.out,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if p.returncode: raise RuntimeError(f"Pandoc EPUB build failed for {label}: {p.stderr[-4000:]}")
         unknown_tags_escaped=escape_unknown_html_tags(output)
