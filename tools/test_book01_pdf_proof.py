@@ -111,6 +111,26 @@ class ProofTests(unittest.TestCase):
         ):
             self.assertIn(identifier, references)
 
+    def test_unrendered_index_and_math_command_block_release(self):
+        # A literal TeX command in actual reader text is a production defect.
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "raw-tex-leak.pdf"
+            document = fitz.open()
+            for number in range(14):
+                page = document.new_page(width=504, height=720)
+                page.insert_text(
+                    (78, 120),
+                    r"Bad index command: \index{SIMD}" if number == 13
+                    else "Valid reader content",
+                    fontsize=10,
+                )
+            document.set_metadata({"title": "Reader", "author": "Test"})
+            document.save(path)
+            document.close()
+            result = proof.inspect(path, paperback=False)
+            self.assertIn("raw_tex_leak", result["counts"])
+            self.assertGreater(result["fatal_count"], 0)
+
     def test_valid_minimal_print_pdf(self):
         with TemporaryDirectory() as temp:
             path = self.make_pdf(Path(temp))
