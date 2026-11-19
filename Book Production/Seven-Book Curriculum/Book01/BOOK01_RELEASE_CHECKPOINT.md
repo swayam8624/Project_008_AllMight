@@ -6,6 +6,31 @@ This is the **final Book 1 C++23 foundations curriculum authoring checkpoint**, 
 
 It is **not** a claim that the entire seven-book program is finished or that all 39 existing original foundational reading chapters have been moved into final seven-volume print masters. The existing seven-stage print-production generation is a separate older snapshot and remains untouched. The expanded-reader release is deliberately independent because the old print generator relies on local cached assets and source paths and predates the eighteen newly authored lessons.
 
+### Repair note: 19 November Mac terminal evidence
+
+The Homebrew install completed, but `npm` was still being launched from
+`/opt/homebrew/Cellar/node@22/22.23.5/bin/node`. This binary requires
+`libsimdjson.36.dylib`, removed by the dependency upgrade. The preferred
+non-destructive workaround is to **prepend Homebrew's current unversioned
+Node bin directory to PATH** using
+`export PATH="$(brew --prefix node)/bin:$PATH"`, then `rehash`.
+This avoids changing other apps' default runtime or force-linking Node.
+It also means `npm install -g @mermaid-js/mermaid-cli` can execute from
+the installed current Node; a subsequent `mmdc --version` verifies success.
+
+Earlier Chapter 9 failed the math-release guard with 40 source boxed equations
+but 39 generated boxed equations. In the updated reader, **all** source
+display equations are protected with unique tokens before Markdown conversion
+and restored as original LaTeX after Pandoc. Per-equation source identity and
+completeness checks remain enabled. The initial failing `--prepare` prevented
+the release manifest being refreshed, so the following verification/compile
+errors were cascaded stale-manifest errors, not four independent defects.
+
+Run `--prepare` successfully before `--verify-prepared` and `--compile`.
+For a single-stop shell sequence, use `set -e` (exit on first failure)
+or chain the commands with `&&`. Do not upload an incomplete PDF.
+
+
 ## Current academic production pipeline — 19 November 2026
 
 **This section supersedes earlier PDF/format instructions below.** The
@@ -51,7 +76,12 @@ git pull --ff-only origin curriculum/cpp23-nes-project-pass01
 export PATH="/Library/TeX/texbin:$PATH"
 
 # Mermaid's command-line diagram renderer requires Node.
-brew install node
+# Avoid a stale node@22 shim after Homebrew upgrades simdjson.
+# No forced relinking, uninstall or Homebrew cleanup is needed.
+export PATH="$(brew --prefix node)/bin:$PATH"
+rehash
+node --version
+npm --version
 npm install -g @mermaid-js/mermaid-cli
 mmdc --version
 
