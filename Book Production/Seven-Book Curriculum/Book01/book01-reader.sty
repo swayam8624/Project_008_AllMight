@@ -24,6 +24,20 @@
   {\IfFontExistsTF{Menlo}
     {\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon]}
     {\setmonofont{Latin Modern Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}}
+\RequirePackage{newunicodechar}
+% Arrows are actual semantic content in the CPU/GPU flow diagrams and prose.
+% TeX Gyre text faces do not contain every arrow glyph. Use a mathematically
+% meaningful, font-independent fallback rather than silently losing arrows.
+% Only the generated Book 1 publication style is affected; source text and
+% verbatim/code listings remain byte-for-byte unchanged.
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{←}{\ensuremath{\leftarrow}}
+\newunicodechar{↑}{\ensuremath{\uparrow}}
+\newunicodechar{↓}{\ensuremath{\downarrow}}
+\newunicodechar{↔}{\ensuremath{\leftrightarrow}}
+\newunicodechar{↕}{\ensuremath{\updownarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+
 % An academic print page: dense enough for long mathematical and code examples,
 % with room for a binding and marginal annotations.
 \geometry{
