@@ -27,6 +27,8 @@ import subprocess
 import sys
 
 import apply_cpp23_project_inserts as inserts
+import book01_render_support as render
+from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
 MASTER = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
@@ -34,6 +36,7 @@ EDITION = ROOT / "Chapter Edition/01 - Computing Foundations"
 LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
 CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
 READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reader.sty"
+ACADEMIC_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_PREFACE.md"
 OUTPUT = ROOT / "build/book01-expanded-reader"
 SOURCE_BEGIN = b"<!-- CHAPTER-SOURCE-BEGIN -->\n"
 SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
@@ -220,6 +223,9 @@ def audit_sources() -> tuple[list[dict], dict]:
         "chapter_count": NUMBER_OF_CHAPTERS,
         "addition_count": total,
         "reader_style_sha256": sha256(READER_STYLE.read_bytes()),
+        "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
+        "academic_title": BOOK_TITLE,
+        "academic_subtitle": BOOK_SUBTITLE,
         "part_ranges": [list(x) for x in PARTS],
     }
     return rows, metadata
@@ -239,7 +245,7 @@ def pandoc_binary() -> str:
     return binary
 
 
-def amend_generated_tex(path: Path) -> None:
+def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stats: dict | None = None, chapter: int = 0) -> None:
     """Correct only generated TeX, never the original teaching Markdown."""
     content = path.read_text("utf-8")
     def correct(match: re.Match[str]) -> str:
@@ -247,6 +253,9 @@ def amend_generated_tex(path: Path) -> None:
     content = re.sub(r"\\texttt\{([^{}\n]*)\}", correct, content)
     content = content.replace(r"\begin{verbatim}", r"\begin{BookCode}")
     content = content.replace(r"\end{verbatim}", r"\end{BookCode}")
+    content = render.replace_figure_tokens(content, figures or [])
+    if math_stats is not None:
+        render.check_math_rendered(math_stats, content, chapter)
     path.write_text(content, encoding="utf-8")
 
 
@@ -257,7 +266,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
     fonts = LATEX / "Assets/Fonts"
     if not style.is_file() or not READER_STYLE.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
         raise FileNotFoundError("The existing LaTeX profile and its bundled local font must be available")
-    report = {**metadata, "parts": [], "chapters": []}
+    report = {**metadata, "parts": [], "chapters": [], "diagrams": []}
     for part_number, (low, high) in enumerate(PARTS, 1):
         name = f"book01-expanded-p{part_number:02d}"
         directory = OUTPUT / name
@@ -280,7 +289,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                r"\usepackage[ebook]{allmight-book}",
                r"\usepackage{book01-reader}",
                r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
-               r"\title{Bits, Programs, and Reliable Systems — Diagnostic Part " + str(part_number) + "}",
+               r"\title{" + tex_escape(BOOK_TITLE) + " — Diagnostic Part " + str(part_number) + "}",
                r"\author{Swayam Singal}",
                r"\begin{document}", r"\maketitle",
                r"\tableofcontents", r"\mainmatter",
@@ -293,21 +302,32 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             tex_path = content_dir / (fragment + ".tex")
             payload = row["_preface"] + b"\n" + row["_expanded"]
             raw_path.write_bytes(payload)
+            source_text = payload.decode("utf-8")
+            math_stats = render.math_preflight(source_text, f"Chapter {num}")
+            converted, figures = render.plan_figures(source_text, num, part_number, directory, OUTPUT)
+            render_path = content_dir / (fragment + ".reader.md")
+            render_path.write_text(converted, encoding="utf-8")
+            report["diagrams"].extend(figures)
             command = [pandoc, "-f",
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=section",
                        "--wrap=none", "--no-highlight",
-                       "-o", str(tex_path), str(raw_path)]
+                       "-o", str(tex_path), str(render_path)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode:
                 raise RuntimeError(f"Pandoc failed for chapter {num}: {run.stderr[:3000]}")
             if not tex_path.is_file() or not tex_path.stat().st_size:
                 raise RuntimeError(f"Missing/nontext TeX output for chapter {num}")
-            tex.append(r"\chapter{" + tex_escape(row["title"]) + "}")
-            amend_generated_tex(tex_path)
+            tex.append(r"\chapter{" + tex_escape(CHAPTER_TITLES[num - 1]) + "}")
+            amend_generated_tex(tex_path, figures, math_stats, num)
             tex.append(r"\input{content/" + fragment + "}")
             clean = {k: v for k, v in row.items() if not k.startswith("_")}
             clean.update({"part": name, "markdown_sha256": sha256(payload),
+                          "render_markdown_path": render_path.relative_to(OUTPUT).as_posix(),
+                          "render_markdown_sha256": sha256(render_path.read_bytes()),
+                          "math_preflight": math_stats,
+                          "figure_count": len(figures),
+                          "reader_title": CHAPTER_TITLES[num - 1],
                           "latex_sha256": sha256(tex_path.read_bytes()),
                           "markdown_path": (raw_path.relative_to(OUTPUT)).as_posix(),
                           "latex_path": (tex_path.relative_to(OUTPUT)).as_posix()})
@@ -329,7 +349,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
                 raise RuntimeError("Pandoc could not render the final capstone: " + run.stderr[:3000])
-            amend_generated_tex(challenge_tex)
+            amend_generated_tex(challenge_tex, [], render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone"), 17)
             tex.append(r"\input{content/final-mastery}")
             tex.append(r"\appendix")
             tex.append(r"\chapter{Learning Journal and Experiment Checklist}")
@@ -379,19 +399,20 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"\usepackage[ebook]{allmight-book}",
         r"\usepackage{book01-reader}",
         r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
-        r"\title{Bits, Programs, and Reliable Systems}",
+        r"\title{" + tex_escape(BOOK_TITLE) + r"\\[0.6em]\large " + tex_escape(BOOK_SUBTITLE) + "}",
         r"\author{Swayam Singal}",
         r"\begin{document}",
         r"\frontmatter",
         r"\maketitle",
+        r"\setcounter{tocdepth}{1}",
         r"\tableofcontents",
-        r"\BookStudyMethod",
+        r"\input{frontmatter}",
         r"\mainmatter",
     ]
     for row in rows:
         number = row["number"]
         part_number = ((number - 1) // 4) + 1
-        book.append(r"\chapter{" + tex_escape(row["title"]) + "}")
+        book.append(r"\chapter{" + tex_escape(CHAPTER_TITLES[number - 1]) + "}")
         book.append(
             r"\input{../book01-expanded-p" + f"{part_number:02d}" +
             r"/content/chapter-" + f"{number:02d}" + "}"
