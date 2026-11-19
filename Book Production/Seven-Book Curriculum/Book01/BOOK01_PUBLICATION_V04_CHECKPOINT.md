@@ -4,7 +4,7 @@
 
 ## What the academic edition includes
 
-The continuous digital edition draws on sixteen original Computing Foundations chapter bodies, eighteen exactly reversible additive C++23 project lessons, an integrative mastery chapter, the distinct academic front matter and back matter, and ten supplemental investigations placed alongside their relevant chapters. The investigations include the bit-to-CPU bridge; modern C++23 contracts; CPU instruction execution; GPU coalescing and scan; borrowing and resource lifetimes; asynchronous execution; Vulkan resources and hazards; Metal execution; and evidence-based performance analysis.
+The continuous digital edition draws on sixteen original Computing Foundations chapter bodies, eighteen exactly reversible additive C++23 project lessons, an integrative mastery chapter, the distinct academic front matter and back matter, and sixteen chapter-specific supplemental investigations placed alongside their relevant chapters. The investigations include the bit-to-CPU bridge; modern C++23 contracts; CPU instruction execution; GPU coalescing and scan; borrowing and resource lifetimes; asynchronous execution; Vulkan resources and hazards; Metal execution; and evidence-based performance analysis.
 
 Every one of the sixteen chapters also concludes with a **Reconstruct, Falsify, Transfer** exercise. These are compact learning checkpoints, not a claim that reading alone verifies a program.
 
@@ -15,6 +15,8 @@ The original 39-chapter master manuscript and the chapter-edition source text ar
 - The book's academic typography is restrained: a Times-family text face, legible monospaced listings, grayscale-safe distinctions, shortened chapter running heads, and one consistent page-number system.
 - The two paperbacks carry explicit Volume I and Volume II cover identities within the common *Foundations of Computing Systems* series.
 - Source diagrams are required artifacts, never silently converted to source-code listings. The new visual investigations add CPU, GPU, Vulkan and Metal diagrams on top of the existing author-drawn figures.
+- The **C++23 Companion** contains four independently testable command-line models (a bounded binary CPU, generational handles, stable scan/scatter, and resource retirement) with a CMake/CTest project. Their source is included in the repository and mapped into the book's academic back matter.
+- **GitHub Actions:** the `.github/workflows/book01-quality.yml` workflow runs unit tests, provenance preparation and C++ companion builds on branch pushes. A workflow file existing is not a successful run; check its actual Actions status.
 - Repeated decorative rules and development-only scaffolding are normalized in the derived reader. The original prose is retained in the canonical source; justified omissions of author-directed instructions are recorded as editorial receipts in the manifest.
 - Private Obsidian links become readable labels instead of invalid public hyperlinks. A source catalogue and primary standards references are in the back matter.
 - C++ illustrations that intentionally use non-compilable algorithmic syntax are explicitly labelled pseudocode. Long compiler commands are emitted as shell listings to keep their spaces and flags copyable.
