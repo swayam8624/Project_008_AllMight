@@ -96,6 +96,19 @@ add_executable(nes_command_lifecycle_cpp23_lab
 )
 target_compile_features(nes_command_lifecycle_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(nes_command_lifecycle_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass13 cross-project GPU contracts, optional real Vulkan probe.
+add_executable(gpu_device_resource_cpp23_lab
+ ../../../tools/labs/gpu_device_resource_cpp23_lab.cpp
+ ../../../tools/labs/gpu_course/native_vulkan_probe.cpp
+)
+target_compile_features(gpu_device_resource_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(gpu_device_resource_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+find_package(Vulkan QUIET)
+if(Vulkan_FOUND AND TARGET Vulkan::Vulkan)
+ target_link_libraries(gpu_device_resource_cpp23_lab PRIVATE Vulkan::Vulkan)
+ target_compile_definitions(gpu_device_resource_cpp23_lab PRIVATE ALLMIGHT_COURSE_HAS_VULKAN=1)
+endif()
 find_package(Threads REQUIRED)
 target_link_libraries(nes_gpu_memory_contract_cpp23_lab PRIVATE Threads::Threads)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
@@ -121,8 +134,9 @@ if(MSVC)
     target_compile_options(nes_reproducible_benchmark_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_scoped_frame_upload_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_command_lifecycle_cpp23_lab PRIVATE /W4)
+    target_compile_options(gpu_device_resource_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -135,7 +149,8 @@ foreach(course_lab IN ITEMS
  typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab
  nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab
  nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab
- nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab)
+ nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab
+ gpu_device_resource_cpp23_lab)
     target_link_libraries(${course_lab} PRIVATE nes_course_public_api)
 endforeach()
 
@@ -175,3 +190,7 @@ add_test(NAME nes_11b_const_borrow_guarded_frame_upload_and_retirement
 
 add_test(NAME nes_12q_command_submission_uncertainty_and_lifetimes
  COMMAND nes_command_lifecycle_cpp23_lab)
+
+# Native Vulkan probing is separately opt-in, never a default CTest pass.
+add_test(NAME gpu_13d_cross_project_device_memory_contracts_cpu_only
+ COMMAND gpu_device_resource_cpp23_lab)
