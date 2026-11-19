@@ -130,6 +130,25 @@ INSERTS = (
 )
 
 
+def overlapping_count(data: bytes, needle: bytes) -> int:
+    """Count occurrences even when two headings share a boundary newline.
+
+    bytes.count() misses overlapping patterns; a pair of adjacent identical
+    Markdown headings can therefore look unique if the anchor includes both
+    its leading and trailing newline.
+    """
+    if not needle:
+        raise ValueError("Cannot count empty source anchor")
+    count = 0
+    position = 0
+    while True:
+        match = data.find(needle, position)
+        if match < 0:
+            return count
+        count += 1
+        position = match + 1
+
+
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -162,10 +181,10 @@ def process(original: bytes) -> tuple[bytes, list[str]]:
             receipt.append(f"{spec.name}: present, exact, untouched")
             continue
 
-        if staged.count(spec.anchor) != 1:
+        if overlapping_count(staged, spec.anchor) != 1:
             raise ValueError(
                 f"{spec.name}: expected exactly one canonical anchor; "
-                f"found {staged.count(spec.anchor)}"
+                f"found {overlapping_count(staged, spec.anchor)}"
             )
 
         prior = staged
