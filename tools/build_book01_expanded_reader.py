@@ -326,7 +326,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             clean.update({"part": name, "markdown_sha256": sha256(payload),
                           "render_markdown_path": render_path.relative_to(OUTPUT).as_posix(),
                           "render_markdown_sha256": sha256(render_path.read_bytes()),
-                          "math_preflight": math_stats,
+                          "math_preflight": {key: value for key, value in math_stats.items() if not key.startswith("_")},
                           "layout_reflow": structure,
                           "figure_count": len(figures),
                           "reader_title": CHAPTER_TITLES[num - 1],
