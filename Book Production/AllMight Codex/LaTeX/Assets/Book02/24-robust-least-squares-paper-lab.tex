@@ -1,0 +1,83 @@
+% Book Two Pass 2: fit a nonlinear model, don't just call an optimizer.
+\clearpage
+\section*{Research reconstruction: nonlinear least squares with outliers}
+\noindent\textbf{Source lineage:} Gauss--Newton and
+Levenberg--Marquardt methods; the
+\href{https://ceres-solver.readthedocs.io/latest/nnls_modeling.html}
+{Ceres Solver nonlinear-least-squares modeling documentation}
+and \href{https://ceres-solver.readthedocs.io/latest/tutorial.html}
+{robust curve-fitting tutorial}. Our small IRLS/Levenberg-like
+solver is independently authored; it is not Ceres code.
+
+\paragraph{Define the measurement problem.}
+Suppose samples \((x_i,y_i)\) follow
+\(y_i=a\exp(bx_i)+c+\epsilon_i\). For parameters
+\(\theta=(a,b,c)^T\), write residuals
+\[
+r_i(\theta)=a e^{bx_i}+c-y_i.
+\]
+The Jacobian row is
+\[
+J_i=\begin{pmatrix}
+e^{bx_i}&a x_i e^{bx_i}&1
+\end{pmatrix}.
+\]
+This derivation is a contract: numerical finite differences
+or automatic differentiation of the same residual should
+agree within justified tolerance away from overflow.
+
+\paragraph{Derive the update.}
+Linearizing around \(\theta\) gives
+\(r(\theta+\Delta)\approx r+J\Delta\).
+Ordinary least squares minimizes \(\frac12\lVert r\rVert^2\);
+its normal-system approximation is
+\(J^TJ\,\Delta=-J^Tr\).
+Direct normal equations may magnify conditioning; production
+solvers use better factorizations and regularization strategies.
+To keep a small educational step well defined, use a positive
+damping term:
+\[
+(J^TWJ+\lambda I)\Delta=-J^TWr.
+\]
+For the Huber loss with threshold \(\delta>0\), a common
+IRLS approximation assigns
+\[
+w_i=\begin{cases}
+1,&|r_i|\le\delta,\\
+\delta/|r_i|,&|r_i|>\delta.
+\end{cases}
+\]
+The corresponding scalar cost is
+\(\rho_\delta(r)=\frac12r^2\) in the quadratic region and
+\(\rho_\delta(r)=\delta(|r|-\delta/2)\) outside it.
+Always measure trial improvement using the \emph{actual robust
+objective}, not the weighted quadratic approximation that
+generated the step.
+
+\paragraph{A controlled outlier experiment.}
+Our companion creates 35 synthetic observations from
+\((a,b,c)=(2,-0.7,0.5)\) with a small deterministic sinusoidal
+perturbation and one declared gross outlier. We fit the same
+observations with three methods: plain nonlinear least squares
+from SciPy, Huber-robust SciPy least squares, and our own
+damped IRLS method. Each estimates \(\theta\), but the
+underlying estimand depends on the objective and noise model.
+
+\paragraph{Verification and limits.}
+Use numerical Jacobian comparisons, final parameter differences,
+robust-objective values, gradient norms and stopping reasons.
+Seed initial conditions explicitly; report whether a solver hit
+its iteration limit or a stationary point. A robust loss does
+\emph{not} guarantee recovery under arbitrary contamination,
+bad initialization, non-identifiable parameters or an incorrect
+forward model. A successful 35-point synthetic experiment
+is not a production claim about bundle adjustment.
+
+\paragraph{Connection to the user's implementation.}
+The public \href{https://github.com/swayam8624/KairoMath/blob/master/Optimization.cppm}
+{KairoMath optimization module} contains general optimization
+settings and a conjugate-gradient result interface. This audit
+has inspected source structure; it has not executed the
+complete KairoMath module suite or proved numerical parity.
+Use the original C++23 module as a case study when its
+exact-head compiler/test gate becomes reproducible.
