@@ -1,0 +1,18 @@
+% Book Two Pass 3: source-derived original scientific plate.
+\clearpage
+\section*{Measured mesh resolution, not assumed convergence}
+\noindent Grid refinement changes discretization error, operator conditioning and the heat timestep when that timestep depends on mean edge length. The observed error must therefore be measured instead of replaced by a theoretical straight line.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/figures/geodesic-resolution.pdf}
+\caption{Actually computed mean, median and maximum absolute geodesic errors on six different resolutions of the same two-metre planar domain. This graph makes no runtime or guaranteed asymptotic rate claim.}
+\label{fig:book02-atlas-geodesic-resolution}
+\end{figure}
+
+\noindent\textbf{Reconstruction experiment.} Compute empirical refinement slopes, change the mesh diagonal and source location, and report if any error metric becomes nonmonotonic.
+
+\noindent\emph{Reproducibility:} The original figure, SVG, print PDF, PNG,
+exact numerical CSV data and machine-readable provenance report are produced
+by \texttt{tools/labs/book02\_visual\_atlas.py}. These are independently
+written educational experiments, not imported research-paper figures.
