@@ -245,11 +245,20 @@ def main():
             "declaration":"Candidate export only. Full original text mathematical correctness and reader/trim visual acceptance remain editorial gates."}
     output=ROOT/"Build"/generation.name/"book02-publication-candidates"
     output.mkdir(parents=True,exist_ok=True)
+    file=output/"book02-candidate-verification.json"
+    # A print-only run followed by epub-only must not erase the PDF acceptance
+    # evidence. Conversely a newly generated PDF should not erase a verified
+    # EPUB record. Merge only from the SAME generation, not stale snapshots.
+    if file.is_file():
+        old=json.loads(file.read_text(encoding="utf-8"))
+        if old.get("generation")!=generation.name:
+            raise RuntimeError("Existing candidate report belongs to another frozen generation")
+        result["print_parts"]=old.get("print_parts",[])
+        result["epub"]=old.get("epub")
     if not args.epub_only:
         result["print_parts"]=print_candidates(generation,output)
     if not args.print_only:
         result["epub"]=epub_candidate(generation,output,cover_image)
-    file=output/"book02-candidate-verification.json"
     file.write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
     print("BOOK02_CANDIDATES_VERIFIED",file)
     return 0
