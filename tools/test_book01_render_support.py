@@ -56,6 +56,22 @@ class Book01ProductionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 book.math_preflight(source, "broken")
 
+    def test_academic_spacing_preserves_fenced_code_and_math(self):
+        prose = (
+            "### GENERAL COMPUTE & PARALLEL ALGORITHMS\n\n"
+            "$\n\\boxed{\\text{run this kernel}}\n$\n\n"
+            "---\n\n**Workgroup size is an algorithmic choice**\n\n"
+            "A workgroup is not a fixed performance recipe.\n\n"
+            + f"{TICK}text\n---\nliteral code line\n{TICK}\n\n"
+            + "---\n\nThe next section continues.\n"
+        )
+        result, report = book.prepare_reading_structure(prose)
+        self.assertIn("#### Workgroup size is an algorithmic choice", result)
+        self.assertIn("\\boxed{\\text{run this kernel}}", result)
+        self.assertIn(f"{TICK}text\n---\nliteral code line\n{TICK}", result)
+        self.assertNotIn("GENERAL COMPUTE & PARALLEL ALGORITHMS", result)
+        self.assertGreaterEqual(report["promoted_concept_headings"], 1)
+
     def test_mermaid_source_hash_checks(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
