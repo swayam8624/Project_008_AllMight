@@ -86,6 +86,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson14 = self.root / "Supplementary/C++23 Project Labs/GPU-14F - Frame Submission Synchronization and Retirement.md"
         self.lesson15 = self.root / "Supplementary/C++23 Project Labs/GPU-15M - Execute Verify and Measure a Metal Frame.md"
         self.lesson16 = self.root / "Supplementary/C++23 Project Labs/GPU-16P - GPU Profiling and Apple Callback Ownership.md"
+        self.lesson17 = self.root / "Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
@@ -102,6 +103,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson14.write_text("### GPU-14F — A tested frame submission\n\nOriginal GPU-14F addition.\n")
         self.lesson15.write_text("### GPU-15M — A tested Metal frame\n\nOriginal GPU-15M addition.\n")
         self.lesson16.write_text("### GPU-16P — A tested GPU profile owner\n\nOriginal GPU-16P addition.\n")
+        self.lesson17.write_text("### CPP-18A — A tested modern asset service\n\nOriginal CPP-18A addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -142,14 +144,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU14F-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU15M-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU16P-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-CPP18A-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the sixteen
+        # Stronger preservation oracle: surgically delete only the seventeen
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q", b"GPU13D", b"GPU14F", b"GPU15M", b"GPU16P"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q", b"GPU13D", b"GPU14F", b"GPU15M", b"GPU16P", b"CPP18A"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
@@ -188,11 +191,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-GPU14F-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-GPU15M-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-GPU16P-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-CPP18A-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original GPU-16P addition.", b"Locally edited GPU-16P addition."
+            b"Original CPP-18A addition.", b"Locally edited CPP-18A addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
