@@ -7,6 +7,7 @@ on:
     paths:
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_epub_supplements.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_supplements.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_proof_export.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
@@ -57,9 +58,8 @@ jobs:
       - name: Validate actual reflowable EPUB package with EPUBCheck
         working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
         run: |
-          EPUB_PROOF="$(find /tmp -path '*/Book02-Additive-EPUB-Proof.epub' | head -1)"
-          # The unit test's temporary directory was deleted at class teardown.
-          # Create a durable proof with the exact same adapter.
+          # The unittest temp fixture is deleted at teardown. Re-export the
+          # semantic proof into the GitHub Actions artifact directory.
           python test_book02_epub_proof_export.py --output "${{ runner.temp }}/Book02-Additive-EPUB-Proof.epub"
           java -jar "$(find /tmp/epubcheck -name epubcheck.jar | head -1)" "${{ runner.temp }}/Book02-Additive-EPUB-Proof.epub"
       - name: Publish semantically validated proof artifact
