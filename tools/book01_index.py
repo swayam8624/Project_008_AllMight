@@ -25,8 +25,8 @@ TERMS = (
     "undefined behavior", "value category", "virtual memory",
     "Vulkan", "Metal", "workgroup",
 )
-FENCE = re.compile(r"(?ms)^" + re.escape(chr(96) * 3) +
-                   r"[^\n]*\n.*?^" + re.escape(chr(96) * 3) + r"[ \t]*$")
+FENCE = re.compile(r"(?ms)^(?P<marker>`{3,}|~{3,})[^\n]*\n"
+                   r".*?^(?P=marker)[ \t]*$")
 DISPLAY = re.compile(r"(?s)\$\$(.*?)\$\$")
 
 
