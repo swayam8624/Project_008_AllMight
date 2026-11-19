@@ -20,6 +20,8 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import posixpath
+from urllib.parse import unquote, urlsplit
 from pathlib import Path
 import re
 import subprocess
@@ -105,6 +107,40 @@ def prepare_fragment(
 ) -> str:
     raw = raw_file.read_text(encoding="utf-8")
     reader = reader_file.read_text(encoding="utf-8")
+    # A relative reference from the repository cannot resolve inside an
+    # EPUB archive. Redirect companion C++ sources to verified GitHub files.
+    # Apply only to prose to preserve the original code examples byte-for-byte.
+    def source_links(fragment: str) -> str:
+        return fragment.replace(
+            "../../tools/labs/",
+            "https://github.com/swayam8624/Project_008_AllMight/"
+            "blob/curriculum/cpp23-nes-project-pass01/tools/labs/",
+        )
+    reader = protect_markdown_fences(reader, source_links)
+    if chapter == 12:
+        # Remove a chapter-composition instruction that leaked into the
+        # ebook. Replace it with a reader-facing bridge, not an omission
+        # of the underlying technical explanation.
+        compose_note = re.compile(
+            r"(?m)^The original Chapter 12 already contains substantial "
+            r"material on command processors, asynchronous compute, upload "
+            r"arenas, synchronization overhead, profiling zones, occupancy, "
+            r"arithmetic intensity and the performance tradeoffs of batching "
+            r"versus fusion\..*?Neither existing prose nor mathematical "
+            r"derivations are replaced\.[ \t]*$", re.DOTALL,
+        )
+        reader, changed = compose_note.subn(
+            "The following analysis first establishes what command submission "
+            "actually guarantees and what remains unproven. That correctness "
+            "and uncertainty model provides the basis for later measurements "
+            "of synchronization overhead, GPU occupancy, arithmetic intensity, "
+            "and the tradeoffs of batching versus fusion.",
+            reader, count=1,
+        )
+        # Historical source variants can differ slightly. Any surviving
+        # author instruction is a failed release rather than reader prose.
+        if "This addition belongs before the chapter" in reader:
+            raise ValueError("Unremoved editorial production note in chapter 12")
     reader = restore_math(reader, raw, chapter)
     reader = restore_diagrams(reader, diagrams, chapter)
     reader = LATEX_INLINE_INDEX.sub("", reader)
@@ -225,6 +261,45 @@ def validate_epub(path: Path) -> dict:
             raise ValueError("Missing Kindle navigable table of contents")
         if not any("cover-image" in item.attrib.get("properties", "").split() for item in items):
             raise ValueError("Missing embedded EPUB cover image")
+        # OPF validity alone misses malformed XHTML generated when Pandoc
+        # interprets a C++ expression like std::span<T> as raw HTML.
+        # Parse *every* XHTML document and validate all local resources
+        # and fragment anchors before calling an EPUB structurally valid.
+        xhtml_docs = {}
+        xhtml_ids = {}
+        for member in sorted(p for p in members if p.endswith(".xhtml")):
+            try:
+                document = ET.fromstring(z.read(member))
+            except ET.ParseError as exc:
+                raise ValueError(f"Invalid XHTML {member}: {exc}") from exc
+            xhtml_docs[member] = document
+            xhtml_ids[member] = {
+                node.get("id") for node in document.iter() if node.get("id")
+            }
+        local_links_checked = 0
+        for member, document in xhtml_docs.items():
+            for node in document.iter():
+                for key, href in node.attrib.items():
+                    if key.rsplit("}", 1)[-1] not in ("href", "src"):
+                        continue
+                    url = urlsplit(href)
+                    if url.scheme or url.netloc:
+                        continue  # External DOI, publisher, and GitHub links
+                    resource = (
+                        posixpath.normpath(posixpath.join(
+                            posixpath.dirname(member), unquote(url.path)))
+                        if url.path else member
+                    )
+                    if resource not in members:
+                        raise ValueError(
+                            f"Broken EPUB resource in {member}: {href}"
+                        )
+                    if url.fragment and resource in xhtml_ids:
+                        if unquote(url.fragment) not in xhtml_ids[resource]:
+                            raise ValueError(
+                                f"Broken EPUB anchor in {member}: {href}"
+                            )
+                    local_links_checked += 1
         chapter_pages = [p for p in members if p.endswith(".xhtml") and "/text/" in p]
         if not chapter_pages:
             chapter_pages = [p for p in members if p.endswith(".xhtml")]
@@ -236,7 +311,9 @@ def validate_epub(path: Path) -> dict:
                 "mathml_elements": full_text.count("<math"),
                 "embedded_images": sum(item.attrib.get("media-type","").startswith("image/")
                                        for item in items),
-                "has_nav": True, "has_cover_image": True}
+                "has_nav": True, "has_cover_image": True,
+                "xhtml_parsed": len(xhtml_docs),
+                "local_links_checked": local_links_checked}
 
 
 def main() -> int:
@@ -314,7 +391,7 @@ def main() -> int:
         encoding="utf-8"
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    run(["pandoc", "-f", "markdown+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
+    run(["pandoc", "-f", "markdown-raw_html+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
          "-t", "epub3", "--standalone", "--toc", "--toc-depth=2",
          "--split-level=1", "--mathml", "--css", str(css),
          "--epub-cover-image", str(cover_for_epub),
