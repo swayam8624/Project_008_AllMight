@@ -415,6 +415,75 @@ Future books will select the appropriate long-running project instead of
 defaulting to the NES emulator.
 
 
+## Pass 14 — Book 01, Chapter 14: Submit, Synchronize, and Retire GPU Work
+
+**Project scope:** The primary executable/source architecture is **KairoRenderer's
+real Vulkan command, fence and presentation path**, contrasted with **Maveb's
+Metal FrameContext and completed-handler** lifecycle. These are stronger and
+more authentic teaching examples than forcing an NES emulator into Vulkan WSI.
+The separate [seven-book project matrix](project-lab-matrix.md) makes the
+multi-project progression a durable requirement.
+
+**Authoritative original chapter remains intact:** Chapter 14 has about 4,398
+lines / 71.27K characters of existing command buffers, queue submissions,
+fences, semaphores, synchronization, barriers, frames in flight, validation,
+timestamps, device lost and MoltenVK material. The newly staged
+[GPU-14F - Frame Submission Synchronization and Retirement](../../Supplementary/C++23%20Project%20Labs/GPU-14F%20-%20Frame%20Submission%20Synchronization%20and%20Retirement.md)
+(~37.4K characters) is inserted *only* before the original
+`### VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES` heading; it
+does not delete or regenerate the original manuscript.
+
+**Portable executable:** `tools/labs/gpu_course/submission_retirement.hpp`
+and `tools/labs/gpu_submit_retire_cpp23_lab.cpp` implement a single-threaded
+C++23 CPU model and negative tests for frame-slot versus WSI-image index,
+independent generations, Kairo fence reset before failed command submission,
+explicit recovery, uncertain submission quarantine, graphics completion
+separate from presentation completion, deferred resource retirement,
+Maveb arena reuse, CPU pins and Kyoto/XR resource references. CPU model
+events are synthetic and do **not** claim native Vulkan fence or WSI success.
+
+**Actual native Vulkan path, separately opt-in:** When CMake detects a Vulkan
+SDK, `tools/labs/gpu_course/native_vulkan_submit_probe.cpp` may be executed
+with `gpu_submit_retire_cpp23_lab --probe-native`. It creates a real headless
+VkDevice and transfer buffer, allocates/binds compatible host-visible coherent
+memory, records a VkCmdFillBuffer and transfer-write-to-host-read barrier,
+submits the primary command buffer via VkQueueSubmit, waits for an actual
+VkFence, maps and compares 64 x 32-bit result words, and tears down resources
+in dependency order. No graphics shader, surface/swapchain presentation,
+synchronization2/Metal backend, or performance claim is inferred. Missing
+Vulkan SDK/device returns **unavailable (77)**, not a passing GPU test.
+The portable default CTest **never invokes** this opt-in native path.
+
+**Source-level Kairo review item:** `KairoRenderer/VulkanRenderer.cppm`
+currently resets `m_Sync.InFlight()` immediately after successful image
+acquisition and **before** command recording and accepted submission.
+If a later recording or known rejected submission error occurs, the next
+frame's fence wait could block without a submission that will signal it.
+This is a grounded *source-control-flow* concern, not a reproduced native
+hang or an applied Kairo fix. `KairoRenderer/VulkanCommand.cppm` and
+`VulkanSync.cppm` were inspected to verify command-pool and semaphore
+ownership; `Maveb/engine/metal/src/Renderer.cpp` and `FrameContext.cpp`
+were inspected for three-frame permits and completion/arena lifetimes.
+Their exact Git blob SHAs are preserved in [project-lab-matrix.md](project-lab-matrix.md).
+No external repo was edited.
+
+**Cumulative authoring:** 14 registered C++23 CMake executable targets and
+14 default CPU CTest invocations, 14 marker-delimited additive source
+insertions, updated whole-manuscript restoration/idempotence/conflict tests,
+and a strict source-pinned CTest/JUnit evidence manifest. The canonical master
+is unchanged; no user commands, LaTeX compilation or original text removal.
+
+**Evidence boundaries:** A committed test source is not proof it compiles
+or passes. Actual full build, GitHub CI, native vkQueueSubmit/fence execution,
+GPU bytes, validation logs, timing and physical device identity remain
+**unverified** until observed evidence arrives.
+
+**Next:** Chapter15 "Execute and Measure a Metal Frame" should make
+Maveb/Kairo Metal the primary platform project, with correct Apple GPU
+resource ownership and native shader/frame evidence, backed by portable
+CPU oracles and platform-conditional tests rather than invented devices.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
