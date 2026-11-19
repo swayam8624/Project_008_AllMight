@@ -429,6 +429,75 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"Keep open questions, unexpected results, possible alternative explanations, and the next experiments needed to resolve them.",
         r"\end{document}",
     ])
+    def prepare_preface(directory: Path) -> dict:
+        path = directory / "frontmatter.tex"
+        cmd = [pandoc, "-f",
+               "markdown+tex_math_single_backslash+tex_math_double_backslash",
+               "-t", "latex", "--top-level-division=chapter",
+               "--wrap=none", "--no-highlight",
+               "-o", str(path), str(ACADEMIC_PREFACE)]
+        conversion = subprocess.run(cmd, capture_output=True, text=True)
+        if conversion.returncode or not path.is_file():
+            raise RuntimeError("Preface LaTeX conversion failed: " + conversion.stderr[:2000])
+        return {"path": path.relative_to(OUTPUT).as_posix(),
+                "sha256": sha256(path.read_bytes())}
+
+    report["prefaces"] = [prepare_preface(complete_dir)]
+    report["print_volumes"] = []
+    for volume_number, (low, high, title, subtitle) in enumerate(PRINT_VOLUMES, 1):
+        directory = OUTPUT / f"book01-print-v{volume_number:02d}"
+        directory.mkdir(exist_ok=True)
+        shutil.copy2(style, directory / "allmight-book.sty")
+        shutil.copy2(READER_STYLE, directory / "book01-reader.sty")
+        asset_root = directory / "Assets"
+        asset_root.mkdir(exist_ok=True)
+        font_link = asset_root / "Fonts"
+        if font_link.is_symlink():
+            if font_link.resolve() != fonts.resolve():
+                raise ValueError("Unexpected paperback font symlink")
+        elif font_link.exists():
+            raise ValueError("Refusing to overwrite paperback font assets")
+        else:
+            font_link.symlink_to(
+                os.path.relpath(fonts, asset_root), target_is_directory=True)
+        preface = prepare_preface(directory)
+        report["prefaces"].append(preface)
+        volume = [
+            r"\documentclass[10pt,twoside,openany]{book}",
+            r"\usepackage[print]{allmight-book}",
+            r"\usepackage{book01-reader}",
+            r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
+            r"\title{" + tex_escape(title) + r"\\[0.6em]\large " + tex_escape(subtitle) + "}",
+            r"\author{Swayam Singal}",
+            r"\begin{document}",
+            r"\frontmatter", r"\maketitle",
+            r"\setcounter{tocdepth}{1}", r"\tableofcontents",
+            r"\input{frontmatter}", r"\mainmatter",
+            r"\setcounter{chapter}{" + str(low - 1) + "}",
+        ]
+        for number in range(low, high + 1):
+            source_part = ((number - 1) // 4) + 1
+            volume.append(r"\chapter{" + tex_escape(CHAPTER_TITLES[number - 1]) + "}")
+            volume.append(
+                r"\input{../book01-expanded-p" + f"{source_part:02d}" +
+                r"/content/chapter-" + f"{number:02d}" + "}")
+        if volume_number == len(PRINT_VOLUMES):
+            volume.append(r"\input{../book01-expanded-p04/content/final-mastery}")
+        volume.extend([
+            r"\appendix",
+            r"\chapter{Laboratory Records and Source Verification}",
+            r"Record the hypothesis, input, toolchain, device, expected output, "
+            r"observed output, failure case, and reproducible reference for each experiment.",
+            r"\end{document}",
+        ])
+        master = directory / "main.tex"
+        master.write_text("\n".join(volume) + "\n", encoding="utf-8")
+        report["print_volumes"].append({
+            "volume": volume_number, "chapters": [low, high],
+            "title": title, "subtitle": subtitle,
+            "master_path": master.relative_to(OUTPUT).as_posix(),
+            "master_sha256": sha256(master.read_bytes()),
+        })
     complete_master = complete_dir / "main.tex"
     complete_master.write_text("\n".join(book) + "\n", encoding="utf-8")
     report["complete"] = {
@@ -440,7 +509,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
     manifest.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     verify_prepared(rows, metadata)
     print(f"PREPARED {NUMBER_OF_CHAPTERS} preserved chapters and {EXPECTED_ADDITIONS} additive lessons")
-    print("Single academic book master prepared; four diagnostic parts retained under", OUTPUT)
+    print("One digital master, two 828-page-limited paperback masters, and four diagnostic parts prepared under", OUTPUT)
+    print("Mermaid diagrams planned:", len(report["diagrams"]), "; original chapter bodies untouched")
     print("No LaTeX engine or PDF compiler has been called.")
 
 
@@ -460,7 +530,7 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
             raise ValueError("Original chapter changed since --prepare")
         if authored["expanded_body_sha256"] != recorded["expanded_body_sha256"]:
             raise ValueError("Original/additive composition changed since --prepare")
-        for kind in ("markdown", "latex"):
+        for kind in ("markdown", "latex", "render_markdown"):
             path = OUTPUT / recorded[kind + "_path"]
             if not path.is_file() or sha256(path.read_bytes()) != recorded[kind + "_sha256"]:
                 raise ValueError("Prepared chapter " + kind + " altered or missing: " + str(path))
@@ -482,6 +552,22 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
     complete_style = complete_master.parent / "book01-reader.sty"
     if not complete_style.is_file() or sha256(complete_style.read_bytes()) != metadata["reader_style_sha256"]:
         raise ValueError("Complete-book typography changed since preparation")
+    for preface in data.get("prefaces", []):
+        path = OUTPUT / preface["path"]
+        if not path.is_file() or sha256(path.read_bytes()) != preface["sha256"]:
+            raise ValueError("Academic frontmatter missing or changed")
+    if len(data.get("print_volumes", [])) != len(PRINT_VOLUMES):
+        raise ValueError("Paperback volume masters incomplete")
+    for record in data["print_volumes"]:
+        path = OUTPUT / record["master_path"]
+        if not path.is_file() or sha256(path.read_bytes()) != record["master_sha256"]:
+            raise ValueError("Paperback volume master stale or altered")
+    for fig in data.get("diagrams", []):
+        path = OUTPUT / fig["source"]
+        if not path.is_file() or sha256(path.read_bytes()) != fig["diagram_sha256"]:
+            raise ValueError("Mermaid source missing or modified: " + str(path))
+    if sum(record.get("figure_count", 0) for record in data["chapters"]) != len(data.get("diagrams", [])):
+        raise ValueError("Diagram manifest does not account for all figures")
     for record in data["parts"]:
         reader_style = OUTPUT / record["id"] / "book01-reader.sty"
         if not reader_style.is_file() or sha256(reader_style.read_bytes()) != metadata["reader_style_sha256"]:
