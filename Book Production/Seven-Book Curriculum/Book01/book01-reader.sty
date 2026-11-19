@@ -19,18 +19,21 @@
   {\setmathfont{TeX Gyre Pagella Math}}
 % Box-drawing characters and arrows in real program traces need glyph coverage.
 % Latin Modern Mono is too limited for the existing source diagrams.
+% Never use Scale=MatchLowercase for code: Menlo's x-height matching
+% reduced 8.5pt intended code to roughly 6.97pt in the earlier Mac proof.
+% Specified 9pt listings must produce >=9pt glyph runs regardless of host.
 \IfFontExistsTF{DejaVu Sans Mono}
-  {\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}
+  {\setmonofont{DejaVu Sans Mono}[Scale=1,Ligatures=NoCommon]}
   {\IfFontExistsTF{Menlo}
-    {\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon]}
-    {\setmonofont{Latin Modern Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}}
+    {\setmonofont{Menlo}[Scale=1,Ligatures=NoCommon]}
+    {\setmonofont{Latin Modern Mono}[Scale=1,Ligatures=NoCommon]}}
 \RequirePackage{newunicodechar}
 % Arrows are actual semantic content in the CPU/GPU flow diagrams and prose.
 % TeX Gyre text faces do not contain every arrow glyph. Use a mathematically
 % meaningful, font-independent fallback rather than silently losing arrows.
 % Only the generated Book 1 publication style is affected; source text and
 % verbatim/code listings remain byte-for-byte unchanged.
-\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{→}{\ensuremath{\rightarrow}\allowbreak}
 \newunicodechar{←}{\ensuremath{\leftarrow}}
 \newunicodechar{↑}{\ensuremath{\uparrow}}
 \newunicodechar{↓}{\ensuremath{\downarrow}}
