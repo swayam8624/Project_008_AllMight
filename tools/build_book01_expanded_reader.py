@@ -38,6 +38,8 @@ LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
 CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
 READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reader.sty"
 ACADEMIC_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_PREFACE.md"
+SECOND_VOLUME_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/VOLUME_II_PREFACE.md"
+ACADEMIC_BACKMATTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_BACKMATTER.md"
 OUTPUT = ROOT / "build/book01-expanded-reader"
 SOURCE_BEGIN = b"<!-- CHAPTER-SOURCE-BEGIN -->\n"
 SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
@@ -225,6 +227,8 @@ def audit_sources() -> tuple[list[dict], dict]:
         "addition_count": total,
         "reader_style_sha256": sha256(READER_STYLE.read_bytes()),
         "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
+        "second_volume_preface_sha256": sha256(SECOND_VOLUME_PREFACE.read_bytes()),
+        "academic_backmatter_sha256": sha256(ACADEMIC_BACKMATTER.read_bytes()),
         "academic_title": BOOK_TITLE,
         "academic_subtitle": BOOK_SUBTITLE,
         "part_ranges": [list(x) for x in PARTS],
@@ -448,31 +452,38 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"/content/chapter-" + f"{number:02d}" + "}"
         )
     book.extend([
-        r"\input{../book01-expanded-p04/content/final-mastery}",
-        r"\appendix",
-        r"\chapter{Research Notebook and Reproducibility}",
-        r"\section{Experiment record}",
-        r"Record the question, hypothesis, baseline, input data and version, environment, seeds, measurement units, observations, failed cases, and interpretations.",
-        r"\section{Code review}",
-        r"Review ownership, lifetime, failure handling, concurrent access, input validation, resource limits, reproducibility, and whether the evidence supports the stated conclusion.",
-        r"\section{Personal research notes}",
-        r"Keep open questions, unexpected results, possible alternative explanations, and the next experiments needed to resolve them.",
-        r"\end{document}",
+        r"\\input{../book01-expanded-p04/content/final-mastery}",
+        r"\\appendix",
+        r"\\input{backmatter}",
+        r"\\end{document}",
     ])
-    def prepare_preface(directory: Path) -> dict:
+    def prepare_preface(directory: Path, source: Path = ACADEMIC_PREFACE) -> dict:
         path = directory / "frontmatter.tex"
         cmd = [pandoc, "-f",
                "markdown+tex_math_single_backslash+tex_math_double_backslash",
                "-t", "latex", "--top-level-division=chapter",
                "--wrap=none", "--no-highlight",
-               "-o", str(path), str(ACADEMIC_PREFACE)]
+               "-o", str(path), str(source)]
         conversion = subprocess.run(cmd, capture_output=True, text=True)
         if conversion.returncode or not path.is_file():
             raise RuntimeError("Preface LaTeX conversion failed: " + conversion.stderr[:2000])
         return {"path": path.relative_to(OUTPUT).as_posix(),
+                "source": source.relative_to(ROOT).as_posix(),
+                "sha256": sha256(path.read_bytes())}
+
+    def prepare_backmatter(directory: Path) -> dict:
+        path = directory / "backmatter.tex"
+        cmd = [pandoc, "-f", "markdown+tex_math_single_backslash+tex_math_double_backslash",
+               "-t", "latex", "--top-level-division=chapter", "--wrap=none",
+               "--no-highlight", "-o", str(path), str(ACADEMIC_BACKMATTER)]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode or not path.is_file():
+            raise RuntimeError("Academic backmatter conversion failed: " + result.stderr[:2000])
+        return {"path": path.relative_to(OUTPUT).as_posix(),
                 "sha256": sha256(path.read_bytes())}
 
     report["prefaces"] = [prepare_preface(complete_dir)]
+    report["backmatters"] = [prepare_backmatter(complete_dir)]
     report["print_volumes"] = []
     for volume_number, (low, high, title, subtitle) in enumerate(PRINT_VOLUMES, 1):
         directory = OUTPUT / f"book01-print-v{volume_number:02d}"
@@ -490,8 +501,9 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         else:
             font_link.symlink_to(
                 os.path.relpath(fonts, asset_root), target_is_directory=True)
-        preface = prepare_preface(directory)
+        preface = prepare_preface(directory, SECOND_VOLUME_PREFACE if volume_number == 2 else ACADEMIC_PREFACE)
         report["prefaces"].append(preface)
+        report["backmatters"].append(prepare_backmatter(directory))
         volume = [
             r"\documentclass[10pt,twoside,openany]{book}",
             r"\usepackage[print]{allmight-book}",
@@ -514,11 +526,9 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         if volume_number == len(PRINT_VOLUMES):
             volume.append(r"\input{../book01-expanded-p04/content/final-mastery}")
         volume.extend([
-            r"\appendix",
-            r"\chapter{Laboratory Records and Source Verification}",
-            r"Record the hypothesis, input, toolchain, device, expected output, "
-            r"observed output, failure case, and reproducible reference for each experiment.",
-            r"\end{document}",
+            r"\\appendix",
+            r"\\input{backmatter}",
+            r"\\end{document}",
         ])
         master = directory / "main.tex"
         master.write_text("\n".join(volume) + "\n", encoding="utf-8")
@@ -582,6 +592,12 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
     complete_style = complete_master.parent / "book01-reader.sty"
     if not complete_style.is_file() or sha256(complete_style.read_bytes()) != metadata["reader_style_sha256"]:
         raise ValueError("Complete-book typography changed since preparation")
+    if len(data.get("backmatters", [])) != 3:
+        raise ValueError("Academic apparatus not generated for all outputs")
+    for appendix in data["backmatters"]:
+        path = OUTPUT / appendix["path"]
+        if not path.is_file() or sha256(path.read_bytes()) != appendix["sha256"]:
+            raise ValueError("Academic backmatter missing or changed")
     for preface in data.get("prefaces", []):
         path = OUTPUT / preface["path"]
         if not path.is_file() or sha256(path.read_bytes()) != preface["sha256"]:
