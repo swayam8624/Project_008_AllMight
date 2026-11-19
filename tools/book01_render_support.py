@@ -115,6 +115,429 @@ def math_preflight(source: str, label: str) -> dict:
 
 
 
+
+FENCE_LANG_ID = re.compile(
+    r'(?m)^(?P<fence>' + re.escape(chr(96) * 3) + r')'
+    r'(?P<lang>[A-Za-z][\w.+-]*)(?P<extra>[ \t]+id="[^"\n]+")[ \t]*
+    """Protect every display formula from Pandoc's Markdown math heuristics.
+
+    A source display is replaced by one unique plain-text marker during
+    Markdown-to-TeX conversion. The exact formula is reinserted as raw TeX
+    afterward, before any source-preserving TeX safety escaping. This prevents
+    implicit Markdown interpretation from dropping a boxed expression.
+    Fenced code examples remain untouched.
+    """
+    equations: list[dict] = []
+
+    def protect_prose(segment: str) -> str:
+        def replace(match: re.Match[str]) -> str:
+            body = match.group(1)
+            if not body.strip():
+                raise ValueError(f"Chapter {chapter}: empty display expression")
+            index = len(equations) + 1
+            token = f"ALLMIGHTMATHCH{chapter:02d}INDEX{index:04d}"
+            equations.append({
+                "index": index,
+                "token": token,
+                "body": body,
+                "sha256": digest(body.encode("utf-8")),
+            })
+            return "\n\n" + token + "\n\n"
+        return DISPLAY_MATH.sub(replace, segment)
+
+    pieces: list[str] = []
+    offset = 0
+    for match in FENCE.finditer(source):
+        pieces.append(protect_prose(source[offset:match.start()]))
+        pieces.append(match.group(0))
+        offset = match.end()
+    pieces.append(protect_prose(source[offset:]))
+    expected = len(DISPLAY_MATH.findall(FENCE.sub("", source)))
+    if len(equations) != expected:
+        raise ValueError(
+            f"Chapter {chapter}: expected {expected} source math displays, "
+            f"protected {len(equations)}. No math may be omitted."
+        )
+    return "".join(pieces), equations
+
+
+def replace_math_tokens(tex: str, equations: list[dict]) -> str:
+    """Restore original math text exactly once at its original position."""
+    for entry in equations:
+        token = entry["token"]
+        if digest(entry["body"].encode("utf-8")) != entry["sha256"]:
+            raise ValueError("Math source identity changed: " + token)
+        regex = r"(?m)^" + re.escape(token) + r"$"
+        count = len(re.findall(regex, tex))
+        if count != 1:
+            raise ValueError(
+                f"Math marker {token} occurred {count} times in Pandoc TeX"
+            )
+        original = "\\[\n" + sanitize_source_math_for_tex(entry["body"].strip()) + "\n\\]"
+        tex = re.sub(regex, lambda _: original, tex, count=1)
+    if "ALLMIGHTMATHCH" in tex:
+        raise ValueError("Unresolved display-math marker in TeX")
+    return tex
+
+
+def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path):
+    """Plan every Mermaid figure without changing the canonical chapter."""
+    figure_dir = directory / "content" / "figures"
+    figure_dir.mkdir(parents=True, exist_ok=True)
+    entries = []
+
+    def translate(match):
+        body = match.group("body").strip() + "\n"
+        if not body.strip():
+            raise ValueError(f"Chapter {chapter}: empty Mermaid code")
+        idx = len(entries) + 1
+        basename = f"chapter-{chapter:02d}-diagram-{idx:02d}"
+        mmd = figure_dir / (basename + ".mmd")
+        png = figure_dir / (basename + ".png")
+        token = f"ALLMIGHTFIGURECH{chapter:02d}INDEX{idx:03d}"
+        headings = re.findall(r"(?m)^#{2,5} +([^\n]+)$", source[:match.start()])
+        lead = headings[-1] if headings else "Computational data flow"
+        lead = re.sub(r"[`*_\[\]]", "", lead).strip()
+        lead = re.sub(r"\s+", " ", lead)[:96]
+        mmd.write_text(body, encoding="utf-8")
+        entries.append({
+            "chapter": chapter, "part": part, "index": idx, "token": token,
+            "diagram_sha256": digest(body.encode("utf-8")),
+            "source": mmd.relative_to(output).as_posix(),
+            "image": png.relative_to(output).as_posix(),
+            "caption": f"Figure {chapter}.{idx}: {lead}",
+        })
+        return "\n\n" + token + "\n\n"
+
+    revised, matched = MERMAID.subn(translate, source)
+    declared = len(re.findall(r"(?m)^```mermaid(?:[ \t]|$)", source))
+    if matched != declared:
+        raise ValueError(f"Chapter {chapter}: {declared} Mermaid fences; {matched} matched")
+    return revised, entries
+
+
+def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
+    for item in figures:
+        token = item["token"]
+        path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
+        caption = item["caption"].replace("\\", "")
+        for reserved, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"),
+                                  ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                                  ("$", r"\$"), ("~", r"\textasciitilde{}"),
+                                  ("^", r"\textasciicircum{}")):
+            caption = caption.replace(reserved, escaped)
+        latex = (
+            "\\par\\begin{center}\n"
+            "\\includegraphics[width=.94\\linewidth,height=.36\\textheight,"
+            "keepaspectratio]{" + path + "}\n"
+            "\\par{\\footnotesize\\itshape " + caption +
+            "}\\par\\end{center}\\smallskip\n"
+        )
+        pattern = r"(?m)^" + re.escape(token) + r"$"
+        if len(re.findall(pattern, tex)) != 1:
+            raise ValueError(f"Missing/duplicate diagram marker: {token}")
+        tex = re.sub(pattern, lambda _: latex, tex, count=1)
+    if "ALLMIGHTFIGURECH" in tex:
+        raise ValueError("Unresolved Mermaid marker in TeX")
+    return tex
+
+
+def check_math_rendered(source_stats: dict, tex: str, chapter: int):
+    """Require every original display formula's TeX body to survive Pandoc."""
+    generated = len(re.findall(r"\\boxed\s*\{", tex))
+    if generated < source_stats["boxed_math"]:
+        raise ValueError(
+            f"Chapter {chapter}: source has {source_stats['boxed_math']} boxed "
+            f"equations but generated TeX only {generated}"
+        )
+    def normalize(s: str) -> str:
+        # Underscores inside generated texttt are escaped for compilability.
+        return re.sub(r"\s+", "", s).replace(r"\_", "_").replace(r"\%", "%")
+    output = normalize(tex)
+    missing = [index for index, body in
+               enumerate(source_stats.get("_original_math_bodies", []), 1)
+               if normalize(body) not in output]
+    if missing:
+        raise ValueError(
+            f"Chapter {chapter}: {len(missing)} display equations were "
+            f"altered, split, or omitted in generated TeX; display-math "
+            f"block numbers: {missing[:20]}"
+        )
+
+
+def render_figures(manifest: dict, output: Path):
+    figures = manifest.get("diagrams", [])
+    if not figures:
+        print("No Mermaid diagrams declared")
+        return
+    binary = shutil.which("mmdc")
+    if not binary:
+        raise RuntimeError(
+            f"{len(figures)} diagrams must be rendered. Install Mermaid CLI: "
+            "brew install node; npm install -g @mermaid-js/mermaid-cli"
+        )
+    for item in figures:
+        src, dst = output / item["source"], output / item["image"]
+        if not src.is_file() or digest(src.read_bytes()) != item["diagram_sha256"]:
+            raise ValueError("Changed or missing diagram source: " + str(src))
+        if dst.is_file() and dst.stat().st_size > 500 and item.get("render_sha256") == digest(dst.read_bytes()):
+            continue
+        result = subprocess.run([binary, "-i", str(src), "-o", str(dst),
+                                 "-s", "3", "-t", "neutral", "-b", "white"],
+                                capture_output=True, text=True)
+        if result.returncode or not dst.is_file() or dst.stat().st_size < 500:
+            raise RuntimeError(f"Mermaid failed: chapter {item['chapter']} "
+                               f"diagram {item['index']}\n" +
+                               (result.stderr or result.stdout)[-4000:])
+        item["render_sha256"] = digest(dst.read_bytes())
+    print("Verified rendered diagrams:", len(figures))
+
+
+def pdf_preflight(pdf: Path, *, paperback: bool) -> int:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise RuntimeError("PDF preflight needs: python3 -m pip install pypdf") from exc
+    pages = PdfReader(str(pdf)).pages
+    count = len(pages)
+    if count < 1:
+        raise RuntimeError("PDF has no pages")
+    if paperback:
+        if count > KDP_MAX_WHITE_BW:
+            raise RuntimeError(f"KDP paperback REFUSED: {count} > {KDP_MAX_WHITE_BW} pages")
+        for index, page in enumerate(pages, 1):
+            width, height = float(page.mediabox.width), float(page.mediabox.height)
+            if abs(width - 504) > .5 or abs(height - 720) > .5:
+                raise RuntimeError(f"KDP trim mismatch at PDF page {index}")
+    return count
+
+)
+
+
+def normalize_code_fence_metadata(source: str) -> tuple[str, int]:
+    """Make Obsidian language+id fences into Pandoc-compatible code blocks.
+
+    Source comments and code payloads remain byte-for-byte identical.
+    Only the unsupported presentation metadata on each opening fence is
+    removed in the transient reader Markdown. Do not strip code content.
+    """
+    converted, count = FENCE_LANG_ID.subn(
+        lambda match: match.group("fence") + match.group("lang"), source
+    )
+    remaining = re.findall(
+        r'(?m)^' + re.escape(chr(96) * 3)
+        + r'[^\n]*[ \t]+id="[^"\n]+"[ \t]*
+    """Protect every display formula from Pandoc's Markdown math heuristics.
+
+    A source display is replaced by one unique plain-text marker during
+    Markdown-to-TeX conversion. The exact formula is reinserted as raw TeX
+    afterward, before any source-preserving TeX safety escaping. This prevents
+    implicit Markdown interpretation from dropping a boxed expression.
+    Fenced code examples remain untouched.
+    """
+    equations: list[dict] = []
+
+    def protect_prose(segment: str) -> str:
+        def replace(match: re.Match[str]) -> str:
+            body = match.group(1)
+            if not body.strip():
+                raise ValueError(f"Chapter {chapter}: empty display expression")
+            index = len(equations) + 1
+            token = f"ALLMIGHTMATHCH{chapter:02d}INDEX{index:04d}"
+            equations.append({
+                "index": index,
+                "token": token,
+                "body": body,
+                "sha256": digest(body.encode("utf-8")),
+            })
+            return "\n\n" + token + "\n\n"
+        return DISPLAY_MATH.sub(replace, segment)
+
+    pieces: list[str] = []
+    offset = 0
+    for match in FENCE.finditer(source):
+        pieces.append(protect_prose(source[offset:match.start()]))
+        pieces.append(match.group(0))
+        offset = match.end()
+    pieces.append(protect_prose(source[offset:]))
+    expected = len(DISPLAY_MATH.findall(FENCE.sub("", source)))
+    if len(equations) != expected:
+        raise ValueError(
+            f"Chapter {chapter}: expected {expected} source math displays, "
+            f"protected {len(equations)}. No math may be omitted."
+        )
+    return "".join(pieces), equations
+
+
+def replace_math_tokens(tex: str, equations: list[dict]) -> str:
+    """Restore original math text exactly once at its original position."""
+    for entry in equations:
+        token = entry["token"]
+        if digest(entry["body"].encode("utf-8")) != entry["sha256"]:
+            raise ValueError("Math source identity changed: " + token)
+        regex = r"(?m)^" + re.escape(token) + r"$"
+        count = len(re.findall(regex, tex))
+        if count != 1:
+            raise ValueError(
+                f"Math marker {token} occurred {count} times in Pandoc TeX"
+            )
+        original = "\\[\n" + entry["body"].strip() + "\n\\]"
+        tex = re.sub(regex, lambda _: original, tex, count=1)
+    if "ALLMIGHTMATHCH" in tex:
+        raise ValueError("Unresolved display-math marker in TeX")
+    return tex
+
+
+def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path):
+    """Plan every Mermaid figure without changing the canonical chapter."""
+    figure_dir = directory / "content" / "figures"
+    figure_dir.mkdir(parents=True, exist_ok=True)
+    entries = []
+
+    def translate(match):
+        body = match.group("body").strip() + "\n"
+        if not body.strip():
+            raise ValueError(f"Chapter {chapter}: empty Mermaid code")
+        idx = len(entries) + 1
+        basename = f"chapter-{chapter:02d}-diagram-{idx:02d}"
+        mmd = figure_dir / (basename + ".mmd")
+        png = figure_dir / (basename + ".png")
+        token = f"ALLMIGHTFIGURECH{chapter:02d}INDEX{idx:03d}"
+        headings = re.findall(r"(?m)^#{2,5} +([^\n]+)$", source[:match.start()])
+        lead = headings[-1] if headings else "Computational data flow"
+        lead = re.sub(r"[`*_\[\]]", "", lead).strip()
+        lead = re.sub(r"\s+", " ", lead)[:96]
+        mmd.write_text(body, encoding="utf-8")
+        entries.append({
+            "chapter": chapter, "part": part, "index": idx, "token": token,
+            "diagram_sha256": digest(body.encode("utf-8")),
+            "source": mmd.relative_to(output).as_posix(),
+            "image": png.relative_to(output).as_posix(),
+            "caption": f"Figure {chapter}.{idx}: {lead}",
+        })
+        return "\n\n" + token + "\n\n"
+
+    revised, matched = MERMAID.subn(translate, source)
+    declared = len(re.findall(r"(?m)^```mermaid(?:[ \t]|$)", source))
+    if matched != declared:
+        raise ValueError(f"Chapter {chapter}: {declared} Mermaid fences; {matched} matched")
+    return revised, entries
+
+
+def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
+    for item in figures:
+        token = item["token"]
+        path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
+        caption = item["caption"].replace("\\", "")
+        for reserved, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"),
+                                  ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                                  ("$", r"\$"), ("~", r"\textasciitilde{}"),
+                                  ("^", r"\textasciicircum{}")):
+            caption = caption.replace(reserved, escaped)
+        latex = (
+            "\\par\\begin{center}\n"
+            "\\includegraphics[width=.94\\linewidth,height=.36\\textheight,"
+            "keepaspectratio]{" + path + "}\n"
+            "\\par{\\footnotesize\\itshape " + caption +
+            "}\\par\\end{center}\\smallskip\n"
+        )
+        pattern = r"(?m)^" + re.escape(token) + r"$"
+        if len(re.findall(pattern, tex)) != 1:
+            raise ValueError(f"Missing/duplicate diagram marker: {token}")
+        tex = re.sub(pattern, lambda _: latex, tex, count=1)
+    if "ALLMIGHTFIGURECH" in tex:
+        raise ValueError("Unresolved Mermaid marker in TeX")
+    return tex
+
+
+def check_math_rendered(source_stats: dict, tex: str, chapter: int):
+    """Require every original display formula's TeX body to survive Pandoc."""
+    generated = len(re.findall(r"\\boxed\s*\{", tex))
+    if generated < source_stats["boxed_math"]:
+        raise ValueError(
+            f"Chapter {chapter}: source has {source_stats['boxed_math']} boxed "
+            f"equations but generated TeX only {generated}"
+        )
+    def normalize(s: str) -> str:
+        # Underscores inside generated texttt are escaped for compilability.
+        return re.sub(r"\s+", "", s).replace(r"\_", "_")
+    output = normalize(tex)
+    missing = [index for index, body in
+               enumerate(source_stats.get("_original_math_bodies", []), 1)
+               if normalize(body) not in output]
+    if missing:
+        raise ValueError(
+            f"Chapter {chapter}: {len(missing)} display equations were "
+            f"altered, split, or omitted in generated TeX; display-math "
+            f"block numbers: {missing[:20]}"
+        )
+
+
+def render_figures(manifest: dict, output: Path):
+    figures = manifest.get("diagrams", [])
+    if not figures:
+        print("No Mermaid diagrams declared")
+        return
+    binary = shutil.which("mmdc")
+    if not binary:
+        raise RuntimeError(
+            f"{len(figures)} diagrams must be rendered. Install Mermaid CLI: "
+            "brew install node; npm install -g @mermaid-js/mermaid-cli"
+        )
+    for item in figures:
+        src, dst = output / item["source"], output / item["image"]
+        if not src.is_file() or digest(src.read_bytes()) != item["diagram_sha256"]:
+            raise ValueError("Changed or missing diagram source: " + str(src))
+        if dst.is_file() and dst.stat().st_size > 500 and item.get("render_sha256") == digest(dst.read_bytes()):
+            continue
+        result = subprocess.run([binary, "-i", str(src), "-o", str(dst),
+                                 "-s", "3", "-t", "neutral", "-b", "white"],
+                                capture_output=True, text=True)
+        if result.returncode or not dst.is_file() or dst.stat().st_size < 500:
+            raise RuntimeError(f"Mermaid failed: chapter {item['chapter']} "
+                               f"diagram {item['index']}\n" +
+                               (result.stderr or result.stdout)[-4000:])
+        item["render_sha256"] = digest(dst.read_bytes())
+    print("Verified rendered diagrams:", len(figures))
+
+
+def pdf_preflight(pdf: Path, *, paperback: bool) -> int:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise RuntimeError("PDF preflight needs: python3 -m pip install pypdf") from exc
+    pages = PdfReader(str(pdf)).pages
+    count = len(pages)
+    if count < 1:
+        raise RuntimeError("PDF has no pages")
+    if paperback:
+        if count > KDP_MAX_WHITE_BW:
+            raise RuntimeError(f"KDP paperback REFUSED: {count} > {KDP_MAX_WHITE_BW} pages")
+        for index, page in enumerate(pages, 1):
+            width, height = float(page.mediabox.width), float(page.mediabox.height)
+            if abs(width - 504) > .5 or abs(height - 720) > .5:
+                raise RuntimeError(f"KDP trim mismatch at PDF page {index}")
+    return count
+, converted
+    )
+    if remaining:
+        raise ValueError(
+            "Unrecognized code-fence metadata still present: " +
+            repr(remaining[:3])
+        )
+    return converted, count
+
+
+def sanitize_source_math_for_tex(body: str) -> str:
+    """Escape raw percent signs in a math display without changing meaning.
+
+    In Markdown a percent is ordinary text, but in LaTeX an unescaped percent
+    starts a line comment. In a math text macro, a raw 99% may hide the
+    closing brace of a boxed expression. Existing escaped percents stay intact.
+    """
+    return re.sub(r'(?<!\\)%', lambda _: r'\%', body)
+
+
 def plan_math(source: str, chapter: int) -> tuple[str, list[dict]]:
     """Protect every display formula from Pandoc's Markdown math heuristics.
 
