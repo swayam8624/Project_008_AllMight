@@ -217,3 +217,85 @@ replace the 32-box correctness oracle with actual SAP/DBVT/Guard/ML outputs,
 large datasets and fair competing baselines; do not claim that this native
 all-pairs kernel is an optimized broad phase. XR needs compositor/display and
 gaze timestamps, not only command-buffer GPU start/end.
+
+
+## Pass16 — GPU profiling and asynchronous Apple ownership
+
+**Project selection:** Maveb's production Metal renderer/callback code and
+KairoRenderer's real Objective-C++ bridge are primary. A tiny original Metal
+GPU compute shader is a native correctness witness. Kyoto/KairoPhysics and
+XR are *distinct measurement clients*, not claims that their research
+worktrees were compiled. NES remains the earlier CPU/binary project, not a
+forced visual/profiling frame.
+
+### Actual connected GitHub source (read-only)
+
+| Repo file | Observed main-branch Git blob SHA | Concrete evidence |
+| --- | --- | --- |
+| `Maveb/engine/metal/src/Renderer.cpp` | `cfe9669de8475995f82166e71dc407d0b39b3331` | Triple dispatch-semaphore frame permits; camera/Gaussian/scene rendering; capture completed handler captures `this` and buffer, compacts 256-byte-pitch rows, then releases; other completed handler calculates GPUStart/GPUEnd difference, increments completedFrames_ and signals permit |
+| `Maveb/engine/metal/src/FrameContext.cpp` | `e610d5b2e4b0e467f4e93d3fed6a7b694a47a5e6` | 8 MiB shared upload, 256 KiB shared readback, 64 MiB private heap; `beginFrame()` deferred cleanup and cursor reset; explicit invalid-alignment/overflow/capacity checks |
+| `Maveb/engine/metal/include/aether/metal/FrameContext.hpp` | `c0b9efbad52088ad89f5033510e6e1b8afd020c4` | Concrete BufferSlice owner/borrow boundary and explicit FrameContext move-only management |
+| `KairoRenderer/MetalRenderer.cppm` | `78f8dd55116b860b43af17838c4eea161528702c` | C++23 renderer-neutral façade, pick/capture, objects and graphic backend conversion |
+| `KairoRenderer/detail/MetalBackend.mm` | `5d291ebc02578fbff222fdf67aacf8d270a945b9` | Objective-C++ Metal command queue, command-buffer commit, wait-for-last-command before pick/capture/destruction, tracked native backend ownership |
+
+**Source-level review findings, not reproduced runtime faults:** The Maveb
+completed-handler capture of `this` requires a complete permit-drain and
+shutdown/callback accounting proof, not a categorical assertion of use-after-
+free. Its destructor waits for three frame permits, which is meaningful
+lifetime coordination. The stored GPU duration calculation needs careful
+handling of command terminal error, zero/unavailable GPU timestamps and
+source identity before it can be used as a paper-grade performance metric.
+Kairo's synchronous capture/readback simplifies a lifetime proof but can
+introduce CPU stalls; those were not measured by this source read.
+
+### New cross-project implementation and limits
+
+- `gpu_course/gpu_profile_ownership.hpp`: a host callback mailbox whose
+  `TerminalCallback` captures shared *internal state*, never a raw renderer;
+  explicit owner/slot/generation and submitted/unknown status, one mutex
+  for exact at-most-once completion/permit return, generation exhaustion,
+  optional valid GPU timestamps and a fail-closed native-profile evidence
+  summary keyed by device, source/shader/workload, SDK, tool, resolution and
+  correctness result. GPU counter values require actual support and units.
+- `gpu_profile_ownership_cpp23_lab.cpp`: **actual host C++23 jthreads** test
+  concurrent completion, duplicates, stale frame/foreign owner rejection,
+  renderer/UI owner disposal before late callback, unknown submission
+  quarantine, terminal errors and missing/invalid GPU timing. The
+  performance data are SYNTHETIC fixtures, not measured hardware.
+- `gpu_course/native_metal_callback_probe.mm`: optional actual Apple ARC
+  Objective-C++23 Metal kernel and native `addCompletedHandler:` block,
+  with strong internal receipt and weak UI observer. The test deliberately
+  destroys the renderer-like wrapper and UI before native GPU submission,
+  waits for actual terminal status/callback delivery, and independently
+  compares 64 GPU-written words with CPU arithmetic. A **single** native
+  GPU interval is diagnostic only, and invalid/missing GPU timestamps are
+  explicitly unavailable. This is authored, **not executed** here.
+- `gpu_course/native_metal_callback_unavailable.cpp`: code 77 if Metal
+  toolchain/runtime is not selected. Default CTest is CPU-only and cannot
+  certify native GPU, Xcode capture, counter sampling or rendering.
+- `GPU-16P - GPU Profiling and Apple Callback Ownership.md`: 44,409
+  characters of additive long-form explanation and project reconstruction
+  before the original Chapter16 host-allocation section. The original
+  source manuscript stays intact and source-pinned.
+
+### Real profiling workflow that is NOT yet executed
+
+Primary Apple documentation consulted this pass: MTLCommandBuffer terminal
+statuses/completed handler, GPUStartTime/GPUEndTime after completion,
+`MTLCaptureManager` and GPU counter support/sampling. Actual
+hardware counters and Xcode traces must be captured on a particular
+compatible Mac with the exact source/scene/shader build and repeated,
+correctness-gated runs. No `.gputrace`, counter values, profiler screenshots,
+Maveb run or Kyoto/ILLIXR benchmark was produced by the connected GitHub
+source edits.
+
+**Future integration:** Maveb needs a real callback/error/permit audit under
+actual Metal debug validation, not blanket ownership accusations. Kairo
+should compare synchronous capture overhead with a bounded optional
+asynchronous capture on matched scenes. Kyoto should compare exact pair
+sets and timing across its real baselines and not extrapolate a 64-word
+compute witness to collision performance. XR needs observed gaze sample,
+prediction, GPU, compositor and display clocks.
+
+**User workflow:** Continue staged additive commits and do not request any
+local pull/LaTeX commands until the chosen consolidated checkpoint.
