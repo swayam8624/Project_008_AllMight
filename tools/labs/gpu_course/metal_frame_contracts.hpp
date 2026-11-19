@@ -83,6 +83,9 @@ struct TerminalEvent {
     Terminal status{Terminal::error};
     std::optional<double> measured_gpu_milliseconds;
     std::optional<Capture> capture;
+    // Distinguishes successful GPU execution from failed CPU postprocessing.
+    // A bad capture never strands the terminal frame permit.
+    std::optional<Error> capture_error;
 };
 [[nodiscard]] constexpr bool power_of_two(std::size_t n) noexcept {
     return n!=0 && (n&(n-1))==0;
@@ -207,6 +210,8 @@ public:
         auto checked=slot_for(key);
         if(!checked) return std::unexpected(checked.error());
         const auto* slot=*checked;
+        if(slot->phase!=Phase::recording && slot->phase!=Phase::encoded)
+            return std::unexpected(Error::bad_phase);
         if(range.offset>slot->cursor ||
            range.length>slot->cursor-range.offset)
             return std::unexpected(Error::arena_full);
@@ -282,8 +287,11 @@ public:
                 measured_gpu_milliseconds(native_time);
             if(optional_capture) {
                 auto compact=compact_bgra8(*optional_capture);
-                if(!compact) return std::unexpected(compact.error());
-                event.capture.emplace(std::move(*compact));
+                if(compact) event.capture.emplace(std::move(*compact));
+                else event.capture_error=compact.error();
+                // Terminal GPU completion is already known here. Invalid
+                // CPU capture metadata is an independent data-processing
+                // error and must NOT retain a frame permit indefinitely.
             }
         } // Error paths never publish a successful image or GPU timing.
         events_.push_back(std::move(event));  // prepare before permit release
