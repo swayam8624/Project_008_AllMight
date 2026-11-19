@@ -56,7 +56,7 @@ RICH_FIGURES = {
     "02-foundations-ii-ch030": ("33-atlas-sampling.tex",),
     "02-foundations-ii-ch031": ("34-atlas-ransac.tex",),
 }
-ATLAS_SCRIPT = Path(__file__).resolve().parents[3] / "tools" / "labs" / "book02_visual_atlas.py"
+ATLAS_SCRIPT = Path(__file__).resolve().parents[4] / "tools" / "labs" / "book02_visual_atlas.py"
 PRELUDE_CHAPTER = "01-foundations-i-ch017"
 PRELUDE_FILE = "06-reader-contract.tex"
 PACKAGE_MARKER = r"\usepackage[print]{allmight-book}"
