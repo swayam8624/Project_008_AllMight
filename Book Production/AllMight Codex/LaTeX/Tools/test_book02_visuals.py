@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
+import re
 from pathlib import Path
 
 from book02_visuals import FIGURES, PRELUDE_CHAPTER, PRELUDE_FILE, install_book02_visuals
@@ -51,6 +53,30 @@ def make_tex(directory: Path, chapter_ids: list[str], stage: int = 2) -> Path:
 
 
 class Book02VisualTests(unittest.TestCase):
+    def test_actual_production_catalogue_and_two_parts_are_preserved(self) -> None:
+        # Read the real frozen production sources, not only synthetic test TeX.
+        root = Path(__file__).resolve().parents[1]
+        catalogue = json.loads((root/"Tools"/"stage-catalog.json").read_text())
+        selected = next(st for st in catalogue["stages"] if st["number"] == 2)
+        self.assertEqual(selected["chapters"], ALL_CHAPTERS)
+
+        generation_info = json.loads((root/"CURRENT.json").read_text())
+        generation = root / generation_info["generation_path"]
+        actual = []
+        for part_name in ("02-Mathematics-for-Visual-Computing-P01",
+                          "02-Mathematics-for-Visual-Computing-P02"):
+            main = (generation / part_name / "main.tex").read_text()
+            found = re.findall(
+                r"\\input\{\.\./current/[^}\n]+/content/([^/}\n]+)\.tex\}",
+                main,
+            )
+            actual.extend(ch for ch in found if re.fullmatch(
+                r"(?:01-foundations-i|02-foundations-ii|03-visual-computing-i)-ch\d+",
+                ch,
+            ))
+        self.assertEqual(actual, ALL_CHAPTERS)
+        self.assertEqual(len(set(actual)), 16)
+
     def test_all_chapters_have_explicit_supplemental_ownership(self) -> None:
         self.assertEqual(set(FIGURES), set(ALL_CHAPTERS))
         self.assertEqual(len(ALL_CHAPTERS), len(set(ALL_CHAPTERS)))
