@@ -17,7 +17,8 @@ KDP_BW_WHITE_PAGE_LIMIT = 828
 SKIP_FRONT_TEXT = 12
 FATAL = {"trim", "page_limit", "missing_metadata", "duplicate_footers",
          "clipped_header",
-         "overlapping_headers", "clipped_text", "tiny_code", "missing_figures"}
+         "overlapping_headers", "clipped_text", "tiny_code",
+         "missing_figures", "raw_tex_leak"}
 LEAKS = (
     "This addition belongs", "the user has reserved", "Supplementary/Manual Integration",
     "source attachment's central", "the supplied source attachment",
@@ -55,6 +56,15 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
                 if not txt: continue
                 bbox = fitz.Rect(line["bbox"])
                 lines.append((bbox, txt, line))
+                # Lone punctuation at a code wrap can make a valid program
+                # look corrupted. It requires a visible proof review.
+                if txt in (";", ");") and any(
+                    any(family in str(span.get("font", "")).casefold()
+                        for family in ("mono", "menlo", "courier", "consolas"))
+                    for span in line["spans"]
+                ):
+                    flag("code_wrap_orphan", i,
+                         f"Review stranded listing punctuation: {txt!r}")
                 if bbox.y0 > rect.height-75 and re.fullmatch(r"[ivxlcdm]+|\d+", txt, re.I):
                     bottom_nums.append((bbox, txt))
                 if 25 < bbox.y0 < 75 and len(txt) >= 8:
@@ -106,6 +116,16 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
         for leak in LEAKS:
             if leak.casefold() in text.casefold():
                 flag("editorial_leak", i, leak)
+        # Source syntax is not reader-facing text. Especially reject raw
+        # index macros inserted inside indented/tilde Markdown code blocks.
+        leaked_tex = re.search(
+            r"\\(?:index|ldots|boxed|frac|begin|end|texttt)\b|"
+            r"\{\{\}\}|\bN--1\b",
+            text,
+        )
+        if leaked_tex:
+            flag("raw_tex_leak", i,
+                 "Unrendered TeX source: " + repr(leaked_tex.group(0)))
         if re.search(r"\b(?:[1-9]|1[0-7])\.0\.[1-9]\d*\b", text):
             flag("bad_section_numbering", i, "Zero-section numbering found")
         # PDF text extraction may sometimes collapse natural word spacing,
