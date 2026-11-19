@@ -254,6 +254,10 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
         pattern = r"(?m)^" + re.escape(token) + r"$"
         if len(re.findall(pattern, tex)) != 1:
             raise ValueError(f"Missing/duplicate diagram marker: {token}")
+        required = ("part", "image", "caption", "chapter", "index")
+        missing = [field for field in required if field not in item]
+        if missing:
+            raise ValueError(f"Incomplete diagram metadata for {token}: {missing}")
         path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
         caption = item["caption"].replace("\\", "")
         for reserved, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"),
