@@ -33,6 +33,7 @@ MASTER = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and S
 EDITION = ROOT / "Chapter Edition/01 - Computing Foundations"
 LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
 CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
+READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reader.sty"
 OUTPUT = ROOT / "build/book01-expanded-reader"
 SOURCE_BEGIN = b"<!-- CHAPTER-SOURCE-BEGIN -->\n"
 SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
@@ -218,6 +219,7 @@ def audit_sources() -> tuple[list[dict], dict]:
         "original_canonical_git_blob_after_stripping_additions": git_blob(preimage),
         "chapter_count": NUMBER_OF_CHAPTERS,
         "addition_count": total,
+        "reader_style_sha256": sha256(READER_STYLE.read_bytes()),
         "part_ranges": [list(x) for x in PARTS],
     }
     return rows, metadata
@@ -237,12 +239,23 @@ def pandoc_binary() -> str:
     return binary
 
 
+def amend_generated_tex(path: Path) -> None:
+    """Correct only generated TeX, never the original teaching Markdown."""
+    content = path.read_text("utf-8")
+    def correct(match: re.Match[str]) -> str:
+        return r"\texttt{" + re.sub(r"(?<!\\)_", r"\\_", match.group(1)) + "}"
+    content = re.sub(r"\\texttt\{([^{}\n]*)\}", correct, content)
+    content = content.replace(r"\begin{verbatim}", r"\begin{BookCode}")
+    content = content.replace(r"\end{verbatim}", r"\end{BookCode}")
+    path.write_text(content, encoding="utf-8")
+
+
 def prepare(rows: list[dict], metadata: dict) -> None:
     pandoc = pandoc_binary()
     OUTPUT.mkdir(parents=True, exist_ok=True)
     style = LATEX / "allmight-book.sty"
     fonts = LATEX / "Assets/Fonts"
-    if not style.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
+    if not style.is_file() or not READER_STYLE.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
         raise FileNotFoundError("The existing LaTeX profile and its bundled local font must be available")
     report = {**metadata, "parts": [], "chapters": []}
     for part_number, (low, high) in enumerate(PARTS, 1):
@@ -251,6 +264,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         content_dir = directory / "content"
         content_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(style, directory / "allmight-book.sty")
+        shutil.copy2(READER_STYLE, directory / "book01-reader.sty")
         asset_root = directory / "Assets"
         asset_root.mkdir(exist_ok=True)
         font_link = asset_root / "Fonts"
@@ -263,7 +277,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             font_link.symlink_to(os.path.relpath(fonts, asset_root), target_is_directory=True)
 
         tex = [r"\documentclass[11pt,twoside,openany]{book}",
-               r"\usepackage[print]{allmight-book}",
+               r"\usepackage[ebook]{allmight-book}",
+               r"\usepackage{book01-reader}",
                r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
                r"\title{Bits, Programs, and Reliable Systems — Expanded Reader, Part " + str(part_number) + " of 4}",
                r"\author{Swayam Singal}",
@@ -289,7 +304,10 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             if not tex_path.is_file() or not tex_path.stat().st_size:
                 raise RuntimeError(f"Missing/nontext TeX output for chapter {num}")
             tex.append(r"\chapter{" + tex_escape(row["title"]) + "}")
+            amend_generated_tex(tex_path)
+            tex.append(r"\BookChapterOrientation")
             tex.append(r"\input{content/" + fragment + "}")
+            tex.append(r"\BookPersonalNotes{" + tex_escape(row["title"]) + "}")
             clean = {k: v for k, v in row.items() if not k.startswith("_")}
             clean.update({"part": name, "markdown_sha256": sha256(payload),
                           "latex_sha256": sha256(tex_path.read_bytes()),
@@ -313,7 +331,21 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
                 raise RuntimeError("Pandoc could not render the final capstone: " + run.stderr[:3000])
+            amend_generated_tex(challenge_tex)
             tex.append(r"\input{content/final-mastery}")
+            tex.append(r"\appendix")
+            tex.append(r"\chapter{Learning Journal and Experiment Checklist}")
+            tex.append(r"\begin{BookLearningNote}[How to use this appendix]")
+            tex.append(r"Treat each completed lab as evidence: retain its inputs, expected behavior, observed behavior, environment, and reproducible test.")
+            tex.append(r"\end{BookLearningNote}")
+            tex.append(r"\section{Experiment record}")
+            tex.append(r"\begin{BookPractice}[Repeatable experiment template]")
+            tex.append(r"Question; hypothesis; baseline; test setup; inputs and seeds; measurement units; observations; failures; alternative explanations; next test.")
+            tex.append(r"\end{BookPractice}")
+            tex.append(r"\section{Code review checklist}")
+            tex.append(r"Review ownership, lifetimes, failure handling, concurrency, input validation, resource limits, reproducibility, and whether measured results support the claim.")
+            tex.append(r"\section{Personal research notes}")
+            tex.append(r"Record questions, unexpected outcomes, experiments that failed, and evidence that would revise your conclusions.")
             report["final_capstone"] = {
                 "markdown_path": challenge_md.relative_to(OUTPUT).as_posix(),
                 "markdown_sha256": sha256(challenge_bytes),
@@ -364,6 +396,9 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
     if capstone["markdown_sha256"] != metadata["final_capstone_sha256"]:
         raise ValueError("Final capstone does not match committed source")
     for record in data["parts"]:
+        reader_style = OUTPUT / record["id"] / "book01-reader.sty"
+        if not reader_style.is_file() or sha256(reader_style.read_bytes()) != metadata["reader_style_sha256"]:
+            raise ValueError("Reader style missing or stale; rerun --prepare")
         path = OUTPUT / record["master_path"]
         if not path.is_file() or sha256(path.read_bytes()) != record["master_sha256"]:
             raise ValueError("Prepared LaTeX master altered: " + str(path))
@@ -400,12 +435,33 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
         destination = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
         shutil.copy2(pdf, destination)
         print("PDF:", destination)
-        if open_pdf:
+        if open_pdf and part:
             opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
             if opener:
                 subprocess.Popen([opener, str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 print("PDF opener not available; open manually:", destination)
+
+    if not part:
+        try:
+            from pypdf import PdfWriter
+        except ImportError as exc:
+            raise RuntimeError("Part PDFs built, but merging requires pypdf. Install with: python3 -m pip install pypdf") from exc
+        combined = OUTPUT / "Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf"
+        writer = PdfWriter()
+        for number in range(1, 5):
+            source = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
+            writer.append(str(source), import_outline=True)
+        with combined.open("wb") as handle:
+            writer.write(handle)
+        writer.close()
+        if not combined.is_file() or combined.stat().st_size < 10000:
+            raise RuntimeError("Merged PDF missing or incomplete")
+        print("COMPLETE BOOK PDF:", combined)
+        if open_pdf:
+            opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
+            if opener:
+                subprocess.Popen([opener, str(combined)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def main() -> int:
