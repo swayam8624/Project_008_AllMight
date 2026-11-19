@@ -579,8 +579,13 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
           "chapters,", metadata["addition_count"], "lessons, four LaTeX parts")
 
 
-def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: bool = False) -> None:
+def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: bool = False, paperback: bool = False) -> None:
     verify_prepared(rows, metadata)
+    if paperback and part is not None:
+        raise ValueError("Use paperback or --part; not both")
+    # Figure inclusion is mandatory: do not compile an incomplete book.
+    manifest = json.loads((OUTPUT / "manifest.json").read_text("utf-8"))
+    render.render_figures(manifest, OUTPUT)
     engine = shutil.which("latexmk")
     lualatex = shutil.which("lualatex")
     if not lualatex:
@@ -589,7 +594,13 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
     # for cross-references/TOC rather than forcing installation of full MacTeX.
     # Default is one continuous TeX book, not four compiled volumes
     # merged into a PDF with repeated covers and incomplete contents.
-    if part is None:
+    if paperback:
+        selected = [
+            (OUTPUT / f"book01-print-v{n:02d}",
+             OUTPUT / f"Book01-KDP-Paperback-Volume-{n:02d}.pdf")
+            for n in range(1, len(PRINT_VOLUMES) + 1)
+        ]
+    elif part is None:
         selected = [(OUTPUT / "book01-complete",
                      OUTPUT / "Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf")]
     else:
@@ -621,7 +632,10 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
         if not pdf.is_file() or not pdf.stat().st_size:
             raise RuntimeError("No PDF from " + directory.name + "; see " + str(directory / "build/main.log"))
         shutil.copy2(pdf, destination)
-        print("PDF:", destination)
+        pages = render.pdf_preflight(destination, paperback=paperback)
+        print("PDF:", destination, "—", pages, "pages")
+        if not paperback and pages > render.KDP_MAX_WHITE_BW:
+            print("NOTE: continuous digital PDF exceeds 828-page paperback limit; use --compile-paperback")
         if open_pdf:
             opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
             if opener:
@@ -636,13 +650,14 @@ def main() -> int:
     choice.add_argument("--check", action="store_true", help="Read-only source-preservation audit")
     choice.add_argument("--prepare", action="store_true", help="Generate Markdown + TeX; never compile")
     choice.add_argument("--verify-prepared", action="store_true", help="Verify generated sources, never compile")
-    choice.add_argument("--compile", action="store_true", help="Explicitly compile PDFs on this machine")
+    choice.add_argument("--compile", action="store_true", help="Compile the continuous digital book")
+    choice.add_argument("--compile-paperback", action="store_true", help="Compile two KDP 7x10 paperback interiors with 828-page ceiling")
     parser.add_argument("--part", type=int, choices=(1, 2, 3, 4),
                         help="For --compile, build only this part")
     parser.add_argument("--open", action="store_true", help="Open each successfully compiled PDF in the default viewer")
     args = parser.parse_args()
-    if args.open and not args.compile:
-        parser.error("--open requires --compile")
+    if args.open and not (args.compile or args.compile_paperback):
+        parser.error("--open requires --compile or --compile-paperback")
     if args.part and not args.compile:
         parser.error("--part is only meaningful with --compile")
     try:
@@ -653,8 +668,8 @@ def main() -> int:
             prepare(rows, metadata)
         elif args.verify_prepared:
             verify_prepared(rows, metadata)
-        elif args.compile:
-            compile_parts(rows, metadata, args.part, args.open)
+        elif args.compile or args.compile_paperback:
+            compile_parts(rows, metadata, args.part, args.open, args.compile_paperback)
     except (OSError, ValueError, RuntimeError, AssertionError, UnicodeError) as exc:
         print("Book01 release refused:", exc, file=sys.stderr)
         return 1
