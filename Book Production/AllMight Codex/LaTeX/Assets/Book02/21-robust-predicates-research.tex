@@ -53,7 +53,7 @@ digit from an already rounded measurement, and it is slower than
 Shewchuk's adaptive expansions.
 
 For a concrete adversarial witness choose \(a=(0,0)\),
-\(b=(M,M)\), \(c=(M,\operatorname{nextafter}(M,0))\),
+\(b=(M,M)\), \(c=(0.9M,\operatorname{nextafter}(0.9M,0))\),
 where \(M=10^{308}\) is a finite binary64 number.
 The exact stored-coordinate determinant is negative because
 \(c_y<b_y\); a naive float determinant can become NaN through
