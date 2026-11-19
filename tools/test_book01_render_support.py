@@ -6,21 +6,23 @@ import unittest
 import book01_render_support as book
 
 
+TICK = chr(96) * 3
+
+
 class Book01ProductionTests(unittest.TestCase):
     def test_mermaid_is_never_passed_as_raw_code(self):
         source = (
             "## CPU to GPU transfer\n\n"
-            "\`\`\`mermaid\nflowchart LR\n  A[CPU] --> B[GPU]\n\`\`\`\n\n"
+            f"{TICK}mermaid\nflowchart LR\n  A[CPU] --> B[GPU]\n{TICK}\n\n"
             "## Synchronization\n\n"
-            "\`\`\`mermaid\nsequenceDiagram\nA->>B: Work\n\`\`\`\n"
+            f"{TICK}mermaid\nsequenceDiagram\nA->>B: Work\n{TICK}\n"
         )
-        source = source.replace("\\\`", "\`")
         with TemporaryDirectory() as temp:
             root = Path(temp)
             part = root / "book01-expanded-p01"
             transformed, entries = book.plan_figures(source, 1, 1, part, root)
             self.assertEqual(len(entries), 2)
-            self.assertNotIn("\`\`\`mermaid", transformed)
+            self.assertNotIn(TICK + "mermaid", transformed)
             self.assertIn("ALLMIGHTFIGURECH01INDEX001", transformed)
             tex = book.replace_figure_tokens(transformed, entries)
             self.assertEqual(tex.count("\\includegraphics"), 2)
@@ -59,7 +61,7 @@ class Book01ProductionTests(unittest.TestCase):
             root = Path(temp)
             part = root / "book01-expanded-p02"
             text, entries = book.plan_figures(
-                "\`\`\`mermaid\nflowchart LR\n A-->B\n\`\`\`".replace("\\\`", "\`"),
+                f"{TICK}mermaid\nflowchart LR\n A-->B\n{TICK}",
                 5, 2, part, root
             )
             self.assertEqual(book.digest((root / entries[0]["source"]).read_bytes()),
