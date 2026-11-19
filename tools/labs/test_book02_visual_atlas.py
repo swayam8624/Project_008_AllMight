@@ -197,10 +197,13 @@ class Book02AtlasVerification(unittest.TestCase):
             self.assertEqual(install_book02_visuals(main,include_rich_atlas=True),[])
             self.assertEqual(saved,main.read_bytes())
 
-    def test_rich_chapter_mapping_covers_all_seven_figures(self) -> None:
+    def test_rich_chapter_mapping_covers_all_seven_figures_and_bridge(self) -> None:
         snippets={n for v in RICH_FIGURES.values() for n in v}
-        self.assertEqual(len(snippets),7)
+        self.assertEqual(len(snippets),8)
         source = REPO/"Book Production"/"AllMight Codex"/"LaTeX"/"Assets"/"Book02"
+        self.assertIn("36-from-probability-to-pixels.tex",snippets)
+        self.assertTrue((self.atlas/"coverage"/"triangle-pixel-coverage.pdf").is_file())
+        self.assertEqual(self.manifest["coverage_bridge"]["exact_fraction"],"119/192")
         for slug in FIGURES:
             matches=[n for n in snippets if slug in (source/n).read_text()]
             self.assertEqual(len(matches),1,slug)
