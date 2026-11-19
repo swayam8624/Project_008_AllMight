@@ -30,6 +30,7 @@ import apply_cpp23_project_inserts as inserts
 import book01_render_support as render
 import book01_publication_edit as publication
 import book01_index as idx
+import book01_learning_gates as gates
 from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -41,6 +42,7 @@ READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reade
 ACADEMIC_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_PREFACE.md"
 SECOND_VOLUME_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/VOLUME_II_PREFACE.md"
 ACADEMIC_BACKMATTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_BACKMATTER.md"
+LEARNING_GATES_SOURCE = ROOT / "tools/book01_learning_gates.py"
 OUTPUT = ROOT / "build/book01-expanded-reader"
 SOURCE_BEGIN = b"<!-- CHAPTER-SOURCE-BEGIN -->\n"
 SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
@@ -245,6 +247,7 @@ def audit_sources() -> tuple[list[dict], dict]:
         "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
         "second_volume_preface_sha256": sha256(SECOND_VOLUME_PREFACE.read_bytes()),
         "academic_backmatter_sha256": sha256(ACADEMIC_BACKMATTER.read_bytes()),
+        "learning_gates_sha256": sha256(LEARNING_GATES_SOURCE.read_bytes()),
         "academic_enrichment_sha256": {str(n): sha256(source.read_bytes())
                                         for n, source in ENRICHMENT_FILES.items()},
         "academic_title": BOOK_TITLE,
@@ -307,7 +310,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
     if not style.is_file() or not READER_STYLE.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
         raise FileNotFoundError("The existing LaTeX profile and its bundled local font must be available")
     report = {**metadata, "parts": [], "chapters": [], "diagrams": [],
-              "publication_edits": [], "enrichments": []}
+              "publication_edits": [], "enrichments": [], "learning_gates": []}
     for part_number, (low, high) in enumerate(PARTS, 1):
         name = f"book01-expanded-p{part_number:02d}"
         directory = OUTPUT / name
@@ -437,6 +440,16 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                     "protected_math_displays": len(extra_math),
                     "code_fence_metadata_normalized": extra_code_ids,
                 })
+            # The same three independent learning obligations close every
+            # chapter; the tasks themselves are unique to its mechanisms.
+            gate_path = content_dir / f"gate-{num:02d}.tex"
+            gate_path.write_text(gates.gate_latex(num), encoding="utf-8")
+            tex.append(r"\input{content/gate-" + f"{num:02d}" + "}")
+            report["learning_gates"].append({
+                "chapter": num,
+                "latex_path": gate_path.relative_to(OUTPUT).as_posix(),
+                "latex_sha256": sha256(gate_path.read_bytes()),
+            })
         # The multi-project competency chapter belongs AFTER all sixteen
         # original chapters. It has its own documented source identity and
         # does not masquerade as a nineteenth exact-anchor insertion.
@@ -540,6 +553,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\input{../book01-expanded-p" + f"{part_number:02d}" +
             r"/content/chapter-" + f"{number:02d}" + "}"
         )
+        book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
+                    r"/content/gate-" + f"{number:02d}" + "}")
         if number in ENRICHMENT_FILES:
             book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
                         r"/content/academic-ch" + f"{number:02d}" + "}")
@@ -618,6 +633,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             volume.append(
                 r"\input{../book01-expanded-p" + f"{source_part:02d}" +
                 r"/content/chapter-" + f"{number:02d}" + "}")
+            volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
+                          r"/content/gate-" + f"{number:02d}" + "}")
             if number in ENRICHMENT_FILES:
                 volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
                               r"/content/academic-ch" + f"{number:02d}" + "}")
@@ -673,6 +690,12 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
             path = OUTPUT / recorded[kind + "_path"]
             if not path.is_file() or sha256(path.read_bytes()) != recorded[kind + "_sha256"]:
                 raise ValueError("Prepared chapter " + kind + " altered or missing: " + str(path))
+    if len(data.get("learning_gates", [])) != NUMBER_OF_CHAPTERS:
+        raise ValueError("Missing one or more chapter reconstruction gates")
+    for item in data["learning_gates"]:
+        gate_path = OUTPUT / item["latex_path"]
+        if not gate_path.is_file() or sha256(gate_path.read_bytes()) != item["latex_sha256"]:
+            raise ValueError("Modified or missing reconstruction gate: " + str(gate_path))
     if len(data.get("enrichments", [])) != len(ENRICHMENT_FILES):
         raise ValueError("Academic enrichment sources missing in generated reader")
     for extra in data["enrichments"]:
