@@ -325,6 +325,9 @@ def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stat
     # Source-protected display math is reinserted after this transformation.
     content = render.reflow_inline_monospace(content)
     content = render.replace_math_tokens(content, math_entries or [])
+    # Source-preserving *presentation* reflow: no C++ token is edited, and
+    # lines are broken only outside literals on safe token boundaries.
+    content = render.reflow_long_cpp_verbatim(content)
     content = content.replace(r"\begin{verbatim}", r"\begin{BookCode}")
     content = content.replace(r"\end{verbatim}", r"\end{BookCode}")
     content = render.replace_figure_tokens(content, figures or [])
