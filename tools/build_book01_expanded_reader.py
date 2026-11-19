@@ -553,11 +553,11 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\input{../book01-expanded-p" + f"{part_number:02d}" +
             r"/content/chapter-" + f"{number:02d}" + "}"
         )
-        book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
-                    r"/content/gate-" + f"{number:02d}" + "}")
         if number in ENRICHMENT_FILES:
             book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
                         r"/content/academic-ch" + f"{number:02d}" + "}")
+        book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
+                    r"/content/gate-" + f"{number:02d}" + "}")
     book.extend([
         r"\input{../book01-expanded-p04/content/final-mastery}",
         r"\appendix",
@@ -633,11 +633,11 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             volume.append(
                 r"\input{../book01-expanded-p" + f"{source_part:02d}" +
                 r"/content/chapter-" + f"{number:02d}" + "}")
-            volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
-                          r"/content/gate-" + f"{number:02d}" + "}")
             if number in ENRICHMENT_FILES:
                 volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
                               r"/content/academic-ch" + f"{number:02d}" + "}")
+            volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
+                          r"/content/gate-" + f"{number:02d}" + "}")
         if volume_number == len(PRINT_VOLUMES):
             volume.append(r"\input{../book01-expanded-p04/content/final-mastery}")
         volume.extend([
