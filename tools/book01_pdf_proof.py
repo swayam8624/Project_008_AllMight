@@ -16,6 +16,7 @@ import sys
 KDP_BW_WHITE_PAGE_LIMIT = 828
 SKIP_FRONT_TEXT = 12
 FATAL = {"trim", "page_limit", "missing_metadata", "duplicate_footers",
+         "clipped_header",
          "overlapping_headers", "clipped_text", "tiny_code", "missing_figures"}
 LEAKS = (
     "This addition belongs", "the user has reserved", "Supplementary/Manual Integration",
@@ -55,8 +56,13 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
                 lines.append((bbox, txt, line))
                 if bbox.y0 > rect.height-75 and re.fullmatch(r"[ivxlcdm]+|\d+", txt, re.I):
                     bottom_nums.append((bbox, txt))
-                if 25 < bbox.y0 < 95 and len(txt) >= 8:
+                if 25 < bbox.y0 < 75 and len(txt) >= 8:
                     header_lines.append((bbox, txt))
+                    # In the older paperbacks the left running header was
+                    # cropped to "pter", beginning exactly at x=0. Flag
+                    # that even when the text object itself fits the page.
+                    if i > 2 and (bbox.x0 < 18 or bbox.x1 > rect.width - 18):
+                        flag("clipped_header", i, f"{txt[:65]!r} touches trim edge")
                 if i > 1 and (bbox.x0 < -1.0 or bbox.x1 > rect.width + 1.0 or bbox.y0 < -1.0 or bbox.y1 > rect.height + 1.0):
                     flag("clipped_text", i, f"{txt[:70]!r} at {tuple(round(t) for t in bbox)}")
                 if "Mono" in str(line["spans"][0].get("font", "")) or "Menlo" in str(line["spans"][0].get("font", "")):
