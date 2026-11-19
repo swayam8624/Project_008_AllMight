@@ -117,6 +117,13 @@
 % Generated concept headings are compact, unnumbered run-in paragraphs.
 \titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries\color{BOneInk}}{}{0pt}{}
 \titlespacing*{\paragraph}{0pt}{0.9ex plus 0.2ex minus 0.1ex}{0.7em}
+% Widen the section-number box in the table of contents. The book class
+% default 2.3em is too narrow for 16.10--16.12 and 17.10, producing
+% visually concatenated entries such as "16.10From".
+\makeatletter
+\renewcommand*\l@section{\@dottedtocline{1}{1.5em}{3.9em}}
+\makeatother
+
 % Reader-only running furniture: clear all inherited ebook/print slots.
 % Without \fancyhf{}, the global style's right-side page number survived on
 % even pages, doubling the footer; full-width marks also collided in the head.
