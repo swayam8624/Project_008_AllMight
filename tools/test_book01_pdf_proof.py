@@ -52,6 +52,37 @@ class ProofTests(unittest.TestCase):
             self.assertIn("trim", result["counts"])
             self.assertGreater(result["fatal_count"], 0)
 
+    def test_sub_eight_point_code_is_still_a_release_blocker(self):
+        with TemporaryDirectory() as temp:
+            path = self.make_pdf(Path(temp))
+            document = fitz.open(path)
+            # Courier represents the same physical size check as Menlo,
+            # independently of whether the font is installed in CI.
+            document[1].insert_text(
+                (78, 160), "int main() { return 0; }",
+                fontname="cour", fontsize=7.0
+            )
+            copy = Path(temp) / "tiny-code.pdf"
+            document.save(copy)
+            document.close()
+            result = proof.inspect(copy, paperback=True)
+            self.assertIn("tiny_code", result["counts"])
+            self.assertGreater(result["fatal_count"], 0)
+
+    def test_nine_point_code_is_not_a_false_positive(self):
+        with TemporaryDirectory() as temp:
+            path = self.make_pdf(Path(temp))
+            document = fitz.open(path)
+            document[1].insert_text(
+                (78, 160), "int main() { return 0; }",
+                fontname="cour", fontsize=9.0
+            )
+            copy = Path(temp) / "readable-code.pdf"
+            document.save(copy)
+            document.close()
+            result = proof.inspect(copy, paperback=True)
+            self.assertNotIn("tiny_code", result["counts"])
+
     def test_cropped_header_blocks_release(self):
         with TemporaryDirectory() as temp:
             result = proof.inspect(
