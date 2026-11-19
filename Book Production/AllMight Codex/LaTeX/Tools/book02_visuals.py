@@ -168,16 +168,16 @@ def install_book02_visuals(tex_path: str | Path, *, include_rich_atlas: bool = F
     # source chapter IDs and physical cross-book link target paths do not move.
     # Only the copied main.tex is modified, never the frozen generation.
     source = source.replace(
-        r"\\SetBookStage{2}{Mathematics for Visual Computing}",
-        r"\\SetBookStage{2}{From Equations to Geometry}", 1
+        r"\SetBookStage{2}{Mathematics for Visual Computing}",
+        r"\SetBookStage{2}{From Equations to Geometry}", 1
     )
     source = source.replace(
-        r"\\title{Mathematics for Visual Computing}",
-        r"\\title{From Equations to Geometry\\\\{\\large Mathematics, Numerical Methods, Optimization, and Visual Computing}}", 1
+        r"\title{Mathematics for Visual Computing}",
+        r"\title{From Equations to Geometry\\{\large Mathematics, Numerical Methods, Optimization, and Visual Computing}}", 1
     )
     source = source.replace(
-        r"\\AllMightStageMark{2}{Mathematics for Visual Computing}",
-        r"\\AllMightStageMark{2}{From Equations to Geometry}", 1
+        r"\AllMightStageMark{2}{Mathematics for Visual Computing}",
+        r"\AllMightStageMark{2}{From Equations to Geometry}", 1
     )
     source = source.replace("This is Mathematics for Visual Computing --- Part",
                             "This is From Equations to Geometry --- Part")
