@@ -157,6 +157,11 @@ public:
         [[nodiscard]] std::size_t staged_size() const noexcept {
             return control_?control_->slots[index_].payload.size():0;
         }
+        // Read-only identity accessor lets a submission queue reject
+        // writers belonging to another frame pool BEFORE publication.
+        [[nodiscard]] std::uint64_t owner_id() const noexcept {
+            return control_?control_->owner:0;
+        }
         [[nodiscard]] std::expected<FrameHandle,FrameError>
         submit(CompletionStamp required) noexcept {
             if (!control_) return std::unexpected(FrameError::no_writer);
