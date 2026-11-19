@@ -35,6 +35,11 @@ Markdown.
   grayscale-safe code/definition boxes. Chapter-opening generic study prompts
   and blank journal pages are omitted from the reader, but no source text
   is deleted. Pages are not padded with filler.
+- Repetitive Markdown thematic breaks are converted **only in the derived reader**
+  to compact run-in concept headings or restrained spacing. These conversion
+  counts are recorded in the manifest; the original authored Markdown stays intact.
+- Every original display formula must survive the Pandoc conversion with its
+  complete mathematical content, not merely a matching number of equations.
 - The EPUB is **not generated** until the PDF content and typography are
   reviewed and approved.
 
