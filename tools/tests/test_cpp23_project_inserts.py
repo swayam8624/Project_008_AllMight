@@ -212,6 +212,21 @@ class ProjectInsertionTests(unittest.TestCase):
         self.run_script("--apply", success=False)
         self.assertEqual(self.master.read_bytes(), ambiguous)
 
+    def test_adjacent_shared_newline_anchor_is_still_ambiguous(self) -> None:
+        """An identical heading can share a newline with its neighbor.
+
+        bytes.count() misses this overlapping occurrence; the strict source
+        patcher must detect BOTH headings rather than applying the lesson
+        to the first one and silently accepting an ambiguous manuscript.
+        """
+        anchor = b"\n## Let the compiler compose the operations\n"
+        adjacent = b"\n## Let the compiler compose the operations\n## Let the compiler compose the operations\n"
+        self.assertEqual(adjacent.count(anchor), 1)  # Non-overlapping miscount.
+        ambiguous = self.original.replace(anchor, adjacent)
+        self.master.write_bytes(ambiguous)
+        self.run_script("--apply", success=False)
+        self.assertEqual(self.master.read_bytes(), ambiguous)
+
     def test_missing_or_ambiguous_anchor_refuses_to_change_file(self) -> None:
         other = self.original.replace(
             b"\n## Choose a type for its promise, not its familiar size\n",
