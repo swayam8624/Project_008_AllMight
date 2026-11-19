@@ -39,6 +39,10 @@ SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
 PARTS = ((1, 4), (5, 8), (9, 12), (13, 16))
 NUMBER_OF_CHAPTERS = 16
 EXPECTED_ADDITIONS = 18
+# Original foundation master before this branch's additive work. The exact
+# same identity is required after reversing any already-applied lesson
+# blocks; otherwise the derived Chapter Edition may be stale.
+EXPECTED_BASE_BLOB = "d3202af31e1eb644a74565eeb63e7a3352438823"
 
 
 def sha256(value: bytes) -> str:
@@ -139,6 +143,19 @@ def insert_and_prove(base: bytes, specs: list[inserts.Insert]) -> tuple[bytes, l
 def audit_sources() -> tuple[list[dict], dict]:
     master = MASTER.read_bytes()
     master.decode("utf-8")
+    preimage = master
+    for spec in inserts.INSERTS:
+        begin, end, block = inserts.get_block(spec)
+        if begin in preimage or end in preimage:
+            if preimage.count(begin) != 1 or preimage.count(end) != 1 or preimage.count(block) != 1:
+                raise ValueError(spec.name + ": modified or partial canonical addition")
+            preimage = preimage.replace(block, b"", 1)
+    if git_blob(preimage) != EXPECTED_BASE_BLOB:
+        raise ValueError(
+            "Canonical source changed beyond exact staged additions; "
+            "the 16 derived chapter bodies must be regenerated and audited "
+            "before an updated Book01 release can be trusted"
+        )
     mapped = specs_by_chapter()
     all_specs = list(inserts.INSERTS)
     for spec in all_specs:
@@ -198,6 +215,7 @@ def audit_sources() -> tuple[list[dict], dict]:
         "canonical_source": MASTER.relative_to(ROOT).as_posix(),
         "canonical_source_sha256": sha256(master),
         "canonical_source_git_blob": git_blob(master),
+        "original_canonical_git_blob_after_stripping_additions": git_blob(preimage),
         "chapter_count": NUMBER_OF_CHAPTERS,
         "addition_count": total,
         "part_ranges": [list(x) for x in PARTS],
