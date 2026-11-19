@@ -73,6 +73,44 @@ class ProofTests(unittest.TestCase):
         self.assertLess(geometry, headwidth)
         self.assertLess(headwidth, running)
 
+    def test_book_one_series_identity_and_clean_reader_imprint(self):
+        # Book 1 is part of a seven-book sequence; print halves are formats.
+        from book01_editorial import SERIES_TITLE, SERIES_POSITION, BOOK_TITLE
+        self.assertEqual(SERIES_TITLE, "From Bits to Research")
+        self.assertEqual(SERIES_POSITION, "Book One of Seven")
+        self.assertEqual(BOOK_TITLE, "From Bits to Parallel Systems")
+        self.assertEqual(
+            builder.book_imprint("Reader Title", "Reader Subtitle"),
+            r"\BookImprintPage{Reader Title}{Reader Subtitle}"
+        )
+
+        root = Path(__file__).resolve().parents[1]
+        style = (root / "Book Production/Seven-Book Curriculum/Book01"
+                 / "book01-reader.sty").read_text("utf-8")
+        self.assertIn(r"\newcommand{\BookSeriesTitle}{From Bits to Research}", style)
+        self.assertIn(r"\newcommand{\BookImprintPage}[2]", style)
+        self.assertIn("github.com/swayam8624/Project_008_AllMight", style)
+        for unwanted in ("Academic working proof", "Academic production proof:",
+                         "No ISBN or publishing imprint", "Source revision:"):
+            self.assertNotIn(unwanted, style)
+
+    def test_reader_bibliography_identifiers_are_real_source_links(self):
+        root = Path(__file__).resolve().parents[1]
+        path = (root / "Book Production/Seven-Book Curriculum/Book01"
+                / "ACADEMIC_BACKMATTER.md")
+        references = path.read_text("utf-8")
+        for identifier in (
+            "10.1145/103162.103163",
+            "10.1145/1498765.1498785",
+            "10.1145/1375581.1375591",
+            "10.1002/9781394193202",
+            "10.1201/B17511",
+            "978-0-13-681648-5",
+            "github.com/swayam8624/NESEmulator",
+            "github.com/swayam8624/Maveb",
+        ):
+            self.assertIn(identifier, references)
+
     def test_valid_minimal_print_pdf(self):
         with TemporaryDirectory() as temp:
             path = self.make_pdf(Path(temp))
