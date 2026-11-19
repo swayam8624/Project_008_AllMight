@@ -6,6 +6,89 @@ This is the **final Book 1 C++23 foundations curriculum authoring checkpoint**, 
 
 It is **not** a claim that the entire seven-book program is finished or that all 39 existing original foundational reading chapters have been moved into final seven-volume print masters. The existing seven-stage print-production generation is a separate older snapshot and remains untouched. The expanded-reader release is deliberately independent because the old print generator relies on local cached assets and source paths and predates the eighteen newly authored lessons.
 
+## Current academic production pipeline — 19 November 2026
+
+**This section supersedes earlier PDF/format instructions below.** The
+source-preserving authoring checkpoint remains the same: 16 original reading
+chapters, 18 reversible project additions and one final integrative laboratory.
+The new academic publishing layer is explicitly separate from the canonical
+Markdown.
+
+### Changes and correctness gates
+
+- Main scholarly title: **From Bits to Parallel Systems**; subtitle:
+  **C++23, CPU Execution, GPU Memory, and Reliable Software**.
+- One continuous digital PDF with a single cover, unified table of contents,
+  substantive academic preface and renamed chapter headings.
+- Two separate paperback interiors, printed from the same exact chapter
+  fragments: **From Bits to Programs** (Chapters 1–8) and
+  **From Programs to GPUs** (Chapters 9–16).
+- The print trim is **7 × 10 inches** and page checks enforce a maximum of
+  **828 pages per volume** for KDP black ink on white paper, with a wide
+  inside margin. The digital PDF is not artificially truncated at that limit.
+- Original fenced Mermaid diagrams are transformed into PNG figures before
+  LaTeX compilation. The build refuses to proceed if a diagram cannot render,
+  a token is lost, a source figure changes, or the rendered math appears to
+  lose an authored boxed expression. Fenced ASCII and source-code diagrams
+  remain readable as listings.
+- Readable Times-family scholarly typography, compact display math, and
+  grayscale-safe code/definition boxes. Chapter-opening generic study prompts
+  and blank journal pages are omitted from the reader, but no source text
+  is deleted. Pages are not padded with filler.
+- The EPUB is **not generated** until the PDF content and typography are
+  reviewed and approved.
+
+### Exact Mac commands for the refreshed edition
+
+```bash
+cd ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Master
+git pull --ff-only origin curriculum/cpp23-nes-project-pass01
+export PATH="/Library/TeX/texbin:$PATH"
+
+# Mermaid's command-line diagram renderer requires Node.
+brew install node
+npm install -g @mermaid-js/mermaid-cli
+mmdc --version
+
+# Isolate the Python PDF audit dependency.
+python3 -m venv .venv-book01
+.venv-book01/bin/python -m pip install pypdf
+
+# Syntax, diagram/mathematics regression, and exact-source preparation.
+.venv-book01/bin/python -m py_compile tools/book01_render_support.py tools/book01_editorial.py tools/build_book01_expanded_reader.py
+.venv-book01/bin/python tools/test_book01_render_support.py
+.venv-book01/bin/python tools/build_book01_expanded_reader.py --prepare
+.venv-book01/bin/python tools/build_book01_expanded_reader.py --verify-prepared
+
+# The complete digital textbook with all sixteen selected reading chapters.
+.venv-book01/bin/python tools/build_book01_expanded_reader.py --compile --open
+
+# KDP paperback interiors with strict size and maximum-page validation.
+.venv-book01/bin/python tools/build_book01_expanded_reader.py --compile-paperback --open
+```
+
+Digital output:
+`build/book01-expanded-reader/Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf`
+
+Paperback outputs:
+`build/book01-expanded-reader/Book01-KDP-Paperback-Volume-01.pdf`
+and `Book01-KDP-Paperback-Volume-02.pdf`.
+
+The four `--compile --part N` partitions remain optional diagnostics for
+isolating TeX failures; they are not four published books. If the code refuses
+a release because a formula, diagram, trim size or paperback page count is
+wrong, **fix the input/build problem and rebuild**, rather than dropping
+material or suppressing the check.
+
+**Independent validation still required:** local LuaLaTeX compilation,
+manual inspection of figures and equations in the actual PDF, source-to-TeX
+comparison of a sample from every chapter, page and gutter inspection,
+KDP Print Previewer approval, and a proper C++23 language-coverage audit.
+The present Book 1 edition is not asserted to include all 39 foundation
+chapter-edition chapters or to cover the full ISO C++23 specification.
+
+---
+
 ## Academic reader-edition update — 19 November 2026
 
 **Current release behavior supersedes the older four-part presentation instructions below.**
