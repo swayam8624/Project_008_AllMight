@@ -247,6 +247,42 @@ class Book01ProductionTests(unittest.TestCase):
         self.assertIn(actual_math, result)
         self.assertNotIn(r"\boxed{\text{Can another machine", result)
 
+    def test_vulkan_metal_long_display_reflow_does_not_change_operands(self):
+        formula = (
+            "\\[\n"
+            "\\boxed{\n"
+            "\\text{predictability}\n+\n"
+            "\\text{parallel command construction}\n+\n"
+            "\\text{explicit synchronization}\n+\n"
+            "\\text{lower driver overhead}\n"
+            "}\n\\]"
+        )
+        budget = (
+            "\\[\nM_{\\text{required}} =\nM_{\\text{bindings}}\n+\n"
+            "M_{\\text{alignment/padding}}\n+\n"
+            "M_{\\text{temporary scratch}}\n+\n"
+            "M_{\\text{concurrently live outputs}}\n+\n"
+            "M_{\\text{deferred-retirement}}.\n\\]"
+        )
+        sampler = (
+            "\\[\nminification,\nmagnification,\nmip filtering,\n"
+            "addressing,\ncomparison sampling,\nanisotropy,\nLOD range.\n\\]"
+        )
+        resolved = book.reflow_long_textual_displays(
+            formula + "\n" + budget + "\n" + sampler
+        )
+        self.assertIn("parallel command construction", resolved)
+        self.assertIn(r"\fbox{\parbox{0.82\linewidth}", resolved)
+        self.assertIn(r"M_{\text{concurrently live outputs}}", resolved)
+        self.assertIn("comparison sampling", resolved)
+        self.assertGreaterEqual(resolved.count(r"\begin{aligned}"), 2)
+        self.assertIn(r"\end{aligned}", resolved)
+        self.assertEqual(resolved.count(r"\["), 2)
+        # Math that cannot be confidently reflowed must remain exactly as is.
+        real_equation = r"\[\boxed{\frac{a+b}{c}}\]"
+        self.assertEqual(book.reflow_long_textual_displays(real_equation),
+                         real_equation)
+
     def test_short_boxed_math_remains_exact(self):
         examples = (
             r"\[\boxed{x}\]" + "\n"
