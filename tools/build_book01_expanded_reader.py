@@ -112,7 +112,7 @@ def insert_and_prove(base: bytes, specs: list[inserts.Insert]) -> tuple[bytes, l
         begin, end, block = inserts.get_block(spec)
         if begin in result or end in result:
             raise ValueError(spec.name + ": unexpected existing marker in derived chapter")
-        if result.count(spec.anchor) != 1:
+        if inserts.overlapping_count(result, spec.anchor) != 1:
             raise ValueError(spec.name + ": original derived heading is not unique")
         prior = result
         result = result.replace(spec.anchor, block + spec.anchor, 1)
@@ -142,7 +142,7 @@ def audit_sources() -> tuple[list[dict], dict]:
     mapped = specs_by_chapter()
     all_specs = list(inserts.INSERTS)
     for spec in all_specs:
-        if master.count(spec.anchor) != 1:
+        if inserts.overlapping_count(master, spec.anchor) != 1:
             raise ValueError(spec.name + ": canonical master anchor not unique")
         # The established patcher refuses altered/partial prior applications.
     inserts.process(master)
