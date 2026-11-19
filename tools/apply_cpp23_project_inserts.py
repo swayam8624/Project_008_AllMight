@@ -92,6 +92,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md",
         b"\n## From generated GPU work to safe explicit execution\n",
     ),
+    Insert(
+        "NES-12Q",
+        "Supplementary/C++23 Project Labs/NES-12Q - Command Lifecycles and Uncertain Submission.md",
+        b"\n### PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN\n",
+    ),
 )
 
 
