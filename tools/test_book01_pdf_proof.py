@@ -66,6 +66,7 @@ class ProofTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         style = (root / "Book Production/Seven-Book Curriculum/Book01"
                  / "book01-reader.sty").read_text("utf-8")
+        self.assertIn(r"\RequirePackage{emptypage}", style)
         geometry = style.index(r"\geometry{")
         headwidth = style.index(r"\setlength{\headwidth}{\textwidth}")
         running = style.index(r"\fancyhead[LE]")
