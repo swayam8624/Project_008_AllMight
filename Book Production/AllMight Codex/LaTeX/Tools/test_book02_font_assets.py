@@ -105,6 +105,15 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
                 self.assertTrue((exported / "From Equations to Geometry - Part 2.pdf").is_file())
                 self.assertTrue((exported / "From Equations to Geometry.epub").is_file())
                 self.assertTrue((exported / "book02-candidate-verification.json").is_file())
+                portable = exported / "book02-master-export-manifest.json"
+                self.assertTrue(portable.is_file())
+                portable_data = json.loads(portable.read_text(encoding="utf-8"))
+                self.assertEqual(portable_data["source_fingerprint_sha256"], "f"*64)
+                self.assertEqual(portable_data["schema"],"allmight-book02-master-export-v1")
+                for entry in portable_data["copied_candidates"].values():
+                    copied_file = exported / entry["file"]
+                    self.assertTrue(copied_file.is_file())
+                    self.assertEqual(candidates.digest(copied_file),entry["sha256"])
                 # Idempotent, with no overwrite or Git operations.
                 self.assertEqual(exported,candidates.export_candidates_to_master(generation,master))
                 tampered = exported / "From Equations to Geometry.epub"
