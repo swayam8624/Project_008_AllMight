@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 FIGURE_SOURCE = Path(__file__).resolve().parents[1] / "Assets" / "Book02"
@@ -42,6 +44,19 @@ FIGURES = {
     "02-foundations-ii-ch031": ("11-sampling-support-case.tex", "25-ransac-paper-lab.tex"),
     "03-visual-computing-i-ch012": ("20-sampling-measure-case.tex", "26-library-parity-and-limits.tex"),
 }
+# Research figures require scipy/numpy/matplotlib only for the actual book build.
+# Existing mathematical source-unit tests keep the default lightweight path.
+RICH_FIGURES = {
+    "01-foundations-i-ch018": ("28-atlas-orientation.tex",),
+    "02-foundations-ii-ch025": (
+        "29-atlas-geodesic.tex", "30-atlas-geodesic-3d.tex",
+        "31-atlas-resolution.tex",
+    ),
+    "02-foundations-ii-ch027": ("32-atlas-fitting.tex",),
+    "02-foundations-ii-ch030": ("33-atlas-sampling.tex",),
+    "02-foundations-ii-ch031": ("34-atlas-ransac.tex",),
+}
+ATLAS_SCRIPT = Path(__file__).resolve().parents[3] / "tools" / "labs" / "book02_visual_atlas.py"
 PRELUDE_CHAPTER = "01-foundations-i-ch017"
 PRELUDE_FILE = "06-reader-contract.tex"
 PACKAGE_MARKER = r"\usepackage[print]{allmight-book}"
@@ -49,7 +64,7 @@ STAGE_MARKER = r"\SetBookStage{2}{Mathematics for Visual Computing}"
 INJECTION_MARKER = "% AllMight Book02 reproducible scientific figures"
 
 
-def install_book02_visuals(tex_path: str | Path) -> list[str]:
+def install_book02_visuals(tex_path: str | Path, *, include_rich_atlas: bool = False) -> list[str]:
     """Install figures without changing the authorial source or generated stage.
 
     Operates only on a copied main.tex in a proof/build directory.
@@ -66,7 +81,9 @@ def install_book02_visuals(tex_path: str | Path) -> list[str]:
         raise RuntimeError("Book02 preamble anchor missing or ambiguous: " + str(tex_path))
 
     installed: list[str] = []
-    for chapter, figure_names in FIGURES.items():
+    rich_count = 0
+    for chapter, normal_names in FIGURES.items():
+        figure_names = normal_names + (RICH_FIGURES.get(chapter, ()) if include_rich_atlas else ())
         # Generated stage-proofs and printed parts both use these content IDs.
         chapter_input = re.compile(
             r"(\\input\{\.\./current/[^}\n]+/content/" +
@@ -83,6 +100,7 @@ def install_book02_visuals(tex_path: str | Path) -> list[str]:
         )
         source = chapter_input.sub(lambda m: m.group(1) + "\n" + lines, source)
         installed.extend(figure_names)
+        rich_count += sum(name in RICH_FIGURES.get(chapter, ()) for name in figure_names)
 
     # The new entry must occur before the original first chapter, so the
     # mathematical objects/units contract precedes Python performance detail.
@@ -109,6 +127,35 @@ def install_book02_visuals(tex_path: str | Path) -> list[str]:
         if not source_file.is_file():
             raise FileNotFoundError("Missing source-scientific figure: " + str(source_file))
         shutil.copy2(source_file, root / name)
+
+    # Build genuine print PDF and EPUB-compatible SVG/PNG from the actual
+    # numerical teaching experiments. No illustrative static image is faked.
+    if rich_count:
+        if not ATLAS_SCRIPT.is_file():
+            raise FileNotFoundError("Book02 atlas source is missing: " + str(ATLAS_SCRIPT))
+        cmd = [sys.executable, str(ATLAS_SCRIPT), "--output", str(root / "rendered")]
+        try:
+            subprocess.run(cmd, check=True, text=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(
+                "Book02 scientific figure build failed. Install NumPy, SciPy "
+                "and Matplotlib in the same Python environment as build.py; "
+                "inspect the generator traceback.\n" + (exc.stdout or "")
+            ) from exc
+        needed = set(
+            re.findall(r"book02-figures/rendered/figures/([^}/]+)\.pdf",
+                       "\n".join((root / name).read_text(encoding="utf-8")
+                                 for name in installed if name in {
+                                     rich for group in RICH_FIGURES.values()
+                                     for rich in group
+                                 }))
+        )
+        for slug in needed:
+            for fmt in ("pdf", "svg", "png"):
+                file = root / "rendered" / "figures" / (slug + "." + fmt)
+                if not file.is_file() or file.stat().st_size < 600:
+                    raise RuntimeError("Missing generated scientific figure: " + str(file))
 
     source = source.replace(
         PACKAGE_MARKER,
