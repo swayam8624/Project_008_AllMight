@@ -93,3 +93,38 @@ PY
 ```
 
 **Caveat:** Successful automation validates source identity, execution of supported mathematical oracles, packaging, declared EPUB structure and PDF page counts. Actual page-by-page mathematical review, layout/alt-text reader checks, KDP preview, and the paper/book source-claim audit must still be done before a public publication claim. The JPEG is an EPUB front cover, not a full paperback wraparound cover with trim, bleed and spine.
+
+
+## 4. Deliver verified candidates into the canonical Obsidian Master folder
+
+The Desktop worktree exists **only** as a safe branch-isolated build environment.
+It is not the official destination of the books. The Obsidian `Master` vault
+continues to be the canonical project workspace.
+
+The Noto Emoji font is already committed at
+`Book Production/AllMight Codex/LaTeX/Assets/Fonts/NotoEmoji-Static.ttf`.
+The compiler now stages it automatically in the nested working folder.
+Neither a second font download nor manually moving fonts into Master is necessary.
+
+Only **after both complete physical PDFs and the full stage EPUB have succeeded**
+and their combined verification report exists, run:
+
+```bash
+cd "$HOME/Desktop/Project_008_AllMight_Book02"
+PY="$PWD/.venv-book02/bin/python"
+MASTER="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master"
+TARGET="$MASTER/Book Production/AllMight Codex/LaTeX/Build"
+
+"$PY" "Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py" \
+  --export-only --export-dir "$TARGET"
+```
+
+The result is a versioned subfolder of Master containing the two verified PDFs,
+the EPUB and their SHA-checked verification report. The exporter will refuse
+missing/invalid candidates and will never overwrite an existing different
+output. It does not modify the original Markdown source, move the original
+font, alter Git branches, or merge potentially divergent `Master` history.
+
+To merge **source changes** into the canonical Master branch in a subsequent
+step, first reconcile and back up its current Git state. Do not force-pull
+the Book Two branch onto Master or run a destructive checkout.
