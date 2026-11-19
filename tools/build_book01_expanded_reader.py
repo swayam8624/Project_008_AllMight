@@ -597,12 +597,12 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
     if paperback:
         selected = [
             (OUTPUT / f"book01-print-v{n:02d}",
-             OUTPUT / f"Book01-KDP-Paperback-Volume-{n:02d}.pdf")
+             OUTPUT / ("Book01-From-Bits-to-Programs-KDP-Volume-01.pdf" if n == 1 else "Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf"))
             for n in range(1, len(PRINT_VOLUMES) + 1)
         ]
     elif part is None:
         selected = [(OUTPUT / "book01-complete",
-                     OUTPUT / "Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf")]
+                     OUTPUT / "Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf")]
     else:
         selected = [(OUTPUT / f"book01-expanded-p{part:02d}",
                      OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{part:02d}.pdf")]
