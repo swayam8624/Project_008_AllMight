@@ -8,6 +8,16 @@ Worked examples recur in different settings. A small binary-machine laboratory m
 
 The text does not ask readers to trust a sample because it compiled once. A test is evidence about specified inputs in a specified environment; a language or API guarantee must instead be traced to the relevant rule or specification. Devices and implementations evolve, so examples explicitly distinguish general obligations from platform-specific observations.
 
+## The seven-book journey
+
+**From Bits to Research** is planned as a coherent, seven-book course in computing and the construction, observation, and scientific study of visual worlds. Each book is intended to make the next possible, rather than treating mathematics, software engineering, physics, rendering, vision, or research as isolated collections of definitions. This first book is **From Bits to Parallel Systems**: it builds the representation, C++23, CPU, GPU, and verification foundations on which the later work depends.
+
+The sequence continues through mathematics for visual computing; geometry, cameras and image formation; light transport and image synthesis; spatial worlds, engine architecture and simulation; GPU architecture and real-time rendering; and vision, XR, experimentation and research communication. These are the seven *teaching stages*, not claims that every later volume is already publication-ready. Print Volume I and Print Volume II of this first book are merely a physical split of **Book One**.
+
+The destination includes not only performing research but **showing it rigorously and beautifully**. Later stages will develop publication-quality plots, carefully designed scientific figures, diagrams of algorithms and data structures, perceptually honest colour and scale choices, 3D experimental scenes, reproducible animations and comparative visual demonstrations. A compelling image is useful when the reader knows how it was generated, what it measures, what is simulated rather than observed, and which alternative interpretation it might conceal. Visual polish should serve truth and understanding, not replace evidence.
+
+The companion programme, source repositories and references are collected in the back matter. The starting point for all seven books is [Project AllMight](https://github.com/swayam8624/Project_008_AllMight).
+
 ## Who this book is for
 
 The primary audience is advanced undergraduate students, graduate students, native-software engineers, and graphics or simulation researchers seeking a stronger foundation beneath working code. Readers with minimal programming experience can begin with the representation and machine-model material, but the later chapters demand actual C++ compilation and a willingness to reason carefully about resource lifetime and concurrency.
@@ -36,4 +46,4 @@ The two paperback volumes divide the physical text for readability. The digital 
 
 The book's code and experimental narratives are accompanied by source references and laboratory records. When a named project is discussed, treat its status as the snapshot described by the text rather than a promise about its current repository state. A companion-code catalogue and verification checklist appear in the back matter. External standards and vendor documentation are collected separately so that a reader can distinguish a normative API rule from a teaching model.
 
-This is a publication-proof edition. A figure or mathematical expression that fails to render, an unreadable code listing, a clipped page, or an unverified command in a purportedly runnable example is a defect to correct rather than an acceptable shortcut. The most valuable result of studying the book is the ability to explain and test a mechanism without needing its original author's confidence as evidence.
+A figure or mathematical expression that fails to render, an unreadable code listing, a clipped page, or an unverified command in a purportedly runnable example is a defect to correct rather than an acceptable shortcut. The most valuable result of studying the book is the ability to explain and test a mechanism without needing its original author's confidence as evidence.
