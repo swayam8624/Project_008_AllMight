@@ -10,6 +10,9 @@
 #else
 #define ALLMIGHT_HAS_REGISTRY 0
 #endif
+#if defined(ALLMIGHT_COURSE_REQUIRE_REGISTRY) && !ALLMIGHT_HAS_REGISTRY
+#error "The Book01 course must include the original Pass06 generational registry"
+#endif
 #include <algorithm>
 #include <array>
 #include <atomic>
