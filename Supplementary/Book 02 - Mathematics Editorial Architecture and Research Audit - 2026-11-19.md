@@ -174,3 +174,22 @@ Suggested pass allocation, strictly additive unless evidence proves an error:
 **Immediate next source edit:** select original canonical math master passage behind ch017–ch020; write a clear zero-prerequisite bridge from scalars/units to vectors and linear transformations, preserving the Python discussion and existing computational optics examples. Add a self-contained documented lab for basis change, precision and stable linear solves, and tests before assigning any chapter an acceptance status.
 
 **Not done here:** no original master narrative has been changed, no tests or PDF have been compiled, no source paper has been reproduced solely by creating this planning document.
+
+
+## First visual-atlas integration (2026-11-19)
+
+Five original, equation-driven figure plates have been authored at `Book Production/AllMight Codex/LaTeX/Assets/Book02/`. The new `Tools/book02_visuals.py` injects them non-destructively into temporary Book Two TeX copies during both logical-stage proof and physical-book composition via `Tools/build.py`. The original Markdown continuous masters, seven-stage catalogue, generated source files, and source chapter bodies are unchanged. Other books are not modified by the injector.
+
+| Existing chapter anchor | Original visual plate | Mathematical provenance |
+|---|---|---|
+| 01-foundations-i-ch019 | Linear transformation of a unit circle | Explicit 2x2 matrix; basis images and closed-form ellipse parameterization |
+| 02-foundations-ii-ch024 | Gaussian density surface and 2D heatmap | Properly normalized independent bivariate normal with declared covariance |
+| 02-foundations-ii-ch025 | Heat-equation analytic surface and map | Exact single eigenmode on unit square at t=0.04 under zero Dirichlet conditions |
+| 02-foundations-ii-ch027 | 3D optimization landscape and descent trajectory | Explicit strictly convex quadratic and checked iterates with alpha=0.1 |
+| 02-foundations-ii-ch029 | Numerical convergence log-log plot | Closed-form forward-Euler error for y'=-y at T=1, with first-order reference |
+
+The figures are vector PGFPlots graphics generated from their stated functions, **not** made-up benchmark outputs, photorealistic pictures or empirical result visualizations. Captions explicitly distinguish analytic values and simulated measurement. Every figure includes a first reconstruction exercise. Their color palette follows a navy/cyan/gold technical identity.
+
+A standalone LuaLaTeX smoke test of the heat-equation analytic plot and PGFPlots preamble was executed successfully in the assistant container; the standalone PDF rendered and was inspected. This does **not** assert that the entire user-side Book Two PDF or all five plates have compiled successfully. The dedicated `test_book02_visuals.py` checks idempotence, chapter placement and other-book isolation, but its repository-side execution still requires verification. As part of the remaining final pass, compile both physical books on the author's macOS TeX runtime, visually inspect each printed plate at actual trim size and port semantic illustrations to EPUB.
+
+**Publication distinction:** Figures inserted after a source chapter are reader-facing supplementary visual laboratories. They are not silently claimed to have come from or to have been reviewed by the original chapter author/source. The source chapter's complete text remains intact.
