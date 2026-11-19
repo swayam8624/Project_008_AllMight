@@ -46,6 +46,29 @@ class Book02AtlasVerification(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.tmp.cleanup()
 
+    def test_offline_viewer_contains_real_data_and_no_external_dependencies(self) -> None:
+        viewer = self.atlas / "Numerical-Geometry-Atlas.html"
+        self.assertTrue(viewer.is_file())
+        html = viewer.read_text(encoding="utf-8")
+        self.assertIn("Numerical Geometry Atlas", html)
+        self.assertNotIn("__ATLAS_DATA__", html)
+        self.assertNotIn("https://", html)
+        self.assertNotIn("http://", html)
+        self.assertNotIn("<script src=", html)
+        self.assertIn("application/json", html)
+        import re
+        block = re.search(r'<script id="atlas-json" type="application/json">(.*?)</script>',
+                          html, re.S)
+        self.assertIsNotNone(block)
+        embedded = json.loads(block.group(1))
+        self.assertEqual(set(embedded["tables"]), set(FIGURES))
+        self.assertEqual(len(embedded["tables"]["geodesic-fields"]),625)
+        self.assertEqual(len(embedded["tables"]["ransac-consensus"]),110)
+        self.assertEqual(len(embedded["tables"]["mis-variance"]),1350)
+        self.assertEqual(embedded["metadata"]["ransac-consensus"]["seed"],73013)
+        self.assertTrue(all(math.isfinite(v) for v in
+                            embedded["metadata"]["ransac-consensus"]["fit_line"].values()))
+
     def test_seven_source_backed_figures_and_three_formats(self) -> None:
         manifest = self.manifest
         self.assertEqual(manifest["schema"], "allmight-book02-atlas-1")
