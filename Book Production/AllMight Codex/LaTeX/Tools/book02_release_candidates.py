@@ -180,10 +180,52 @@ def epub_candidate(generation:Path,root:Path,cover_image:Path|None=None)->dict:
     return result
 
 
+
+def check_environment(generation:Path, *, cover_image:Path|None,
+                      require_print:bool, require_epub:bool)->dict:
+    """Read-only source, compiler, and cover preflight.
+
+    A successful preflight means the expensive full-book build can begin.
+    It does not replace rendering, EPUBCheck or checking mathematical claims.
+    """
+    checks={}
+    for part in PARTS:
+        checks["main_"+part[-3:]]=(generation/part/"main.tex").is_file()
+    source_lock=audit()
+    checks["16_original_chapters"]=source_lock["original_chapters"]==16
+    checks["36_supplied_additions"]=source_lock["additive_sources"]==EXPECTED_EXTRA
+    if require_print:
+        checks["latexmk"]=bool(shutil.which("latexmk") or
+            Path("/usr/local/texlive/2025/bin/universal-darwin/latexmk").is_file())
+        checks["lualatex"]=bool(shutil.which("lualatex"))
+        checks["book_style"]=(ROOT/"allmight-book.sty").is_file()
+    if require_epub:
+        checks["pandoc"]=bool(shutil.which("pandoc"))
+        checks["java"]=bool(shutil.which("java"))
+        cache=Path("/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15")
+        checks["source_cache_builder"]=(cache/"build_books.py").is_file()
+        checks["epubcheck_5_4_0"]=(cache/"epubcheck"/"epubcheck-5.4.0"/"epubcheck.jar").is_file()
+        checks["frozen_conversion_manifest"]=(generation/"conversion-manifest.json").is_file()
+    if cover_image is not None and require_epub:
+        checks["cover_file"]=cover_image.is_file() and cover_image.suffix.lower() in (".jpg",".jpeg")
+        if checks["cover_file"]:
+            try:
+                from PIL import Image
+                with Image.open(cover_image) as image:
+                    checks["portrait_cover_jpeg"]=(image.format=="JPEG" and
+                        image.width>=300 and image.height>=450 and image.height>image.width)
+            except (OSError,ValueError):
+                checks["portrait_cover_jpeg"]=False
+    return {"generation":generation.name,"cover_declared":bool(cover_image),
+            "checks":checks,"ready_for_candidate_build":all(checks.values()),
+            "caveat":"This preflight is not publication approval."}
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--generation",help="Frozen generation id, defaults to CURRENT.json")
     p.add_argument("--cover-image",type=Path,help="Book Two JPEG cover on the author\x27s Mac, for the EPUB (not the print interior)")
+    p.add_argument("--check-only",action="store_true",help="Read-only source and environment preflight, without building anything")
     g=p.add_mutually_exclusive_group()
     g.add_argument("--print-only",action="store_true")
     g.add_argument("--epub-only",action="store_true")
@@ -192,6 +234,12 @@ def main():
     cover_image=args.cover_image.expanduser().resolve() if args.cover_image else None
     if cover_image is not None and (not cover_image.is_file() or cover_image.suffix.lower() not in (".jpg",".jpeg")):
         p.error("Book Two EPUB cover must be an existing .jpg/.jpeg file")
+    if args.check_only:
+        status=check_environment(generation,cover_image=cover_image,
+                                 require_print=not args.epub_only,
+                                 require_epub=not args.print_only)
+        print(json.dumps(status,indent=2,ensure_ascii=False))
+        return 0 if status["ready_for_candidate_build"] else 2
     result={"generation":generation.name,"title":TITLE,
             "source_lock":audit(),"print_parts":[],"epub":None,
             "declaration":"Candidate export only. Full original text mathematical correctness and reader/trim visual acceptance remain editorial gates."}
