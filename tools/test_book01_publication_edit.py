@@ -116,11 +116,44 @@ class PublicationTransformTests(unittest.TestCase):
         converted, entries = index.insert_index_tokens(source, 3)
         self.assertGreaterEqual(len(entries), 2)
         self.assertIn(code, converted)
-        self.assertEqual(converted.count("ALLMIGHTINDEXCH"), len(entries))
+        self.assertEqual(converted.count(r"\index{"), len(entries))
         tex = index.replace_index_tokens(converted, entries)
         self.assertIn("\\index{RAII}", tex)
         self.assertIn("\\index{object lifetime}", tex)
         self.assertNotIn("ALLMIGHTINDEXCH", tex)
+
+    def test_raw_index_commands_survive_pandoc_links_lists_and_tables(self):
+        import shutil
+        import subprocess
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        raw = (
+            "## Ownership and object lifetime\n\n"
+            "The [lifetime](https://example.org/lifetime) of a borrow matters.\n\n"
+            "A " + chr(96) + "C++23" + chr(96) + " concept can appear inside inline code.\n\n"
+            "| Feature | Rule |\n|:--|:--|\n"
+            "| Vulkan | synchronization matters |\n\n"
+            "An RAII owner retains the resource.\n"
+        )
+        transformed, entries = index.insert_index_tokens(raw, 3)
+        self.assertGreaterEqual(len(entries), 4)
+        self.assertIn("[lifetime](https://example.org/lifetime)", transformed)
+        self.assertIn("C++23", transformed)
+        self.assertNotIn("ALLMIGHTINDEXCH", transformed)
+        self.assertEqual(transformed.count(r"\index{"), len(entries))
+        if not shutil.which("pandoc"):
+            self.skipTest("Pandoc not available for integration test")
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "reader.md"
+            path.write_text(transformed, encoding="utf-8")
+            result = subprocess.run(
+                ["pandoc", "-f", "markdown+raw_tex", "-t", "latex",
+                 "--wrap=none", "--no-highlight", str(path)],
+                text=True, capture_output=True, check=True,
+            )
+            index.replace_index_tokens(result.stdout, entries)
+            for entry in entries:
+                self.assertEqual(result.stdout.count(entry["command"]), 1)
 
     def test_source_mathematics_and_mermaid_remain_compatible(self):
         source = (
