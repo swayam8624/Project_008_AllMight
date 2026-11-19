@@ -31,6 +31,19 @@ class ProofTests(unittest.TestCase):
         doc.close()
         return out
 
+    def test_reader_resets_header_width_after_final_geometry(self):
+        # The print profile initializes fancyhdr at a different trim size.
+        # These directives must remain in this order, or long paperback
+        # running heads can extend outside the 7-inch physical page.
+        root = Path(__file__).resolve().parents[1]
+        style = (root / "Book Production/Seven-Book Curriculum/Book01"
+                 / "book01-reader.sty").read_text("utf-8")
+        geometry = style.index(r"\geometry{")
+        headwidth = style.index(r"\setlength{\headwidth}{\textwidth}")
+        running = style.index(r"\fancyhead[LE]")
+        self.assertLess(geometry, headwidth)
+        self.assertLess(headwidth, running)
+
     def test_valid_minimal_print_pdf(self):
         with TemporaryDirectory() as temp:
             path = self.make_pdf(Path(temp))
