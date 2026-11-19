@@ -1,0 +1,38 @@
+% Analytic matrix exponential of an infinitesimal planar rotation.
+\clearpage
+\section*{Verification case: matrix exponentials preserve the intended geometry}
+\noindent A matrix exponential is not an elementwise exponential.
+For the planar rotation generator
+\[
+\Omega=\begin{pmatrix}0&-\omega\\\omega&0\end{pmatrix},
+\quad\text{with }\omega>0,
+\]
+powers of \(\Omega\) alternate between \(I\), \(\Omega\)
+and their negatives because \(\Omega^2=-\omega^2I\).
+Separating even and odd powers of the exponential series yields
+\[
+e^{t\Omega}
+=I\cos(\omega t)+\frac{\Omega}{\omega}\sin(\omega t)
+=\begin{pmatrix}\cos(\omega t)&-\sin(\omega t)\\
+\sin(\omega t)&\cos(\omega t)\end{pmatrix}.
+\]
+Consequently, if \(x(0)=(1,0)^T\) and
+\(t=\pi/(2\omega)\), then \(x(t)=(0,1)^T\).
+The exact map is orthogonal and preserves squared lengths:
+\(x(t)^Tx(t)=x(0)^Tx(0)=1\).
+
+A single forward-Euler step with that full time increment instead
+produces \(x_1=(1,\pi/2)^T\), whose squared norm is
+\(1+\pi^2/4>1\). Both updates are derived from the same continuous
+ODE \(\dot x=\Omega x\); they disagree because discretization has
+changed the invariant. Smaller Euler steps reduce the error but do
+not make a finite-step explicit Euler map exactly orthogonal.
+
+\paragraph{Reconstruction.}
+Implement the exponential of this \(2\times2\) generator using the
+closed form and compare it with a trusted numerical matrix-exponential
+library. Sweep \(t\) and measure orthogonality error
+\(\lVert R^TR-I\rVert_F\). Compare Euler steps with a method known
+to preserve the geometric structure under a stated model.
+Do not infer that every matrix exponential is a rotation:
+the generator's skew-symmetry is essential.
