@@ -109,6 +109,21 @@ if(Vulkan_FOUND AND TARGET Vulkan::Vulkan)
  target_link_libraries(gpu_device_resource_cpp23_lab PRIVATE Vulkan::Vulkan)
  target_compile_definitions(gpu_device_resource_cpp23_lab PRIVATE ALLMIGHT_COURSE_HAS_VULKAN=1)
 endif()
+
+# Pass14 is Kairo Vulkan/Maveb Metal/physics/XR oriented, not NES-only.
+# Portable CTest models frame/fence/WSI/resource retirement. The separate
+# --probe-native path actually submits vkCmdFillBuffer and checks fence/readback
+# only if Vulkan headers/library are available and explicitly requested.
+add_executable(gpu_submit_retire_cpp23_lab
+    ../../../tools/labs/gpu_submit_retire_cpp23_lab.cpp
+    ../../../tools/labs/gpu_course/native_vulkan_submit_probe.cpp
+)
+target_compile_features(gpu_submit_retire_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(gpu_submit_retire_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+if(Vulkan_FOUND AND TARGET Vulkan::Vulkan)
+    target_link_libraries(gpu_submit_retire_cpp23_lab PRIVATE Vulkan::Vulkan)
+    target_compile_definitions(gpu_submit_retire_cpp23_lab PRIVATE ALLMIGHT_COURSE_HAS_VULKAN=1)
+endif()
 find_package(Threads REQUIRED)
 target_link_libraries(nes_gpu_memory_contract_cpp23_lab PRIVATE Threads::Threads)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
@@ -135,8 +150,9 @@ if(MSVC)
     target_compile_options(nes_scoped_frame_upload_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_command_lifecycle_cpp23_lab PRIVATE /W4)
     target_compile_options(gpu_device_resource_cpp23_lab PRIVATE /W4)
+    target_compile_options(gpu_submit_retire_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -150,7 +166,7 @@ foreach(course_lab IN ITEMS
  nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab
  nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab
  nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab
- gpu_device_resource_cpp23_lab)
+ gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab)
     target_link_libraries(${course_lab} PRIVATE nes_course_public_api)
 endforeach()
 
@@ -194,3 +210,8 @@ add_test(NAME nes_12q_command_submission_uncertainty_and_lifetimes
 # Native Vulkan probing is separately opt-in, never a default CTest pass.
 add_test(NAME gpu_13d_cross_project_device_memory_contracts_cpu_only
  COMMAND gpu_device_resource_cpp23_lab)
+
+# Never execute native Vulkan in the general CTest matrix: hardware
+# success is a separately documented and explicitly requested experiment.
+add_test(NAME gpu_14f_kairo_maveb_submission_retirement_cpu_only
+         COMMAND gpu_submit_retire_cpp23_lab)
