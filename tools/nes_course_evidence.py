@@ -53,6 +53,7 @@ EXPECTED = (
     ("GPU-15M", "gpu_metal_frame_cpp23_lab", "tools/labs/gpu_metal_frame_cpp23_lab.cpp"),
     ("GPU-16P", "gpu_profile_ownership_cpp23_lab", "tools/labs/gpu_profile_ownership_cpp23_lab.cpp"),
     ("CPP-18A", "modern_asset_ingestion_cpp23_lab", "tools/labs/modern_asset_ingestion_cpp23_lab.cpp"),
+    ("CPP-19E", "book01_end_to_end_cpp23_lab", "tools/labs/book01_end_to_end_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -94,6 +95,7 @@ EXTRA_SOURCES = (
     "Book Production/Seven-Book Curriculum/project-lab-matrix.md",
     "Book Production/Seven-Book Curriculum/Book01/PASS17_COVERAGE_AND_DEPTH_AUDIT.md",
     "Book Production/Seven-Book Curriculum/Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md",
+    "Book Production/Seven-Book Curriculum/Book01/PASS19_END_TO_END_EVIDENCE.md",
 )
 
 class EvidenceError(RuntimeError):
@@ -134,6 +136,7 @@ def source_paths() -> tuple[str, ...]:
         "GPU-15M": "GPU-15M - Execute Verify and Measure a Metal Frame.md",
         "GPU-16P": "GPU-16P - GPU Profiling and Apple Callback Ownership.md",
         "CPP-18A": "CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md",
+        "CPP-19E": "CPP-19E - A Complete Asset to Evidence Trace.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
