@@ -812,34 +812,6 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
                                            "\n".join(rerun.stdout.splitlines()[-35:]))
             if not ind_file.is_file() or not ind_file.stat().st_size:
                 raise RuntimeError("Index has entries but generated no index output")
-        # A genuine word index needs a makeindex pass after the first LuaLaTeX
-        # pass. latexmk typically discovers this itself; BasicTeX's direct
-        # lualatex fallback needs explicit handling and two subsequent passes.
-        idx_file = directory / "build/main.idx"
-        ind_file = directory / "build/main.ind"
-        if idx_file.is_file() and idx_file.stat().st_size > 0:
-            if not ind_file.is_file() or ind_file.stat().st_mtime < idx_file.stat().st_mtime:
-                makeindex = shutil.which("makeindex")
-                if not makeindex:
-                    raise RuntimeError("Index source exists, but makeindex is unavailable. Install the TeX Live index utility.")
-                result = subprocess.run([makeindex, "-o", "build/main.ind", "build/main.idx"],
-                                        cwd=directory, capture_output=True, text=True)
-                if result.returncode or not ind_file.is_file():
-                    raise RuntimeError("makeindex failed: " + (result.stderr or result.stdout)[-2000:])
-                for i in range(2):
-                    rerun = subprocess.run(
-                        [lualatex, "-interaction=nonstopmode", "-halt-on-error",
-                         "-file-line-error", "-output-directory=build", "main.tex"],
-                        cwd=directory, stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT, text=True, errors="replace"
-                    )
-                    (directory / "build" / f"index-final-pass-{i+1}.txt").write_text(
-                        rerun.stdout, encoding="utf-8")
-                    if rerun.returncode:
-                        raise RuntimeError("LuaLaTeX failed after building the index: " +
-                                           "\n".join(rerun.stdout.splitlines()[-35:]))
-            if not ind_file.is_file() or not ind_file.stat().st_size:
-                raise RuntimeError("Index has entries but generated no index output")
         if not pdf.is_file() or not pdf.stat().st_size:
             raise RuntimeError("No PDF from " + directory.name + "; see " + str(directory / "build/main.log"))
         # Do not publish a file under the KDP release name until preflight passes.
