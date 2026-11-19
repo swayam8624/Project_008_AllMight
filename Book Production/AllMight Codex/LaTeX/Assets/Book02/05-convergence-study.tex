@@ -1,0 +1,38 @@
+% Exact arithmetic data for forward Euler y'=-y, y(0)=1, T=1.
+% N steps: y_N = (1 - 1/N)^N and exact y(1)=exp(-1).
+\clearpage
+\section*{Visual laboratory: an accuracy claim needs a convergence curve}
+\noindent For \(y'=-y,\;y(0)=1\), the exact solution at \(T=1\)
+is \(e^{-1}\). Forward Euler with \(N\) equal steps gives
+\(y_N=(1-1/N)^N\). The points below plot the absolute error
+\(\lvert y_N-e^{-1}\rvert\) for \(N=2,4,\ldots,256\);
+the reference line \(0.184h\) shows a first-order asymptotic guide.
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+ booktwoaxis,width=0.84\textwidth,height=74mm,
+ title={Forward Euler error under halved time steps},
+ xlabel={Step size $h=1/N$},ylabel={Absolute error at $T=1$},
+ xmin=0.0035,xmax=0.6,ymin=0.00055,ymax=0.2,
+ legend style={draw=none,fill=white,font=\footnotesize,at={(0.03,0.97)},anchor=north west},
+ legend cell align=left
+]
+\addplot[booktwocyan,very thick,mark=*,mark size=1.8pt]
+coordinates {(0.50000000,0.11787944117) (0.25000000,0.05147319117) (0.12500000,0.02427052537) (0.06250000,0.01180531072) (0.03125000,0.00582415192) (0.01562500,0.00289291693) (0.00781250,0.00144172525) (0.00390625,0.00071968628)};
+\addlegendentry{Exact arithmetic Euler error}
+\addplot[booktwogold,thick,densely dashed,mark=none]
+coordinates {(0.50000000,0.09200000000) (0.25000000,0.04600000000) (0.12500000,0.02300000000) (0.06250000,0.01150000000) (0.03125000,0.00575000000) (0.01562500,0.00287500000) (0.00781250,0.00143750000) (0.00390625,0.00071875000)};
+\addlegendentry{First-order guide: $0.184h$}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Deterministically computed analytic error, not observed machine
+timings. A near-unit slope on log--log axes is evidence of first-order
+convergence over this refinement range, but does not alone prove stability
+on arbitrary problems or floating-point implementations.}
+\label{fig:book02-convergence-study}
+\end{figure}
+\noindent\textbf{Reconstruct it:} calculate empirical slopes between
+successive resolutions, compare explicit Euler with a higher-order method,
+and repeat using an actual implementation with recorded precision,
+compiler flags, solver tolerances, and reference error.
