@@ -39,9 +39,10 @@ mmdc --version
 pandoc --version
 lualatex --version
 .venv-book01/bin/python -m pip install pypdf pymupdf
-.venv-book01/bin/python -m py_compile tools/book01_render_support.py tools/book01_publication_edit.py tools/book01_learning_gates.py tools/book01_pdf_proof.py tools/book01_index.py tools/build_book01_expanded_reader.py
+.venv-book01/bin/python -m py_compile tools/book01_render_support.py tools/book01_publication_edit.py tools/book01_learning_gates.py tools/book01_pdf_proof.py tools/book01_index.py tools/build_book01_expanded_reader.py tools/test_book01_pdf_proof.py
 .venv-book01/bin/python tools/test_book01_render_support.py &&
 .venv-book01/bin/python tools/test_book01_publication_edit.py &&
+.venv-book01/bin/python tools/test_book01_pdf_proof.py &&
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --check &&
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --prepare &&
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --verify-prepared &&
