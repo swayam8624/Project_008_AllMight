@@ -607,8 +607,12 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
     if paperback and part is not None:
         raise ValueError("Use paperback or --part; not both")
     # Figure inclusion is mandatory: do not compile an incomplete book.
-    manifest = json.loads((OUTPUT / "manifest.json").read_text("utf-8"))
+    manifest_path = OUTPUT / "manifest.json"
+    manifest = json.loads(manifest_path.read_text("utf-8"))
     render.render_figures(manifest, OUTPUT)
+    # Cache source-matched PNG digests so diagnostic/full builds do not rerender
+    # identical diagrams every time. This is generated output, not manuscript.
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     engine = shutil.which("latexmk")
     lualatex = shutil.which("lualatex")
     if not lualatex:
