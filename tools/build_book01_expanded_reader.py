@@ -293,7 +293,17 @@ def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stat
     content = idx.replace_index_tokens(content, index_entries or [])
     content = render.replace_math_tokens(content, math_entries or [])
     def correct(match: re.Match[str]) -> str:
-        return r"\texttt{" + re.sub(r"(?<!\\)_", r"\\_", match.group(1)) + "}"
+        rendered = re.sub(r"(?<!\\)_", r"\\_", match.group(1))
+        # Long inline identifiers/commands otherwise become unbreakable,
+        # producing hard clipping in KDP. \allowbreak adds no visible glyph
+        # and leaves the original words, punctuation and bytes unchanged.
+        if len(match.group(1)) >= 58:
+            rendered = rendered.replace(" ", " " + r"\allowbreak{}")
+            rendered = re.sub(
+                r"(?<!\\)([\/,;=\-])", lambda m: m.group(1) + r"\allowbreak{}",
+                rendered,
+            )
+        return r"\texttt{" + rendered + "}"
     content = re.sub(r"\\texttt\{([^{}\n]*)\}", correct, content)
     content = content.replace(r"\begin{verbatim}", r"\begin{BookCode}")
     content = content.replace(r"\end{verbatim}", r"\end{BookCode}")
