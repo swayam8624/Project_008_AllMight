@@ -37,6 +37,14 @@ PSEUDOCODE_FENCE = re.compile(
     r'cpp(?P<metadata>[^\n]*)\n(?=(?:for each item:|if useful:|GPU-naive:))'
 )
 
+INLINE_BUILD_COMMAND = re.compile(
+    r"Compile with " + re.escape(chr(96)) +
+    r"(?P<compile>clang\+\+[^" + re.escape(chr(96)) + r"\n]{35,240})" +
+    re.escape(chr(96)) + r", then run " + re.escape(chr(96)) +
+    r"(?P<run>[^" + re.escape(chr(96)) + r"\n]+)" +
+    re.escape(chr(96)) + r"\."
+)
+
 FIGURE_LABEL = re.compile(
     r"(?m)^(?:#{1,5}\s*)?Figure\s+(?:B\d+|CPP[- ]\d+)[^\n]*\n"
     r"(?=\s*ALLMIGHTFIGURECH)"
@@ -49,7 +57,7 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
     edits = {"chapter": chapter, "removed_editorial_notes": notes,
              "heading_level_adjustments": 0, "removed_duplicate_title": 0,
              "renamed_merge_headings": 0, "normalized_wikilinks": 0,
-             "relabeled_pseudocode": 0}
+             "relabeled_pseudocode": 0, "promoted_build_commands": 0}
     source, n = REDUNDANT_TITLE.subn("", source)
     edits["removed_duplicate_title"] += n
     # A small set of author-directed remarks are not learning content.
@@ -108,6 +116,17 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
         source,
     )
     edits["relabeled_pseudocode"] = labeled
+
+    # A shell command exceeding the measure of the printed page must be a
+    # copyable code block, not one long unbreakable inline text run.
+    def command_as_listing(match: re.Match[str]) -> str:
+        edits["promoted_build_commands"] += 1
+        return ("Compile and run using the following commands:\n\n"
+                + chr(96) * 3 + "sh\n"
+                + match.group("compile") + "\n"
+                + match.group("run") + "\n"
+                + chr(96) * 3 + "\n")
+    source = INLINE_BUILD_COMMAND.sub(command_as_listing, source)
 
     # Pandoc converts '# heading' to LaTeX section in a chapter fragment.
     # In the raw chapter edition the content often begins at ## or ###,
