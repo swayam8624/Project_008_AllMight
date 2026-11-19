@@ -141,17 +141,18 @@ void test_callback_outlives_renderer_owner_safely() {
     check(weakOwner.expired(),
           "callback did not retain UI owner / renderer object");
     const auto done=callback(observed(true));
-    check(done,
+    check(done.has_value(),
           "callback safely finishes after original wrapper destruction");
     const auto twice=callback(observed(true));
     check(!twice && twice.error()==p::Error::stale_generation,
           "post-destruction duplicate callback rejected");
     p::CompletionMailbox other(1,5678);
     const auto q=other.reserve(p::Project::kairo);
-    check(q && !other.publish(id) &&
-          other.publish(*q) &&
-          other.abandon_unsubmitted(*q)==std::unexpected(p::Error::wrong_phase),
-          "foreign owner and accepted/queued work fail closed");
+    check(q && !other.publish(id) && other.publish(*q),
+          "foreign owner cannot mutate unrelated mailbox");
+    const auto noCancel=other.abandon_unsubmitted(*q);
+    check(!noCancel && noCancel.error()==p::Error::wrong_phase,
+          "accepted work cannot be cancelled as unsubmitted");
 }
 void test_unknown_acceptance_and_failed_record() {
     p::CompletionMailbox mailbox(1,6001);
@@ -261,7 +262,7 @@ void test_missing_timestamps_counter_formats_and_stage_safety() {
 
     p::CompletionMailbox m(1,7001);
     auto id=m.reserve(p::Project::kairo);
-    check(id,"slot reserved");
+    check(id.has_value(),"slot reserved");
     const auto before=m.callback_for(*id)(good);
     check(!before && before.error()==p::Error::wrong_phase,
           "completion callback cannot run before a real commit");
