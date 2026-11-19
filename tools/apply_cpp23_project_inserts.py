@@ -122,6 +122,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md",
         b"\n## From a living asset registry to reliable queries and transformations\n",
     ),
+    Insert(
+        "CPP-19E",
+        "Supplementary/C++23 Project Labs/CPP-19E - A Complete Asset to Evidence Trace.md",
+        b"\n### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW\n",
+    ),
 )
 
 
