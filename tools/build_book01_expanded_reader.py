@@ -304,7 +304,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             raw_path.write_bytes(payload)
             source_text = payload.decode("utf-8")
             math_stats = render.math_preflight(source_text, f"Chapter {num}")
-            converted, figures = render.plan_figures(source_text, num, part_number, directory, OUTPUT)
+            reading_text, structure = render.prepare_reading_structure(source_text)
+            converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
             render_path = content_dir / (fragment + ".reader.md")
             render_path.write_text(converted, encoding="utf-8")
             report["diagrams"].extend(figures)
@@ -326,6 +327,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "render_markdown_path": render_path.relative_to(OUTPUT).as_posix(),
                           "render_markdown_sha256": sha256(render_path.read_bytes()),
                           "math_preflight": math_stats,
+                          "layout_reflow": structure,
                           "figure_count": len(figures),
                           "reader_title": CHAPTER_TITLES[num - 1],
                           "latex_sha256": sha256(tex_path.read_bytes()),
