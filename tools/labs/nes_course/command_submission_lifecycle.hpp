@@ -24,6 +24,7 @@
 // is mandatory if used from multiple host threads.
 #include "scoped_frame_upload_ring.hpp"
 #include "work_dependency_graph.hpp"
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -338,6 +339,16 @@ public:
         for(const auto& entry:entries_)
             if(entry.state!=State::retired) ++count;
         return count;
+    }
+    // A bounded journal needs an explicit compaction policy. Only RETIRED
+    // records can be discarded; their owned completion events are separately
+    // delivered via drain_events(), and IDs are never recycled.
+    [[nodiscard]] std::size_t prune_retired() noexcept {
+        const auto before=entries_.size();
+        std::erase_if(entries_,[](const Entry& entry) noexcept {
+            return entry.state==State::retired;
+        });
+        return before-entries_.size();
     }
     [[nodiscard]] std::optional<State>
     status(std::uint64_t ticket) const noexcept {
