@@ -484,6 +484,86 @@ resource ownership and native shader/frame evidence, backed by portable
 CPU oracles and platform-conditional tests rather than invented devices.
 
 
+## Pass 15 — Book 01, Chapter 15: Execute and Measure a Metal Frame
+
+**Deliberate multi-project continuation.** Maveb is the main native Metal
+teaching engine, KairoRenderer's actual Objective-C++ Metal implementation
+the comparative engine, KairoPhysics/Kyoto the exact-pair GPU-compute
+correctness client, and XR the timing/latency client. NES remains useful for
+earlier CPU representation topics but **is not** the sole project thread.
+The durable [seven-book multi-project matrix](project-lab-matrix.md) records
+source revisions and genuinely different project responsibilities.
+
+**Original writing preserved:** The actual Chapter 15 reading copy has
+3,061 lines / 47,241 characters already covering Metal's execution model,
+render/compute/blit encoders, storage, tile memory, drawables, frames in
+flight, heaps, native hazards, profiling and ObjC++/Metal-cpp lifetime.
+No existing lines were removed or regenerated. The new ~43,585-character
+[GPU-15M — Execute, Verify and Measure a Metal Frame](../../Supplementary/C++23%20Project%20Labs/GPU-15M%20-%20Execute%20Verify%20and%20Measure%20a%20Metal%20Frame.md)
+is staged immediately before the original `### STORAGE MODES, TILE MEMORY,
+DRAWABLES, FRAMES IN FLIGHT, HEAPS & SYNCHRONIZATION` heading.
+
+**Portable C++23 reference model:** `tools/labs/gpu_course/metal_frame_contracts.hpp`
+models Maveb-style three-frame permits, owner/slot/generation identity,
+checked monotonic upload arenas, definite precommit cancellation,
+indeterminate submission quarantine, device-lost refusal, terminal
+completed versus error, valid/nonzero GPU timestamp intervals, and
+format-aware BGRA8 capture row-stride compaction. A malformed capture
+records a separate `capture_error` but still **releases the frame permit
+when GPU terminal completion is known**. `gpu_metal_frame_cpp23_lab.cpp`
+tests Maveb Gaussian, Kairo scene, Kyoto collision and XR gaze tags,
+arena overflow, out-of-order terminal callbacks, stale identity, error
+result handling, correct 256-byte-pitch capture, and positive/missing
+timing evidence. Default CTest is an explicit **synthetic CPU oracle**.
+
+**Actual native Metal possibility:** `tools/labs/gpu_course/native_metal_compute_probe.mm`
+uses Apple Objective-C++ ARC and actual Metal/Foundation frameworks, only
+when the CMake compiler/framework checks pass. On explicit `--probe-native`,
+the program compiles original MSL compute/vertex/fragment shaders, creates
+real compute and rendering pipelines, dispatches a 32x32 AABB overlap
+mask, draws a solid-red full-screen triangle to a private 3x2
+`MTLPixelFormatBGRA8Unorm` texture, blits it into a shared readback
+buffer at 256 bytes per row, waits for real terminal GPU completion,
+then checks **every pair mask entry, guard word and pixel** against CPU
+expectations. This is a real offscreen GPU compute+graphics+blit
+correctness witness **only if that native test is actually executed**.
+No drawable, real presentation, XR compositor or production Maveb shader
+is inferred.
+
+**Native measurement possibility:** Explicit `--benchmark-native` repeats
+the same correctness-checked command buffer for five warmups + thirty
+measurements and prints nearest-rank median/p95 host encode-to-commit
+time, plus GPU command interval only when all reported GPUStartTime/
+GPUEndTime values are nonzero, positive, finite and ordered. These
+numbers are **not present yet**; source-code presence is not GPU evidence
+and a small offscreen command sample is not a whole-engine FPS claim.
+
+**Portability and diagnostics:** If the platform lacks a usable
+Objective-C++ Metal/Foundation environment, CMake includes
+`tools/labs/gpu_course/native_metal_unavailable.cpp` which returns
+77/unavailable, not a fake passed hardware result. The default CPU CTest
+still runs on GCC/Clang/macOS independently of hardware availability.
+The exact CTest source-pinned provenance record was expanded to **15
+targets**, and the insert tool and fixture preservation tests now
+cover **15 marker-delimited additions**. The original canonical
+manuscript remains unchanged. No user-local commands, LaTeX compilation
+or cross-repo changes have been performed.
+
+**Actually inspected source (not altered):** Maveb
+`engine/metal/src/Renderer.cpp`, `FrameContext.cpp`, `FrameContext.hpp`;
+KairoRenderer `MetalRenderer.cppm` and `detail/MetalBackend.mm`.
+The exact observed blob SHAs, source-level frame-lifetime observations
+and open follow-ups are in [project-lab-matrix.md](project-lab-matrix.md).
+No actual Metal SDK compilation, CTest pass, Metal compute dispatch,
+GPU screenshot or benchmark sample has been observed yet in this turn.
+
+**Next:** Chapter 16 — "Profile GPUs and Respect Apple Ownership Boundaries."
+Use the same real Maveb/Kairo sources for Objective-C++/C++ callback
+lifetime, native diagnostics/counters, Metal GPU capture, retained
+references and truthful performance reports rather than another
+NES-only detour.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
