@@ -539,7 +539,7 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
         raise FileNotFoundError("Run --prepare first; no release manifest")
     data = json.loads(manifest.read_text("utf-8"))
     if any(data.get(key) != value for key, value in metadata.items()):
-        raise ValueError("Prepared release no longer matches the current canonical source")
+        raise ValueError("Prepared release is stale or --prepare previously failed; rerun --prepare successfully before verifying or compiling. The original manuscript has not been changed.")
     if len(data.get("chapters", [])) != NUMBER_OF_CHAPTERS or len(data.get("parts", [])) != 4:
         raise ValueError("Incomplete Book01 release manifest")
     if sum(len(x.get("lesson_receipts", [])) for x in data["chapters"]) != EXPECTED_ADDITIONS:
