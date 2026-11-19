@@ -342,6 +342,34 @@ def export_candidates_to_master(generation:Path, destination:Path) -> Path:
         else:
             shutil.copy2(original,target)
         copied.append(str(target))
+    # The original candidate report contains Desktop source-worktree paths.
+    # Keep it as immutable provenance, but also write a relocation-safe
+    # manifest for auditing the books after the Desktop worktree is deleted.
+    export_manifest={
+        "schema":"allmight-book02-master-export-v1",
+        "generation":generation.name,
+        "source_fingerprint_sha256":current_fingerprint,
+        "copied_candidates":{
+            "part_1":{"file":"From Equations to Geometry - Part 1.pdf",
+                      "sha256":parts[0]["sha256"],"pages":parts[0].get("pages")},
+            "part_2":{"file":"From Equations to Geometry - Part 2.pdf",
+                      "sha256":parts[1]["sha256"],"pages":parts[1].get("pages")},
+            "epub":{"file":"From Equations to Geometry.epub",
+                    "sha256":epub["sha256"],
+                    "epubcheck_exit_code":epub["epubcheck"]["exit_code"],
+                    "supplement_source_count":epub.get("supplement_source_count")},
+        },
+        "original_candidate_report":"book02-candidate-verification.json",
+        "note":"All artifact paths are relative to this export folder and remain valid after removal of the Desktop source worktree."
+    }
+    manifest_file=version/"book02-master-export-manifest.json"
+    manifest_text=json.dumps(export_manifest,indent=2,ensure_ascii=False)+"\n"
+    if manifest_file.exists():
+        if manifest_file.read_text(encoding="utf-8")!=manifest_text:
+            raise RuntimeError("Refusing to overwrite a different canonical Master export manifest: "+str(manifest_file))
+    else:
+        manifest_file.write_text(manifest_text,encoding="utf-8")
+    copied.append(str(manifest_file))
     print("BOOK02_MASTER_EXPORT_OK",version)
     for item in copied:
         print("  "+item)
