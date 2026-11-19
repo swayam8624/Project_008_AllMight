@@ -59,6 +59,8 @@ class ProjectInsertionTests(unittest.TestCase):
             "## From generated GPU work to safe explicit execution\n"
             "Keep original async command lessons.\n"
             "### PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN\n"
+            "Keep original GPU performance material.\n"
+            "### BUFFERS, IMAGES, MEMORY & UPLOADS\n"
             "Keep all the original subsequent material.\n"
         ).encode("utf-8")
         self.master.write_bytes(self.original)
@@ -74,6 +76,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson10 = self.root / "Supplementary/C++23 Project Labs/NES-10R - Reproducibility and Evidence-Driven Profiling.md"
         self.lesson11 = self.root / "Supplementary/C++23 Project Labs/NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md"
         self.lesson12 = self.root / "Supplementary/C++23 Project Labs/NES-12Q - Command Lifecycles and Uncertain Submission.md"
+        self.lesson13 = self.root / "Supplementary/C++23 Project Labs/GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
@@ -86,6 +89,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson10.write_text("### NES-10R — A tested reproducibility protocol\n\nOriginal NES-10R addition.\n")
         self.lesson11.write_text("### NES-11B — A tested frame borrow ring\n\nOriginal NES-11B addition.\n")
         self.lesson12.write_text("### NES-12Q — A tested async journal\n\nOriginal NES-12Q addition.\n")
+        self.lesson13.write_text("### GPU-13D — A tested cross-project device\n\nOriginal GPU-13D addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -122,14 +126,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES10R-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES11B-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES12Q-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU13D-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the twelve
+        # Stronger preservation oracle: surgically delete only the thirteen
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q", b"GPU13D"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
@@ -164,11 +169,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES10R-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES11B-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES12Q-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-GPU13D-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original NES-12Q addition.", b"Locally edited NES-12Q addition."
+            b"Original GPU-13D addition.", b"Locally edited GPU-13D addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
