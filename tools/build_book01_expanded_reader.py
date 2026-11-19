@@ -369,18 +369,29 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             raw_path.write_bytes(payload)
             source_text = payload.decode("utf-8")
             math_stats = render.math_preflight(source_text, f"Chapter {num}")
-            reading_text, structure = render.prepare_reading_structure(source_text)
+            # Protect displays BEFORE any reader-only editing; otherwise a
+            # paragraph rewrite can inadvertently change or remove math.
+            shielded_source, math_entries = render.plan_math(source_text, num)
+            if len(math_entries) != math_stats["display_math"]:
+                raise ValueError(
+                    f"Chapter {num}: math preflight found "
+                    f"{math_stats['display_math']} displays but the shield "
+                    f"captured {len(math_entries)}; manuscript unchanged"
+                )
+            reading_text, structure = render.prepare_reading_structure(shielded_source)
+            render.check_math_tokens(reading_text, math_entries, num, "reader reflow")
             reading_text, editorial = publication.apply_reader_edits(reading_text, num)
+            render.check_math_tokens(reading_text, math_entries, num, "editorial cleanup")
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
+            render.check_math_tokens(converted, math_entries, num, "figure planning")
             converted, duplicate_figure_labels = publication.remove_duplicate_figure_labels(converted)
             editorial["removed_duplicate_figure_labels"] = duplicate_figure_labels
             editorial["remaining_merge_markers"] = publication.editorial_quality_report(converted)
             report["publication_edits"].append(editorial)
             indexed_source, index_entries = idx.insert_index_tokens(converted, num)
-            prepared_math, math_entries = render.plan_math(indexed_source, num)
-            prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(prepared_math)
-            if len(math_entries) != math_stats["display_math"]:
-                raise ValueError(f"Chapter {num}: display math count changed during reader reflow")
+            render.check_math_tokens(indexed_source, math_entries, num, "index insertion")
+            prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(indexed_source)
+            render.check_math_tokens(prepared_math, math_entries, num, "code-fence normalization")
             render_path = content_dir / (fragment + ".reader.md")
             render_path.write_text(prepared_math, encoding="utf-8")
             report["diagrams"].extend(figures)
@@ -423,15 +434,21 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                 extra_md.write_bytes(extra_bytes)
                 extra_text = extra_bytes.decode("utf-8")
                 extra_stats = render.math_preflight(extra_text, f"Enrichment {num}")
+                extra_shielded, extra_math = render.plan_math(extra_text, num)
+                if len(extra_math) != extra_stats["display_math"]:
+                    raise ValueError(f"Enrichment {num}: inconsistent source math count")
                 extra_figured, extra_diagrams = render.plan_figures(
-                    extra_text, num, part_number, directory, OUTPUT,
+                    extra_shielded, num, part_number, directory, OUTPUT,
                     first_index=len(figures) + 1,
                 )
+                render.check_math_tokens(extra_figured, extra_math, num,
+                                         "academic figure planning")
                 extra_indexed, extra_index = idx.insert_index_tokens(extra_figured, num)
-                extra_ready, extra_math = render.plan_math(extra_indexed, num)
-                extra_ready, extra_code_ids = render.normalize_code_fence_metadata(extra_ready)
-                if len(extra_math) != extra_stats["display_math"]:
-                    raise ValueError(f"Enrichment {num} lost display math before Pandoc")
+                render.check_math_tokens(extra_indexed, extra_math, num,
+                                         "academic index insertion")
+                extra_ready, extra_code_ids = render.normalize_code_fence_metadata(extra_indexed)
+                render.check_math_tokens(extra_ready, extra_math, num,
+                                         "academic code normalization")
                 extra_rendered.write_text(extra_ready, encoding="utf-8")
                 report["diagrams"].extend(extra_diagrams)
                 cmd = [pandoc, "-f",
@@ -477,13 +494,22 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             challenge_tex = content_dir / "final-mastery.tex"
             challenge_bytes = CAPSTONE.read_bytes()
             challenge_md.write_bytes(challenge_bytes)
-            challenge_stats = render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone")
-            cap_figured, cap_figures = render.plan_figures(challenge_bytes.decode("utf-8"), 17, part_number, directory, OUTPUT)
-            cap_indexed, cap_index = idx.insert_index_tokens(cap_figured, 17)
-            cap_prepared, cap_math = render.plan_math(cap_indexed, 17)
-            cap_prepared, cap_fences = render.normalize_code_fence_metadata(cap_prepared)
+            cap_text = challenge_bytes.decode("utf-8")
+            challenge_stats = render.math_preflight(cap_text, "Final capstone")
+            cap_shielded, cap_math = render.plan_math(cap_text, 17)
             if len(cap_math) != challenge_stats["display_math"]:
-                raise ValueError("Final capstone lost display math before Pandoc")
+                raise ValueError("Final capstone: inconsistent source math count")
+            cap_figured, cap_figures = render.plan_figures(
+                cap_shielded, 17, part_number, directory, OUTPUT
+            )
+            render.check_math_tokens(cap_figured, cap_math, 17,
+                                     "capstone figure planning")
+            cap_indexed, cap_index = idx.insert_index_tokens(cap_figured, 17)
+            render.check_math_tokens(cap_indexed, cap_math, 17,
+                                     "capstone index insertion")
+            cap_prepared, cap_fences = render.normalize_code_fence_metadata(cap_indexed)
+            render.check_math_tokens(cap_prepared, cap_math, 17,
+                                     "capstone code normalization")
             cap_reader = content_dir / "final-mastery.reader.md"
             cap_reader.write_text(cap_prepared, encoding="utf-8")
             report["diagrams"].extend(cap_figures)
