@@ -57,8 +57,8 @@ ACADEMIC_HEADINGS = {
     "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES":
         "Profiling and Apple Platform Ownership Boundaries",
 }
-FENCE = re.compile(r"(?ms)^" + re.escape(chr(96) * 3) +
-                   r"[^\n]*\n.*?^" + re.escape(chr(96) * 3) + r"[ \t]*$")
+FENCE = re.compile(r"(?ms)^(?P<marker>`{3,}|~{3,})[^\n]*\n"
+                   r".*?^(?P=marker)[ \t]*$")
 THEMATIC_BOLD = re.compile(
     r"(?m)^[ \t]*---[ \t]*\n(?:[ \t]*\n)*\*\*([^\n*]{3,120})\*\*[ \t]*\n"
 )
@@ -84,7 +84,7 @@ def verify_fenced_blocks_unchanged(
         for match in FENCE.finditer(source):
             raw = match.group(0)
             header, _, rest = raw.partition("\n")
-            payload, delimiter, _ = rest.rpartition("\n" + chr(96) * 3)
+            payload, delimiter, _ = rest.rpartition("\n" + match.group("marker"))
             if not delimiter:
                 raise ValueError("Malformed closing code-fence marker")
             blocks.append((header, digest(payload.encode("utf-8"))))
