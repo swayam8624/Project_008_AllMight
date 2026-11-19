@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 from collections import Counter
 import posixpath
 from urllib.parse import unquote, urlsplit
@@ -232,6 +233,70 @@ def combine_book(manifest: dict) -> str:
     return combined
 
 
+
+# A reflowable technical book must not force the whole reader viewport wider
+# than the screen merely because an equation or table is very long.
+# MathML stays semantic and copyable; the protective span allows horizontal
+# access to wide formulae instead of clipping their last terms.
+MATH_SCROLL_STYLE = """
+.math-scroll-container {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.math-scroll-container > math {
+  display: block;
+  max-width: none;
+  white-space: nowrap;
+}
+div.sourceCode, pre { max-width: 100%; }
+div.sourceCode { overflow-x: auto; }
+table { display: block; max-width: 100%; overflow-x: auto; }
+body { overflow-wrap: anywhere; }
+"""
+BLOCK_MATH = re.compile(
+    r'(<math\b[^>]*\bdisplay="block"[^>]*>[\s\S]*?</math>)'
+)
+
+
+def contain_wide_epub_content(epub_path: Path) -> int:
+    """Limit equation/table/code overflow without changing teaching content.
+
+    Repack only EPUB XHTML containing block MathML and the EPUB CSS.
+    All text/math tokens, image bytes, links, spine and metadata remain
+    unchanged. Every transformed document is XML-parsed before replacement.
+    Kindle Previewer is still required: CSS support differs by device.
+    """
+    staged = epub_path.with_suffix(".reflow-staging")
+    changed = 0
+    try:
+        with zipfile.ZipFile(epub_path, "r") as original, \
+             zipfile.ZipFile(staged, "w") as revised:
+            for info in original.infolist():
+                body = original.read(info.filename)
+                if info.filename.endswith(".xhtml"):
+                    source = body.decode("utf-8")
+                    wrapped, n = BLOCK_MATH.subn(
+                        lambda match:
+                            '<span class="math-scroll-container">'
+                            + match.group(0) + '</span>',
+                        source,
+                    )
+                    if n:
+                        ET.fromstring(wrapped.encode("utf-8"))
+                        body = wrapped.encode("utf-8")
+                        changed += n
+                elif info.filename == "EPUB/styles/stylesheet1.css":
+                    if b".math-scroll-container" not in body:
+                        body += ("\n" + MATH_SCROLL_STYLE).encode("utf-8")
+                revised.writestr(info, body)
+        os.replace(staged, epub_path)
+    finally:
+        staged.unlink(missing_ok=True)
+    return changed
+
+
 def validate_epub(path: Path) -> dict:
     """Structural EPUB3 checks; Kindle device rendering remains independent."""
     ns = {"c": "urn:oasis:names:tc:opendocument:xmlns:container",
@@ -410,7 +475,9 @@ def main() -> int:
          "--metadata", "author=Swayam Singal",
          "--metadata", "lang=en-US",
          "-o", str(args.output), str(md)])
+    wrapped_equations = contain_wide_epub_content(args.output)
     result = validate_epub(args.output)
+    result["scroll_contained_display_math"] = wrapped_equations
     result["editorial_cleanup"] = dict(EDITORIAL_SUMMARY)
     report = work / "epub-preflight.json"
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
