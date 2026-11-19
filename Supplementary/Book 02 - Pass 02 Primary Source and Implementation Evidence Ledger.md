@@ -59,7 +59,7 @@ Both Kairo repositories' `STATUS.md` files currently explicitly reject earlier p
 
 ## 5. Acceptance gates and nonclaims
 
-The CI workflow `.github/workflows/book02-research-pass02.yml` pins Python 3.12, NumPy 2.2.6 and SciPy 1.15.3, then runs all research-program tests in normal and optimized Python. Record the exact successful run URL and commit hash only after it completes; earlier failed runs are **not** acceptance. Mathematical figure placement and full chapter preservation continue to be guarded by the separate Pass 1 workflow.
+The CI workflow `.github/workflows/book02-research-pass02.yml` pins Python 3.12, NumPy 2.2.6 and SciPy 1.15.3, then runs all research-program tests in normal and optimized Python. **Exact code acceptance:** [GitHub Actions run 44586396518](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44586396518) completed successfully on code commit `0a2ed73bb7662ea5d35de15f829c4127f3c21974`. Python numerical source/parity tests, optimized-mode tests and the strict GCC C++23 compile/run gate all passed. Earlier failed runs remain in history and are not acceptance. Mathematical figure placement and full chapter preservation continue to be guarded by the separate Pass 1 workflow.
 
 A verified result means the declared **synthetic** cases passed; no wall-clock speedups were fabricated. A source paper named in this ledger has **not** necessarily been read cover to cover. A repo containing a method is **not** proof it is correct. A numerically close fit is not proof of physical validity, and a single seed is not sufficient to infer general stochastic performance.
 
