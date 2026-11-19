@@ -1,5 +1,34 @@
 # Project AllMight — Seven-book C++23 curriculum (in progress)
 
+## Book 1 foundations authoring checkpoint — ready for the user's four-part LaTeX build
+
+The **first sixteen original Computing Foundations reading chapters** are now
+releasable as a self-contained, source-preserving expanded reader with all
+**eighteen authored C++23 project lessons** inserted at verified original
+teaching anchors and a separate long-form, four-route, final mastery chapter.
+This is **Book01's foundations-curriculum checkpoint**, not seven finished
+books and not a claim that the older separately routed seven-stage print
+generation has been regenerated.
+
+The source-only assembly and Pandoc conversion passed in
+[expanded reader CI run 44487625396](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44487625396);
+the prior complete portable C++23 suite passed GCC, Clang19, AppleClang
+and sanitizer validation in
+[run 44476138886](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44476138886).
+The reader never discards or replaces a canonical master paragraph; its
+reversal proof detects every exact marked addition. The user-side local
+PDF compilation remains deliberately separate and has **not** been run by
+the assistant; native GPU experimental proof is not implied by a CPU lab.
+
+**For the exact checkout, optional original-master insertion, CMake/CTest,
+Pandoc and Mac LuaLaTeX build, use the dedicated [Book01 release guide](Book01/BOOK01_RELEASE_CHECKPOINT.md).**
+The executable builder is [tools/build_book01_expanded_reader.py](../../tools/build_book01_expanded_reader.py).
+It emits four updated LuaLaTeX reader parts under
+`build/book01-expanded-reader/` and a SHA-256 source manifest. The older
+`Book Production/AllMight Codex/LaTeX/Generations` snapshots are preserved,
+not silently overwritten.
+
+
 > **Correction, 18 November 2026 — preserve the full books.** This branch is an **additive revision layer** for existing long-form manuscripts. The older two-page LaTeX preview was a small standalone proof-of-format, **not a revised chapter, not a replacement for the thousands of pages, and not the expected amount of chapter work**. It must never be substituted for the canonical chapter or used to infer that a chapter is complete. No existing source has been deleted or shortened on this branch. The current manuscript source is the continuous Markdown under `Continuous Notes/`; its existing large file cannot be safely replaced using the limited content-fetch operation. New material is first developed as a source-preserving insert and applied locally, without regenerating the book.
 
 **Actual NES-01 addition:** [Supplementary/C++23 Project Labs/NES-01 - Cartridge Bytes and Trusted Layout.md](../../Supplementary/C++23%20Project%20Labs/NES-01%20-%20Cartridge%20Bytes%20and%20Trusted%20Layout.md) — written to be inserted directly after the original bit-field exercise, before the existing heading "Arithmetic becomes a policy". The older lessons are retained verbatim. The runnable C++23 lab lives at [tools/labs/ines_header_cpp23_lab.cpp](../../tools/labs/ines_header_cpp23_lab.cpp). The former `Book01/01-bits-to-cartridge-nes.tex` remains an **optional prototype** only, not the canonical seven-book teaching source.
