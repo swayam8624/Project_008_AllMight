@@ -293,7 +293,10 @@ void execute_cpu_only(Demo& demo,const g::Plan& plan) {
                 // The catalog still owns one cartridge. The bus needs its
                 // OWN independent NROM value, so re-decode the stored source
                 // instead of borrowing a moved-from or dead object.
-                const auto parsed=NromCartridge::from_image(demo.rom);
+                // std::expected holds a move-only NromCartridge. Keeping
+                // the expected non-const permits a genuine move out of it;
+                // moving from const would try the deleted copy constructor.
+                auto parsed=NromCartridge::from_image(demo.rom);
                 check(parsed.has_value(),"second owned cartridge decode");
                 auto copied=std::move(*parsed);
                 check(demo.bus.insert(std::move(copied)).has_value(),
