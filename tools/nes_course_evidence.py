@@ -48,6 +48,7 @@ EXPECTED = (
     ("NES-10R", "nes_reproducible_benchmark_cpp23_lab", "tools/labs/nes_reproducible_benchmark_cpp23_lab.cpp"),
     ("NES-11B", "nes_scoped_frame_upload_cpp23_lab", "tools/labs/nes_scoped_frame_upload_cpp23_lab.cpp"),
     ("NES-12Q", "nes_command_lifecycle_cpp23_lab", "tools/labs/nes_command_lifecycle_cpp23_lab.cpp"),
+    ("GPU-13D", "gpu_device_resource_cpp23_lab", "tools/labs/gpu_device_resource_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -65,6 +66,8 @@ EXTRA_SOURCES = (
     "tools/labs/nes_course/measurement_protocol.hpp",
     "tools/labs/nes_course/scoped_frame_upload_ring.hpp",
     "tools/labs/nes_course/command_submission_lifecycle.hpp",
+    "tools/labs/gpu_course/device_resource_contracts.hpp",
+    "tools/labs/gpu_course/native_vulkan_probe.cpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -73,6 +76,7 @@ EXTRA_SOURCES = (
     "Book Production/Seven-Book Curriculum/Book01/CMakePresets.json",
     "Book Production/Seven-Book Curriculum/README.md",
     "Book Production/Seven-Book Curriculum/source-routing-foundations.md",
+    "Book Production/Seven-Book Curriculum/project-lab-matrix.md",
 )
 
 class EvidenceError(RuntimeError):
@@ -108,6 +112,7 @@ def source_paths() -> tuple[str, ...]:
         "NES-10R": "NES-10R - Reproducibility and Evidence-Driven Profiling.md",
         "NES-11B": "NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md",
         "NES-12Q": "NES-12Q - Command Lifecycles and Uncertain Submission.md",
+        "GPU-13D": "GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
