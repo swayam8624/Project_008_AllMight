@@ -631,8 +631,9 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
                   result.stdout.count("Overfull \\hbox"), "overfull line warnings")
         if not pdf.is_file() or not pdf.stat().st_size:
             raise RuntimeError("No PDF from " + directory.name + "; see " + str(directory / "build/main.log"))
+        # Do not publish a file under the KDP release name until preflight passes.
+        pages = render.pdf_preflight(pdf, paperback=paperback)
         shutil.copy2(pdf, destination)
-        pages = render.pdf_preflight(destination, paperback=paperback)
         print("PDF:", destination, "—", pages, "pages")
         if not paperback and pages > render.KDP_MAX_WHITE_BW:
             print("NOTE: continuous digital PDF exceeds 828-page paperback limit; use --compile-paperback")
