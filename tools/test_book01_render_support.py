@@ -360,6 +360,68 @@ class Book01ProductionTests(unittest.TestCase):
         )
         self.assertEqual(book.reflow_long_textual_displays(examples), examples)
 
+    def test_tilde_fences_are_protected_from_index_and_prose_changes(self):
+        import book01_index as indexer
+        import book01_publication_edit as editor
+        source = (
+            "## Worked example\n\n"
+            "~~~text\nsymptom:\n    SIMD utilization low\n\n"
+            "evidence:\n    LLC misses high\n~~~\n\n"
+            "A SIMD kernel can be measured.\n"
+        )
+        reader, _ = editor.apply_reader_edits(source, 5)
+        self.assertIn("~~~text\nsymptom:", reader)
+        book.verify_fenced_blocks_unchanged(
+            source, reader, 5, "reader normalization")
+        indexed, entries = indexer.insert_index_tokens(reader, 5)
+        self.assertEqual([item["term"] for item in entries], ["SIMD"])
+        code = indexed[indexed.index("~~~text"):indexed.index("~~~", indexed.index("~~~text") + 6) + 3]
+        self.assertNotIn(r"\index", code)
+        self.assertIn(r"\index{SIMD}", indexed)
+        book.verify_fenced_blocks_unchanged(
+            reader, indexed, 5, "index insertion")
+
+    def test_indented_code_never_receives_index_command(self):
+        import book01_index as indexer
+        source = ("    symptom:\n    SIMD utilization low\n\n"
+                  "A SIMD kernel can be measured.\n")
+        indexed, _ = indexer.insert_index_tokens(source, 5)
+        self.assertNotIn("    \\index", indexed)
+        self.assertEqual(indexed.count(r"\index{SIMD}"), 1)
+
+    def test_long_cpp_listing_wraps_without_stranding_punctuation(self):
+        original = (
+            "\\begin{verbatim}\n"
+            "#include <array>\n"
+            "struct TinyCPU {\n"
+            '    throw std::runtime_error("program counter out of range");\n'
+            "    const unsigned wide = "
+            "static_cast<unsigned>(accumulator) + bytes[address];\n"
+            "};\n"
+            "\\end{verbatim}"
+        )
+        wrapped = book.reflow_long_cpp_verbatim(original)
+        self.assertNotIn("\n;\n", wrapped)
+        self.assertNotIn("\n);\n", wrapped)
+        self.assertEqual(wrapped.count("program counter out of range"), 1)
+        self.assertEqual(wrapped.count("accumulator"), 1)
+        self.assertEqual(wrapped.count(r"\begin{verbatim}"), 1)
+        self.assertIn("\n", wrapped)
+        # A Python listing must not have its indentation or semantics edited.
+        py = "\\begin{verbatim}\ndef long_python_function_name(a, b, c, d):\n    return a + b + c + d\n\\end{verbatim}"
+        self.assertEqual(book.reflow_long_cpp_verbatim(py), py)
+
+    def test_missing_index_inside_verbatim_fails_closed(self):
+        import book01_index as indexer
+        damaged = (
+            "\\begin{verbatim}\n"
+            "\\index{SIMD}\n"
+            "~~~text\n"
+            "\\end{verbatim}"
+        )
+        with self.assertRaisesRegex(ValueError, "Raw index macro leaked"):
+            indexer.replace_index_tokens(damaged, [])
+
     def test_mermaid_source_hash_checks(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
