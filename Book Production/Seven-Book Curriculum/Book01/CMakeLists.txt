@@ -167,7 +167,7 @@ if(ALLMIGHT_METAL_NATIVE_AVAILABLE)
  target_link_libraries(gpu_profile_ownership_cpp23_lab PRIVATE
   "${ALLMIGHT_METAL_FRAMEWORK}" "${ALLMIGHT_FOUNDATION_FRAMEWORK}")
  set_target_properties(gpu_profile_ownership_cpp23_lab PROPERTIES
-  OBJCXX_STANDARD 20 OBJCXX_STANDARD_REQUIRED ON OBJCXX_EXTENSIONS OFF)
+  OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED ON OBJCXX_EXTENSIONS OFF)
  target_compile_options(gpu_profile_ownership_cpp23_lab PRIVATE
   "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
 else()
