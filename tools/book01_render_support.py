@@ -43,13 +43,17 @@ def plan_figures(source: str, chapter: int, part: int, directory: Path, output: 
         mmd = figure_dir / (basename + ".mmd")
         png = figure_dir / (basename + ".png")
         token = f"ALLMIGHTFIGURECH{chapter:02d}INDEX{idx:03d}"
+        headings = re.findall(r"(?m)^#{2,5} +([^\n]+)$", source[:match.start()])
+        lead = headings[-1] if headings else "Computational data flow"
+        lead = re.sub(r"[`*_\[\]]", "", lead).strip()
+        lead = re.sub(r"\s+", " ", lead)[:96]
         mmd.write_text(body, encoding="utf-8")
         entries.append({
             "chapter": chapter, "part": part, "index": idx, "token": token,
             "diagram_sha256": digest(body.encode("utf-8")),
             "source": mmd.relative_to(output).as_posix(),
             "image": png.relative_to(output).as_posix(),
-            "caption": f"Figure {chapter}.{idx}: computational relationships",
+            "caption": f"Figure {chapter}.{idx}: {lead}",
         })
         return "\n\n" + token + "\n\n"
 
@@ -64,11 +68,12 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
     for item in figures:
         token = item["token"]
         path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
+        caption = item["caption"].replace("\\", "").replace("&", r"\&").replace("%", r"\%").replace("#", r"\#").replace("_", r"\_")
         latex = (
             "\\par\\begin{center}\n"
             "\\includegraphics[width=.94\\linewidth,height=.36\\textheight,"
             "keepaspectratio]{" + path + "}\n"
-            "\\par{\\footnotesize\\itshape " + item["caption"] +
+            "\\par{\\footnotesize\\itshape " + caption +
             "}\\par\\end{center}\\smallskip\n"
         )
         pattern = r"(?m)^" + re.escape(token) + r"$"
