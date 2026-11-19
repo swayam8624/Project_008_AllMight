@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only structural audit of staged Book01 revision, NOT a quality verdict.
 
-The seventeen staged additions and their original source anchors must be
+The eighteen staged additions and their original source anchors must be
 individually identifiable. This does not compile C++, validate hardware,
 verify papers, or assess the truth of narrative explanations. No source files
 are changed. --allow-applied is for the later authorized integration stage.
@@ -61,10 +61,10 @@ def audit(allow_applied: bool=False)->dict:
     executables=re.findall(r"(?m)^\s*add_executable\(\s*([^\s()]+)",cmake)
     ctests=re.findall(r"(?m)^\s*add_test\(\s*NAME\s+([^\s()]+)",cmake)
     if len(mapped)!=39: faults.append("Reading map does not have 39 chapters")
-    if len(specs)!=17 or len(targets)!=17:
-        faults.append("Staged insertion and source evidence inventories must both have 17")
-    if len(executables)!=17 or len(ctests)!=17:
-        faults.append("CMake executable and CTest registration counts must both have 17")
+    if len(specs)!=18 or len(targets)!=18:
+        faults.append("Staged insertion and source evidence inventories must both have 18")
+    if len(executables)!=18 or len(ctests)!=18:
+        faults.append("CMake executable and CTest registration counts must both have 18")
     if len(set(executables))!=len(executables) or len(set(ctests))!=len(ctests):
         faults.append("Duplicate executable/CTest name")
     if [x.name for x in specs]!=[x[0] for x in targets]:
