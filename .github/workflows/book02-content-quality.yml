@@ -1,0 +1,38 @@
+name: Book Two - Content Reconstruction Witnesses
+
+on:
+  push:
+    branches:
+      - curriculum/book02-mathematics-refinement-pass01
+    paths:
+      - 'tools/labs/book02_coverage_oracle.py'
+      - 'tools/labs/test_book02_coverage_oracle.py'
+      - '.github/workflows/book02-content-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: book02-content-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-content-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the mathematical teaching source syntax
+        run: |
+          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py
+      - name: Execute independent exact-cover and sampling contracts
+        working-directory: tools/labs
+        run: |
+          python -m unittest -v test_book02_coverage_oracle
+          python -O -m unittest -v test_book02_coverage_oracle
+      - name: Show independently reproducible analytical oracle
+        run: python tools/labs/book02_coverage_oracle.py
