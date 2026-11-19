@@ -1,0 +1,69 @@
+name: AllMight Book01 expanded-source reader release (no LaTeX build)
+
+on:
+  push:
+    branches:
+      - curriculum/cpp23-nes-project-pass01
+    paths:
+      - ".github/workflows/allmight-book01-expanded-reader.yml"
+      - "tools/build_book01_expanded_reader.py"
+      - "tools/apply_cpp23_project_inserts.py"
+      - "tools/tests/test_book01_expanded_reader.py"
+      - "Chapter Edition/01 - Computing Foundations/**"
+      - "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+      - "Supplementary/**"
+      - "Book Production/Seven-Book Curriculum/Book01/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: allmight-book01-reader-release
+  cancel-in-progress: true
+
+jobs:
+  verify-reader-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check byte-preserving 16-chapter and 18-lesson assembly
+        run: |
+          python3 tools/build_book01_expanded_reader.py --check
+          python3 -m unittest discover -s tools/tests -p 'test_book01_expanded_reader.py' -v
+      - name: Install semantic Markdown to LaTeX converter (never compile TeX)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+          pandoc --version | head -n 1
+      - name: Generate four complete TeX source parts without invoking latexmk/lualatex
+        run: |
+          python3 tools/build_book01_expanded_reader.py --prepare
+          python3 tools/build_book01_expanded_reader.py --verify-prepared
+          find build/book01-expanded-reader -type f -name '*.tex' | sort
+      - name: Prove generated manuscript has all exact additive lesson markers
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("build/book01-expanded-reader")
+          data=json.loads((root/"manifest.json").read_text())
+          assert data["chapter_count"]==16 and data["addition_count"]==18
+          assert len(data["parts"])==4
+          seen=[]
+          for row in data["chapters"]:
+              source=(root/row["markdown_path"]).read_text()
+              for addition in row["lesson_receipts"]:
+                  marker=addition["id"].replace("-","")
+                  assert source.count(f"<!-- ALLMIGHT-CPP23-{marker}-ADDITIVE-START -->")==1
+                  assert source.count(f"<!-- ALLMIGHT-CPP23-{marker}-ADDITIVE-END -->")==1
+                  seen.append(addition["id"])
+          assert len(seen)==len(set(seen))==18
+          print("PASS: all 16 original source bodies retained, all 18 exact lessons placed once")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: book01-expanded-tex-sources-and-source-manifest
+          path: build/book01-expanded-reader
+          if-no-files-found: error
