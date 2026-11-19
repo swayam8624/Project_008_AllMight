@@ -183,19 +183,25 @@ int run_native_probe() {
         bufferInfo.usage=VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         bufferInfo.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
-        VkBuffer buffer=VK_NULL_HANDLE;
-        result=vkCreateBuffer(device,&bufferInfo,nullptr,&buffer);
+        // One joint owner prevents destructor-order mistakes: the resource
+        // is destroyed BEFORE its still-bound backing memory is freed.
+        struct BoundBufferGuard {
+            VkDevice device;
+            VkBuffer buffer{VK_NULL_HANDLE};
+            VkDeviceMemory storage{VK_NULL_HANDLE};
+            ~BoundBufferGuard() {
+                if(buffer) vkDestroyBuffer(device,buffer,nullptr);
+                if(storage) vkFreeMemory(device,storage,nullptr);
+            }
+        } owned{device};
+        result=vkCreateBuffer(device,&bufferInfo,nullptr,&owned.buffer);
         if(result!=VK_SUCCESS) {
             std::cerr<<"ERROR: native vkCreateBuffer: "<<result<<"\n";
             return 1;
         }
-        struct BufferGuard {
-            VkDevice device; VkBuffer buffer;
-            ~BufferGuard(){if(buffer) vkDestroyBuffer(device,buffer,nullptr);}
-        } bufferGuard{device,buffer};
 
         VkMemoryRequirements requirements{};
-        vkGetBufferMemoryRequirements(device,buffer,&requirements);
+        vkGetBufferMemoryRequirements(device,owned.buffer,&requirements);
         VkPhysicalDeviceMemoryProperties memory{};
         vkGetPhysicalDeviceMemoryProperties(physical,&memory);
 
@@ -229,18 +235,12 @@ int run_native_probe() {
         alloc.sType=VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         alloc.allocationSize=requirements.size; // not the 256 source bytes
         alloc.memoryTypeIndex=selected;
-        VkDeviceMemory storage=VK_NULL_HANDLE;
-        result=vkAllocateMemory(device,&alloc,nullptr,&storage);
+        result=vkAllocateMemory(device,&alloc,nullptr,&owned.storage);
         if(result!=VK_SUCCESS) {
             std::cerr<<"ERROR: native vkAllocateMemory: "<<result<<"\n";
             return 1;
         }
-        struct MemoryGuard {
-            VkDevice device; VkDeviceMemory memory;
-            ~MemoryGuard(){if(memory) vkFreeMemory(device,memory,nullptr);}
-        } storageGuard{device,storage};
-
-        result=vkBindBufferMemory(device,buffer,storage,0);
+        result=vkBindBufferMemory(device,owned.buffer,owned.storage,0);
         if(result!=VK_SUCCESS) {
             std::cerr<<"ERROR: native vkBindBufferMemory: "<<result<<"\n";
             return 1;
