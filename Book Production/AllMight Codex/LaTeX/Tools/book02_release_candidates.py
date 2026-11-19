@@ -107,14 +107,21 @@ def print_candidates(generation:Path, root:Path)->list[dict]:
     return reports
 
 
-def inspect_epub(path:Path,record:dict)->dict:
+def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
     if not path.is_file() or record.get("epubcheck",{}).get("exit_code")!=0:
         raise RuntimeError("Full stage EPUB missing or EPUBCheck not successful")
     supplement=record.get("book02_supplement_sources",[])
     if len(supplement)!=EXPECTED_EXTRA:
         raise RuntimeError(f"Expected 36 EPUB additive sources, got {len(supplement)}")
+    if cover_image is not None and record.get("book02_cover_sha256")!=digest(cover_image):
+        raise RuntimeError("EPUB cover provenance differs from the supplied cover image")
     with zipfile.ZipFile(path) as z:
         names=z.namelist()
+        if cover_image is not None and not any(
+            hashlib.sha256(z.read(name)).hexdigest()==digest(cover_image)
+            for name in names if name.lower().endswith((".jpg",".jpeg"))
+        ):
+            raise RuntimeError("The actual EPUB package does not contain the supplied cover JPEG")
         svgs=[p for p in names if p.endswith(".svg")]
         if len(svgs)<EXPECTED_IMAGE_ASSETS:
             raise RuntimeError(f"Expected at least 13 scientific SVGs, got {len(svgs)}")
@@ -138,10 +145,11 @@ def inspect_epub(path:Path,record:dict)->dict:
         "supplement_source_count":len(supplement),
         "original_frozen_chapters":record.get("chapter_rows"),
         "epubcheck":record["epubcheck"],
+        "cover_sha256":record.get("book02_cover_sha256"),
     }
 
 
-def epub_candidate(generation:Path,root:Path)->dict:
+def epub_candidate(generation:Path,root:Path,cover_image:Path|None=None)->dict:
     # The historical builder has several author-local helper dependencies.
     # Fail immediately, rather than creating an incomplete EPUB in their
     # absence or quietly dropping 16 chapters/references/attachments.
@@ -159,13 +167,15 @@ def epub_candidate(generation:Path,root:Path)->dict:
     cmd=[sys.executable,str(ROOT/"Tools"/"build_epubs.py"),
          "--generation",generation.name,"--stage",STAGE,
          "--output-dir",str(out)]
+    if cover_image is not None:
+        cmd.extend(["--book02-cover-image",str(cover_image)])
     subprocess.run(cmd,check=True)
     path=out/(STAGE+".epub")
     status=json.loads((out/"build-status.json").read_text())
     records=[x for x in status["completed"] if x.get("stage_id")==STAGE]
     if len(records)!=1:
         raise RuntimeError("EPUB build status lacks the exact Book Two stage")
-    result=inspect_epub(path,records[0])
+    result=inspect_epub(path,records[0],cover_image)
     print("BOOK02_EPUB_CANDIDATE_OK",path,flush=True)
     return result
 
@@ -173,11 +183,15 @@ def epub_candidate(generation:Path,root:Path)->dict:
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--generation",help="Frozen generation id, defaults to CURRENT.json")
+    p.add_argument("--cover-image",type=Path,help="Book Two JPEG cover on the author\x27s Mac, for the EPUB (not the print interior)")
     g=p.add_mutually_exclusive_group()
     g.add_argument("--print-only",action="store_true")
     g.add_argument("--epub-only",action="store_true")
     args=p.parse_args()
     generation=generation_path(args.generation)
+    cover_image=args.cover_image.expanduser().resolve() if args.cover_image else None
+    if cover_image is not None and (not cover_image.is_file() or cover_image.suffix.lower() not in (".jpg",".jpeg")):
+        p.error("Book Two EPUB cover must be an existing .jpg/.jpeg file")
     result={"generation":generation.name,"title":TITLE,
             "source_lock":audit(),"print_parts":[],"epub":None,
             "declaration":"Candidate export only. Full original text mathematical correctness and reader/trim visual acceptance remain editorial gates."}
@@ -186,7 +200,7 @@ def main():
     if not args.epub_only:
         result["print_parts"]=print_candidates(generation,output)
     if not args.print_only:
-        result["epub"]=epub_candidate(generation,output)
+        result["epub"]=epub_candidate(generation,output,cover_image)
     file=output/"book02-candidate-verification.json"
     file.write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
     print("BOOK02_CANDIDATES_VERIFIED",file)
