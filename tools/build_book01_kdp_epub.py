@@ -251,13 +251,42 @@ def main() -> int:
     if not args.cover.is_file():
         parser.error("Provide the actual cover image file: " + str(args.cover))
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
     except ImportError:
-        parser.error("Pillow is required for cover validation. Install it in this environment with: python -m pip install Pillow")
-    with Image.open(args.cover) as image:
-        w, h = image.size
-        if w < 1200 or h < 1800 or not 0.56 <= w/h <= 0.75:
-            parser.error(f"Cover is {w}x{h}; supply suitable portrait artwork, ideally 1600x2560")
+        parser.error(
+            "Pillow is missing from the book virtual environment. Run: "
+            ".venv-book01/bin/python -m pip install Pillow"
+        )
+    # Keep the author's original cover untouched. The supplied 992x1586
+    # portrait art may be transparently padded/upscaled to a Kindle-size JPG.
+    cover_for_epub = args.cover
+    with Image.open(args.cover) as source:
+        source.load()
+        w, h = source.size
+        if not 0.56 <= w / h <= 0.75:
+            parser.error(f"Cover dimensions {w}x{h} are not the expected portrait aspect ratio")
+        if source.mode != "RGB" or w < 1600 or h < 2560:
+            staging = OUTPUT / "epub-preflight"
+            staging.mkdir(parents=True, exist_ok=True)
+            cover_for_epub = staging / "book01-cover-for-epub.jpg"
+            # Composite any transparent pixels on dark navy, consistent
+            # with the actual author's uploaded art. Never crop any text.
+            rgba = source.convert("RGBA")
+            background = Image.new("RGBA", rgba.size, (0, 7, 19, 255))
+            background.alpha_composite(rgba)
+            rgb = background.convert("RGB")
+            if w < 1600 or h < 2560:
+                rgb = ImageOps.pad(
+                    rgb, (1600, 2560),
+                    method=Image.Resampling.LANCZOS,
+                    color=(0, 7, 19),
+                    centering=(0.5, 0.5),
+                )
+            rgb.save(cover_for_epub, "JPEG", quality=94, subsampling=0)
+            print(
+                f"Prepared cover for EPUB: {cover_for_epub} "
+                f"({w}x{h} original, {rgb.width}x{rgb.height} output)"
+            )
     rows, metadata = builder.audit_sources()
     if not args.skip_source_verify:
         builder.verify_prepared(rows, metadata)
@@ -288,7 +317,7 @@ def main() -> int:
     run(["pandoc", "-f", "markdown+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
          "-t", "epub3", "--standalone", "--toc", "--toc-depth=2",
          "--split-level=1", "--mathml", "--css", str(css),
-         "--epub-cover-image", str(args.cover),
+         "--epub-cover-image", str(cover_for_epub),
          "--metadata", "title=" + BOOK_TITLE,
          "--metadata", "subtitle=" + BOOK_SUBTITLE,
          "--metadata", "author=Swayam Singal",
