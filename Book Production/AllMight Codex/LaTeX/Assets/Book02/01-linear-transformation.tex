@@ -1,0 +1,35 @@
+% Deterministic mapping of the unit circle under a declared 2x2 matrix.
+\clearpage
+\section*{Visual laboratory: a matrix changes a shape}
+\noindent A linear transformation does more than rearrange symbols. Here each point
+\(\mathbf u(\theta)=(\cos\theta,\sin\theta)^T\) on the unit circle becomes
+\(\mathbf p(\theta)=A\mathbf u(\theta)\) under
+\(A=\begin{pmatrix}2&0.6\\0&0.45\end{pmatrix}\).
+The longer axis in the image is a consequence of anisotropic scaling and shear;
+it is not a measured dataset.
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+ group style={group size=2 by 1,horizontal sep=10mm},
+ booktwoaxis,width=0.44\textwidth,height=58mm,
+ axis equal image,xmin=-2.9,xmax=2.9,ymin=-2.2,ymax=2.2,
+ xlabel={$x$},ylabel={$y$}
+]
+\nextgroupplot[title={Before: $\mathbf{u}$}]
+\addplot[booktwocyan,very thick,domain=0:360,samples=121] ({cos(x)},{sin(x)});
+\addplot[booktwogold,thick,-stealth] coordinates {(0,0)(1,0)};
+\addplot[booktwonavy,thick,-stealth] coordinates {(0,0)(0,1)};
+\nextgroupplot[title={After: $A\mathbf{u}$}]
+\addplot[booktwocyan,very thick,domain=0:360,samples=121] ({2*cos(x)+0.6*sin(x)},{0.45*sin(x)});
+\addplot[booktwogold,thick,-stealth] coordinates {(0,0)(2,0)};
+\addplot[booktwonavy,thick,-stealth] coordinates {(0,0)(0.6,0.45)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{An exact affine-free linear map of a unit circle. Gold and navy arrows are the transformed basis vectors, not necessarily the principal axes. Singular vectors and singular values recover the ellipse's principal directions and stretches.}
+\label{fig:book02-linear-transformation}
+\end{figure}
+\noindent\textbf{Reconstruct it:} compute \(A^TA\), its eigenvectors,
+and the square roots of its eigenvalues. Overlay the two principal axes;
+then check that applying \(A^{-1}\) recovers the original points within a
+reported floating-point tolerance.
