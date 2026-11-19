@@ -372,6 +372,10 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
         # Use the LaTeX figure counter, not a hand-printed "Figure 1.2:"
         # prefix. This gives correct references and a genuine list of figures.
         title = re.sub(r"^Figure\s+\d+\.\d+\s*:\s*", "", caption)
+        # Do not print internal source labels such as "Figure B1" again
+        # after LaTeX has already assigned the public Figure 1.2 counter.
+        title = re.sub(r"^Figure\s+(?:B\d+|CPP[- ]\d+)\s*[-:]\s*",
+                       "", title)
         latex = (
             "\\par\\begin{center}\n"
             "\\includegraphics[width=.94\\linewidth,height=.34\\textheight,"
