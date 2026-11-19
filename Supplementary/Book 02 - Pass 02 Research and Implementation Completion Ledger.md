@@ -4,7 +4,7 @@
 **Series:** From Bits to Research, Book Two of Seven
 **Date:** 2026-11-19
 **Scope:** Research-method reconstruction, reference implementations, source-boundary analysis and reproducible numerical comparisons.
-**Status:** Implementation and teaching complete for the defined Pass 02 scope; exact-head C++23 CI acceptance and final editorial signoff are recorded below once verified.
+**Status:** COMPLETE and independently tested for the defined Pass 02 research-teaching scope. Exact code acceptance is confirmed by [GitHub Actions run 44586396518](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44586396518) at commit `0a2ed73bb7662ea5d35de15f829c4127f3c21974`. This is not a claim of full published-paper replication or finished PDF/EPUB.
 
 ## 1. Material actually added to the publication
 
@@ -55,7 +55,7 @@ No benchmark latency, GPU speedup, paper result figure, or original dataset resu
 
 ### Evidence gate
 
-The decisive GitHub Actions verification must correspond to a commit containing the complete C++23 witness, MIS lab, updated workflow and current paper reproductions; no earlier green partial run substitutes for exact-current-head acceptance. The report will be updated with the successful run before calling the pass verified.
+**Acceptance met.** [The successful research-method run 44586396518](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44586396518) checked all Python research suites and strict C++23 compilation/execution from commit `0a2ed73bb7662ea5d35de15f829c4127f3c21974`. Later documentation-only commits do not change that tested code snapshot. The separate Pass 1 preservation workflow [run 44585221598](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44585221598) passed after the updated research chapter placements were added.
 
 ## 5. Pass 3 handoff
 
