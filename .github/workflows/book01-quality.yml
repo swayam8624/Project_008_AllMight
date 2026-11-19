@@ -29,6 +29,7 @@ jobs:
           sudo apt-get install -y pandoc
           python3 --version
           pandoc --version | head -n 2
+          python3 -m pip install --user pymupdf pypdf
       - name: Check Python syntax and editorial regression tests
         run: |
           python3 -m py_compile \
@@ -39,9 +40,11 @@ jobs:
             tools/book01_pdf_proof.py \
             tools/build_book01_expanded_reader.py \
             tools/test_book01_render_support.py \
-            tools/test_book01_publication_edit.py
+            tools/test_book01_publication_edit.py \
+            tools/test_book01_pdf_proof.py
           python3 tools/test_book01_render_support.py
           python3 tools/test_book01_publication_edit.py
+          python3 tools/test_book01_pdf_proof.py
       - name: Verify source preservation and compile-ready LaTeX preparation
         run: |
           python3 tools/build_book01_expanded_reader.py --check
