@@ -7,6 +7,8 @@ on:
     paths:
       - 'tools/labs/book02_visual_atlas.py'
       - 'tools/labs/test_book02_visual_atlas.py'
+      - 'tools/labs/book02_build_viewer.py'
+      - 'tools/labs/book02_atlas_viewer_template.html'
       - 'tools/labs/book02_papers_*.py'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/28-*.tex'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/29-*.tex'
@@ -43,7 +45,7 @@ jobs:
           python -m pip install numpy==2.2.6 scipy==1.15.3 matplotlib==3.10.5
       - name: Validate source and figure generator syntax
         run: |
-          python -m py_compile tools/labs/book02_visual_atlas.py tools/labs/test_book02_visual_atlas.py
+          python -m py_compile tools/labs/book02_visual_atlas.py tools/labs/test_book02_visual_atlas.py tools/labs/book02_build_viewer.py
           python -m py_compile 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - name: Run original data and rich publication figure tests
         working-directory: tools/labs
@@ -65,6 +67,24 @@ jobs:
               assert (root/obj["data"]).is_file()
           print("BOOK02_VISUAL_ATLAS: VERIFIED",len(manifest["figures"]))
           PY
+      - name: Verify offline HTML experiment controls and standalone JavaScript syntax
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          root = pathlib.Path("${{ runner.temp }}/book02-visual-atlas")
+          html = (root/"Numerical-Geometry-Atlas.html").read_text(encoding="utf-8")
+          assert "__ATLAS_DATA__" not in html
+          assert "https://" not in html and "http://" not in html
+          assert "<script src=" not in html
+          block = re.search(r"<script id=\"atlas-json\" type=\"application/json\">(.*?)</script>", html, re.S)
+          assert block is not None
+          obj = json.loads(block.group(1))
+          assert len(obj["tables"]) == 7
+          scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
+          assert len(scripts) == 1
+          (root/"_viewer_syntax_check.js").write_text(scripts[0], encoding="utf-8")
+          PY
+          node --check "${{ runner.temp }}/book02-visual-atlas/_viewer_syntax_check.js"
       - name: Upload complete print and EPUB compatible figure assets
         uses: actions/upload-artifact@v4
         with:
