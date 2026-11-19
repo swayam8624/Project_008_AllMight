@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only structural audit of staged Book01 revision, NOT a quality verdict.
 
-The sixteen staged additions and their original source anchors must be
+The seventeen staged additions and their original source anchors must be
 individually identifiable. This does not compile C++, validate hardware,
 verify papers, or assess the truth of narrative explanations. No source files
 are changed. --allow-applied is for the later authorized integration stage.
@@ -44,6 +44,7 @@ def audit(allow_applied: bool=False)->dict:
     faults=[]
     warnings=[]
     records=[]
+    extra=[]
     try:
         patcher=read_module("apply_cpp23_project_inserts.py","allmight_audit_patcher")
         evidence=read_module("nes_course_evidence.py","allmight_audit_evidence")
@@ -60,10 +61,10 @@ def audit(allow_applied: bool=False)->dict:
     executables=re.findall(r"(?m)^\s*add_executable\(\s*([^\s()]+)",cmake)
     ctests=re.findall(r"(?m)^\s*add_test\(\s*NAME\s+([^\s()]+)",cmake)
     if len(mapped)!=39: faults.append("Reading map does not have 39 chapters")
-    if len(specs)!=16 or len(targets)!=16:
-        faults.append("Staged insertion and source evidence inventories must both have 16")
-    if len(executables)!=16 or len(ctests)!=16:
-        faults.append("CMake executable and CTest registration counts must both have 16")
+    if len(specs)!=17 or len(targets)!=17:
+        faults.append("Staged insertion and source evidence inventories must both have 17")
+    if len(executables)!=17 or len(ctests)!=17:
+        faults.append("CMake executable and CTest registration counts must both have 17")
     if len(set(executables))!=len(executables) or len(set(ctests))!=len(ctests):
         faults.append("Duplicate executable/CTest name")
     if [x.name for x in specs]!=[x[0] for x in targets]:
@@ -137,6 +138,40 @@ def audit(allow_applied: bool=False)->dict:
             "lesson_url_occurrences":len(re.findall(r"https?://",lab)),
             "exact_source_anchor_count":anchor_count,
         })
+    # Additional gap-repair lessons can belong to a previously read chapter.
+    # Check their heading AND find exactly one original chapter containing
+    # the actual source anchor; do not assume lesson index == chapter index.
+    for supplement in specs[16:]:
+        lesson_path=ROOT/supplement.source
+        if not lesson_path.is_file():
+            faults.append("Additional lesson missing: "+supplement.source)
+            continue
+        lesson=lesson_path.read_text("utf-8")
+        if not lesson.startswith("### "+supplement.name+" "):
+            faults.append("Additional lesson heading mismatch: "+supplement.name)
+        heading=supplement.anchor.decode("utf-8").strip()
+        candidate_chapters=[]
+        for chapter_no, chapter_name in enumerate(mapped[:16],start=1):
+            chapter_path=EDITION/(chapter_name+".md")
+            if not chapter_path.is_file():
+                continue
+            lines=chapter_path.read_text("utf-8").splitlines()
+            if sum(line==heading for line in lines)==1:
+                candidate_chapters.append(chapter_no)
+        if len(candidate_chapters)!=1:
+            faults.append(
+                supplement.name+": source anchor is not unique across "
+                "original chapter reading copies"
+            )
+        if original_bytes.count(supplement.anchor)!=1:
+            faults.append(supplement.name+": canonical master anchor not unique")
+        extra.append({
+            "lesson_id":supplement.name,
+            "source_chapters":candidate_chapters,
+            "chars":len(lesson),
+            "source":supplement.source,
+            "code_fences":measure_fences(lesson),
+        })
     return {
         "ok":not faults,
         "scope":"structural source-only; never a technical completeness certificate",
@@ -147,6 +182,7 @@ def audit(allow_applied: bool=False)->dict:
         "registered_executables":len(executables),
         "registered_ctests":len(ctests),
         "audited_chapters":len(records),
+        "additional_gap_lessons":extra,
         "faults":faults,
         "warnings":warnings,
         "chapters":records,
