@@ -245,6 +245,51 @@ class Book01ProductionTests(unittest.TestCase):
                 4, "deleted program", allowed_new_shell_listings=1,
             )
 
+    def test_nested_template_inline_code_breaks_without_changing_verbatim(self):
+        inline = (
+            r"\texttt{dynamic\_cast\textless{}CountingBackend*"
+            r"\textgreater{}(backend.get())}"
+        )
+        nested = (
+            r"\texttt{std::vector\textless{}Slot\textgreater{}::"
+            r"emplace\_back}"
+        )
+        code = (r"\begin{verbatim}" + "\n"
+                + inline + "\n" + r"\end{verbatim}")
+        converted = book.reflow_inline_monospace(
+            inline + "\n" + nested + "\n" + code
+        )
+        self.assertIn(r"\textless{}\allowbreak{}", converted)
+        self.assertIn(r"::\allowbreak{}emplace", converted)
+        self.assertIn(r"Counting\allowbreak{}Backend", converted)
+        self.assertIn(code, converted)
+        self.assertEqual(converted.count(r"\begin{verbatim}"), 1)
+
+    def test_conjunctive_math_wraps_without_dropping_conditions(self):
+        expression = (
+            "\\[\n"
+            r"\operatorname{acceptPath}(R,p)"
+            "\n=\n"
+            r"\operatorname{relativeNoAscent}(p)"
+            "\n"
+            r"\land\operatorname{noObservedSymlink}(R/p)"
+            "\n"
+            r"\land\operatorname{canonicalWithin}(R,R/p)"
+            "\n"
+            r"\land\operatorname{regularFile}(R/p)."
+            "\n\\]"
+        )
+        rendered = book.reflow_long_textual_displays(expression)
+        self.assertIn(r"\begin{aligned}", rendered)
+        self.assertIn(r"\operatorname{acceptPath}(R,p)", rendered)
+        self.assertIn(r"\operatorname{regularFile}(R/p)", rendered)
+        self.assertEqual(rendered.count(r"\land"), 3)
+        self.assertEqual(rendered.count(r"\end{aligned}"), 1)
+        self.assertEqual(
+            book.reflow_long_textual_displays(r"\[a \land b\]"),
+            r"\[a \land b\]"
+        )
+
     def test_long_textual_math_is_reflowed_without_changing_equations(self):
         long_claim = (
             r"\[\boxed{\text{Can another machine, OS, compiler and CI worker "
