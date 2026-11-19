@@ -126,7 +126,14 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
                 + match.group("compile") + "\n"
                 + match.group("run") + "\n"
                 + chr(96) * 3 + "\n")
-    source = INLINE_BUILD_COMMAND.sub(command_as_listing, source)
+    command_pieces, command_pos = [], 0
+    for fenced in FENCE.finditer(source):
+        command_pieces.append(INLINE_BUILD_COMMAND.sub(
+            command_as_listing, source[command_pos:fenced.start()]))
+        command_pieces.append(fenced.group(0))
+        command_pos = fenced.end()
+    command_pieces.append(INLINE_BUILD_COMMAND.sub(command_as_listing, source[command_pos:]))
+    source = "".join(command_pieces)
 
     # Pandoc converts '# heading' to LaTeX section in a chapter fragment.
     # In the raw chapter edition the content often begins at ## or ###,
