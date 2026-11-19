@@ -1,77 +1,150 @@
-% Book 1 reader-edition layer. Does not modify the shared seven-book profile.
+% Project AllMight / Book 1: sober academic typesetting layer.
+% Scoped to Book 1. The shared seven-book design file is deliberately untouched.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{book01-reader}[2026/11/19 v0.1 Book 1 reader layout]
+\ProvidesPackage{book01-reader}[2026/11/19 v0.2 academic reader edition]
 \RequirePackage{listings}
 \RequirePackage[most]{tcolorbox}
-\definecolor{BOneNavy}{HTML}{183B56}
-\definecolor{BOneBlue}{HTML}{1F6D98}
-\definecolor{BOneTeal}{HTML}{147D79}
-\definecolor{BOneGreen}{HTML}{287C54}
-\definecolor{BOneAmber}{HTML}{A66217}
-\definecolor{BOneCodeBg}{HTML}{F0F5F8}
-\definecolor{BOneNoteBg}{HTML}{EDF7F6}
-\definecolor{BOnePracticeBg}{HTML}{FFF5E7}
-\colorlet{AMAccent}{BOneBlue}
-\colorlet{AMBookAccent}{BOneBlue}
-% Real code panels, not unframed verbatim. Keep long source lines visible.
-% Listing code is captured verbatim by tcolorbox/listings.
+\RequirePackage{setspace}
+% Text face: conventional Times-family scholarly book typography.
+% The explicit fallbacks permit compilation on smaller TeX installations.
+\IfFontExistsTF{TeX Gyre Termes}
+  {\setmainfont{TeX Gyre Termes}[Ligatures=TeX]}
+  {\setmainfont{TeX Gyre Pagella}[Ligatures=TeX]}
+\IfFontExistsTF{TeX Gyre Termes Math}
+  {\setmathfont{TeX Gyre Termes Math}}
+  {\setmathfont{TeX Gyre Pagella Math}}
+\IfFontExistsTF{Latin Modern Mono}
+  {\setmonofont{Latin Modern Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}
+  {\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon]}
+% An academic print page: dense enough for long mathematical and code examples,
+% with room for a binding and marginal annotations.
+\geometry{
+  paperwidth=7.4in,paperheight=10in,
+  inner=0.88in,outer=0.76in,bindingoffset=0.06in,
+  top=0.80in,bottom=0.82in,
+  includeheadfoot,headheight=13pt,headsep=0.20in,footskip=0.28in
+}
+\AtBeginDocument{\fontsize{10}{12.8}\selectfont}
+\setlength{\parindent}{1.05em}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2.6em}
+\linespread{1.0}
+% Ink-first palette. All semantics survive a black-and-white print.
+\definecolor{BOneInk}{HTML}{222831}
+\definecolor{BOneSlate}{HTML}{405A6E}
+\definecolor{BOneMuted}{HTML}{616970}
+\definecolor{BOneRule}{HTML}{C3CAD0}
+\definecolor{BOnePaper}{HTML}{F5F6F7}
+\definecolor{BOneNote}{HTML}{F4F7F8}
+\definecolor{BOnePractice}{HTML}{F8F7F4}
+\definecolor{BOneString}{HTML}{77523E}
+\definecolor{BOneComment}{HTML}{57695E}
+\colorlet{AMAccent}{BOneSlate}
+\colorlet{AMInk}{BOneInk}
+\colorlet{AMMuted}{BOneMuted}
+\colorlet{AMRule}{BOneRule}
+\definecolor{AMStageOne}{HTML}{405A6E}
+\definecolor{AMStageOneWash}{HTML}{F2F5F7}
+\definecolor{AMStageTwo}{HTML}{786353}
+\definecolor{AMStageTwoWash}{HTML}{F7F5F3}
+\definecolor{AMStageThree}{HTML}{4D6B5A}
+\definecolor{AMStageThreeWash}{HTML}{F3F6F4}
+\definecolor{AMStageFour}{HTML}{645D76}
+\definecolor{AMStageFourWash}{HTML}{F6F5F8}
+\definecolor{AMStageFive}{HTML}{76564F}
+\definecolor{AMStageFiveWash}{HTML}{F7F4F3}
+\color{BOneInk}
+\hypersetup{colorlinks=true,linkcolor=BOneSlate,urlcolor=BOneSlate,
+  citecolor=BOneSlate,pdfborder={0 0 0},
+  bookmarksopen=false,bookmarksnumbered=true}
+% Replace the large display-style headings from the shared production theme.
+\titleformat{\chapter}[display]
+  {\normalfont\color{BOneInk}}
+  {\normalfont\fontsize{10}{12}\selectfont\scshape\color{BOneMuted}Chapter \thechapter}
+  {0.45ex}
+  {\fontsize{19}{22}\selectfont\bfseries}
+  [\vspace{0.35ex}{\color{BOneRule}\titlerule[0.55pt]}]
+\titlespacing*{\chapter}{0pt}{-0.8ex}{2.0ex}
+\titleformat{\section}
+  {\normalfont\fontsize{12.4}{15}\selectfont\bfseries\color{BOneInk}}
+  {\thesection}{0.65em}{}
+\titlespacing*{\section}{0pt}{1.65ex plus 0.4ex minus 0.2ex}{0.6ex}
+\titleformat{\subsection}
+  {\normalfont\fontsize{10.8}{13.1}\selectfont\bfseries\color{BOneInk}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{1.25ex plus 0.25ex minus 0.2ex}{0.4ex}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{BOneSlate}}
+  {\thesubsubsection}{0.55em}{}
+\titlespacing*{\subsubsection}{0pt}{1.2ex}{0.35ex}
+% Minimal running furniture: no colored bands or oversized page numbers.
+\fancyhead[LE]{\footnotesize\color{BOneMuted}\nouppercase{\leftmark}}
+\fancyhead[RO]{\footnotesize\color{BOneMuted}\nouppercase{\rightmark}}
+\fancyfoot[LE,RO]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+% Serious restrained cover, not a classroom worksheet.
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0.21\textheight}
+    {\normalfont\small\scshape\color{BOneSlate}Project AllMight\par}
+    \vspace{1.1\baselineskip}
+    {\normalfont\fontsize{25}{29}\selectfont\bfseries\color{BOneInk}\@title\par}
+    \vspace{1.0\baselineskip}
+    {\color{BOneRule}\rule{0.64\textwidth}{0.6pt}\par}
+    \vspace{1.8\baselineskip}
+    {\normalfont\large\@author\par}
+    \vfill
+    {\normalfont\small\color{BOneMuted}Technical reader edition \textbullet\
+       Source-preserving working manuscript\par}
+  \end{titlepage}}
+\makeatother
+% Source code: subtle rule and near-white background. No bright classroom colors.
+% Line breaking is enabled without changing the original code bytes.
 \newtcblisting{BookCode}{
   enhanced,breakable,listing only,listing engine=listings,
-  colback=BOneCodeBg,colframe=BOneBlue!65!black,
-  boxrule=0.45pt,arc=1mm,
-  borderline west={2.4pt}{0pt}{BOneTeal},
-  left=7pt,right=6pt,top=7pt,bottom=7pt,
-  before skip=0.7\baselineskip,after skip=0.75\baselineskip,
+  colback=BOnePaper,colframe=BOneRule,
+  boxrule=0.4pt,arc=0pt,
+  left=6pt,right=5pt,top=5pt,bottom=5pt,
+  before skip=0.55\baselineskip,after skip=0.60\baselineskip,
   listing options={
-    basicstyle=\ttfamily\footnotesize,
+    language={},basicstyle=\ttfamily\fontsize{8.5}{10.1}\selectfont,
     columns=fullflexible,keepspaces=true,showstringspaces=false,
     breaklines=true,breakatwhitespace=false,tabsize=4,
-    keywordstyle=\color{BOneBlue}\bfseries,
-    commentstyle=\color{BOneGreen}\itshape,
-    stringstyle=\color{BOneAmber},
-    language=C++
+    numbers=none,
+    keywordstyle=\color{BOneSlate}\bfseries,
+    commentstyle=\color{BOneComment},
+    stringstyle=\color{BOneString}
   }
 }
+% Callouts should only be used for actually meaningful explanations, not every
+% quotation or every paragraph. They are readable when printed without color.
 \newtcolorbox{BookLearningNote}[1][]{
-  enhanced,breakable,colback=BOneNoteBg,colframe=BOneTeal,
-  boxrule=0pt,borderline west={3pt}{0pt}{BOneTeal},
-  sharp corners,left=10pt,right=10pt,top=7pt,bottom=7pt,
-  fonttitle=\bfseries\sffamily,title={#1},
-  colbacktitle=BOneNoteBg,coltitle=BOneNavy,
-  before skip=0.85\baselineskip,after skip=0.85\baselineskip
+  enhanced,breakable,colback=BOneNote,colframe=BOneRule,
+  boxrule=0.4pt,arc=0pt,
+  borderline west={1.3pt}{0pt}{BOneSlate},
+  left=7pt,right=7pt,top=5pt,bottom=5pt,
+  fonttitle=\small\bfseries,title={#1},
+  colbacktitle=BOneNote,coltitle=BOneInk,
+  before skip=0.65\baselineskip,after skip=0.65\baselineskip
 }
 \newtcolorbox{BookPractice}[1][]{
-  enhanced,breakable,colback=BOnePracticeBg,colframe=BOneAmber,
-  boxrule=0pt,borderline west={3pt}{0pt}{BOneAmber},
-  sharp corners,left=10pt,right=10pt,top=7pt,bottom=7pt,
-  fonttitle=\bfseries\sffamily,title={#1},
-  colbacktitle=BOnePracticeBg,coltitle=BOneNavy,
-  before skip=0.85\baselineskip,after skip=0.85\baselineskip
+  enhanced,breakable,colback=BOnePractice,colframe=BOneRule,
+  boxrule=0.4pt,arc=0pt,
+  borderline west={1.3pt}{0pt}{BOneMuted},
+  left=7pt,right=7pt,top=5pt,bottom=5pt,
+  fonttitle=\small\bfseries,title={#1},
+  colbacktitle=BOnePractice,coltitle=BOneInk,
+  before skip=0.65\baselineskip,after skip=0.65\baselineskip
 }
-% Existing Markdown quotations become a visually distinct reading note.
-% This does not alter any of the source text within the quotation.
-\RenewDocumentEnvironment{quote}{}{
-  \begin{BookLearningNote}[Reading note]
-}{
-  \end{BookLearningNote}
-}
-\newcommand{\BookChapterOrientation}{
- \begin{BookLearningNote}[How to approach this chapter]
- Read the explanation first, then reproduce at least one example without copying.
- Write down which assumption makes the result work, and test a case that violates it.
- When a lab is referenced, run it and explain the outcome before proceeding.
- \end{BookLearningNote}
-}
-\newcommand{\BookPersonalNotes}[1]{
- \clearpage
- \section*{Personal notes and questions}
- \addcontentsline{toc}{section}{Personal notes: #1}
- \begin{BookPractice}[Chapter reflection]
- In your own words, explain the main mechanism behind #1.
- Record one question that remains unanswered and one experiment that could resolve it.
- \end{BookPractice}
- \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
- \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
- \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
- \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}
+% Optional author-owned study material: called at most once per volume.
+\newcommand{\BookStudyMethod}{%
+  \chapter*{Using This Book}
+  \addcontentsline{toc}{chapter}{Using This Book}
+  The purpose of this volume is to connect explanations to programs and
+  reproducible observations. Study a section's argument before consulting
+  its code, reconstruct the implementation, then test the assumptions on
+  which the argument depends. Cases, measurements, and experiments are
+  evidence only for the behavior they actually exercise.
 }
