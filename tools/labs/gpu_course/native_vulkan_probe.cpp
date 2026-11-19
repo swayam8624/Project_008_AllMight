@@ -51,9 +51,8 @@ int run_native_probe() {
                        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)==0) {
             requestedExtensions.push_back(
                 VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-#ifdef VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR
+            // This flag is a C enum token, not a preprocessor macro.
             instanceFlags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
             break;
         }
     }
@@ -97,6 +96,7 @@ int run_native_probe() {
         std::cerr<<"ERROR: vkEnumeratePhysicalDevices list: "<<result<<"\n";
         return 1;
     }
+    candidates.resize(physicalCount); // valid returned entries only
     for(const VkPhysicalDevice physical:candidates) {
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(physical,&properties);
