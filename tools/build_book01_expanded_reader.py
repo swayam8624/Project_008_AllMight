@@ -389,16 +389,26 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                     f"captured {len(math_entries)}; manuscript unchanged"
                 )
             reading_text, structure = render.prepare_reading_structure(shielded_source)
+            render.verify_fenced_blocks_unchanged(shielded_source, reading_text, num, "reader reflow")
             render.check_math_tokens(reading_text, math_entries, num, "reader reflow")
+            before_editorial = reading_text
             reading_text, editorial = publication.apply_reader_edits(reading_text, num)
+            render.verify_fenced_blocks_unchanged(before_editorial, reading_text, num,
+                                                   "editorial cleanup", allow_pseudocode_labels=True)
             render.check_math_tokens(reading_text, math_entries, num, "editorial cleanup")
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
+            source_figure_count = len(render.MERMAID.findall(shielded_source))
+            if len(figures) != source_figure_count:
+                raise ValueError(f"Chapter {num}: source had {source_figure_count} Mermaid diagrams, "
+                                 f"but reader planned only {len(figures)}")
             render.check_math_tokens(converted, math_entries, num, "figure planning")
             converted, duplicate_figure_labels = publication.remove_duplicate_figure_labels(converted)
             editorial["removed_duplicate_figure_labels"] = duplicate_figure_labels
             editorial["remaining_merge_markers"] = publication.editorial_quality_report(converted)
             report["publication_edits"].append(editorial)
             indexed_source, index_entries = idx.insert_index_tokens(converted, num)
+            render.verify_fenced_blocks_unchanged(converted, indexed_source, num,
+                                                   "index insertion")
             render.check_math_tokens(indexed_source, math_entries, num, "index insertion")
             prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(indexed_source)
             render.check_math_tokens(prepared_math, math_entries, num, "code-fence normalization")
