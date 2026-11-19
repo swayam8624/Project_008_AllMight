@@ -17,19 +17,28 @@ FIGURE_DESTINATION = "book02-figures"
 # Supplemental teaching stays separate from the original chapters and source
 # generation. It is inserted into build copies at stable source boundaries.
 FIGURES = {
+    "01-foundations-i-ch017": ("12-array-contract-case.tex",),
+    "01-foundations-i-ch018": ("13-refraction-contract-case.tex",),
     "01-foundations-i-ch019": (
-        "01-linear-transformation.tex", "07-metric-gradient-case.tex"
+        "01-linear-transformation.tex", "07-metric-gradient-case.tex",
     ),
     "01-foundations-i-ch020": ("08-conditioning-case.tex",),
+    "02-foundations-ii-ch021": ("14-projection-jacobian-case.tex",),
+    "02-foundations-ii-ch022": ("15-differentiation-quadrature-case.tex",),
+    "02-foundations-ii-ch023": ("16-bayes-base-rate-case.tex",),
     "02-foundations-ii-ch024": ("02-gaussian-uncertainty.tex",),
     "02-foundations-ii-ch025": (
-        "04-heat-diffusion.tex", "09-heat-stability-case.tex"
+        "04-heat-diffusion.tex", "09-heat-stability-case.tex",
     ),
+    "02-foundations-ii-ch026": ("17-matrix-exponential-case.tex",),
     "02-foundations-ii-ch027": (
-        "03-optimization-landscape.tex", "10-gauge-nullspace-case.tex"
+        "03-optimization-landscape.tex", "10-gauge-nullspace-case.tex",
     ),
+    "02-foundations-ii-ch028": ("18-bracketed-root-case.tex",),
     "02-foundations-ii-ch029": ("05-convergence-study.tex",),
+    "02-foundations-ii-ch030": ("19-clustered-inference-case.tex",),
     "02-foundations-ii-ch031": ("11-sampling-support-case.tex",),
+    "03-visual-computing-i-ch012": ("20-sampling-measure-case.tex",),
 }
 PRELUDE_CHAPTER = "01-foundations-i-ch017"
 PRELUDE_FILE = "06-reader-contract.tex"
