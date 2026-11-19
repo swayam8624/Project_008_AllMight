@@ -28,6 +28,7 @@ import sys
 
 import apply_cpp23_project_inserts as inserts
 import book01_render_support as render
+import book01_publication_edit as publication
 from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -267,7 +268,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
     fonts = LATEX / "Assets/Fonts"
     if not style.is_file() or not READER_STYLE.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
         raise FileNotFoundError("The existing LaTeX profile and its bundled local font must be available")
-    report = {**metadata, "parts": [], "chapters": [], "diagrams": []}
+    report = {**metadata, "parts": [], "chapters": [], "diagrams": [], "publication_edits": []}
     for part_number, (low, high) in enumerate(PARTS, 1):
         name = f"book01-expanded-p{part_number:02d}"
         directory = OUTPUT / name
@@ -306,7 +307,12 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             source_text = payload.decode("utf-8")
             math_stats = render.math_preflight(source_text, f"Chapter {num}")
             reading_text, structure = render.prepare_reading_structure(source_text)
+            reading_text, editorial = publication.apply_reader_edits(reading_text, num)
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
+            converted, duplicate_figure_labels = publication.remove_duplicate_figure_labels(converted)
+            editorial["removed_duplicate_figure_labels"] = duplicate_figure_labels
+            editorial["remaining_merge_markers"] = publication.editorial_quality_report(converted)
+            report["publication_edits"].append(editorial)
             prepared_math, math_entries = render.plan_math(converted, num)
             prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(prepared_math)
             if len(math_entries) != math_stats["display_math"]:
@@ -333,6 +339,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "render_markdown_sha256": sha256(render_path.read_bytes()),
                           "math_preflight": {key: value for key, value in math_stats.items() if not key.startswith("_")},
                           "layout_reflow": structure,
+                          "academic_editorial_edits": {k: v for k, v in editorial.items() if k != "removed_editorial_notes"},
                           "protected_math_displays": len(math_entries),
                           "code_fence_metadata_normalized": fence_metadata_removed,
                           "figure_count": len(figures),
