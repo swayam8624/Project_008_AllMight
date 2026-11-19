@@ -31,10 +31,10 @@ MERGE_HEADING = re.compile(
 REDUNDANT_TITLE = re.compile(
     r"(?m)^#\s+Computing Foundations\s*[—-]\s*From Bits to C\+\+ and Systems APIs\s*$"
 )
-WIKILINK = re.compile(r"\\[\\[([^\\]\\n]+)\\]\\]")
+WIKILINK = re.compile(r"\[\[([^\]\n]+)\]\]")
 PSEUDOCODE_FENCE = re.compile(
     r'(?m)^' + re.escape(chr(96) * 3) +
-    r'cpp(?P<metadata>[^\\n]*)\\n(?=(?:for each item:|if useful:|GPU-naive:))'
+    r'cpp(?P<metadata>[^\n]*)\n(?=(?:for each item:|if useful:|GPU-naive:))'
 )
 
 FIGURE_LABEL = re.compile(
@@ -103,8 +103,10 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
     # Identify deliberately schematic snippets, which are useful but should
     # never be advertised as compilable C++ source.
     source, labeled = PSEUDOCODE_FENCE.subn(
-        lambda match: "**Pseudocode (not compilable C++):**\\n\\n"
-        + chr(96) * 3 + "text" + match.group("metadata") + "\\n", source)
+        lambda match: "**Pseudocode (not compilable C++):**\n\n"
+        + chr(96) * 3 + "text" + match.group("metadata") + "\n",
+        source,
+    )
     edits["relabeled_pseudocode"] = labeled
 
     # Pandoc converts '# heading' to LaTeX section in a chapter fragment.
