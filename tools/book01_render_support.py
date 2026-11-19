@@ -256,12 +256,17 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
                                   ("$", r"\$"), ("~", r"\textasciitilde{}"),
                                   ("^", r"\textasciicircum{}")):
             caption = caption.replace(reserved, escaped)
+        # Use the LaTeX figure counter, not a hand-printed "Figure 1.2:"
+        # prefix. This gives correct references and a genuine list of figures.
+        title = re.sub(r"^Figure\s+\d+\.\d+\s*:\s*", "", caption)
         latex = (
             "\\par\\begin{center}\n"
-            "\\includegraphics[width=.94\\linewidth,height=.36\\textheight,"
+            "\\includegraphics[width=.94\\linewidth,height=.34\\textheight,"
             "keepaspectratio]{" + path + "}\n"
-            "\\par{\\footnotesize\\itshape " + caption +
-            "}\\par\\end{center}\\smallskip\n"
+            "\\captionof{figure}{" + title + "}"
+            "\\label{fig:book01:" + str(item["chapter"]) + ":" +
+            str(item["index"]) + "}\n"
+            "\\end{center}\\smallskip\n"
         )
         pattern = r"(?m)^" + re.escape(token) + r"$"
         if len(re.findall(pattern, tex)) != 1:
