@@ -7,6 +7,7 @@ on:
     paths:
       - 'tools/labs/book02_coverage_oracle.py'
       - 'tools/labs/test_book02_coverage_oracle.py'
+      - 'tools/labs/book02_coverage_visual.py'
       - '.github/workflows/book02-content-quality.yml'
   workflow_dispatch:
 
@@ -26,9 +27,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install visual verification libraries
+        run: python -m pip install numpy==2.2.6 matplotlib==3.10.5
       - name: Check the mathematical teaching source syntax
         run: |
-          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py
+          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py tools/labs/book02_coverage_visual.py
       - name: Execute independent exact-cover and sampling contracts
         working-directory: tools/labs
         run: |
@@ -36,3 +39,25 @@ jobs:
           python -O -m unittest -v test_book02_coverage_oracle
       - name: Show independently reproducible analytical oracle
         run: python tools/labs/book02_coverage_oracle.py
+      - name: Produce actual mathematical figure and 60-replication CSV
+        run: |
+          python tools/labs/book02_coverage_visual.py --output "${{ runner.temp }}/book02-coverage-proof"
+          python - <<'PY'
+          import csv,json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'book02-coverage-proof'
+          report=json.loads((root/'coverage-provenance.json').read_text())
+          assert report['exact_fraction']=='119/192'
+          with (root/'coverage-replicates.csv').open(newline='') as f:
+              assert len(list(csv.DictReader(f)))==60
+          for suffix in ('pdf','svg','png'):
+              p=root/('triangle-pixel-coverage.'+suffix)
+              assert p.is_file() and p.stat().st_size>1000,p
+          print('Exact geometry and generated diagram accepted')
+          PY
+      - name: Publish source-driven content proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: book02-content-pixel-coverage
+          path: "${{ runner.temp }}/book02-coverage-proof/"
+          retention-days: 30
+          if-no-files-found: error
