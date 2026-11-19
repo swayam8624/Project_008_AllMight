@@ -67,6 +67,13 @@ jobs:
           # semantic proof into the GitHub Actions artifact directory.
           python test_book02_epub_proof_export.py --output "${{ runner.temp }}/Book02-Additive-EPUB-Proof.epub"
           java -jar "$(find /tmp/epubcheck -name epubcheck.jar | head -1)" "${{ runner.temp }}/Book02-Additive-EPUB-Proof.epub"
+      - name: Export source fragments for independent LuaLaTeX print proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: book02-pass04-latex-source-proof
+          path: 'Book Production/AllMight Codex/LaTeX/Assets/Book02/*.tex'
+          retention-days: 30
+          if-no-files-found: error
       - name: Publish semantically validated proof artifact
         uses: actions/upload-artifact@v4
         with:
