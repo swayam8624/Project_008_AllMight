@@ -126,7 +126,15 @@ def combine_book(manifest: dict) -> str:
         'lang: en-US\n'
         'rights: "Copyright © 2026 Swayam Singal. All rights reserved."\n'
         "---\n\n",
-        "# Preface\n\n",
+        "# Title and Copyright\n\n"
+        "**From Bits to Research — Book One of Seven**\n\n"
+        "**From Bits to Parallel Systems**\n\n"
+        "*C++23, CPU Execution, GPU Memory, and Reliable Software*\n\n"
+        "Swayam Singal\n\n"
+        "Copyright © 2026 Swayam Singal. All rights reserved. "
+        "Third-party works retain their own copyrights and licences.\n\n"
+        "References, companion code and corrections: "
+        "[Project AllMight](https://github.com/swayam8624/Project_008_AllMight).\n\n",
         builder.ACADEMIC_PREFACE.read_text(encoding="utf-8") + "\n\n",
     ]
     chapters = {int(item["number"]): item for item in manifest["chapters"]}
