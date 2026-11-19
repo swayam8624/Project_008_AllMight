@@ -6,8 +6,8 @@
 // An orientation near the floating-point error bound returns UNDECIDED,
 // so callers cannot silently mistake an unverified sign for an exact result.
 //
-// Build: c++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic \
-//              tools/labs/book02_papers_cpp23.cpp -o book02_cpp23
+// Build: c++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic
+//        tools/labs/book02_papers_cpp23.cpp -o book02_cpp23
 // Execute: ./book02_cpp23
 
 #include <algorithm>
