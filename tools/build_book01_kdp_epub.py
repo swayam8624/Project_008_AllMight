@@ -244,13 +244,16 @@ def main() -> int:
     parser.add_argument("--cover", type=Path, required=True,
                         help="Exact cover art (JPEG/PNG). No generated substitute.")
     parser.add_argument("--output", type=Path,
-                        default=OUTPUT / "Book01-From-Bits-to-Parallel-Systems-KDP.epub")
+                        default=OUTPUT / "Book01-From-Bits-to-Parallel-Systems-EBOOK.epub")
     parser.add_argument("--skip-source-verify", action="store_true",
                         help="Only for debugging; never for a KDP release")
     args = parser.parse_args()
     if not args.cover.is_file():
         parser.error("Provide the actual cover image file: " + str(args.cover))
-    from PIL import Image
+    try:
+        from PIL import Image
+    except ImportError:
+        parser.error("Pillow is required for cover validation. Install it in this environment with: python -m pip install Pillow")
     with Image.open(args.cover) as image:
         w, h = image.size
         if w < 1200 or h < 1800 or not 0.56 <= w/h <= 0.75:
@@ -295,7 +298,7 @@ def main() -> int:
     report = work / "epub-preflight.json"
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print("EPUB STRUCTURAL PROOF PASSED:", args.output, json.dumps(result))
-    print("MANDATORY NEXT STEP: open EPUB in Kindle Previewer (tablet, phone, e-ink).")
+    print("Before release: validate with EPUBCheck, then inspect math, code, tables, and diagrams in Kindle Previewer or another target e-reader.")
     return 0
 
 
