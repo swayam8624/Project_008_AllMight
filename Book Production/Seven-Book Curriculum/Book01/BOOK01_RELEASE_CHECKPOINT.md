@@ -6,6 +6,53 @@ This is the **final Book 1 C++23 foundations curriculum authoring checkpoint**, 
 
 It is **not** a claim that the entire seven-book program is finished or that all 39 existing original foundational reading chapters have been moved into final seven-volume print masters. The existing seven-stage print-production generation is a separate older snapshot and remains untouched. The expanded-reader release is deliberately independent because the old print generator relies on local cached assets and source paths and predates the eighteen newly authored lessons.
 
+## Academic reader-edition update — 19 November 2026
+
+**Current release behavior supersedes the older four-part presentation instructions below.**
+The default `python3 tools/build_book01_expanded_reader.py --compile --open`
+now compiles **one continuous LaTeX book** in
+`build/book01-expanded-reader/book01-complete/main.tex`, creating
+`Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf` with one title page,
+one full table of contents, continuous page numbering and chapter bookmarks.
+The four `book01-expanded-p01` through `p04` directories remain only
+for `--compile --part N` diagnostics and do not represent four books.
+
+The new style file, `Book01/book01-reader.sty`, sets Times-like 10 pt
+academic body text, 8.5 pt monospace listings, understated 19 pt chapter
+headings, clean marginal and running-header typography, and grayscale-safe
+neutral code/note boxes with restrained accents. The formerly repeated
+generic chapter prefaces and empty notes-page inserts have been removed
+from the generated edition; **no original source paragraph was removed**.
+The common seven-book stylesheet remains untouched.
+
+**Scope:** the source-pinned edition currently includes exactly 16
+long-form original computing chapters, 18 additive C++23 laboratory lessons
+and the final capstone. The Computing Foundations reading map has 39
+chapters; inclusion of the other 23 chapters and any claim of *complete*
+C++23 curriculum coverage require separate verified routing, editing and
+coverage gates. Do not market this checkpoint as an entire 39-chapter or
+fully comprehensive C++ reference. A two-volume physical printing can
+be decided after measuring a successfully compiled and visually inspected
+single-volume PDF; it must not duplicate cover/contents four times.
+
+From the repository root:
+
+```bash
+git pull --ff-only origin curriculum/cpp23-nes-project-pass01
+export PATH="/Library/TeX/texbin:$PATH"
+python3 -m py_compile tools/build_book01_expanded_reader.py
+python3 tools/build_book01_expanded_reader.py --prepare
+python3 tools/build_book01_expanded_reader.py --verify-prepared
+python3 tools/build_book01_expanded_reader.py --compile --open
+```
+
+The single TeX master has not yet been compiled or inspected as a finished
+PDF by the assistant. If a complete-volume build fails, the `--part N`
+option isolates the source-only diagnostic partitions. This print design
+is **not** an EPUB template; a reflowable EPUB remains gated on PDF approval.
+
+---
+
 ## What was completed
 
 The new lesson material is staged in `Supplementary/C++23 Project Labs/` and inserted *before its actual original teaching heading*, never in a two-page replacement chapter. The original continuous master remains present and unchanged on the GitHub branch. The insertion utility can optionally apply the same additions to that long-form master on the user's machine; repeated application is idempotent. It compares exact marker-delimited contents, rejects partially edited prior insertions, and now **detects even overlapping occurrences of the same original heading**. Reversing only the eighteen marked additions yields the original source bytes. This is stricter than counting lesson titles or pages.
