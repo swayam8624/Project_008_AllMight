@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+from collections import Counter
 import posixpath
 from urllib.parse import unquote, urlsplit
 from pathlib import Path
@@ -31,6 +32,7 @@ from xml.etree import ElementTree as ET
 
 import book01_render_support as render
 import book01_learning_gates as gates
+import book01_ebook_editorial as editorial
 from book01_editorial import (
     SERIES_TITLE, SERIES_SUBTITLE, SERIES_POSITION,
     BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES,
@@ -42,6 +44,7 @@ OUTPUT = builder.OUTPUT
 BOOK1 = ROOT / "Book Production/Seven-Book Curriculum/Book01"
 LATEX_INLINE_INDEX = re.compile(r"(?m)^[ \t]*\\index\{[^\n]*\}[ \t]*\n?")
 MARKER = re.compile(r"ALLMIGHT(?:MATH|FIGURE|INDEX)CH\d+[A-Z]*INDEX\d+")
+EDITORIAL_SUMMARY: Counter[str] = Counter()
 
 
 def run(command: list[str], **kwargs) -> None:
@@ -107,6 +110,8 @@ def prepare_fragment(
 ) -> str:
     raw = raw_file.read_text(encoding="utf-8")
     reader = reader_file.read_text(encoding="utf-8")
+    reader, cleanup = editorial.clean_reader_markdown(reader, chapter)
+    EDITORIAL_SUMMARY.update(cleanup)
     # A relative reference from the repository cannot resolve inside an
     # EPUB archive. Redirect companion C++ sources to verified GitHub files.
     # Apply only to prose to preserve the original code examples byte-for-byte.
@@ -401,6 +406,7 @@ def main() -> int:
          "--metadata", "lang=en-US",
          "-o", str(args.output), str(md)])
     result = validate_epub(args.output)
+    result["editorial_cleanup"] = dict(EDITORIAL_SUMMARY)
     report = work / "epub-preflight.json"
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print("EPUB STRUCTURAL PROOF PASSED:", args.output, json.dumps(result))
