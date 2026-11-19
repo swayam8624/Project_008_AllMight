@@ -350,6 +350,71 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 13, "Open Vulkan Devices and Describe Resources": learn and test native Vulkan loader/adapter/feature and resource contracts as the first concrete device-backed bridge, with fallback behavior when a Vulkan runtime/device is absent and no invented hardware capabilities.
 
 
+## Pass 13 — Book 01, Chapter 13: Open Vulkan Devices and Describe Resources
+
+**Important change in project emphasis.** The NES emulator is one deliberately
+small systems exercise, **not the full C++23 seven-book curriculum**. The
+binding [multi-project teaching matrix](project-lab-matrix.md) now assigns
+real teaching milestones to KairoRenderer/KairoGameEngine (Vulkan engine),
+Maveb (Metal, Gaussian, TSDF, reconstruction), KairoPhysicsEngine/Kyoto
+collision work (broad phase and numerical physics), KairoMath/KairoGeometry/
+KairoRayTracer (numerics and graphics), Vulkax (scientific validation) and
+XR/ILLIXR (vision and perceptual real-time systems). Reuse and inspect each
+repo precisely when its topic belongs; do not invent cross-project tests.
+
+**Original source intact.** Chapter 13 has ~4,556 lines of existing Vulkan
+instance, queue, presentation, resource, memory, descriptor, pipeline and
+shader explanations. No original source content was replaced. The new
+~42,298-character [GPU-13D — Cross-Project Vulkan Devices and Resource
+Contracts](../../Supplementary/C++23%20Project%20Labs/GPU-13D%20-%20Cross-Project%20Vulkan%20Devices%20and%20Resource%20Contracts.md)
+is staged immediately before the original `### BUFFERS, IMAGES, MEMORY & UPLOADS`.
+
+**New portable lab.** `tools/labs/gpu_course/device_resource_contracts.hpp`
+and `tools/labs/gpu_device_resource_cpp23_lab.cpp` implement C++23 typed
+device capability and resource matching for **Kairo graphics, Maveb
+Gaussian compute, collision-pair buffers, XR gaze/render and NES overlay**.
+All default tests use explicitly synthetic device snapshots and check queue
+flags/counts, surface-specific unknown presentation support, device extension
+gate, memoryTypeBits, required/preferred flags, heap index/size/budget,
+alignment and typed rejection. These are *policy tests*, not GPU execution.
+
+**Optional real API bridge.** `tools/labs/gpu_course/native_vulkan_probe.cpp`
+is linked to the same target only when CMake locates a Vulkan SDK. Explicit
+`--probe-native` queries real instance/physical device/queue/memory data,
+creates a **headless VkDevice**, creates a small VkBuffer, queries actual
+VkMemoryRequirements, allocates and binds compatible VkDeviceMemory and
+releases resources through correct RAII dependency order. Without SDK or
+compatible device it reports unavailable (77); **the regular CTest never
+invokes this path**. No surface, swapchain, shader, draw, synchronization
+or hardware benchmarking is claimed.
+
+**Grounded source inspection.** Actual main-branch files inspected include
+KairoRenderer `VulkanInstance.cppm` / `VulkanDevice.cppm` /
+`VulkanBuffer.cppm` / `VulkanTexture.cppm` / `VulkanRenderer.cppm` /
+`MetalRenderer.cppm`; Maveb `FrameContext.cpp` / `FrameContext.hpp` /
+`Renderer.cpp` and `GaussianAsset.hpp`; KairoPhysicsEngine
+`Broadphase.cppm` and KairoGPU `README.md`. Exact Git blobs are listed in
+the [multi-project matrix](project-lab-matrix.md). The buffer-destructor
+free-before-destroy ordering in Kairo is a **review item**, not an actual
+modification of Kairo. The Kyoto and ILLIXR local source trees were not
+retrieved in this pass.
+
+**Cumulative build and source preservation.** Book01 now has **13** C++23
+targets and CTest registrations, with the Pass13 Vulkan dependency **optional**.
+The staged byte-preserving source patcher now registers **13** additions;
+its fixture tests check whole-manuscript byte restoration, idempotence and
+fail-closed conflicts. The CTest/JUnit evidence manifest includes the new
+cross-project source and seven-book project matrix. Original manuscript stays
+unchanged. **Actual compilation, all-pass CI, native Vulkan device creation
+and GPU benchmark evidence have not been verified.**
+
+**Future direction.** Pass14 must implement and verify real Vulkan command
+submission/synchronization and retired bound resources, and compare against
+the Kairo renderer's actual source and Maveb's native Metal alternative.
+Future books will select the appropriate long-running project instead of
+defaulting to the NES emulator.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
