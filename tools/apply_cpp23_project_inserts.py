@@ -112,6 +112,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/GPU-15M - Execute Verify and Measure a Metal Frame.md",
         b"\n### STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS & SYNCHRONIZATION\n",
     ),
+    Insert(
+        "GPU-16P",
+        "Supplementary/C++23 Project Labs/GPU-16P - GPU Profiling and Apple Callback Ownership.md",
+        b"\n### Distinguish host allocation callbacks from device-memory allocation\n",
+    ),
 )
 
 
