@@ -89,6 +89,7 @@ class CommandStream {
         State state{State::initial};
         dg::DependencyGraph graph;
         std::optional<dg::Plan> compiled;
+        std::optional<dg::Failure> last_graph_failure;
         std::array<bool,3> gpu_domains{};
         std::size_t encoded_count{};
     };
@@ -104,6 +105,10 @@ public:
     }
     [[nodiscard]] std::size_t command_count() const noexcept {
         return control_?control_->encoded_count:0U;
+    }
+    [[nodiscard]] std::optional<dg::Failure>
+    last_graph_failure() const noexcept {
+        return control_?control_->last_graph_failure:std::nullopt;
     }
 
     [[nodiscard]] std::expected<void,CommandError> begin() noexcept {
@@ -126,7 +131,11 @@ public:
         // Compute the domains only after graph accepts the entire record.
         const auto domain=task.domain;
         const auto added=control_->graph.add(std::move(task));
-        if(!added) return std::unexpected(CommandError::graph_rejected);
+        if(!added) {
+            control_->last_graph_failure=added.error();
+            return std::unexpected(CommandError::graph_rejected);
+        }
+        control_->last_graph_failure.reset();
         if(domain==dg::Domain::gpu_transfer) control_->gpu_domains[0]=true;
         if(domain==dg::Domain::gpu_compute) control_->gpu_domains[1]=true;
         if(domain==dg::Domain::gpu_graphics) control_->gpu_domains[2]=true;
@@ -141,7 +150,11 @@ public:
         if(control_->encoded_count==0)
             return std::unexpected(CommandError::empty_recording);
         auto plan=control_->graph.plan();
-        if(!plan) return std::unexpected(CommandError::graph_rejected);
+        if(!plan) {
+            control_->last_graph_failure=plan.error();
+            return std::unexpected(CommandError::graph_rejected);
+        }
+        control_->last_graph_failure.reset();
         control_->compiled.emplace(std::move(*plan));
         control_->state=State::executable;
         return {};
@@ -159,6 +172,7 @@ public:
             return std::unexpected(CommandError::wrong_state);
         control_->graph=dg::DependencyGraph{};
         control_->compiled.reset();
+        control_->last_graph_failure.reset();
         control_->encoded_count=0;
         control_->gpu_domains={};
         control_->state=State::initial;
@@ -173,6 +187,7 @@ public:
             return std::unexpected(CommandError::wrong_state);
         control_->graph=dg::DependencyGraph{};
         control_->compiled.reset();
+        control_->last_graph_failure.reset();
         control_->encoded_count=0;
         control_->gpu_domains={};
         control_->state=State::initial;
