@@ -54,9 +54,9 @@ def audit()->dict:
             "citations_or_urls":len(re.findall(r"\\(?:cite|href|url)\{",text)),
         })
     supplemental=[x.name for x in EXTRA.glob("??-*.tex")]
-    if len(supplemental)!=35:
-        raise RuntimeError(f"Expected 35 additive Book Two TeX sources, got {len(supplemental)}")
-    if len(set(supplemental))!=35:
+    if len(supplemental)!=36:
+        raise RuntimeError(f"Expected 36 additive Book Two TeX sources, got {len(supplemental)}")
+    if len(set(supplemental))!=36:
         raise RuntimeError("Duplicate supplement filenames")
     report={
         "pass":"source custody preflight",
@@ -67,7 +67,7 @@ def audit()->dict:
         "notes":[
             "All original chapters are checked byte-for-byte against the frozen-generation blob SHA1.",
             "This report checks source identity and document shape, not full mathematical correctness.",
-            "All original text plus 35 chapter-boundary supplements still require full PDF and EPUB rendering acceptance.",
+            "All original text plus 36 chapter-boundary supplements still require full PDF and EPUB rendering acceptance.",
         ],
         "chapters":chapter_results,
     }
