@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.24)
+project(allmight_book01_companion LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(CTest)
+foreach(lab IN ITEMS binary_cpu generational_handles parallel_scan retirement_contract)
+    add_executable(book01_${lab} src/${lab}.cpp)
+    if(MSVC)
+        target_compile_options(book01_${lab} PRIVATE /W4 /permissive-)
+    else()
+        target_compile_options(book01_${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion)
+    endif()
+    add_test(NAME book01_${lab} COMMAND book01_${lab})
+endforeach()
