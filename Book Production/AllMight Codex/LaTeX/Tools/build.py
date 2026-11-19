@@ -60,11 +60,40 @@ def tex_runtime():
     return engine, env
 
 
+def prepare_book_font_assets(cwd):
+    """Stage the repository's existing licensed font in this TeX working copy.
+
+    allmight-book.sty intentionally searches `Assets/Fonts/` relative to
+    latexmk's working directory. The nested Book Two candidate directory is
+    deeper than that stylesheet's historical relative-path guesses. Copy the
+    *existing* source asset into the isolated build working directory; never
+    move it out of the canonical Master repository or alter original chapters.
+    """
+    cwd = Path(cwd)
+    source = ROOT / 'Assets' / 'Fonts' / 'NotoEmoji-Static.ttf'
+    if not source.is_file() or source.stat().st_size < 100_000:
+        raise RuntimeError(
+            'The repository font asset is missing or incomplete: ' + str(source) +
+            '. Restore the tracked asset in LaTeX/Assets/Fonts before compiling.'
+        )
+    target_dir = cwd / 'Assets' / 'Fonts'
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / source.name
+    # The working copy can be rebuilt repeatedly. Only touch the nested
+    # temporary asset, never the original font under ROOT/Assets/Fonts.
+    if not target.is_file() or target.stat().st_size != source.stat().st_size:
+        shutil.copy2(source, target)
+    if not target.is_file() or target.stat().st_size != source.stat().st_size:
+        raise RuntimeError('Could not stage Noto Emoji at ' + str(target))
+    return target
+
+
 def compile_tex(cwd, engine, env, generation=None):
     cwd = Path(cwd)
     env = env.copy()
     env['TEXINPUTS'] = str(cwd.resolve()) + os.pathsep + env.get('TEXINPUTS', '')
     shutil.copy2(ROOT / 'allmight-book.sty', cwd / 'allmight-book.sty')
+    prepare_book_font_assets(cwd)
     (cwd / 'build').mkdir(parents=True, exist_ok=True)
     command = [engine, '-g', '-lualatex', '-interaction=nonstopmode', '-halt-on-error',
                '-file-line-error', '-outdir=build', 'main.tex']
