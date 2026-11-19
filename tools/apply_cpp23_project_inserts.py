@@ -97,6 +97,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-12Q - Command Lifecycles and Uncertain Submission.md",
         b"\n### PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN\n",
     ),
+    Insert(
+        "GPU-13D",
+        "Supplementary/C++23 Project Labs/GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
+        b"\n### BUFFERS, IMAGES, MEMORY & UPLOADS\n",
+    ),
 )
 
 
