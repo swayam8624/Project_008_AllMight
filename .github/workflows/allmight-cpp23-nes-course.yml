@@ -9,6 +9,8 @@ on:
       - "tools/labs/**"
       - "tools/tests/test_cpp23_project_inserts.py"
       - "tools/tests/test_nes_course_evidence.py"
+      - "tools/tests/test_book01_coverage_audit.py"
+      - "tools/book01_coverage_audit.py"
       - "tools/nes_course_evidence.py"
       - "tools/apply_cpp23_project_inserts.py"
       - "Supplementary/C++23 Project Labs/**"
@@ -51,6 +53,9 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py' -v
           python3 -m unittest discover -s tools/tests -p 'test_nes_course_evidence.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_book01_coverage_audit.py' -v
+      - name: Audit all 16 chapter-to-lesson anchors, source sizes and coverage notes
+        run: python3 tools/book01_coverage_audit.py --json > build/nes-ci-gcc/book01-coverage-audit.json
       - name: Dry-run exact additive manuscript insertions (never apply)
         run: python3 tools/apply_cpp23_project_inserts.py --check
       - name: Audit inventory and collect verifiable source-pinned receipt
@@ -72,6 +77,7 @@ jobs:
           path: |
             build/nes-ci-gcc/ctest-junit.xml
             build/nes-ci-gcc/source-inventory.json
+            build/nes-ci-gcc/book01-coverage-audit.json
             build/nes-ci-gcc/nes-course-evidence.json
             build/nes-ci-gcc/compile_commands.json
           if-no-files-found: error
