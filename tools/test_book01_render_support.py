@@ -51,6 +51,31 @@ class Book01ProductionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             book.check_math_rendered(stat, "\\[x+y\\]", 9)
 
+    def test_math_protection_preserves_boxed_cuda_gpu_and_cpp_expressions(self):
+        source = (
+            "A scheduling rule.\n\n$\n"
+            "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
+            "$\n\n"
+            + f"{TICK}cpp\n// literal $ and \\boxed{{x}} in code\n{TICK}\n\n"
+            + "$\n\\texttt{simd_sum} = 256\n$\n"
+        )
+        stats = book.math_preflight(source, "Chapter 9")
+        prepared, protected = book.plan_math(source, 9)
+        self.assertEqual(stats["display_math"], 2)
+        self.assertEqual(len(protected), 2)
+        self.assertEqual(stats["boxed_math"], 1)
+        self.assertIn("ALLMIGHTMATHCH09INDEX0001", prepared)
+        self.assertIn(f"{TICK}cpp\n// literal $", prepared)
+        rendered = book.replace_math_tokens(prepared, protected)
+        self.assertIn(
+            "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}",
+            rendered,
+        )
+        self.assertIn("\\texttt{simd_sum} = 256", rendered)
+        book.check_math_rendered(stats, rendered, 9)
+        with self.assertRaises(ValueError):
+            book.replace_math_tokens("missing marker", protected)
+
     def test_empty_display_and_empty_box_are_rejected(self):
         for source in ("$$\n\n$$", "$$\n\\boxed{\n}\n$$"):
             with self.assertRaises(ValueError):
