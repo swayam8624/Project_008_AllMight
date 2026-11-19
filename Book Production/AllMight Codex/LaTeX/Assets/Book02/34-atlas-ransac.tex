@@ -1,0 +1,18 @@
+% Book Two Pass 3: source-derived original scientific plate.
+\clearpage
+\section*{Consensus, rejected points and the loss of all-data TLS}
+\noindent Eighty synthetic near-line points and thirty structured outliers are fit using RANSAC with orthogonal total-least-squares refinement. The all-point TLS baseline sees every point; the selected consensus is an algorithm output rather than hidden truth.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/figures/ransac-consensus.pdf}
+\caption{Selected and rejected points, true generating line, RANSAC line and all-data TLS line; the second panel shows residuals for all 110 original observations. The distance threshold is in the same units as the points.}
+\label{fig:book02-atlas-ransac-consensus}
+\end{figure}
+
+\noindent\textbf{Reconstruction experiment.} Vary the confidence, seed, outlier fraction and distance threshold; compute precision and recall from the known synthetic generating labels.
+
+\noindent\emph{Reproducibility:} The original figure, SVG, print PDF, PNG,
+exact numerical CSV data and machine-readable provenance report are produced
+by \texttt{tools/labs/book02\_visual\_atlas.py}. These are independently
+written educational experiments, not imported research-paper figures.
