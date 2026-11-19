@@ -447,6 +447,71 @@ def render_figures(manifest: dict, output: Path):
 
 
 
+def reflow_inline_monospace(tex: str) -> str:
+    """Allow line breaks within nested Pandoc \texttt{...} snippets.
+
+    Pandoc emits C++ template syntax with nested \textless{} and
+    \textgreater{} commands, e.g. \texttt{std::vector\textless{}T...}.
+    The earlier one-level regex skipped those snippets entirely, causing
+    cropped text in the PDF. This balanced-brace scanner edits only generated
+    TeX prose, not verbatim code or the canonical Markdown. Display math is
+    restored *after* this pass and has its own source-protected sanitizer.
+    """
+    opening = re.compile(r"\\texttt\{")
+    verbatim = re.compile(r"\\begin\{verbatim\}.*?\\end\{verbatim\}",
+                          re.DOTALL)
+
+    def prose(fragment: str) -> str:
+        out: list[str] = []
+        consumed = 0
+        for match in opening.finditer(fragment):
+            if match.start() < consumed:
+                continue
+            cursor = match.end()
+            depth = 1
+            while cursor < len(fragment) and depth:
+                if (fragment[cursor] == "\\"
+                        and cursor + 1 < len(fragment)
+                        and fragment[cursor + 1] in "{}"):
+                    cursor += 2
+                    continue
+                if fragment[cursor] == "{":
+                    depth += 1
+                elif fragment[cursor] == "}":
+                    depth -= 1
+                cursor += 1
+            if depth != 0:
+                raise ValueError("Unclosed generated inline \\texttt argument")
+            raw = fragment[match.end():cursor - 1]
+            fixed = re.sub(r"(?<!\\)_", lambda _: r"\_", raw)
+            if len(raw) >= 15:
+                fixed = re.sub(
+                    r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])",
+                    lambda _: r"\allowbreak{}", fixed,
+                )
+            if len(raw) >= 24:
+                fixed = re.sub(
+                    r"(\\textless\{\}|\\textgreater\{\}|\\_|::|[/.,;=\-])"
+                    r"(?!\\allowbreak\{\})",
+                    lambda found: found.group(1) + r"\allowbreak{}",
+                    fixed,
+                )
+            out.append(fragment[consumed:match.start()])
+            out.append(r"\texttt{" + fixed + "}")
+            consumed = cursor
+        out.append(fragment[consumed:])
+        return "".join(out)
+
+    result: list[str] = []
+    cursor = 0
+    for match in verbatim.finditer(tex):
+        result.append(prose(tex[cursor:match.start()]))
+        result.append(match.group(0))
+        cursor = match.end()
+    result.append(prose(tex[cursor:]))
+    return "".join(result)
+
+
 def reflow_long_textual_displays(tex: str) -> str:
     """Avoid clipping long prose and pipeline math in generated TeX only.
 
@@ -531,6 +596,13 @@ def reflow_long_textual_displays(tex: str) -> str:
                 if arranged:
                     if boxed:
                         arranged = r"\boxed{" + arranged + "}"
+                    return "\\[\n" + arranged + "\n\\]"
+
+        if inner.count(r"\land") >= 2 and len(inner) > 85:
+            parts = top_level_parts(inner, r"\land")
+            if len(parts) >= 3:
+                arranged = wrap_terms(parts, r"\land ", 54)
+                if arranged:
                     return "\\[\n" + arranged + "\n\\]"
 
         if inner.count(" + ") >= 3 and len(inner) > 80:
