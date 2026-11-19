@@ -114,6 +114,69 @@ def math_preflight(source: str, label: str) -> dict:
             "_original_math_bodies": [b.strip() for b in blocks]}
 
 
+
+def plan_math(source: str, chapter: int) -> tuple[str, list[dict]]:
+    """Protect every display formula from Pandoc's Markdown math heuristics.
+
+    A source display is replaced by one unique plain-text marker during
+    Markdown-to-TeX conversion. The exact formula is reinserted as raw TeX
+    afterward, before any source-preserving TeX safety escaping. This prevents
+    implicit Markdown interpretation from dropping a boxed expression.
+    Fenced code examples remain untouched.
+    """
+    equations: list[dict] = []
+
+    def protect_prose(segment: str) -> str:
+        def replace(match: re.Match[str]) -> str:
+            body = match.group(1)
+            if not body.strip():
+                raise ValueError(f"Chapter {chapter}: empty display expression")
+            index = len(equations) + 1
+            token = f"ALLMIGHTMATHCH{chapter:02d}INDEX{index:04d}"
+            equations.append({
+                "index": index,
+                "token": token,
+                "body": body,
+                "sha256": digest(body.encode("utf-8")),
+            })
+            return "\n\n" + token + "\n\n"
+        return DISPLAY_MATH.sub(replace, segment)
+
+    pieces: list[str] = []
+    offset = 0
+    for match in FENCE.finditer(source):
+        pieces.append(protect_prose(source[offset:match.start()]))
+        pieces.append(match.group(0))
+        offset = match.end()
+    pieces.append(protect_prose(source[offset:]))
+    expected = len(DISPLAY_MATH.findall(FENCE.sub("", source)))
+    if len(equations) != expected:
+        raise ValueError(
+            f"Chapter {chapter}: expected {expected} source math displays, "
+            f"protected {len(equations)}. No math may be omitted."
+        )
+    return "".join(pieces), equations
+
+
+def replace_math_tokens(tex: str, equations: list[dict]) -> str:
+    """Restore original math text exactly once at its original position."""
+    for entry in equations:
+        token = entry["token"]
+        if digest(entry["body"].encode("utf-8")) != entry["sha256"]:
+            raise ValueError("Math source identity changed: " + token)
+        regex = r"(?m)^" + re.escape(token) + r"$"
+        count = len(re.findall(regex, tex))
+        if count != 1:
+            raise ValueError(
+                f"Math marker {token} occurred {count} times in Pandoc TeX"
+            )
+        original = "\\[\n" + entry["body"].strip() + "\n\\]"
+        tex = re.sub(regex, lambda _: original, tex, count=1)
+    if "ALLMIGHTMATHCH" in tex:
+        raise ValueError("Unresolved display-math marker in TeX")
+    return tex
+
+
 def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path):
     """Plan every Mermaid figure without changing the canonical chapter."""
     figure_dir = directory / "content" / "figures"
