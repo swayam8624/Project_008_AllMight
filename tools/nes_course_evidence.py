@@ -82,12 +82,15 @@ EXTRA_SOURCES = (
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
+    "tools/book01_coverage_audit.py",
+    "tools/tests/test_book01_coverage_audit.py",
     ".github/workflows/allmight-cpp23-nes-course.yml",
     "Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt",
     "Book Production/Seven-Book Curriculum/Book01/CMakePresets.json",
     "Book Production/Seven-Book Curriculum/README.md",
     "Book Production/Seven-Book Curriculum/source-routing-foundations.md",
     "Book Production/Seven-Book Curriculum/project-lab-matrix.md",
+    "Book Production/Seven-Book Curriculum/Book01/PASS17_COVERAGE_AND_DEPTH_AUDIT.md",
 )
 
 class EvidenceError(RuntimeError):
