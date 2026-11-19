@@ -50,7 +50,9 @@ class BookOneExpandedReaderTests(unittest.TestCase):
                 reader.chapter_regions(invalid)
 
     def test_exact_additive_splice_and_reverse_with_two_shared_anchors(self):
-        with tempfile.TemporaryDirectory() as d, patch.object(inserts, "ROOT", Path(d)):
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(inserts, "ROOT", Path(d)), \
+             patch.object(reader, "ROOT", Path(d)):
             root = Path(d)
             (root / "A.md").write_text("### ABC — Test A\nDeep material.\n", encoding="utf-8")
             (root / "B.md").write_text("### DEF — Test B\nSecond addition.\n", encoding="utf-8")
