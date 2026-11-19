@@ -1,0 +1,80 @@
+% Book Two Pass 2: discrete three-stage geodesics-in-heat reproduction.
+\clearpage
+\section*{Research reconstruction: heat flow becomes surface distance}
+\noindent\textbf{Primary work:} Keenan Crane, Clarisse Weischedel and
+Max Wardetzky,
+\href{https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/}
+{\emph{Geodesics in Heat} (2013)}. The idea is surprising:
+a short-time diffusion computation can reveal the direction
+toward a geodesic distance field, although heat itself is not
+geodesic distance.
+
+\paragraph{Stage I: a source becomes a temperature field.}
+Let \(K\) be the positive-semidefinite finite-element stiffness
+and \(M\) the mass matrix. With our sign convention, a backward
+Euler step of the heat equation is
+\[
+(M+tK)u=M u_0,\qquad t>0.
+\]
+The initial vector \(u_0\) represents a source impulse in the
+chosen discrete model. The positive timestep stabilizes the
+linear solve. Choosing a timestep tied to squared mean edge
+length is a practical resolution-dependent heuristic, not a
+universal accuracy proof.
+
+\paragraph{Stage II: temperature supplies a direction.}
+On each triangle, compute the piecewise-constant gradient of
+\(u\) from its three nodal values and element basis gradients.
+Then define the unit vector field
+\[
+X=-\frac{\nabla u}{\lVert\nabla u\rVert}.
+\]
+The negative sign makes \(X\) point outward, away from a hot
+source. If \(\lVert\nabla u\rVert\) is too small to normalize
+reliably, the direction is undefined and the code must handle
+that case, rather than divide by a near-zero value.
+
+\paragraph{Stage III: integrate those directions.}
+Find a scalar field whose gradient approximates \(X\) by
+minimizing \(\frac12\int\lVert\nabla\phi-X\rVert^2dA\).
+The first-order condition is the Poisson system
+\[
+K\phi=b,\qquad
+b_i=\sum_{T\ni i}A_T\,\nabla\phi_i\cdot X_T.
+\]
+Because a constant can be added to \(\phi\) without changing
+its gradient, \(K\) has a constant-vector nullspace on a
+free-boundary connected mesh. Fixing \(\phi\) to zero at the
+source selects a coordinate gauge; it does not create a new
+distance observation.
+
+\paragraph{Independent analytical oracle.}
+On a flat rectangular convex domain with a central source and
+no obstacles, the shortest intrinsic path to another interior
+point is the straight line. Its Euclidean length
+\(\lVert p-p_{\rm source}\rVert\) therefore supplies a reference
+for a simple grid triangulation. The companion code constructs
+its own P1 stiffness/mass matrices, takes one backward heat
+step, normalizes triangle gradients, solves the anchored Poisson
+equation, and compares its distances with this exact planar
+reference.
+
+\paragraph{What the method does \emph{not} claim.}
+This teaching experiment does not reproduce the full paper's
+large-mesh benchmark figures, curved-surface comparisons,
+intrinsic-Delaunay corrections or production factorization
+performance. It also does not establish accurate geodesics on
+nonmanifold input, disconnected domains, degenerate triangles
+or arbitrary boundary models. Those require additional algorithms
+and domain checks.
+
+\paragraph{Reconstruction and research questions.}
+First demonstrate mass conservation after the implicit heat
+step, stiffness symmetry, constant-mode behavior and the
+Poisson gauge. Next double the grid resolution, vary \(t/h^2\),
+and report median and maximum \emph{absolute} geodesic error
+separately. Finally compare the heat method with a graph
+shortest-path algorithm: graph edge distances are a useful
+baseline but are not a ground truth for smooth surface distance.
+A reliable figure must show both accuracy and mesh resolution,
+not merely a colorful geodesic gradient.
