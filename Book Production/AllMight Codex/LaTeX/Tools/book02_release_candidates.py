@@ -38,8 +38,8 @@ from build import ROOT, generation_path, tex_runtime, compile_tex
 STAGE = "02-Mathematics-for-Visual-Computing"
 PARTS = (STAGE+"-P01",STAGE+"-P02")
 TITLE = "From Equations to Geometry"
-EXPECTED_EXTRA = 35
-EXPECTED_IMAGE_ASSETS = 12
+EXPECTED_EXTRA = 36
+EXPECTED_IMAGE_ASSETS = 13
 MAX_PAGES_PER_PHYSICAL_BOOK = 800
 
 
@@ -112,18 +112,18 @@ def inspect_epub(path:Path,record:dict)->dict:
         raise RuntimeError("Full stage EPUB missing or EPUBCheck not successful")
     supplement=record.get("book02_supplement_sources",[])
     if len(supplement)!=EXPECTED_EXTRA:
-        raise RuntimeError(f"Expected 35 EPUB additive sources, got {len(supplement)}")
+        raise RuntimeError(f"Expected 36 EPUB additive sources, got {len(supplement)}")
     with zipfile.ZipFile(path) as z:
         names=z.namelist()
         svgs=[p for p in names if p.endswith(".svg")]
         if len(svgs)<EXPECTED_IMAGE_ASSETS:
-            raise RuntimeError(f"Expected at least 12 scientific SVGs, got {len(svgs)}")
+            raise RuntimeError(f"Expected at least 13 scientific SVGs, got {len(svgs)}")
         xhtml=[p for p in names if p.endswith(".xhtml")]
         content=b" ".join(z.read(p) for p in xhtml)
         for snippet in (b"Numerical Geometry Atlas",b"Reconstruction",b"Geodesics"):
             if snippet.lower() not in content.lower():
                 raise RuntimeError("EPUB reading content omitted: "+str(snippet))
-        if content.count(b"alt=")<12:
+        if content.count(b"alt=")<EXPECTED_IMAGE_ASSETS:
             raise RuntimeError("At least one supplemental scientific image lacks alt text")
         # Check exact image assets with names and content from SOURCE, not
         # just a count of any preexisting unrelated visuals.
@@ -150,7 +150,7 @@ def epub_candidate(generation:Path,root:Path)->dict:
         raise RuntimeError(
             "Full Book Two EPUB requires the original source-cache "
             "build_books.py on the author's Mac. The independently EPUBCheck-"
-            "validated 35-section integration proof is available in CI; "
+            "validated 36-section integration proof is available in CI; "
             "do not mistake it for the complete 16-chapter publication.")
     epubcheck=Path("/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15/epubcheck/epubcheck-5.4.0/epubcheck.jar")
     if not epubcheck.is_file():
