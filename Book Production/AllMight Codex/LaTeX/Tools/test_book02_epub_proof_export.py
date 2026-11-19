@@ -2,7 +2,7 @@
 """Export Book Two's standalone *supplement integration proof* for EPUBCheck.
 
 Not the original 16-chapter book. Instead, a demonstrably valid EPUB with
-all 35 real supplemental lessons, all 12 SVGs, and a placeholder header
+all 36 real supplemental lessons, all 13 SVGs, and a placeholder header
 for each original chapter to prove the intended placement. The complete
 full-source KDP EPUB requires the frozen 568-row conversion source tree.
 """
@@ -63,7 +63,7 @@ def make_proof(out: Path) -> Path:
         if out.stat().st_size < 80000:
             raise RuntimeError("Unexpectedly small proof EPUB "+str(out))
         print("BOOK02_EPUB_SEMANTIC_PROOF",len(adapter.used),
-              "source supplements, image count 12, output",out)
+              "source supplements, image count 13, output",out)
         return out
 
 
