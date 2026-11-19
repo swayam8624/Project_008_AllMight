@@ -721,7 +721,7 @@ guaranteed completion count**; new issues may require more passes.
 derived original reading chapters and 16 earlier supplements found no
 worked `std::filesystem`, `std::ranges`/`std::views`,
 `std::format`/`std::print` or `co_await`/`co_yield` examples by their
-standard API spellings. Pass18 adds a **42K+ character cohesive lesson**
+standard API spellings. Pass18 now has a **50K+ character cohesive lesson**
 [CPP-18A — Filesystem Ranges Formatting and Coroutine Asset Import](../../Supplementary/C++23%20Project%20Labs/CPP-18A%20-%20Filesystem%20Ranges%20Formatting%20and%20Coroutine%20Asset%20Import.md)
 adjacent to the existing Chapter06 typed and generational registry. It
 explains a useful end-to-end ingestion design, not four detached API tips.
@@ -783,6 +783,27 @@ ledger](Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md) records actual
 observed compiler modes, failure tests, code portability and remaining
 constraints. This report is descriptive; only future fully executed,
 source-pinned CTest/JUnit receipts can certify the whole course.
+
+**Resumed Pass18 hardening (same branch):** The worker now validates an
+independent request-count limit (default 1024, maximum 4096) and a
+4096-byte pathname ceiling *before* launching its jthread. The chunked
+file reader checks the passed stop_token before path work, between
+4096-byte reads and before successful publication. This prevents an
+unbounded stream of errors bypassing the byte budget, but does not
+pretend to interrupt an already blocked native read or prevent
+filesystem TOCTOU races. New adversarial tests cover both limits and
+cancellation.
+
+**Exact local test evidence:** The Git blobs
+`23a581956e35b8ffd6116e5483ff96a49e790be6` (header) and
+`28369c2bb8ac68d0c08b529b02152c6d5038c46c` (test) were
+confirmed byte-identical to the rebuilt standalone sources.
+GCC 14.2 C++23 strict-warning CTest: **1/1 passed**.
+Clang 17 C++23 + ASan/UBSan CTest: **1/1 passed**.
+These two real local outcomes have standalone JUnit receipts in the
+working container. They **do not test** the shared Pass06 registry,
+the full 17-target course or Apple Metal/Vulkan devices; see the
+updated [Pass18 evidence ledger](Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md).
 
 **Remaining technical work:** run and repair the 17-target GCC/Clang/
 AppleClang/sanitizer build, verify registry integration and native
