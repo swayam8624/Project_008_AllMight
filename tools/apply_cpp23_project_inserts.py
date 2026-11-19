@@ -107,6 +107,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/GPU-14F - Frame Submission Synchronization and Retirement.md",
         b"\n### VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES\n",
     ),
+    Insert(
+        "GPU-15M",
+        "Supplementary/C++23 Project Labs/GPU-15M - Execute Verify and Measure a Metal Frame.md",
+        b"\n### STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS & SYNCHRONIZATION\n",
+    ),
 )
 
 
