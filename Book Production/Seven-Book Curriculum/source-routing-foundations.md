@@ -320,3 +320,80 @@ The derived chapter "Graphs, Search, and GPU Scheduling" has approximately **2,2
 **Release requirements:** The verified 16-target CTest and native-platform evidence pipeline, complete C++23 interface coverage, real multi-project ownership/asset/compute pipeline, selected graphics/physics/numerical witnesses, a narrative/editorial review, primary-book/source-span routing and authorized master application must all be complete. A passing static audit checks layout/presence only, not the quality or correctness of the book.
 
 **Next:** Actual build/repair of the authored 16 labs, plus gap-closing C++23 filesystem/ranges/format/coroutine teaching work. Native Apple/Vulkan runtime outcomes must be reported independently. No request to run LaTeX, export books, or run local commands until the consolidated checkpoint.
+
+
+## Pass 18 — Actual modern C++23 asset ingestion, files, ranges and owned coroutines
+
+**Placement:** Book 1 / Chapter 06, directly after the established
+generational typed asset registry and before the original “From a living asset
+registry to reliable queries and transformations” heading. The 17th
+`CPP-18A` lesson shares that original anchor with `NES-06G`. The strict
+patcher applies the earlier insert first, then this additional gap repair;
+neither changes or replaces the original source bytes. The first 16
+supplemented *original chapters* remain 16; 17 is the **lesson count**.
+
+**Original/source provenance:** `tools/labs/nes_course/typed_asset_pipeline.hpp`
+and `generational_asset_registry.hpp` were actually inspected for their
+`Spec<TextureTag/MeshTag>::decode` and
+`GenerationalAssetRegistry::import/lookup/erase` APIs. These are the
+shared code used in the new full-course target; they are not duplicated or
+reimplemented. The target's public include directories and compile
+definition `ALLMIGHT_COURSE_REQUIRE_REGISTRY=1` make the full build **fail
+at compile time** if that original header is unavailable, instead of
+silently skipping the important cross-pass integration.
+
+**Substantive new teaching:** `Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md`
+is ~42K+ characters. It directly closes the identified worked-example
+gaps for `std::filesystem` and `std::ifstream`/binary reads,
+`std::ranges::sort` and `std::views::filter` with owned range lifetimes,
+`std::format` and `std::println` with library feature gating, a
+move-only `std::coroutine_handle` generator with `co_yield`,
+a manually suspended `co_await` task with owned result state, and a
+genuine host `std::jthread` worker with cooperative stop, mutex-protected
+results, exception containment and aggregate byte budget. The text
+distinguishes synthetic TXR4/MSH1 fixtures from real glTF/KTX/Maveb data,
+and explicitly refuses to call portable pre-open symlink checks a
+race-free security sandbox against malicious concurrent directory edits.
+
+**Executable:** `tools/labs/foundations_course/modern_asset_ingestion.hpp`
+and `tools/labs/modern_asset_ingestion_cpp23_lab.cpp`. The test creates
+actual temporary directories, builds valid educational texture/mesh files,
+refuses absolute/parent/dot/empty/NUL/symlink/missing/directory paths,
+enforces file-size and aggregate batch budgets, verifies owned
+coroutine payloads after caller-vector/file removal, validates duplicate
+paths and two-stage cancellation, and uses the real earlier
+`GenerationalAssetRegistry` in the full course include tree. File read,
+domain decode, publication and GPU resource lifetime are distinct
+contracts; a successful first contract is never misrepresented as proof
+of the later contracts.
+
+**Observed local compilation evidence:** GCC 14.2, Clang 17, optimized
+GCC and Clang ASan+UBSan compiled and executed the standalone
+source-equivalent lab with strict C++23 warnings. The local authoring
+workspace lacks the earlier registry header, so the standalone runner
+**explicitly reported that the Pass06 integration was not exercised**.
+The full CMake target now *requires* that header at compile time; a
+negative local compiler probe verified that it rejects the missing
+header as intended. Source-pinned 17-target CTest, actual integrated
+registry runtime and native GPUs remain unverified, with no fake green
+receipt. Detailed evidence: `Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md`.
+
+**Updated static and execution contracts:** `tools/apply_cpp23_project_inserts.py`
+contains 17 addition specs, strict fixture tests include CPP18A in
+restoration/idempotence/conflict proofs, the source-JUnit manifest requires
+17 CTest results, and `tools/book01_coverage_audit.py` checks the
+**17th supplemental lesson is anchored in original Chapter06** rather
+than expecting a nonexistent seventeenth original book-one chapter.
+The GitHub Actions workflow already triggers on these files; its results
+must be read from an actual runner before asserting full-course success.
+CMake/project preset *display labels* now reflect Book01 cross-project
+work rather than NES exclusively, without renaming the earlier targets
+or touching the original prose.
+
+**Next high-priority gate:** Full repository 17-target GCC/Clang/AppleClang
+build, sanitizer tests, actual legacy-registry integration and JUnit
+receipts, followed by source-level correction of real failures. A
+production extension should add race-resistant native filesystem access,
+bounded number of jobs/consumer queue, durable file transactions and
+scene-generation-aware asset publication. Native GPU correctness must
+remain a separate verified evidence stream.
