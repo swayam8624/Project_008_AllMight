@@ -9,8 +9,8 @@ unchanged order. This adapter *appends* its source-accurate lesson ASTs at the
 same chapter boundaries as the print-only book02_visuals.py mapping.
 
 Unlike the print build, EPUB images are SVGs generated from reproducible
-numeric data. All 35 source lessons are preserved: 5 analytic plates,
-29 other lessons/research/figure fragments, and 1 cumulative project.
+numeric data. All 36 source lessons are preserved: the prior 35 verified teaching sources,
+plus the exact triangle-to-pixel coverage bridge, without touching originals.
 No PDF screenshot or raw TikZ is silently substituted for readable text.
 
 Requires pandoc 3.x (AST API 1.23), matplotlib/numpy/scipy; no network.
@@ -50,6 +50,7 @@ RICH = {
         (34, "ransac", "ransac-consensus"),
     )
 }
+COVERAGE = {"36-from-probability-to-pixels.tex": "triangle-pixel-coverage"}
 # Each scientifically meaningful image gets a text alternative distinct from
 # its longer caption. Caption and body explain the experimental limitations.
 ALTERNATIVES = {
@@ -65,6 +66,7 @@ ALTERNATIVES = {
     "geodesic-resolution": "Mean, median and maximum absolute geodesic errors at six mesh resolutions on the same planar domain.",
     "robust-fitting": "Synthetic exponential observations with one outlier, ordinary and robust fitted curves, and all-data residual distributions.",
     "mis-variance": "Monte Carlo signed-error distributions and empirical replicate variances for equal function-evaluation budgets.",
+    "triangle-pixel-coverage": "An exact rational triangle clipped to a single square pixel, with subpixel hit and miss locations, alongside signed sampling errors from sixty independently seeded Monte Carlo replicates.",
 }
 
 
@@ -75,8 +77,8 @@ def all_source_filenames() -> list[str]:
         names.extend(RICH_FIGURES.get(chapter, ()))
     if len(names) != len(set(names)):
         raise RuntimeError("Book Two supplement filename used twice")
-    if len(names) != 35:
-        raise RuntimeError(f"Expected 35 additive TeX lessons, got {len(names)}")
+    if len(names) != 36:
+        raise RuntimeError(f"Expected 36 additive TeX lessons, got {len(names)}")
     return names
 
 
@@ -155,6 +157,8 @@ class Book02EpubSupplement:
             self.figure_paths[name]=analytic/(slug+".svg")
         for name,slug in RICH.items():
             self.figure_paths[name]=rich/"figures"/(slug+".svg")
+        for name,slug in COVERAGE.items():
+            self.figure_paths[name]=rich/"coverage"/(slug+".svg")
         for name,path in self.figure_paths.items():
             if not path.is_file() or path.stat().st_size<600:
                 raise RuntimeError("Book Two EPUB source image missing: "+str(path))
@@ -170,7 +174,7 @@ class Book02EpubSupplement:
             import copy
             return copy.deepcopy(self.lesson_cache[key])
         raw=(FIGURE_SOURCE/name).read_text(encoding="utf-8")
-        if name in self.figure_paths or name in ANALYTIC or name in RICH:
+        if name in self.figure_paths or name in ANALYTIC or name in RICH or name in COVERAGE:
             self.prepare()
             if raw.count(r"\begin{figure}")!=1 or raw.count(r"\end{figure}")!=1:
                 raise RuntimeError(f"Expected one source plot in {name}")
@@ -204,7 +208,7 @@ class Book02EpubSupplement:
                 raw_target=node["c"][2][0]
                 if not raw_target.startswith("assets/"):
                     raise RuntimeError("Book02 image target not packaged: "+raw_target)
-                slug=ANALYTIC.get(name,RICH.get(name))
+                slug=ANALYTIC.get(name,RICH.get(name,COVERAGE.get(name)))
                 node["c"][0]=["",[],[["width","90%"]]]
                 node["c"][1]=as_str(ALTERNATIVES[slug])
                 node["c"][2][1]=ALTERNATIVES[slug]
