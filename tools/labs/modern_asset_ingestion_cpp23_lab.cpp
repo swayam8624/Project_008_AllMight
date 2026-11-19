@@ -170,6 +170,18 @@ void test_real_host_async_batch() {
             results[1]->relative=="models/tri.msh1",
             "actual jthread resumes coroutine once; owned results returned after join");
 }
+void test_aggregate_budget_prevents_unbounded_publication() {
+    Fixture fixture;
+    fixture.file("assets/tex.txr4",texture());
+    fixture.file("models/tri.msh1",mesh());
+    a::WorkerBatch batch(a::Root(fixture.root,64),
+        {{"assets/tex.txr4",a::AssetKind::texture_rgba8},
+         {"models/tri.msh1",a::AssetKind::triangle_mesh}},24);
+    const auto result=batch.finish();
+    require(result.size()==2 && result[0] && !result[1] &&
+            result[1].error()==a::Issue::aggregate_budget,
+            "worker refuses next owned asset when cumulative byte budget exhausted");
+}
 void test_existing_registry_integration() {
 #if ALLMIGHT_HAS_REGISTRY
     // This is the ACTUAL shared typed NROM/TXR4/MSH1 decoder + generational
@@ -208,6 +220,7 @@ int main(){
         test_coroutine_owned_bytes_ranges_and_cancellation();
         test_coawait_suspend_resume_and_frame_ownership();
         test_real_host_async_batch();
+        test_aggregate_budget_prevents_unbounded_publication();
         test_existing_registry_integration();
         a::announce_success(2);
         std::cout << "Pass18: filesystem/ranges/format/coroutines and host jthread "
