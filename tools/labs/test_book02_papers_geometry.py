@@ -26,7 +26,7 @@ class RobustPredicates(unittest.TestCase):
         top=1e308
         # This is a finite binary64 triple whose exact determinant has
         # a nonzero negative sign, despite overflow in float products.
-        points=((0.,0.),(top,top),(top,math.nextafter(top,0.)))
+        points=((0.,0.),(top,top),(.9*top,math.nextafter(.9*top,0.)))
         exact=orient2d(*points)
         self.assertEqual(exact.sign,-1)
         self.assertEqual(exact.path,"exact-rational")
