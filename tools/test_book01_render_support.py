@@ -198,6 +198,40 @@ class Book01ProductionTests(unittest.TestCase):
         self.assertNotIn("GENERAL COMPUTE & PARALLEL ALGORITHMS", result)
         self.assertGreaterEqual(report["promoted_concept_headings"], 1)
 
+    def test_long_textual_math_is_reflowed_without_changing_equations(self):
+        long_claim = (
+            r"\[\boxed{\text{Can another machine, OS, compiler and CI worker "
+            r"actually reconstruct the same engine correctly?}}\]"
+        )
+        pipeline = (
+            r"\[\text{projection}\rightarrow\text{tile counts}"
+            r"\rightarrow\text{scan}\rightarrow\text{key generation}"
+            r"\rightarrow\text{radix histogram}\rightarrow\text{prefix}"
+            r"\rightarrow\text{scatter}\rightarrow\text{composite}.\]"
+        )
+        actual_math = r"\[\boxed{a^2+b^2=c^2}\]"
+        result = book.reflow_long_textual_displays(
+            long_claim + "\n" + pipeline + "\n" + actual_math
+        )
+        self.assertIn(r"\fbox{\parbox{0.82\linewidth}", result)
+        self.assertIn(
+            "Can another machine, OS, compiler and CI worker "
+            "actually reconstruct the same engine correctly?", result
+        )
+        self.assertIn(r"\begin{aligned}", result)
+        self.assertIn(r"\text{projection}", result)
+        self.assertIn(r"\text{composite}.", result)
+        self.assertIn(actual_math, result)
+        self.assertNotIn(r"\boxed{\text{Can another machine", result)
+
+    def test_short_boxed_math_remains_exact(self):
+        examples = (
+            r"\[\boxed{x}\]" + "\n"
+            r"\[\boxed{\text{valid}} \]" + "\n"
+            r"\[\text{A}\rightarrow\text{B}\]" + "\n"
+        )
+        self.assertEqual(book.reflow_long_textual_displays(examples), examples)
+
     def test_mermaid_source_hash_checks(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
