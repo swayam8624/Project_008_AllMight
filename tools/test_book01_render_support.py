@@ -69,6 +69,30 @@ class Book01ProductionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             book.check_math_rendered(stat, "\\[x+y\\]", 9)
 
+    def test_math_text_underscore_escape_preserves_subscripts(self):
+        source = (
+            chr(36) * 2 + "\n"
+            + r"\texttt{simd_sum}" + "\n"
+            + chr(36) * 2 + "\n\n"
+            + chr(36) * 2 + "\n"
+            + r"\texttt{simd_prefix_exclusive_sum}" + "\n"
+            + chr(36) * 2 + "\n\n"
+            + chr(36) * 2 + "\n"
+            + r"x_{i} + \text{plain_label} + \texttt{already\_escaped}" + "\n"
+            + chr(36) * 2 + "\n"
+        )
+        stats = book.math_preflight(source, "Chapter 9")
+        protected, formulas = book.plan_math(source, 9)
+        tex = book.replace_math_tokens(protected, formulas)
+        self.assertIn(r"\texttt{simd\_sum}", tex)
+        self.assertIn(r"\texttt{simd\_prefix\_exclusive\_sum}", tex)
+        self.assertIn(r"x_{i}", tex)
+        self.assertIn(r"\text{plain\_label}", tex)
+        self.assertIn(r"\texttt{already\_escaped}", tex)
+        self.assertNotIn(r"\texttt{simd_sum}", tex)
+        self.assertNotIn(r"\\_", tex)
+        book.check_math_rendered(stats, tex, 9)
+
     def test_math_protection_preserves_boxed_cuda_gpu_and_cpp_expressions(self):
         math_delim = chr(36) * 2
         source = (
@@ -93,7 +117,7 @@ class Book01ProductionTests(unittest.TestCase):
             "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}",
             rendered,
         )
-        self.assertIn("\\texttt{simd_sum} = 256", rendered)
+        self.assertIn(r"\texttt{simd\_sum} = 256", rendered)
         book.check_math_rendered(stats, rendered, 9)
         with self.assertRaises(ValueError):
             book.replace_math_tokens("missing marker", protected)
