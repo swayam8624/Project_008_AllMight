@@ -13,9 +13,13 @@
 \IfFontExistsTF{TeX Gyre Termes Math}
   {\setmathfont{TeX Gyre Termes Math}}
   {\setmathfont{TeX Gyre Pagella Math}}
-\IfFontExistsTF{Latin Modern Mono}
-  {\setmonofont{Latin Modern Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}
-  {\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon]}
+% Box-drawing characters and arrows in real program traces need glyph coverage.
+% Latin Modern Mono is too limited for the existing source diagrams.
+\IfFontExistsTF{DejaVu Sans Mono}
+  {\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}
+  {\IfFontExistsTF{Menlo}
+    {\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon]}
+    {\setmonofont{Latin Modern Mono}[Scale=MatchLowercase,Ligatures=NoCommon]}}
 % An academic print page: dense enough for long mathematical and code examples,
 % with room for a binding and marginal annotations.
 \geometry{
