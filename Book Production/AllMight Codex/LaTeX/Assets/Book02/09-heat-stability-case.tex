@@ -1,0 +1,55 @@
+% A conservative Fourier-mode statement, with grid assumptions explicit.
+\clearpage
+\section*{Stability laboratory: a smooth picture is not a proof}
+\noindent The continuous heat equation on a unit square is
+\(\partial_tu=\kappa(\partial_{xx}u+\partial_{yy}u)\).
+Its analytical mode
+\(u(x,y,t)=e^{-2\kappa\pi^2 t}\sin(\pi x)\sin(\pi y)\)
+is smooth and decays. The corresponding finite-difference solver
+does not automatically inherit those properties for every time step.
+
+On a uniform grid with spacing \(h\) in both directions, the
+forward-time centered-space discretization is
+\[
+u_{i,j}^{n+1}=u_{i,j}^n+r
+(u_{i+1,j}^n+u_{i-1,j}^n+u_{i,j+1}^n+u_{i,j-1}^n-4u_{i,j}^n),
+\quad
+r=\frac{\kappa\Delta t}{h^2}.
+\]
+The coefficient \(r\) is dimensionless: with \(\kappa\)
+in length-squared per second, \(h^2\) is length-squared and
+\(\Delta t\) is seconds. Keeping track of these units catches
+many subtle mistakes before numerical analysis begins.
+
+For Fourier modes of the periodic or infinite-grid operator,
+the amplification factor is
+\[
+g(k_x,k_y)=1-4r\left(
+\sin^2\frac{k_xh}{2}+\sin^2\frac{k_yh}{2}
+\right).
+\]
+The most demanding mode yields \(g_{\min}=1-8r\).
+Requiring \(\lvert g\rvert\le1\) for every Fourier mode
+gives \(0\le r\le1/4\), or
+\[
+\Delta t\le\frac{h^2}{4\kappa}.
+\]
+This is a classical sufficient limit for the two-dimensional
+forward-Euler, centered-difference heat method; boundary details
+and the actual finite-grid spectrum must be checked before
+transferring a statement about a limiting grid verbatim.
+
+At \(h=1/4\) and \(\kappa=1\), the bound is
+\(\Delta t\le0.015625\). Refining \(h\) by a factor of two
+requires a fourfold smaller step to preserve the same \(r\).
+A more detailed spatial grid can therefore make an explicit
+solver much more expensive even when it has fewer visual artifacts.
+
+\paragraph{Reconstruction challenge.}
+Implement both forward Euler and backward Euler using the same
+discrete Laplacian and boundary constraints.
+Record mode amplification, reference solution errors, total energy,
+and maximum-principle violations separately.
+Show solutions for stable and unstable choices as animations, but
+never use a plausible-looking low-frequency image as a stability test:
+an unobserved high-frequency mode can still grow.
