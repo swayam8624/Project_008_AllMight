@@ -315,6 +315,12 @@ def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stat
                 lambda match: match.group(0) + r"\allowbreak{}",
                 rendered,
             )
+        if len(raw) >= 15:
+            # API identifiers without punctuation can be too long for an
+            # academic page. Add invisible breaks between CamelCase words.
+            rendered = re.sub(r"(?<=[a-z])(?=[A-Z])", r"\\allowbreak{}", rendered)
+            rendered = re.sub(r"(?<=[A-Z])(?=[A-Z][a-z])",
+                              r"\\allowbreak{}", rendered)
         return r"\texttt{" + rendered + "}"
     # Restore protected display math only AFTER altering Pandoc's inline
     # \texttt expressions; this preserves the source equations exactly.
