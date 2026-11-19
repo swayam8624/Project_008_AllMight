@@ -1,0 +1,72 @@
+% Book Two Pass 2: consensus estimation and stopping probability.
+\clearpage
+\section*{Research reconstruction: a model built from consensus}
+\noindent\textbf{Primary work:} Martin Fischler and Robert Bolles,
+\emph{Random Sample Consensus: A Paradigm for Model Fitting with
+Applications to Image Analysis and Automated Cartography},
+\emph{Communications of the ACM}, 1981,
+\href{https://doi.org/10.1145/358669.358692}{DOI and publication record}.
+
+\paragraph{Why ordinary fitting can fail.}
+Least squares minimizes the sum of squared residuals, so a few
+large residuals can dominate the result. RANSAC reverses the
+procedure: generate a model from a minimal sample, count
+observations agreeing within a declared threshold, retain the
+best consensus, and refine using that consensus.
+This does not magically determine the threshold or make a
+wrong measurement model correct.
+
+For a 2D line, a minimal sample is a pair of distinct points.
+The line may be written as \(ax+by+c=0\) with
+\(a^2+b^2=1\), so the orthogonal residual of a point
+\((x_i,y_i)\) is simply
+\[
+d_i=|ax_i+by_i+c|.
+\]
+A point is an inlier if \(d_i\le\tau\), where \(\tau\) has
+the same physical units as the point coordinates. After
+selection, refit the line using an orthogonal
+total-least-squares model of the consensus. Ordinary
+vertical-error regression would assume an entirely different
+noise direction and should not be substituted silently.
+
+\paragraph{How many random hypotheses?}
+If each sample of size \(m\) contains only inliers with
+probability \(w^m\), and successive hypotheses are
+independent, the chance that all \(k\) hypotheses fail is
+\((1-w^m)^k\). To demand success probability at least \(p\),
+choose
+\[
+k\ge\frac{\log(1-p)}{\log(1-w^m)}.
+\]
+For \(m=2,w=0.5,p=0.99\), this gives
+\(k=\lceil\log(0.01)/\log(0.75)\rceil=17\).
+This is an \emph{idealized} probability model. Finite
+sampling without replacement, correlated hypotheses,
+structured outliers, approximate support estimates, and
+degenerate point configurations complicate its interpretation.
+
+\paragraph{A deliberately synthetic replication.}
+The companion \texttt{book02\_papers\_geometry.py} makes 80
+bounded-noise points around \(y=2x+1\) and 30 structured
+outliers, shuffles with a declared seed, and fits a line.
+It compares consensus and orthogonal-refit accuracy with
+an all-observation total-least-squares baseline.
+The recorded seed demonstrates replay, not statistical
+generalization or a paper benchmark result.
+
+\paragraph{What could falsify the lesson?}
+If a seed selects degenerate point pairs too often, no useful
+model is produced. If the inlier threshold is too wide,
+two distinct geometric structures can merge into one
+false consensus; if too narrow, valid observations are
+discarded. If most data agree with a \emph{wrong} model,
+RANSAC can confidently choose it. Compare all-data
+residual distributions and consensus-set stability across
+independent seeds and varying thresholds, not just one
+attractive line overlay.
+
+\paragraph{Original-paper boundary.}
+This lab reproduces the core sample--consensus--refit reasoning
+on a simple line, not the original paper's camera localization
+experiments, implementation or reported measurements.
