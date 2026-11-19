@@ -271,9 +271,8 @@ public:
         auto* slot=*checked;
         if(slot->phase!=Phase::submitted)
             return std::unexpected(Error::no_completion_evidence);
-        if(slot->generation==std::numeric_limits<std::uint64_t>::max())
-            return std::unexpected(Error::max_generation);
-
+        // Max generation MAY finish. reset() retires the slot permanently
+        // rather than overflowing its identity, even for terminal errors.
         TerminalEvent event;
         event.frame=key;
         event.project=slot->project;
