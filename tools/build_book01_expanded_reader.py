@@ -29,6 +29,7 @@ import sys
 import apply_cpp23_project_inserts as inserts
 import book01_render_support as render
 import book01_publication_edit as publication
+import book01_index as idx
 from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -277,9 +278,10 @@ def pandoc_binary() -> str:
     return binary
 
 
-def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stats: dict | None = None, chapter: int = 0, math_entries: list[dict] | None = None) -> None:
+def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stats: dict | None = None, chapter: int = 0, math_entries: list[dict] | None = None, index_entries: list[dict] | None = None) -> None:
     """Correct only generated TeX, never the original teaching Markdown."""
     content = path.read_text("utf-8")
+    content = idx.replace_index_tokens(content, index_entries or [])
     content = render.replace_math_tokens(content, math_entries or [])
     def correct(match: re.Match[str]) -> str:
         return r"\texttt{" + re.sub(r"(?<!\\)_", r"\\_", match.group(1)) + "}"
@@ -347,7 +349,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             editorial["removed_duplicate_figure_labels"] = duplicate_figure_labels
             editorial["remaining_merge_markers"] = publication.editorial_quality_report(converted)
             report["publication_edits"].append(editorial)
-            prepared_math, math_entries = render.plan_math(converted, num)
+            indexed_source, index_entries = idx.insert_index_tokens(converted, num)
+            prepared_math, math_entries = render.plan_math(indexed_source, num)
             prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(prepared_math)
             if len(math_entries) != math_stats["display_math"]:
                 raise ValueError(f"Chapter {num}: display math count changed during reader reflow")
@@ -365,7 +368,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             if not tex_path.is_file() or not tex_path.stat().st_size:
                 raise RuntimeError(f"Missing/nontext TeX output for chapter {num}")
             tex.append(r"\chapter{" + tex_escape(CHAPTER_TITLES[num - 1]) + "}")
-            amend_generated_tex(tex_path, figures, math_stats, num, math_entries)
+            amend_generated_tex(tex_path, figures, math_stats, num, math_entries, index_entries)
             tex.append(r"\input{content/" + fragment + "}")
             clean = {k: v for k, v in row.items() if not k.startswith("_")}
             clean.update({"part": name, "markdown_sha256": sha256(payload),
@@ -375,6 +378,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "layout_reflow": structure,
                           "academic_editorial_edits": {k: v for k, v in editorial.items() if k != "removed_editorial_notes"},
                           "protected_math_displays": len(math_entries),
+                          "index_entry_count": len(index_entries),
                           "code_fence_metadata_normalized": fence_metadata_removed,
                           "figure_count": len(figures),
                           "reader_title": CHAPTER_TITLES[num - 1],
@@ -396,7 +400,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                     extra_text, num, part_number, directory, OUTPUT,
                     first_index=len(figures) + 1,
                 )
-                extra_ready, extra_math = render.plan_math(extra_figured, num)
+                extra_indexed, extra_index = idx.insert_index_tokens(extra_figured, num)
+                extra_ready, extra_math = render.plan_math(extra_indexed, num)
                 extra_ready, extra_code_ids = render.normalize_code_fence_metadata(extra_ready)
                 if len(extra_math) != extra_stats["display_math"]:
                     raise ValueError(f"Enrichment {num} lost display math before Pandoc")
@@ -410,7 +415,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                 run = subprocess.run(cmd, capture_output=True, text=True)
                 if run.returncode or not extra_tex.is_file():
                     raise RuntimeError(f"Pandoc could not render academic enrichment {num}: " + run.stderr[:2500])
-                amend_generated_tex(extra_tex, extra_diagrams, extra_stats, num, extra_math)
+                amend_generated_tex(extra_tex, extra_diagrams, extra_stats, num, extra_math, extra_index)
                 tex.append(r"\input{content/academic-ch" + f"{num:02d}" + "}")
                 report["enrichments"].append({
                     "chapter": num,
@@ -423,6 +428,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                     "latex_path": extra_tex.relative_to(OUTPUT).as_posix(),
                     "latex_sha256": sha256(extra_tex.read_bytes()),
                     "figure_count": len(extra_diagrams),
+                    "index_entry_count": len(extra_index),
                     "protected_math_displays": len(extra_math),
                     "code_fence_metadata_normalized": extra_code_ids,
                 })
@@ -436,7 +442,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             challenge_md.write_bytes(challenge_bytes)
             challenge_stats = render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone")
             cap_figured, cap_figures = render.plan_figures(challenge_bytes.decode("utf-8"), 17, part_number, directory, OUTPUT)
-            cap_prepared, cap_math = render.plan_math(cap_figured, 17)
+            cap_indexed, cap_index = idx.insert_index_tokens(cap_figured, 17)
+            cap_prepared, cap_math = render.plan_math(cap_indexed, 17)
             cap_prepared, cap_fences = render.normalize_code_fence_metadata(cap_prepared)
             if len(cap_math) != challenge_stats["display_math"]:
                 raise ValueError("Final capstone lost display math before Pandoc")
@@ -451,7 +458,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
                 raise RuntimeError("Pandoc could not render the final capstone: " + run.stderr[:3000])
-            amend_generated_tex(challenge_tex, cap_figures, challenge_stats, 17, cap_math)
+            amend_generated_tex(challenge_tex, cap_figures, challenge_stats, 17, cap_math, cap_index)
             tex.append(r"\input{content/final-mastery}")
             tex.append(r"\appendix")
             tex.append(r"\chapter{Learning Journal and Experiment Checklist}")
@@ -474,6 +481,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                 "protected_math_displays": len(cap_math),
                 "code_fence_metadata_normalized": cap_fences,
                 "figure_count": len(cap_figures),
+                "index_entry_count": len(cap_index),
                 "latex_path": challenge_tex.relative_to(OUTPUT).as_posix(),
                 "latex_sha256": sha256(challenge_tex.read_bytes()),
             }
@@ -533,6 +541,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"\input{../book01-expanded-p04/content/final-mastery}",
         r"\appendix",
         r"\input{backmatter}",
+        r"\clearpage\phantomsection\addcontentsline{toc}{chapter}{Index}\printindex",
         r"\end{document}",
     ])
     def prepare_preface(directory: Path, source: Path = ACADEMIC_PREFACE) -> dict:
@@ -611,6 +620,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         volume.extend([
             r"\appendix",
             r"\input{backmatter}",
+            r"\clearpage\phantomsection\addcontentsline{toc}{chapter}{Index}\printindex",
             r"\end{document}",
         ])
         master = directory / "main.tex"
