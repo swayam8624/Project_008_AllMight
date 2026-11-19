@@ -81,9 +81,12 @@ int run_native_gpu_profile_callback_probe() {
         auto ui=std::make_shared<UiObserver>();
         std::weak_ptr<UiObserver> ui_weak=ui;
         auto mailbox=std::make_unique<p::CompletionMailbox>(1);
-        auto id=mailbox->reserve(p::Project::maveb);
-        if(!id || !mailbox->publish(*id)) return 1;
-        auto safe_callback=mailbox->callback_for(*id);
+        // Objective-C 'id' is a type keyword in the following block.
+        // Naming an ordinary C++ local variable 'id' hides that typedef and
+        // breaks ^(id<MTLCommandBuffer> done) parsing under AppleClang.
+        auto frame_id=mailbox->reserve(p::Project::maveb);
+        if(!frame_id || !mailbox->publish(*frame_id)) return 1;
+        auto safe_callback=mailbox->callback_for(*frame_id);
         auto receipt=std::make_shared<Receipt>();
         [command addCompletedHandler:
             ^(id<MTLCommandBuffer> done) {
