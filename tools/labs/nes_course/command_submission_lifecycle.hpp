@@ -55,6 +55,7 @@ enum class CommandError : std::uint8_t {
     ambiguous_submission,
     capacity_exhausted,
     no_payload,
+    foreign_frame_writer,
     invalid_queue_stamp,
     frame_publication_failed,
     device_lost,
@@ -229,6 +230,8 @@ public:
             return std::unexpected(CommandError::wrong_state);
         if(writer.staged_size()==0)
             return std::unexpected(CommandError::no_payload);
+        if(writer.owner_id()!=ring_.owner_id())
+            return std::unexpected(CommandError::foreign_frame_writer);
         if(entries_.size()==max_submissions_)
             return std::unexpected(CommandError::capacity_exhausted);
         if(next_ticket_==std::numeric_limits<std::uint64_t>::max())
