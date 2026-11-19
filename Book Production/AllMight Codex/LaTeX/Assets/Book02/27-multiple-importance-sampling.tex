@@ -43,7 +43,7 @@ m(x)=\frac{p_1(x)+p_2(x)}2=\frac34+\frac x2.
 \]
 An unbiased estimator is
 \[
-\widehat I_{\rm balance}
+\widehat I_{\mathrm{balance}}
 =\frac1{2n}\left[
 \sum_{i=1}^n\frac{e^{X_i}}{m(X_i)}
 +\sum_{j=1}^n\frac{e^{Y_j}}{m(Y_j)}
@@ -52,7 +52,7 @@ X_i\sim p_1,\quad Y_j\sim p_2.
 \]
 Take its expectation under independent draws:
 \[
-\mathbb E[\widehat I_{\rm balance}]
+\mathbb E[\widehat I_{\mathrm{balance}}]
 =\frac12\int_0^1\frac{e^x p_1(x)}{m(x)}\,dx
 +\frac12\int_0^1\frac{e^x p_2(x)}{m(x)}\,dx
 =\int_0^1 e^x\,dx=I.
