@@ -160,3 +160,60 @@ The Pass14 cross-project target follows this primary evidence trail. These are *
 **External write boundary:** Kairo, Maveb, KairoPhysics and Kyoto repositories were **not modified** by Pass14. The source observations above establish design requirements and review targets; implementation fixes in the external repos need dedicated test/build evidence and clear instruction to apply there.
 
 **Next project progression:** Chapter15 should use a real Metal 3 command buffer, drawable, storage-mode/resource-lifetime cases and validated graphics/compute output from Maveb/Kairo's Metal backend, alongside a platform-independent CPU oracle. The CUDA/Vulkan/Metal comparison must respect actual feature and ABI differences, not mechanically map identical flag values across APIs.
+
+
+## Pass15 — actual Maveb/Kairo Metal execution and measurement source ledger
+
+This pass advances the seven-book curriculum's **multi-project** policy. NES remains
+a CPU/data-representation project; native GPU execution and measurement are
+primarily taught through **Maveb and Kairo Metal**, with a collision-pair GPU
+compute oracle and XR latency analysis. The sources below were actually fetched
+from the separate main-branch repositories in this Pass15 turn. No edits were
+made to those external repositories.
+
+| Inspected file | Git blob observed | Grounded observation / open question |
+| --- | --- | --- |
+| `Maveb/engine/metal/src/Renderer.cpp` | `cfe9669de8475995f82166e71dc407d0b39b3331` | Triple frameSemaphore_ permits; commandBuffer render/compute/presentation; frame capture using 256-byte row pitch and completed handler; GPUEndTime-GPUStartTime sample stored without explicit nonzero availability filter. Terminal error/capture success deserve independent reporting |
+| `Maveb/engine/metal/src/FrameContext.cpp` | `e610d5b2e4b0e467f4e93d3fed6a7b694a47a5e6` | 8 MiB shared upload, 256 KiB shared readback, 64 MiB private transient heap; beginFrame deferred cleanup/cursor reuse; explicit power-of-two and cursor overflow checks before alignUp |
+| `Maveb/engine/metal/include/aether/metal/FrameContext.hpp` | `c0b9efbad52088ad89f5033510e6e1b8afd020c4` | FrameContext and BufferSlice actual resource/CPU-address ownership boundary |
+| `KairoRenderer/MetalRenderer.cppm` | `78f8dd55116b860b43af17838c4eea161528702c` | Renderer-neutral C++23 Metal runtime wrapper around detail::MetalBackend, viewport capture/pick, camera transforms and scene/debug data |
+| `KairoRenderer/detail/MetalBackend.mm` | `5d291ebc02578fbff222fdf67aacf8d270a945b9` | Actual ARC ObjC++ native MTL device/queue and encode/commit/present; capture waits for LastCommand before copying offscreen image; different CPU stall/lifetime tradeoff than Maveb |
+
+**GPU-15M lab files:** `tools/labs/gpu_course/metal_frame_contracts.hpp`
+implements a portable single-threaded C++23 model of three in-flight permits,
+alignment/capacity-checked frame upload cursors, terminal success/error,
+separately reported CPU readback errors, 256-byte-pitch BGRA8 compact copies,
+strict positive GPU timestamp quality, no false completion under unknown
+submission/device loss, and no slot-generation wraparound. The
+`tools/labs/gpu_metal_frame_cpp23_lab.cpp` tests use Gaussian, Kairo scene,
+Kyoto collision-pair and XR gaze workload tags and synthetic CPU observations.
+
+**Real native route:** `tools/labs/gpu_course/native_metal_compute_probe.mm`
+compiles *original* MSL compute and rendering programs using an actual
+MTLDevice when available. It dispatches a 32×32 AABB collision-pair mask,
+checks every GPU result against an independently implemented CPU half-open
+AABB oracle and guard words, then draws an actual 3×2 solid-red triangle to
+a private BGRA8 render target and reads it back through a 256-byte-pitch
+shared blit buffer. After actual `waitUntilCompleted`, it checks the
+terminal MTLCommandBufferStatusCompleted and every pixel. A separate
+opt-in native benchmark mode runs five warmups and thirty independently
+correctness-checked samples, distinguishes host encode/commit from GPU
+command interval and refuses missing/zero GPU timestamp percentiles.
+**No native execution or benchmark has been observed in this authoring pass.**
+
+**Build portability:** Only Apple Objective-C++/Metal/Foundation builds
+select the native `.mm` adapter; otherwise `native_metal_unavailable.cpp`
+returns explicit **77 / unavailable**. The default CTest is CPU-only and never
+runs either `--probe-native` or `--benchmark-native`. A missing GPU, failed
+MSL compile, unsupported storage mode or invalid pixel output is never
+presented as a fake passing Metal result.
+
+**Cross-project follow-ups:** Apply native frame-permit/failed-Metal-status
+hardening to the external Maveb renderer only when actual source edits are
+authorized. For Kairo, measure synchronous capture stalls separately from
+normal rendering and avoid comparing Kairo's CPU blocking capture to Maveb's
+async capture without controlling scene, camera and device. For Kyoto,
+replace the 32-box correctness oracle with actual SAP/DBVT/Guard/ML outputs,
+large datasets and fair competing baselines; do not claim that this native
+all-pairs kernel is an optimized broad phase. XR needs compositor/display and
+gaze timestamps, not only command-buffer GPU start/end.
