@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, "/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15")
 import build_books as epub_helpers  # noqa: E402
 
+from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement
+
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -148,6 +150,9 @@ class Packager:
         self.asset_dir=out/"assets";self.asset_dir.mkdir(parents=True,exist_ok=True)
         self.math_cache=ROOT/"Build"/"epub-mathml-cache";self.math_cache.mkdir(parents=True,exist_ok=True)
         self.asset_manifest={};self.attachment_by_source={};self.attachments={}
+        # Supplementary EPUB adapter is lazy: the six unrelated stages do
+        # not need Book Two visual libraries or regenerated assets.
+        self.book02_supplement=None
         for raw in manifest.get("source_attachment_inventory",{}).get("records",[]):
             rec=dict(raw);rec["sha256"]=rec.get("source_sha256");rec["name"]=(rec.get("source_names") or [Path(rec["source"]).name])[0]
             self.attachments[rec["id"]]=rec
@@ -394,6 +399,12 @@ class Packager:
             if mode=="collection":
                 blocks.append({"t":"Header","c":[1,[st["id"],[],[]],[{"t":"Str","c":st["title"]}] ]})
             for row in ordered_rows(self.manifest,st):
+                if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
+                    if self.book02_supplement is None:
+                        self.book02_supplement=Book02EpubSupplement(self.out,self.asset)
+                    if row["id"]=="01-foundations-i-ch017":
+                        blocks.extend(self.book02_supplement.chapter_blocks(
+                            row["id"],mode,prelude=True))
                 ast=self.ast_cache[row["id"]]
                 transformed,refs=self.transform(ast,row,mode,st["id"]);cross.update(refs)
                 rb=transformed.get("blocks",[])
@@ -402,6 +413,10 @@ class Packager:
                         if mode=="collection": node["c"][0]=min(6,int(node["c"][0])+1)
                         elif row["kind"]=="reference" and node["c"][0]==1: node["c"][0]=2
                 blocks.extend(rb);included.append({"id":row["id"],"kind":row["kind"],"stage_id":st["id"],"ast_sha256":row["transformed_ast_sha256"]})
+                # Semantically identical location to the print build insertion
+                # (after this original chapter, never replacing its AST).
+                if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
+                    blocks.extend(self.book02_supplement.chapter_blocks(row["id"],mode))
         if mode=="stage" and cross:
             blocks.extend([{"t":"Header","c":[1,["cross-stage-reference-index",[],[]],[{"t":"Str","c":"Cross Stage References"}]]},{"t":"Para","c":[{"t":"Str","c":"Each entry links to the corresponding topic in its stage EPUB. The chapter and heading provide a reading locator."}]}])
             for (peer,dest),ref in sorted(cross.items()):
@@ -420,6 +435,9 @@ class Packager:
         label=stage["id"] if stage else "AllMight-Codex-Collection"
         ast,rows,attachments=self.compose(mode,stage)
         ast,presentation_report=epub_helpers.presentation_html_clone(ast,label)
+        # Existing 568 frozen sources remain SHA-locked. Added Book02 math
+        # must also be counted when validating packaged native MathML.
+        expected_math_in_final_ast=sum(1 for n in walk_nodes(ast) if n.get("t")=="Math")
         ast,math_replacements=self.mathml_ast(ast)
         content=self.out/(label+".json");content.write_text(json.dumps(ast,ensure_ascii=False),encoding="utf-8")
         css=self.out/"epub.css"
@@ -433,13 +451,15 @@ class Packager:
         if p.returncode: raise RuntimeError(f"Pandoc EPUB build failed for {label}: {p.stderr[-4000:]}")
         unknown_tags_escaped=escape_unknown_html_tags(output)
         epub_helpers.declare_epub_mathml_properties(output)
-        expected=sum(1 for row in rows for n in walk_nodes(self.ast_cache[row["id"]]) if n.get("t")=="Math")
+        expected=expected_math_in_final_ast
+        if math_replacements != expected:
+            raise RuntimeError(f"Incomplete Book02/EPUB MathML conversion: {math_replacements} of {expected}")
         package=epub_helpers.validate_epub_package(output,expected)
         epubcheck="/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15/epubcheck/epubcheck-5.4.0/epubcheck.jar"
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        report={"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
