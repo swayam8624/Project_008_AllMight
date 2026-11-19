@@ -36,6 +36,12 @@ using m::Terminal;
 void check(bool yes,std::string_view message) {
     if(!yes) throw std::runtime_error(std::string(message));
 }
+template<class T,class E>
+void check(const std::expected<T,E>& outcome,std::string_view message) {
+    // std::expected's success conversion is explicit in C++23, so passing
+    // an expected directly to check(bool) is ill-formed on real toolchains.
+    check(outcome.has_value(),message);
+}
 std::vector<m::Byte> rgba_fixture(std::size_t n,std::uint8_t bias=0) {
     std::vector<m::Byte> bytes(n);
     for(std::size_t i=0;i<n;++i)
