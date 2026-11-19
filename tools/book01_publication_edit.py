@@ -31,6 +31,12 @@ MERGE_HEADING = re.compile(
 REDUNDANT_TITLE = re.compile(
     r"(?m)^#\s+Computing Foundations\s*[—-]\s*From Bits to C\+\+ and Systems APIs\s*$"
 )
+WIKILINK = re.compile(r"\\[\\[([^\\]\\n]+)\\]\\]")
+PSEUDOCODE_FENCE = re.compile(
+    r'(?m)^' + re.escape(chr(96) * 3) +
+    r'cpp(?P<metadata>[^\\n]*)\\n(?=(?:for each item:|if useful:|GPU-naive:))'
+)
+
 FIGURE_LABEL = re.compile(
     r"(?m)^(?:#{1,5}\s*)?Figure\s+(?:B\d+|CPP[- ]\d+)[^\n]*\n"
     r"(?=\s*ALLMIGHTFIGURECH)"
@@ -42,7 +48,8 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
     notes: list[str] = []
     edits = {"chapter": chapter, "removed_editorial_notes": notes,
              "heading_level_adjustments": 0, "removed_duplicate_title": 0,
-             "renamed_merge_headings": 0}
+             "renamed_merge_headings": 0, "normalized_wikilinks": 0,
+             "relabeled_pseudocode": 0}
     source, n = REDUNDANT_TITLE.subn("", source)
     edits["removed_duplicate_title"] += n
     # A small set of author-directed remarks are not learning content.
@@ -62,7 +69,7 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
         def simplify_head(match: re.Match[str]) -> str:
             notes.append(match.group(0).strip())
             edits["renamed_merge_headings"] += 1
-            return "### Continuation and technical validation"
+            return ""  # source heading describes the authoring pass, not the concept
         fragment = MERGE_HEADING.sub(simplify_head, fragment)
         return fragment
 
@@ -75,6 +82,30 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
         pos = match.end()
     parts.append(edit_prose(source[pos:]))
     source = "".join(parts)
+
+    # The printed book has its own table of contents and index. An Obsidian
+    # wikilink to a private note is not a public URL; retain its visible label
+    # without promising a broken hyperlink. Canonical links remain in source.
+    def link_label(match: re.Match[str]) -> str:
+        target = match.group(1)
+        label = target.rsplit("|", 1)[-1]
+        if "|" not in target:
+            label = label.rsplit("/", 1)[-1].split("#", 1)[-1]
+        edits["normalized_wikilinks"] += 1
+        return label
+    pieces, pos = [], 0
+    for match in FENCE.finditer(source):
+        pieces.append(WIKILINK.sub(link_label, source[pos:match.start()]))
+        pieces.append(match.group(0))
+        pos = match.end()
+    pieces.append(WIKILINK.sub(link_label, source[pos:]))
+    source = "".join(pieces)
+    # Identify deliberately schematic snippets, which are useful but should
+    # never be advertised as compilable C++ source.
+    source, labeled = PSEUDOCODE_FENCE.subn(
+        lambda match: "**Pseudocode (not compilable C++):**\\n\\n"
+        + chr(96) * 3 + "text" + match.group("metadata") + "\\n", source)
+    edits["relabeled_pseudocode"] = labeled
 
     # Pandoc converts '# heading' to LaTeX section in a chapter fragment.
     # In the raw chapter edition the content often begins at ## or ###,
