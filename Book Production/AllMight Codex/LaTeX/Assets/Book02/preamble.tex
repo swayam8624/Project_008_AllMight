@@ -1,0 +1,30 @@
+% Book Two: reproducible native-vector scientific figures.
+% Every plotted quantity is explicitly defined in the corresponding caption.
+% PGFPlots plots are analytic or deterministic, not performance measurements.
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\definecolor{booktwonavy}{RGB}{18,37,61}
+\definecolor{booktwocyan}{RGB}{0,129,163}
+\definecolor{booktwogold}{RGB}{194,128,23}
+\pgfplotsset{
+  booktwoaxis/.style={
+    axis line style={booktwonavy!65},
+    tick style={booktwonavy!65},
+    tick label style={font=\scriptsize,color=booktwonavy},
+    label style={font=\footnotesize,color=booktwonavy},
+    title style={font=\footnotesize\bfseries,color=booktwonavy},
+    grid=major,
+    grid style={draw=booktwonavy!9},
+    every axis plot/.append style={line width=1pt},
+    unbounded coords=discard,
+    enlargelimits=false
+  },
+  colormap={booktwothermal}{
+    rgb255=(8,32,57)
+    rgb255=(0,113,148)
+    rgb255=(51,180,172)
+    rgb255=(245,179,64)
+  }
+}
