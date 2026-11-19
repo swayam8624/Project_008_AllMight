@@ -1,7 +1,7 @@
 """Book Two Pass 4: inspect every supplement and prove semantic EPUB packaging.
 
 No private ~/.codex source cache, MathML cache, full 568-source conversion, or
-macOS path is needed. This tests the *real* 35 added LaTeX sources and all 12
+macOS path is needed. This tests the *real* 36 added LaTeX sources and all 13
 scientific SVG figures using pinned NumPy/SciPy/Matplotlib and Pandoc 3.x.
 
 A full original 16-chapter KDP book still requires the author's frozen AST
@@ -24,7 +24,7 @@ import xml.etree.ElementTree as ET
 
 from book02_epub_supplements import (
     STAGE, ANALYTIC, RICH, ALTERNATIVES, Book02EpubSupplement,
-    FIGURES, RICH_FIGURES, PRELUDE_CHAPTER, all_source_filenames, walk
+    FIGURES, RICH_FIGURES, COVERAGE, PRELUDE_CHAPTER, all_source_filenames, walk
 )
 
 REPO=Path(__file__).resolve().parents[4]
@@ -71,17 +71,17 @@ class Book02EpubParity(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    def test_35_original_source_files_preserved_as_separate_lessons(self):
+    def test_36_original_source_files_preserved_as_separate_lessons(self):
         names=all_source_filenames()
-        self.assertEqual(len(names),35)
-        self.assertEqual(len(set(names)),35)
+        self.assertEqual(len(names),36)
+        self.assertEqual(len(set(names)),36)
         self.assertEqual([x["source"] for x in self.used],names)
         self.assertTrue(all(x["sha256"] for x in self.used))
         self.assertEqual(len(self.chapter_ids),16)
         self.assertEqual(set(RICH),set(f"{n:02d}-atlas-{v}.tex" for n,v in [
             (28,"orientation"),(29,"geodesic"),(30,"geodesic-3d"),
             (31,"resolution"),(32,"fitting"),(33,"sampling"),(34,"ransac")]))
-        self.assertEqual(len(ALTERNATIVES),12)
+        self.assertEqual(len(ALTERNATIVES),13)
 
     def test_original_chapter_positions_not_replaced(self):
         # Each original chapter header appears exactly once, and all
@@ -107,9 +107,9 @@ class Book02EpubParity(unittest.TestCase):
     def test_all_scientific_figures_have_captions_and_image_alt(self):
         images=[node for node in walk(self.blocks) if node.get("t")=="Image"]
         figures=[node for node in walk(self.blocks) if node.get("t")=="Figure"]
-        self.assertEqual(len(images),12)
-        self.assertEqual(len(figures),12)
-        self.assertEqual(len(self.supp.figure_paths),12)
+        self.assertEqual(len(images),13)
+        self.assertEqual(len(figures),13)
+        self.assertEqual(len(self.supp.figure_paths),13)
         for im in images:
             self.assertTrue(im["c"][1],"Image has no alternative text")
             self.assertTrue(im["c"][2][0].startswith("assets/"))
@@ -127,7 +127,7 @@ class Book02EpubParity(unittest.TestCase):
         for obj in self.used:
             self.assertGreaterEqual(obj["math_nodes"],0)
             self.assertEqual(obj["images"],int(obj["source"] in (
-                set(ANALYTIC)|set(RICH))))
+                set(ANALYTIC)|set(RICH)|set(COVERAGE))))
         # Renders semantic text and scientific math; raw tikz is forbidden.
         text=json.dumps(self.blocks,ensure_ascii=False)
         self.assertIn("Geodesic",text)
@@ -162,7 +162,7 @@ class Book02EpubParity(unittest.TestCase):
             self.assertEqual(z.read("mimetype"),b"application/epub+zip")
             self.assertEqual(z.getinfo("mimetype").compress_type,zipfile.ZIP_STORED)
             svgs=[x for x in files if x.lower().endswith(".svg")]
-            self.assertEqual(len(svgs),12)
+            self.assertEqual(len(svgs),13)
             xhtml=[x for x in files if x.endswith(".xhtml")]
             self.assertGreater(len(xhtml),2)
             heads=[]
@@ -176,8 +176,8 @@ class Book02EpubParity(unittest.TestCase):
                     if e.tag.endswith("img"):
                         im_count+=1
                         alt_count+=bool(e.attrib.get("alt"))
-            self.assertEqual(im_count,12)
-            self.assertEqual(alt_count,12)
+            self.assertEqual(im_count,13)
+            self.assertEqual(alt_count,13)
             self.assertEqual(sum("ORIGINAL-" in x for x in heads),16)
             self.assertTrue(any("Cumulative project" in x for x in heads))
             self.assertTrue(any("Visual laboratory" in x for x in heads))
