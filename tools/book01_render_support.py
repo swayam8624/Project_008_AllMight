@@ -3,6 +3,7 @@
 from __future__ import annotations
 from hashlib import sha256
 from pathlib import Path
+import os
 import re
 import shutil
 import subprocess
@@ -345,9 +346,17 @@ def render_figures(manifest: dict, output: Path):
             raise ValueError("Changed or missing diagram source: " + str(src))
         if dst.is_file() and dst.stat().st_size > 500 and item.get("render_sha256") == digest(dst.read_bytes()):
             continue
-        result = subprocess.run([binary, "-i", str(src), "-o", str(dst),
-                                 "-s", "3", "-t", "neutral", "-b", "white"],
-                                capture_output=True, text=True)
+        args = [binary, "-i", str(src), "-o", str(dst),
+                "-s", "3", "-t", "neutral", "-b", "white"]
+        # Linux CI may need sandbox arguments for its Chromium installation;
+        # macOS uses the Mermaid CLI's standard configuration unchanged.
+        puppeteer_config = os.environ.get("ALLMIGHT_MERMAID_PUPPETEER_CONFIG")
+        if puppeteer_config:
+            cfg = Path(puppeteer_config)
+            if not cfg.is_file():
+                raise FileNotFoundError("Missing Puppeteer config: " + str(cfg))
+            args.extend(["-p", str(cfg)])
+        result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode or not dst.is_file() or dst.stat().st_size < 500:
             raise RuntimeError(f"Mermaid failed: chapter {item['chapter']} "
                                f"diagram {item['index']}\n" +
