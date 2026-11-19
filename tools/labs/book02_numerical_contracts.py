@@ -119,6 +119,114 @@ def metric_gradient() -> tuple[tuple[float, float], tuple[float, float]]:
     return (2., 7.), local
 
 
+
+def extended_pass1_cases() -> dict[str, float]:
+    """Validate independent cases attached to the remaining Book Two chapters.
+
+    These tests evaluate the mathematical examples, NOT source-paper
+    reproduction, full chapter proofs, or real-world measurement datasets.
+    """
+    # ch017: constant translations preserve relative displacements.
+    points = ((1.,0.,0.),(0.,2.,0.),(0.,0.,3.))
+    shift = (.5,-1.,2.)
+    transformed = [tuple(x+y for x,y in zip(p,shift)) for p in points]
+    check(transformed == [(1.5,-1.,2.),(.5,1.,2.),(.5,-1.,5.)],
+          "point translation example")
+    check(all(close(transformed[0][i]-transformed[1][i],
+                    points[0][i]-points[1][i]) for i in range(3)),
+          "translation must preserve point differences")
+
+    # ch018: total internal reflection versus a genuine transmitted ray.
+    k_tir = 1-(1.5**2)*(1-math.cos(math.pi/4)**2)
+    k_transmit = 1-(1.5**2)*(1-math.cos(math.pi/6)**2)
+    check(close(k_tir,-.125) and close(k_transmit,.4375),
+          "Snell-law discriminant")
+    check(close(math.degrees(math.asin(.75)),48.590377890729144),
+          "refraction angle")
+
+    # ch021: perspective Jacobian and its first-order approximation.
+    x,y,z,fx,fy,cx,cy = 2.,1.,4.,800.,800.,320.,240.
+    u,v=fx*x/z+cx,fy*y/z+cy
+    check(close(u,720) and close(v,440),"projection origin")
+    predicted=(-2.,-6.)
+    dx,dy,dz=.01,-.02,.04
+    exact=(fx*(x+dx)/(z+dz)+cx-u,fy*(y+dy)/(z+dz)+cy-v)
+    check(all(abs(a-b)<.1 for a,b in zip(predicted,exact)) and
+          all(abs(a-b)>1e-3 for a,b in zip(predicted,exact)),
+          "Jacobian local approximation must not equal nonlinear map")
+
+    # ch022: partial/directional derivative and polynomial quadrature.
+    dF=.1*(4+math.cos(1))-.2
+    def F(xx:float,yy:float)->float:
+        return xx**2*yy+math.sin(xx)
+    h=1e-5
+    fd=(F(1+.1*h,2-.2*h)-F(1-.1*h,2+.2*h))/(2*h)
+    check(close(dF,fd,1e-8),"directional finite difference")
+    trap=(0.**2+1.**2)/2
+    mid=.5**2
+    simpson=(0.**2+4*(.5**2)+1.**2)/6
+    check(close(trap,.5) and close(mid,.25) and close(simpson,1/3),
+          "quadrature methods must differ")
+
+    # ch023: a low-prevalence positive test has a low posterior.
+    posterior=.95*.01/(.95*.01+.05*.99)
+    check(close(posterior,95/590),"Bayesian base-rate posterior")
+
+    # ch026: exp of a skew-symmetric generator is a length-preserving map.
+    ang=math.pi/2
+    rx,ry=math.cos(ang),math.sin(ang)
+    check(abs(rx)<1e-12 and close(ry,1) and
+          close(rx*rx+ry*ry,1), "matrix exponential rotation")
+    check(1+ang*ang>1,"Euler must not preserve rotational norm")
+
+    # ch028: ten true interval halvings, guaranteed midpoint root error.
+    a,b=1.,2.
+    for _ in range(10):
+        m=(a+b)/2
+        if m**3-2>0:
+            b=m
+        else:
+            a=m
+    true=2**(1/3)
+    check(a<=true<=b and close(b-a,1/1024) and
+          abs((a+b)/2-true)<=1/2048, "bisection certificate")
+
+    # ch030: identical frames from one scene cannot create new clusters.
+    scene=[1.,0.,-1.]
+    scene_se=1/math.sqrt(3)
+    frame=[1.,1.,0.,0.,-1.,-1.]
+    # Sample variance uses n-1; both means are exactly zero.
+    frame_sd=math.sqrt(sum(z*z for z in frame)/(len(frame)-1))
+    frame_naive_se=frame_sd/math.sqrt(len(frame))
+    check(close(scene_se,.5773502691896257) and
+          close(frame_naive_se,math.sqrt(4/5)/math.sqrt(6)) and
+          frame_naive_se<scene_se, "clustered-dependence witness")
+
+    # ch012: the same uniform law has different density under
+    # area measure versus unit-square parameter measure.
+    area=2.*3.
+    p_area=1/area
+    p_uv=p_area*area
+    check(close(p_area,1/6) and close(p_uv,1),
+          "density change of measure")
+
+    # ch025: 2D heat FTCS stability (r <= 1/4) for limiting Fourier modes.
+    r=.25
+    high_frequency_gain=1-8*r
+    check(close(high_frequency_gain,-1) and
+          abs(1-8*(r+.01))>1,"FTCS critical step")
+
+    return {
+        "refraction_discriminant":k_tir,
+        "projection_nonlinear_shift_x":exact[0],
+        "directional_derivative":dF,
+        "posterior_positive":posterior,
+        "bisection_midpoint_error":abs((a+b)/2-true),
+        "scene_standard_error":scene_se,
+        "naive_frame_standard_error":frame_naive_se,
+    }
+
+
 def expect_invalid(fn, *args) -> None:
     try:
         fn(*args)
@@ -205,6 +313,7 @@ def run() -> dict:
         "gaussian_peak":peak, "heat_peak_t0_04":heat_peak,
         "forward_euler_slopes":rates,
         "coordinate_gradient":gradient,
+        "pass1_verification_cases":extended_pass1_cases(),
     }
 
 
