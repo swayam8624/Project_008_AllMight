@@ -122,6 +122,76 @@ Next, remove the `memory_dependency` call without weakening the output condition
 
 For an independent acceptance exercise, instrument a real engine-owned asset and a real renderer command submission, while leaving the original capstone intact. Record the compiler version, all source and shader hashes, device/driver/SDK, input assets, task identities, observed completion and exact output oracle. If an actual native device run fails, show the failure and repair it; do not silently fall back to this CPU oracle and call the GPU path verified. The correct end state is not merely one more green test, but a learner who can trace every resource's lifetime and every claimed result back to reproducible inputs.
 
+#### Pass 20 — When a correct output races against another correct output
+
+Pass 19 produced a meaningful end-to-end CPU trace, but it exposed a particularly important limit: a successful file import, decoded asset, dependency plan and verified computation can all be correct **without having permission to become the currently displayed result**. A renderer and its asset workers are not isolated programs that politely finish one by one. They overlap in time. A modeler may open another scene, a shader may recompile, or an experiment may replace its reference dataset while yesterday's worker is still running. The old job's bytes might remain valid and its checksum might match, but its publication would now be wrong.
+
+The smaller Pass 19 `Scene` intentionally illustrated revision gating in one thread. That is not enough when several workers may call `publish` at once. In particular, the naïve pattern
+
+```cpp
+// WRONG in concurrent code: a data race and a time-of-check/time-of-use hole.
+if (live.revision == my_started_revision) {
+    live.visible = my_finished_result;
+    ++live.revision;
+}
+```
+
+has two independent problems. Reading and writing `revision` without synchronization is a data race, which is undefined behavior in C++; and even if that access happened to be race-free, the equality check and assignment are not a single indivisible decision. Two workers can both read seven before either publishes, then both overwrite the scene while pretending to be its rightful next revision. Replacing `revision` with an isolated atomic integer would fix that integer's data race, but still would not automatically make the associated `visible` object update atomic with it. *Ownership of the content and atomicity of the publication decision must be designed together.*
+
+The corrected executable retains the original educational `Scene` for comparison and introduces a real `ConcurrentScene`. A producer completely prepares an owned `Receipt` outside the scene mutex. It enters a short critical section, tests that the expected revision equals the actual revision and that increment will not wrap, swaps in the prepared value, increments the revision, and exits. A reader takes the same lock to copy an owned `Snapshot`, rather than returning a pointer into an object that another thread may replace.
+
+The key property is **linearizability**. It means the concurrent operation behaves as if every successful or failed publication happened at one well-defined instant somewhere between its invocation and return. For our mutex-protected publisher, its linearization point is the locked update of the stored receipt and revision. No other publisher or snapshot can observe an intermediate state, because every such operation takes the same mutex. The implementation does not require every byte of the new receipt to be assembled under that lock. Moving expensive preparation outside the lock decreases contention while leaving the final decision indivisible.
+
+We can derive the expected outcome of eight contending writers without relying on a scheduler guess. All eight submit independent owned candidates prepared for revision seven. Exactly one writer obtains the mutex while `revision == 7`; it swaps in its value and increments the revision to eight. Every later writer takes the same mutex and sees eight, which is not its expected seven, so it refuses without touching the visible result. Thus the number of wins is exactly one, regardless of which thread happened to arrive first. The identity of the winner is nondeterministic and must **not** be hard-coded by thread index. The correctness oracle checks the winner count, the new revision, and a coherent owned result whose origin remains valid. Scheduling fairness, thread creation order, and wall-clock timing are deliberately not treated as correctness oracles.
+
+```cpp
+// Condensed from the real Pass20 ConcurrentScene; the complete class and
+// simultaneous-eight-worker fixture are in book01_end_to_end_cpp23_lab.cpp.
+[[nodiscard]] bool publish(std::uint64_t expected, Receipt candidate) {
+    // candidate is an owned value. Any potentially throwing caller copy
+    // has already completed before the synchronized publication begins.
+    std::optional<Receipt> prepared{std::move(candidate)};
+    std::scoped_lock lock(mutex_);
+    if (revision_ != expected ||
+        revision_ == std::numeric_limits<std::uint64_t>::max()) {
+        return false;
+    }
+    // The concrete Receipt uses a standard std::string plus integers.
+    // static_assert checks that this optional swap cannot throw.
+    visible_.swap(prepared);
+    ++revision_;
+    return true;
+}
+```
+
+A second detail is easy to miss: if the live result already exists and our new candidate's publication could throw after deleting it, we might lose the previously valid scene. To avoid that, `Receipt` is an owned, nonthrowing-movable value and the executable contains `static_assert` checks that both its move constructor and `std::optional<Receipt>::swap` are `noexcept`. We build `prepared` before acquiring the lock. The locked swap-and-increment is then nonthrowing for this **specific concrete type**. The old result moves into `prepared` and its destruction happens *after* the lock is released. This is an important boundary, not a generic promise that any future asset type can be swapped safely under a mutex. If a later `Receipt` adds a throwing move operation, the compile-time assertions should fail so the publication protocol is redesigned before release.
+
+The revision type has a second, independent edge case. If an unsigned revision at `UINT64_MAX` increments unchecked, it wraps to zero, potentially making an extremely old numerical identity appear current again. Therefore a saturated revision refuses further publication until a deliberate identity-epoch reset protocol exists. The test actually constructs that saturated state and checks that both the revision and visible value remain unchanged. The same principle explains why the earlier generational registry permanently retires slots rather than wrapping their generation counters.
+
+The test starts the eight publisher threads behind a `std::latch` so all can attempt the same revision after the caller finishes preparing them. The latch improves the **chance of contention**, but it does not guarantee that all eight reach the mutex at the same machine instruction, nor does it prove every possible scheduling interleaving. The implementation also handles a less obvious failure: if creating the sixth thread throws an allocation or operating-system error while five threads are blocked on the latch, normal stack unwinding could wait forever for those blocked `std::jthread` objects to join. A small scope guard releases the start latch before the worker vector is destroyed, avoiding that exception-path deadlock. This is why lifetime reasoning must include *failure during preparation*, not just the successful operation.
+
+The concurrent snapshot copies the visible receipt under the same mutex and returns an owned `std::optional<Receipt>` beside its revision. A later publication can replace the live scene while that returned snapshot stays coherent. A read-only borrowed `std::string_view` returned after unlocking would not provide the same safety. On a real engine, a heavy scene snapshot might instead carry a pinned shared immutable resource generation; that is an optimization with its own ownership and GPU-completion requirements, not permission to return an unprotected raw pointer.
+
+A scene revision, a generational asset handle, a source fingerprint, and a GPU completion ticket remain **four different contracts**. The revision guards *which update may become live*. The generational handle guards *which logical slot is currently occupied*. The fingerprint records *which source bytes were read*. The completion signal guards *whether still-running device operations can release memory*. The mutex alone neither prevents a malicious filesystem symlink replacement nor guarantees that Metal/Vulkan has finished reading upload memory; those errors belong to distinct layers. The correct system connects those protections rather than pretending one mechanism solves them all.
+
+#### Pass 20 — What the compilers actually taught us
+
+During the integrated build, a prior NROM dependency-graph lab exposed a true C++ type-system bug. Its cartridge is move-only, but the code had written `const auto parsed = NromCartridge::from_image(...)` and later `std::move(*parsed)`. That last expression does **not** remove constness: it produces an rvalue reference to a const cartridge, which cannot bind to the ordinary move constructor taking `NromCartridge&&`. The compiler therefore searches for a copy constructor, finds that copying was deliberately disabled, and rejects the code. The correct local variable is `auto parsed`, preserving the owned `std::expected` as movable. The conceptual derivation is worth remembering: `std::move` is a cast enabling move overload resolution; it does not force a move or override ownership and const rules.
+
+Another pre-existing bug came from the success operator on `std::expected`. Its `operator bool` is **explicit**. It is usable in contextual boolean expressions such as `if (outcome)`, `!outcome`, or `outcome && other`, but it cannot silently convert `std::expected<void, Error>` into a `bool` parameter in a call to `check(bool, message)`. The revised GPU test files add a well-typed overload taking `const std::expected<T,E>&` and asking `has_value()`. That overload is deliberately narrowly scoped to the test assertion function; it does not weaken the library error type or silently discard failures in production code.
+
+A third issue is that passing `-std=c++23` does not guarantee every vendor compiler/standard-library combination implements the complete standard library. The Linux Clang 18 job lacked `std::expected` through its libstdc++ combination, because the library conditions availability on sufficiently complete Concepts support. The Linux CI now chooses Clang 19 and compiles an actual minimal `std::expected` probe before attempting the course build. On Apple's side, the older Xcode 16.4 SDK lacks the standard `std::stop_token` and `std::jthread` used by the coroutine-and-thread ingestion service. The supported future path is an AppleClang toolchain with those APIs, with a compile-time feature probe; pretending to exercise the feature through a skipped test would teach the wrong lesson.
+
+Even the CI workflow's filename filters were part of the engineering result. A plain filesystem path containing `C++23` is not necessarily a valid GitHub Actions **glob pattern**: the workflow parser interprets `+` specially. The earlier workflow was failing *before creating any runner job*, so none of its thousands of GitHub failure entries proved an actual compiler failure. Replacing the unsafe pattern with `Supplementary/**` restored runner execution, and only then could the real move, conversion and toolchain problems become visible. This is why reproducible builds must distinguish configuration failures, compiler diagnostics, runtime test failures, and missing evidence receipts instead of treating a red workflow icon as a complete diagnosis.
+
+#### Pass 20 — Independent invariants worth reproducing
+
+The end-to-end fixture also gained two metamorphic tests. Such a test changes one controlled property of an input and checks the *relationship* between old and new output, even when the new complete output has not been independently tabulated. Changing a texture's alpha byte changes its whole-file source fingerprint, while preserving the weighted RGB sum because the equation intentionally ignores alpha. Swapping the triangle's second and third indices reverses its signed area, changing `+65536` to `-65536` in quantized squared units, and changes the mesh file fingerprint. Those are different contracts: byte provenance should react to both mutations, while each numerical output reacts only to inputs that are part of its defined computation.
+
+Reconstruct these tests by hand before running them. Derive the texture sum, signed triangle determinant, and expected revision winner count from the contracts. Then change the CPU model to omit its memory dependency and explain the expected visibility rejection; remove the virtual completion observation and explain why retirement stays pending. For the concurrency test, sketch two, then eight, worker interleavings and identify the precise locked state transition that makes the observed outcome independent of scheduling. Finally, explain which assumptions would stop being valid if you replaced the `Receipt` with a raw Maveb Metal texture, a Kairo Vulkan descriptor, a Kyoto solver-state pointer, or an XR gaze-buffer view.
+
+The corrected staged lesson still does not establish native GPU correctness, thread-sanitizer coverage, a hostile-filesystem sandbox, production renderer hot reload, or exact research replication. These require their own platform evidence and independent oracles. The educational gain in this pass is that the boundaries are now visible in code, proven under appropriate assumptions, and tested against concrete failure cases rather than hidden by a single claim of “the project works.”
+
 #### Evidence boundary and book-release gate
 
 This pass adds a complete portable C++23 test **source** grounded in existing APIs and a connected lesson. It is staged in the same additive manuscript workflow and does not shorten, rewrite, regenerate or compile the original multi-thousand-page book. The outcome of the new integrated 18th test **must not be reported as passing** until the full Git checkout compiles and executes it under GCC, Clang and applicable AppleClang configurations with real CTest/JUnit receipts. A staged source file, a CMake test declaration or a text receipt format is not a measured result.
