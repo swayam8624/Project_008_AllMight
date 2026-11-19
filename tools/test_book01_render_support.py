@@ -81,6 +81,32 @@ class Book01ProductionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 book.math_preflight(source, "broken")
 
+    def test_pandoc_math_marker_roundtrip_when_available(self):
+        import shutil
+        import subprocess
+        if not shutil.which("pandoc"):
+            self.skipTest("Pandoc is optional for this unit test")
+        sample = (
+            "GPU compute uses a logical grid.\n\n"
+            "$\n\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n$\n\n"
+            "$\n\\texttt{simd_sum} = 256\n$\n"
+        )
+        stats = book.math_preflight(sample, "Chapter 9")
+        markdown, formulas = book.plan_math(sample, 9)
+        with TemporaryDirectory() as temp:
+            work = Path(temp)
+            source = work / "input.md"
+            source.write_text(markdown, encoding="utf-8")
+            result = subprocess.run(
+                ["pandoc", "-f", "markdown+tex_math_single_backslash+tex_math_double_backslash",
+                 "-t", "latex", "--wrap=none", str(source)],
+                text=True, capture_output=True, check=True,
+            )
+            tex = book.replace_math_tokens(result.stdout, formulas)
+            book.check_math_rendered(stats, tex, 9)
+            self.assertIn("run this kernel over a logical N-dimensional grid", tex)
+            self.assertEqual(len(formulas), 2)
+
     def test_academic_spacing_preserves_fenced_code_and_math(self):
         prose = (
             "### GENERAL COMPUTE & PARALLEL ALGORITHMS\n\n"
