@@ -1,0 +1,77 @@
+% Book 1 reader-edition layer. Does not modify the shared seven-book profile.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{book01-reader}[2026/11/19 v0.1 Book 1 reader layout]
+\RequirePackage{listings}
+\RequirePackage[most]{tcolorbox}
+\definecolor{BOneNavy}{HTML}{183B56}
+\definecolor{BOneBlue}{HTML}{1F6D98}
+\definecolor{BOneTeal}{HTML}{147D79}
+\definecolor{BOneGreen}{HTML}{287C54}
+\definecolor{BOneAmber}{HTML}{A66217}
+\definecolor{BOneCodeBg}{HTML}{F0F5F8}
+\definecolor{BOneNoteBg}{HTML}{EDF7F6}
+\definecolor{BOnePracticeBg}{HTML}{FFF5E7}
+\colorlet{AMAccent}{BOneBlue}
+\colorlet{AMBookAccent}{BOneBlue}
+% Real code panels, not unframed verbatim. Keep long source lines visible.
+% Listing code is captured verbatim by tcolorbox/listings.
+\newtcblisting{BookCode}{
+  enhanced,breakable,listing only,listing engine=listings,
+  colback=BOneCodeBg,colframe=BOneBlue!65!black,
+  boxrule=0.45pt,arc=1mm,
+  borderline west={2.4pt}{0pt}{BOneTeal},
+  left=7pt,right=6pt,top=7pt,bottom=7pt,
+  before skip=0.7\baselineskip,after skip=0.75\baselineskip,
+  listing options={
+    basicstyle=\ttfamily\footnotesize,
+    columns=fullflexible,keepspaces=true,showstringspaces=false,
+    breaklines=true,breakatwhitespace=false,tabsize=4,
+    keywordstyle=\color{BOneBlue}\bfseries,
+    commentstyle=\color{BOneGreen}\itshape,
+    stringstyle=\color{BOneAmber},
+    language=C++
+  }
+}
+\newtcolorbox{BookLearningNote}[1][]{
+  enhanced,breakable,colback=BOneNoteBg,colframe=BOneTeal,
+  boxrule=0pt,borderline west={3pt}{0pt}{BOneTeal},
+  sharp corners,left=10pt,right=10pt,top=7pt,bottom=7pt,
+  fonttitle=\bfseries\sffamily,title={#1},
+  colbacktitle=BOneNoteBg,coltitle=BOneNavy,
+  before skip=0.85\baselineskip,after skip=0.85\baselineskip
+}
+\newtcolorbox{BookPractice}[1][]{
+  enhanced,breakable,colback=BOnePracticeBg,colframe=BOneAmber,
+  boxrule=0pt,borderline west={3pt}{0pt}{BOneAmber},
+  sharp corners,left=10pt,right=10pt,top=7pt,bottom=7pt,
+  fonttitle=\bfseries\sffamily,title={#1},
+  colbacktitle=BOnePracticeBg,coltitle=BOneNavy,
+  before skip=0.85\baselineskip,after skip=0.85\baselineskip
+}
+% Existing Markdown quotations become a visually distinct reading note.
+% This does not alter any of the source text within the quotation.
+\RenewDocumentEnvironment{quote}{}{
+  \begin{BookLearningNote}[Reading note]
+}{
+  \end{BookLearningNote}
+}
+\newcommand{\BookChapterOrientation}{
+ \begin{BookLearningNote}[How to approach this chapter]
+ Read the explanation first, then reproduce at least one example without copying.
+ Write down which assumption makes the result work, and test a case that violates it.
+ When a lab is referenced, run it and explain the outcome before proceeding.
+ \end{BookLearningNote}
+}
+\newcommand{\BookPersonalNotes}[1]{
+ \clearpage
+ \section*{Personal notes and questions}
+ \addcontentsline{toc}{section}{Personal notes: #1}
+ \begin{BookPractice}[Chapter reflection]
+ In your own words, explain the main mechanism behind #1.
+ Record one question that remains unanswered and one experiment that could resolve it.
+ \end{BookPractice}
+ \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
+ \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
+ \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}\par\vspace{2.1\baselineskip}
+ \noindent\textcolor{BOneTeal}{\rule{\linewidth}{0.5pt}}
+}
