@@ -114,7 +114,7 @@ void test_three_concurrent_completion_callbacks() {
     check(!mailbox.publish(*maveb) &&
           !mailbox.callback_for(*maveb)(observed(true)),
           "stale identity rejected after the slot gets a new occupant");
-    check(mailbox.abandon_unsubmitted(*reused),
+    check(mailbox.abandon_unsubmitted(*reused).has_value(),
           "known unsubmitted XR work can release its permit");
 }
 void test_callback_outlives_renderer_owner_safely() {
