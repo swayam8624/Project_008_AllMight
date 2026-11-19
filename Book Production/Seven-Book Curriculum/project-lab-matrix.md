@@ -299,3 +299,51 @@ prediction, GPU, compositor and display clocks.
 
 **User workflow:** Continue staged additive commits and do not request any
 local pull/LaTeX commands until the chosen consolidated checkpoint.
+
+
+## Pass18 — Real C++23 filesystem, range and coroutine entry to typed engine assets
+
+**Multiple projects, one legitimate reusable contract:** This lab is
+intentionally NOT a new NES-only feature. The carried-forward data
+representation is the previously tested TXR4 texture and MSH1 mesh codec
+with typed generational publication, but its consumer architecture is
+**Kairo/Maveb-style asset ingestion**. A separate reconstruction exercise
+maps it to Maveb mesh/Gaussian datasets, Kairo scene replacement, Kyoto
+broad-phase dataset manifests, Vulkax simulation inputs and XR revision
+changes. None of those external engines is claimed patched or benchmarked.
+
+| Real source / concept inspected | Observed source identity / role | What is now implemented |
+| --- | --- | --- |
+| `tools/labs/nes_course/typed_asset_pipeline.hpp` | Same repository's Pass05 `Spec<TextureTag/MeshTag>::decode`, TXR4/MSH1 schemas | New real temporary files use the original decoder; no copied fake codec |
+| `tools/labs/nes_course/generational_asset_registry.hpp` | Same repository's Pass06 `GenerationalAssetRegistry::import/lookup/erase` with owner+generation typed handles | Full course's 17th CTest requires this header; file bytes actually reach typed publication and stale handle refusal in its executable |
+| `Maveb/engine/metal/src/Renderer.cpp` and `FrameContext.cpp` | Previously inspected source: actual staged frame/allocator lifetimes | Model and prose explain why borrowed file data and coroutine frames cannot own in-flight GPU uploads after their lifetimes end; no Maveb edits |
+| `KairoRenderer/MetalRenderer.cppm` and `detail/MetalBackend.mm` | Previously inspected real C++23/ObjC++ renderer boundary | Target consumer for owned async asset imports, scene generation and UI delivery; no Kairo edits |
+| `tools/labs/foundations_course/modern_asset_ingestion.hpp` | New Pass18 portable C++23 source | Bounded `std::ifstream`, lexical/canonical filesystem checks, explicit TOCTOU warning, `std::ranges::sort`/`views::filter`, `std::format`/`std::println` feature gating, `co_yield` and `co_await`, typed result and real `std::jthread` |
+
+**Executed local evidence:** GCC 14.2 and Clang 17 compiled and ran
+the new standalone module with C++23 warnings; optimized GCC and Clang
+Address/UndefinedBehaviorSanitizer also passed. This separate local
+workspace does not contain the original Pass05/06 header, so its output
+explicitly marks that registry subtest **not exercised locally**.
+The repository CMake target now has compile-time fail-closed
+`ALLMIGHT_COURSE_REQUIRE_REGISTRY`; a local negative compiler check
+confirmed missing registry is an error rather than fake passing CTest.
+Full 17-target GitHub CTest/Apple builds remain unobserved. See
+`Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md`.
+
+**Security and cancellation caveats:** `std::filesystem::symlink_status`
+followed by `canonical` then `ifstream` is not an atomic hostile-directory
+sandbox. The lab rejects stable symlinks and path traversal but claims no
+OS-level race-free security. The generator is a single-resumer owned
+coroutine, while the separate worker creates a real host thread; its
+`std::stop_token` is cooperative and cannot force an in-progress file
+read to stop. The worker's aggregate byte cap and caught exceptions
+avoid specific runaway failures, but job-count limits and a bounded
+consumer channel are production follow-ups.
+
+**Book sequence:** Book 1 gains missing C++23 standard-library breadth
+without forcing GPU/physics problems into NES. Book 2 numerical Python,
+Book 3 geometry, Book 5 collision and Book 6 GPU, Book 7 XR then consume
+a well-defined artifact/job interface rather than reteaching file
+ownership and coroutine lifetimes in each domain. Final source-routing
+ownership still needs a dedicated editorial release pass.
