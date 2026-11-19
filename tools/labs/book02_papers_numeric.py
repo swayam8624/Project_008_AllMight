@@ -141,7 +141,7 @@ def curve_residual(p,x,y):
     return curve_model(p,x)-y
 
 
-def curve_jacobian(p,x):
+def curve_jacobian(p,x,_observed_y=None):
     a,b,c=np.asarray(p)
     z=np.exp(b*x)
     return np.column_stack([z,a*x*z,np.ones_like(x)])
