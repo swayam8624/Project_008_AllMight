@@ -21,6 +21,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Validate original four-platform workflow with actionlint
+        run: |
+          go version
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.8 .github/workflows/allmight-cpp23-nes-course.yml
       - name: Configure native C++23 standalone course target
         run: cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/pass20 -DCMAKE_BUILD_TYPE=Debug
       - name: Compile exact end-to-end capstone from repository headers
