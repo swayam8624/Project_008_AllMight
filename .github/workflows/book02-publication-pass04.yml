@@ -6,6 +6,8 @@ on:
       - curriculum/book02-mathematics-refinement-pass01
     paths:
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_epub_supplements.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_source_preflight.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_original_source_lock.json'
       - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_supplements.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_proof_export.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py'
@@ -43,6 +45,9 @@ jobs:
           mkdir -p /tmp/pandoc-bin
           tar -xzf /tmp/pandoc.tar.gz -C /tmp/pandoc-bin
           echo "/tmp/pandoc-bin/pandoc-3.14/bin" >> "$GITHUB_PATH"
+      - name: Verify every original Book Two chapter is byte-identical to locked source
+        working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
+        run: python book02_source_preflight.py --output "${{ runner.temp }}/book02-source-preflight.json"
       - name: Run full semantic-source and image tests
         working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
         run: |
