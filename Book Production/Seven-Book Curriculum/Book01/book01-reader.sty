@@ -70,7 +70,7 @@
   {\normalfont\color{BOneInk}}
   {\normalfont\fontsize{10}{12}\selectfont\scshape\color{BOneMuted}Chapter \thechapter}
   {0.45ex}
-  {\fontsize{19}{22}\selectfont\bfseries}
+  {\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy\fontsize{18.5}{22}\selectfont\bfseries}
   [\vspace{0.35ex}{\color{BOneRule}\titlerule[0.75pt]}]
 \titlespacing*{\chapter}{0pt}{-0.8ex}{2.0ex}
 \titleformat{\section}
@@ -131,6 +131,25 @@
     {\normalfont\small\color{BOneMuted}Working edition \textbullet\space November 2026\par}
   \end{titlepage}}
 \makeatother
+
+% A source-identity imprint is explicit; no ISBN or external publisher is invented.
+\newcommand{\BookImprintPage}[3]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \vspace*{0.54\textheight}
+  {\small\color{BOneInk}
+  \textbf{#1}\par
+  #2\par
+  Copyright \textcopyright\ 2026 Swayam Singal.\par
+  All rights reserved unless otherwise stated in the referenced source.\par
+  Publication-proof edition: November 2026\par
+  Source revision: \texttt{#3}\par
+  No ISBN or publishing imprint is asserted by this working proof.\par
+  For companion sources, reproducibility records and correction guidance,
+  consult the academic back matter and the Project AllMight repository.\par
+  }\clearpage
+}
+
 % Source code: subtle rule and near-white background. No bright classroom colors.
 % Line breaking is enabled without changing the original code bytes.
 \newtcblisting{BookCode}{
@@ -140,7 +159,7 @@
   left=6pt,right=5pt,top=5pt,bottom=5pt,
   before skip=0.55\baselineskip,after skip=0.60\baselineskip,
   listing options={
-    language={},basicstyle=\ttfamily\fontsize{8.5}{10.1}\selectfont,
+    language={},basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont,
     columns=fullflexible,keepspaces=true,showstringspaces=false,
     breaklines=true,breakatwhitespace=false,tabsize=4,
     numbers=none,
