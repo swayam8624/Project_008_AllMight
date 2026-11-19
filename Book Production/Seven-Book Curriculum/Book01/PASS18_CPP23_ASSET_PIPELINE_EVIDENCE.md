@@ -117,3 +117,40 @@ source ownership and a validated end-to-end capstone beyond these 17 labs.
 This pass closes a genuine C++23 teaching hole and provides real, locally
 exercised engineering code; it does not finish the entire seven-book project
 or authorize a user-side pull/LaTeX regeneration.
+
+
+## Pass18 resumed verification and bounded-manifest hardening
+
+**Status:** Follow-up to the earlier Pass18 authoring work, on the same curriculum branch, with no canonical manuscript editing or LaTeX compilation.
+
+The existing worker's aggregate byte budget had one meaningful limitation: a malicious or accidentally huge manifest containing many *failing* asset requests could still produce arbitrarily many lightweight error records, because errors consumed no successful payload bytes. The change adds an independent **request-count bound** (default 1024, configurable 1–4096) and a 4096-byte per-path limit. These are checked **before launching the `std::jthread` worker**, so a rejected manifest cannot begin asynchronously mutating receipt state. The existing per-file byte cap and total successful-payload budget remain separate.
+
+The `Root::load` interface now accepts an optional `std::stop_token` and checks cancellation before path resolution, at each 4096-byte file-read iteration and before publication of the owned result. The coroutine passes its caller's token into the real reader. This can stop future chunk operations and refuses to publish a partially read success result. It cannot forcibly interrupt an OS filesystem syscall currently blocked inside `std::ifstream`, so it is not a hard real-time cancellation guarantee.
+
+New deterministic tests cover an over-limit manifest, zero manifest capacity, overlong path rejection directly and through `WorkerBatch`, capped error records, pre-requested cancellation of a real file read, and preservation of path information in formatted diagnostics. Earlier typed asset fixtures, coroutine ownership and bounded byte budget tests still execute.
+
+### Exact committed source identity of the resumed standalone test
+
+| Source | Git blob SHA-1, verified identical to local build inputs |
+| --- | --- |
+| `tools/labs/foundations_course/modern_asset_ingestion.hpp` | `23a581956e35b8ffd6116e5483ff96a49e790be6` |
+| `tools/labs/modern_asset_ingestion_cpp23_lab.cpp` | `28369c2bb8ac68d0c08b529b02152c6d5038c46c` |
+
+These are **Git blob IDs** (SHA-1 over `blob LENGTH\0` and file bytes), not generic hashes of the raw files. The source hashes were compared against the exact local files immediately before a fresh rebuild.
+
+### Executed local compiler and test evidence — 19 November 2026
+
+| Source-verified run | Build flags / runner | Observed result |
+| --- | --- | --- |
+| Standalone GCC 14.2.0 | CMake + Ninja; C++23; `-Wall -Wextra -Wpedantic -Wconversion -Werror` | **1/1 CTest passed** after rebuilding exact committed source |
+| Standalone Clang 17.0.0 | CMake + Ninja; C++23; same strict warnings; `-fsanitize=address,undefined` | **1/1 CTest passed** after rebuilding exact committed source |
+
+Actual machine-readable standalone JUnit output was produced locally at
+`/mnt/data/allmight_pass18/build-gcc/pass18-final-junit.xml` and
+`/mnt/data/allmight_pass18/build-clang-asan/pass18-final-junit.xml`. These are **working-container paths**, not checked-in repository files or macOS hardware evidence. Both one-test suites reported zero failed and zero skipped tests.
+
+**What was not exercised:** The standalone build did not have the existing `nes_course/generational_asset_registry.hpp` header in its include tree, and the executable **explicitly printed that the Pass06 registry import path was not run**. A negative compile check for `ALLMIGHT_COURSE_REQUIRE_REGISTRY=1` previously confirmed it refuses the missing shared header; this is correct fail-closed behavior, not proof the actual integration compiled. The complete **17-target Book01** CTest suite, actual shared codec/registry integration, AppleClang SDK compilation, native Metal/Vulkan execution, production race-resistant sandboxing, scene-revision transaction testing and real graphical output remain unverified. Do not present the standalone results as any of those.
+
+### Release consequence
+
+Pass18 closes real worked-example gaps in `std::filesystem`, file streams, standard ranges/views, `std::format`/`std::println` (feature-gated), `co_yield`, `co_await` and cooperative host work. The resumed hardening also closes an obvious unbounded-request/error-queue path. It does **not** yet finish Book 1. The next hard gate is to compile and run the **actual seventeen registered CMake targets with the real registry headers**, repair any compiler/CTest issues, and produce source-pinned JUnit receipts across supported toolchains. Separately, improve prose bridges and the seven-book ownership/routing map before release.
