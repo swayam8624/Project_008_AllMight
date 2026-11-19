@@ -22,6 +22,7 @@ git pull --ff-only origin curriculum/cpp23-nes-project-pass01
 
 .venv-book01/bin/python tools/test_book01_render_support.py
 .venv-book01/bin/python tools/test_book01_publication_edit.py
+.venv-book01/bin/python tools/test_book01_ebook_editorial.py
 .venv-book01/bin/python tools/test_book01_pdf_proof.py
 
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --check
