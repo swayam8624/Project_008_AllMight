@@ -153,6 +153,7 @@ class Packager:
         # Supplementary EPUB adapter is lazy: the six unrelated stages do
         # not need Book Two visual libraries or regenerated assets.
         self.book02_supplement=None
+        self.book02_cover_image=None
         for raw in manifest.get("source_attachment_inventory",{}).get("records",[]):
             rec=dict(raw);rec["sha256"]=rec.get("source_sha256");rec["name"]=(rec.get("source_names") or [Path(rec["source"]).name])[0]
             self.attachments[rec["id"]]=rec
@@ -450,6 +451,8 @@ class Packager:
         cmd=[shutil.which("pandoc") or "pandoc",str(content),"--from=json","--to=epub3","--output",str(output),"--css",str(css),f"--split-level={split_level}","--metadata",f"title={title}","--metadata","author=Swayam Singal","--metadata","lang=en"]
         if stage and stage["id"]==BOOK02_STAGE:
             cmd.extend(["--metadata", "subtitle=Mathematics, Numerical Methods, Optimization, and Visual Computing"])
+            if self.book02_cover_image is not None:
+                cmd.extend(["--epub-cover-image", str(self.book02_cover_image)])
         p=subprocess.run(cmd,cwd=self.out,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if p.returncode: raise RuntimeError(f"Pandoc EPUB build failed for {label}: {p.stderr[-4000:]}")
         unknown_tags_escaped=escape_unknown_html_tags(output)
@@ -462,7 +465,7 @@ class Packager:
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
@@ -624,6 +627,7 @@ def main():
     ap.add_argument("--generation",required=True,help="Generation ID, e.g. .generation-uuihb_gl")
     ap.add_argument("--output-dir",help="Output directory; defaults to Build/<generation>/epubs")
     ap.add_argument("--stage",help="Build only this exact stage ID")
+    ap.add_argument("--book02-cover-image",help="Optional Book Two front-cover JPEG path for the EPUB only; no changes to print interior")
     ap.add_argument("--collection-only",action="store_true",help="Build only the all-stage collection EPUB")
     ap.add_argument("--finalize-crossrefs-only",action="store_true",help="Add verified CFI locators to already-built stage EPUBs without rerunning Pandoc")
     ap.add_argument("--patch-css-only",action="store_true",help="Patch the embedded project stylesheet in the eight existing EPUBs and revalidate without rerunning Pandoc")
@@ -646,6 +650,20 @@ def main():
     all_math=sum(1 for ast in ast_cache.values() for n in walk_nodes(ast) if n.get("t")=="Math")
     if all_math != 39483: raise RuntimeError(f"Expected 39,483 transformed Math nodes, found {all_math}")
     builder=Packager(root,out,manifest,ast_cache,owner,titles,chapter_owner,chapter_title,target_anchor)
+    if args.book02_cover_image:
+        cover=Path(args.book02_cover_image).expanduser().resolve()
+        if not cover.is_file() or cover.suffix.lower() not in (".jpg",".jpeg"):
+            ap.error("--book02-cover-image must reference an existing JPEG; image not found or invalid extension")
+        try:
+            from PIL import Image
+            with Image.open(cover) as img:
+                img.verify()
+            with Image.open(cover) as img:
+                if img.format!="JPEG" or img.width<300 or img.height<450 or img.height<=img.width:
+                    ap.error("Book Two EPUB cover must be a valid portrait JPEG at least 300 x 450 pixels")
+        except (OSError,ValueError) as exc:
+            ap.error("Cannot decode Book Two cover JPEG: "+str(exc))
+        builder.book02_cover_image=cover
     stages=manifest["stages"]
     if args.patch_css_only:
         css=out/"epub.css"
