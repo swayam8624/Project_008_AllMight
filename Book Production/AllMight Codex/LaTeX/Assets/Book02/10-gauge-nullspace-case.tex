@@ -1,0 +1,39 @@
+% Exact one-dimensional gauge-freedom example.
+\clearpage
+\section*{Inverse-problem laboratory: a zero residual is not a unique answer}
+\noindent Suppose a measurement can determine only the difference
+\(d=a-b\) between two unknown positions. The residual
+\[
+r(a,b)=a-b-d
+\]
+has Jacobian \(J=\begin{pmatrix}1&-1\end{pmatrix}\)
+and Gauss--Newton normal matrix
+\[
+J^TJ=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}.
+\]
+This matrix is positive semidefinite but singular:
+\(J(1,1)^T=0\). Adding any common translation \(c\) to
+both \(a\) and \(b\) leaves the measurement and residual unchanged.
+The direction \((1,1)\) is a \emph{gauge freedom}, not noise.
+
+Choosing \(b=0\) gives the representative \(a=d\).
+That choice fixes coordinates; it does not create a new observation
+or make the absolute location physically known.
+An arbitrary diagonal regularizer might make the matrix
+invertible, but it selects a preference rather than identifying
+a previously unobservable quantity.
+
+The same issue appears in pose estimation and reconstruction.
+A collection of relative observations can determine scene geometry
+up to a global rigid motion or similarity transform, depending on
+the actual measurement model. Before interpreting a fitted pose,
+count independent constraints, inspect Jacobian rank and distinguish
+a true physical anchor from an imposed numerical gauge.
+
+\paragraph{Working exercise.}
+Derive the \(2\times2\) singular-value structure of the example.
+Create three equally valid least-squares solutions for a fixed \(d\),
+and plot their identical residual. Then fix one coordinate, recompute
+the reduced problem and explain which information is gained versus
+which ambiguity is merely named away. Extend the example to 2D
+points with pairwise differences.
