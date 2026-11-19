@@ -854,6 +854,49 @@ remain open. Source counts and an authored CTest are not pass results. Continue
 the next verification/editorial pass without asking for a per-pass Mac pull,
 build or LaTeX command.
 
+## Pass 20 — Restored CI, corrected ownership contracts and concurrent scene publication
+
+**Original complete book preserved.** Pass20 expands the existing
+[CPP-19E source lesson](../../Supplementary/C++23%20Project%20Labs/CPP-19E%20-%20A%20Complete%20Asset%20to%20Evidence%20Trace.md)
+with a deep derivation of linearizable asset publication, no-throw
+transactional swap, synchronized owned read snapshots, revision overflow,
+eight competing publishers, thread-creation failure unwinding and
+metamorphic texture/triangle correctness checks. This is an additive
+continuation of Pass19's already mapped original Chapter10; there are still
+**18** staged lessons/targets, not an invented nineteenth original chapter.
+No canonical source insertion, LaTeX regeneration or book shortening occurred.
+
+**Actual defects discovered and repaired:** the original GitHub Actions
+workflow was invalid before job startup because `C++23` appeared
+unescaped in a glob; the real NROM dependency lab tried to move a
+move-only cartridge out of a `const std::expected`; two GPU C++23
+tests passed an explicitly bool-convertible `std::expected` to a
+`check(bool)` parameter; the native Metal probe narrowed `size_t`
+inside braced `uint32_t` initialization. Linux Clang18 lacked the
+correct `std::expected` feature gate and is replaced in CI with
+probed Clang19. The older Apple toolchain lacked `std::jthread` and
+`std::stop_token`; its successor CI image now runs an explicit
+support check before attempting to build.
+
+**Observed build evidence:** one targeted capstone GCC CTest passed;
+a later capstone CTest containing real eight-worker scene publication
+also passed. In the restored full-matrix job at commit
+`0697e7e181f7d7a0e1c71d53f1f598bf52930c03`, **GCC passed 18/18
+CTests**, 19 Python fixture tests in three groups and the source-pinned
+provenance verification; **Clang19 ASan+UBSan also succeeded**.
+This does not imply all-platform certification: that particular macOS
+job still used Xcode16.4 and failed, and commits made afterward require
+their own source-matched green suite.
+
+Detailed links, exact failure explanations, qualification of source
+revisions and still-open native GPU and research verification are in
+[Pass20 evidence and source audit](Book01/PASS19_END_TO_END_EVIDENCE.md#pass-20--actual-multi-toolchain-repair-and-evidence-19-november-2026).
+
+**Next release gate:** obtain actual successful GCC, Clang19, sanitizer
+and AppleClang/Xcode26 CTest+JUnit receipts against one source revision,
+then continue the cross-book editorial integrity audit. Do not issue
+user-side Mac commands until the requested one-shot checkpoint.
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
