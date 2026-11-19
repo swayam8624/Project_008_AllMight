@@ -205,13 +205,28 @@ def normalize_code_fence_metadata(source: str) -> tuple[str, int]:
 
 
 def sanitize_source_math_for_tex(body: str) -> str:
-    """Escape unescaped Markdown percentage characters for valid LaTeX math.
+    """Apply the *minimal* TeX text-mode escapes needed by source math.
 
-    Without this transform, a literal percentage such as 99% is a LaTeX
-    comment marker and may swallow the closing braces of a boxed equation.
-    Already escaped \% remains unchanged. Original Markdown stays intact.
+    The canonical source is never edited. Display-math prose may contain a
+    literal percent (99%) or a code identifier in \texttt{simd_sum}. In TeX,
+    percent starts a comment; underscore inside \texttt is invalid text mode.
+    Escaping only the text-mode contents preserves mathematical subscripts
+    such as x_{i}, command semantics, and author-owned formulas.
     """
-    return re.sub(r'(?<!\\)%', lambda _: r'\%', body)
+    sanitized = re.sub(r"(?<!\\)%", lambda _: r"\%", body)
+    for macro in ("texttt", "text", "textbf", "textit", "textrm", "textsf"):
+        # This handles simple text-mode macro arguments. Nested arguments are
+        # never silently rewritten: an explicit regression test and the TeX
+        # compiler must validate genuinely complex display expressions.
+        pattern = re.compile(r"\\" + macro + r"\{([^{}\n]*)\}")
+        def escape_text(match: re.Match[str]) -> str:
+            text = match.group(1)
+            text = re.sub(r"(?<!\\)_", lambda _: r"\_", text)
+            text = re.sub(r"(?<!\\)&", lambda _: r"\&", text)
+            text = re.sub(r"(?<!\\)#", lambda _: r"\#", text)
+            return "\\" + macro + "{" + text + "}"
+        sanitized = pattern.sub(escape_text, sanitized)
+    return sanitized
 
 
 def plan_math(source: str, chapter: int) -> tuple[str, list[dict]]:
