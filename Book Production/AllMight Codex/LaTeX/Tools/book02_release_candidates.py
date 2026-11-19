@@ -229,6 +229,13 @@ def epub_candidate(generation:Path,root:Path,cover_image:Path|None=None)->dict:
     if not epubcheck.is_file():
         raise RuntimeError("Original pinned EPUBCheck 5.4.0 JAR is missing")
     out=root/"epub";out.mkdir(parents=True,exist_ok=True)
+    # Test the entire Book Two supplemental MathML corpus BEFORE expensive
+    # conversion of the frozen original mathematical manuscript.
+    audit_file=out/"book02-supplement-mathml-report.json"
+    subprocess.run([
+        sys.executable,str(ROOT/"Tools"/"book02_mathml_preflight.py"),
+        "--output",str(audit_file)
+    ],check=True)
     cmd=[sys.executable,str(ROOT/"Tools"/"build_epubs.py"),
          "--generation",generation.name,"--stage",STAGE,
          "--output-dir",str(out)]
