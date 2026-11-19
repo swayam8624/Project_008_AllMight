@@ -66,9 +66,16 @@ def inspect(path: Path, paperback: bool, expect_figures: int = 0) -> dict:
                         flag("clipped_header", i, f"{txt[:65]!r} touches trim edge")
                 if i > 1 and (bbox.x0 < -1.0 or bbox.x1 > rect.width + 1.0 or bbox.y0 < -1.0 or bbox.y1 > rect.height + 1.0):
                     flag("clipped_text", i, f"{txt[:70]!r} at {tuple(round(t) for t in bbox)}")
-                if "Mono" in str(line["spans"][0].get("font", "")) or "Menlo" in str(line["spans"][0].get("font", "")):
-                    if min(x["size"] for x in line["spans"]) < 7.95:
-                        flag("tiny_code", i, f"Code <8 pt: {txt[:70]!r}")
+                # Inspect every span, not just the first: PDF extraction can
+                # combine proportional punctuation with monospaced code.
+                for span in line["spans"]:
+                    font = str(span.get("font", ""))
+                    is_mono = any(family in font.casefold() for family in
+                                  ("mono", "menlo", "courier", "consolas",
+                                   "monaco", "inconsolata", "firacode"))
+                    if is_mono and float(span.get("size", 0)) < 7.95:
+                        flag("tiny_code", i, f"Code <8 pt: {txt[:70]!r}; {font} {span.get('size')}")
+                        break
         if len(bottom_nums) > 1:
             # Duplicate footers, not a page number repeated inside a table.
             matched = [v for _,v in bottom_nums]
