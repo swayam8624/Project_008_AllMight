@@ -311,6 +311,11 @@ def validate_epub(path: Path) -> dict:
         full_text = "\n".join(z.read(p).decode("utf-8") for p in chapter_pages)
         if re.search(r"ALLMIGHT(?:MATH|FIGURE|INDEX)", full_text):
             raise ValueError("Unresolved production marker in EPUB content")
+        if re.search(r"ALLMIGHT-CPP23-[A-Z0-9-]+-ADDITIVE-(?:START|END)"
+                     r"|the user has reserved|The user requested no intermediate"
+                     r"|The next engineering pass should compile",
+                     full_text, re.I):
+            raise ValueError("Visible internal authoring note escaped EPUB cleanup")
         return {"files": len(members), "xhtml_pages": len(chapter_pages),
                 "bytes": path.stat().st_size,
                 "mathml_elements": full_text.count("<math"),
