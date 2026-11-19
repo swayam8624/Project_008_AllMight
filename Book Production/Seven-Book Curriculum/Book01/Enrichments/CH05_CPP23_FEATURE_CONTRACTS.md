@@ -103,3 +103,96 @@ C++20 modules and C++23 build systems both require an explicit dependency model.
 ## The reconstruction test
 
 For each row in the feature table, explain whether the guarantee comes from language wording, a library class, a compiler implementation, or a platform API. Which examples allocate? Which views own their data? Which operations are permitted to throw? What evidence would show the claim fails for a given toolchain? A student who can answer those questions has learned a more durable skill than memorizing a feature list.
+
+
+## A non-owning matrix view is not a matrix allocation
+
+A graphics program often has a rectangular array of values but wants to interpret it as rows and columns. C++23 `std::mdspan` makes that distinction more explicit: the owner allocates the elements, while the view records a mapping from multidimensional indices to an underlying contiguous or strided address space. The mapping is not an allocator, and it does not prolong the owner's lifetime. It is therefore a useful language counterpart to GPU buffer views.
+
+Consider a row-major array storing six values, interpreted as two rows and three columns. The conceptual address formula is
+
+$$
+\operatorname{offset}(r,c)=3r+c,\qquad
+0\le r<2,\quad 0\le c<3.
+$$
+
+For example, `(r,c)=(1,2)` selects offset five. In a different mapping policy, the same two-dimensional index can map to a different offset. That is why a multidimensional *shape* is not equivalent to a byte layout.
+
+```cpp
+// Requires a standard library with C++23 <mdspan> support.
+#include <array>
+#include <cstddef>
+#include <mdspan>
+
+int main() {
+    std::array<float, 6> owner{1, 2, 3, 4, 5, 6};
+    using extents_t = std::extents<std::size_t, 2, 3>;
+    std::mdspan<float, extents_t, std::layout_right>
+        matrix(owner.data());
+    return matrix[1, 2] == 6.0f ? 0 : 1;
+}
+```
+
+This is deliberately a *feature-gated* complete example: it requires the target library's `<mdspan>` header and support for the C++23 multidimensional subscript operator. A compiler that accepts `-std=c++23` without those library features is not necessarily broken. Check implementation release notes and relevant feature-test macros before using this example as a CI requirement. In a renderer, a similar view is valid only as long as the backing data and its chosen synchronization contract remain valid.
+
+## Explicit object parameters make receiver types visible
+
+A member function normally has an implicit object argument called `this`. The C++23 explicit object parameter feature permits spelling out that receiver in the parameter list. This allows an interface to express certain constness, value-category and generic-receiver requirements directly.
+
+```cpp
+// Illustrative C++23 language feature; check compiler support.
+struct Sample {
+    int magnitude = 0;
+    int read(this Sample const& self) {
+        return self.magnitude;
+    }
+};
+```
+
+Here the const receiver prevents mutation through `self`. It does not make the containing object's storage immutable to every other alias or thread. If a member returns a reference, a caller still needs to understand the object's lifetime. The feature changes how a contract can be *expressed*; it does not remove lifetime and concurrency obligations.
+
+To test a toolchain, consult the `__cpp_explicit_this_parameter` feature-test macro when it is provided. Write a negative test that attempts a forbidden mutation and confirm that the compiler rejects it. Do not infer language availability from a marketing name or from the package manager's compiler version alone.
+
+## Lazy generators, frames, and borrowed elements
+
+A coroutine function can suspend while retaining a compiler-managed frame containing its state. C++23 provides `std::generator` as a synchronous coroutine sequence abstraction in supporting standard libraries. It is not a worker thread, GPU dispatch, or implicit asynchronous scheduling service.
+
+```cpp
+// Illustration; requires C++23 <generator> library support.
+#include <generator>
+
+std::generator<int> indices(int count) {
+    for (int i = 0; i < count; ++i) {
+        co_yield i;
+    }
+}
+```
+
+A consuming loop repeatedly resumes the generator, observes a value and eventually destroys the coroutine state. References yielded from a coroutine require particular care: the referent must stay alive and accessible across the consumer's use. This is the same ownership rule from the earlier object-lifetime chapters, expressed through a different control-flow mechanism. The frame's destruction is a concrete event worth tracing, not merely a consequence of leaving a source-code scope.
+
+**Experiment.** Instrument the constructor, move and destructor of an object held in a generator frame. Create a sequence, consume only part of it, then destroy the generator. Predict exactly which object destructions are observable. Repeat with a deliberately borrowed source whose owner outlives the generator; do not invoke undefined behavior as a way of checking whether a borrow is valid.
+
+## Move-only callbacks and resource ownership
+
+A callable that owns a `std::unique_ptr` cannot generally be copied, because copying would violate its exclusive ownership. C++23's `std::move_only_function` is a type-erased callable wrapper designed to accommodate move-only targets. This is useful for resource cleanup and asynchronous work, provided the callable's execution and destruction lifetimes are still explicit.
+
+```cpp
+// C++23 library support required for std::move_only_function.
+#include <functional>
+#include <memory>
+
+std::move_only_function<int()> make_reader(int value) {
+    auto owner = std::make_unique<int>(value);
+    return [owned = std::move(owner)] { return *owned; };
+}
+```
+
+The callable owns its captured integer; it does **not** guarantee that a GPU command using an unrelated buffer has finished. Using move-only type erasure can simplify a host-side ownership boundary, but device completion needs its own proof. A failed attempt to copy the returned callback should be an intentional compile-time rejection in a conformance test.
+
+## Three independent implementation checks
+
+Whenever a new C++23 facility enters an example, record three separately verifiable claims. First, state the **language rule** or library contract, ideally with the relevant standard section. Second, state which **compiler and standard library** provide the feature and how you verified it; library availability may lag parsing support. Third, state what **runtime behavior** was exercised, including input sizes, failure paths and any platform-dependent assumptions.
+
+For example, a C++23 program that contains `std::expected` can prove that an error is handled without using an ambiguous success value. It cannot, by merely compiling, establish that every error path is allocation-free, that an unrelated `std::span` remains valid, or that a GPU buffer has retired. The precise separation of those claims is more valuable than memorizing a long feature checklist.
+
+The complete ISO C++23 language and library are larger than this chapter. For unexplained facilities, use the clause-level language reference and the implementation's documented feature-test macros to build a coverage record rather than guessing that a symbol is supported or assuming the current chapter is exhaustive.
