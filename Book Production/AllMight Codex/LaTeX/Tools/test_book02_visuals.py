@@ -24,7 +24,7 @@ class Book02VisualTests(unittest.TestCase):
         ]
         for chapter in chapter_ids:
             part = "P01" if chapter in (
-                "01-foundations-i-ch019", "02-foundations-ii-ch024"
+                "01-foundations-i-ch017", "01-foundations-i-ch019", "02-foundations-ii-ch024"
             ) else "P02"
             parts.append(
                 rf"\input{{../current/02-Mathematics-for-Visual-Computing-{part}/content/{chapter}.tex}}"
@@ -43,12 +43,17 @@ class Book02VisualTests(unittest.TestCase):
             installed = install_book02_visuals(main)
             result = main.read_text()
             self.assertEqual(installed, [
-                "01-linear-transformation.tex", "02-gaussian-uncertainty.tex"
+                "06-reader-contract.tex",
+                "01-linear-transformation.tex", "07-metric-gradient-case.tex",
+                "02-gaussian-uncertainty.tex"
             ])
             self.assertIn(r"\input{book02-figures/preamble.tex}", result)
             self.assertEqual(result.count("book02-figures/01-linear-transformation.tex"), 1)
             self.assertEqual(result.count("book02-figures/02-gaussian-uncertainty.tex"), 1)
             self.assertIn(original.splitlines()[3], result)  # existing body preserved
+            self.assertLess(result.index("06-reader-contract.tex"),
+                            result.index("01-foundations-i-ch017.tex"))
+            self.assertTrue((Path(tmp)/"book02-figures"/"07-metric-gradient-case.tex").is_file())
             self.assertTrue((Path(tmp)/"book02-figures"/"preamble.tex").is_file())
 
     def test_part_two_inserts_three_figures_in_chapter_order(self) -> None:
@@ -60,8 +65,8 @@ class Book02VisualTests(unittest.TestCase):
             ])
             names = install_book02_visuals(main)
             self.assertEqual(names, [
-                "04-heat-diffusion.tex",
-                "03-optimization-landscape.tex",
+                "04-heat-diffusion.tex", "09-heat-stability-case.tex",
+                "03-optimization-landscape.tex", "10-gauge-nullspace-case.tex",
                 "05-convergence-study.tex",
             ])
             text = main.read_text()
@@ -77,6 +82,22 @@ class Book02VisualTests(unittest.TestCase):
             first = main.read_bytes()
             self.assertEqual(install_book02_visuals(main), [])
             self.assertEqual(main.read_bytes(), first)
+
+    def test_math_bridges_do_not_replace_existing_chapter_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            chapters = ["01-foundations-i-ch017", "01-foundations-i-ch019",
+                        "01-foundations-i-ch020", "02-foundations-ii-ch031"]
+            main = self.create_tex(Path(tmp), chapters)
+            before = main.read_text()
+            installed = install_book02_visuals(main)
+            after = main.read_text()
+            for chapter in chapters:
+                self.assertIn(chapter + ".tex", before)
+                self.assertIn(chapter + ".tex", after)
+            self.assertIn("08-conditioning-case.tex", installed)
+            self.assertIn("11-sampling-support-case.tex", installed)
+            self.assertLess(after.index("06-reader-contract.tex"),
+                            after.index("01-foundations-i-ch017.tex"))
 
     def test_other_stage_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
