@@ -67,7 +67,11 @@ def restore_math(reader: str, raw: str, chapter: int) -> str:
         token = item["token"]
         if reader.count(token) != 1:
             raise ValueError(f"Math source missing or duplicated in chapter {chapter}: {token}")
-        expression = item["body"].strip()
+        # The source may contain literal percent signs in prose-like math
+        # and underscores inside text macros. Normalize only those TeX
+        # text-mode hazards before the EPUB MathML conversion, exactly as
+        # the independent PDF rendering pipeline does.
+        expression = render.sanitize_source_math_for_tex(item["body"].strip())
         # EPUB3 uses MathML from Pandoc's TeX-math parser; do not flatten
         # formulas into text or rasterized screenshots.
         reader = reader.replace(token, "\n\n$$\n" + expression + "\n$$\n\n")
