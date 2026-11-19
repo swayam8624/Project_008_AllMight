@@ -3,6 +3,7 @@
 // observations ONLY. --probe-native separately calls actual Vulkan if present.
 #include "gpu_course/submission_retirement.hpp"
 #include <cstdint>
+#include <expected>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -23,6 +24,13 @@ using Phase=sub::Phase;
 
 void check(bool condition,std::string_view why) {
     if(!condition) throw std::runtime_error(std::string(why));
+}
+template<class T, class E>
+void check(const std::expected<T,E>& outcome, std::string_view why) {
+    // expected's operator bool is *explicit*. It works in 'if' and &&
+    // but not as an implicit conversion to a bool function parameter.
+    // This overload also makes the actual success criterion unambiguous.
+    check(outcome.has_value(), why);
 }
 void basic_graphics_and_present_lifetimes() {
     // Two CPU frame slots and three WSI images DO NOT map 1:1.
