@@ -293,16 +293,78 @@ def check_environment(generation:Path, *, cover_image:Path|None,
             "caveat":"This preflight is not publication approval."}
 
 
+
+def export_candidates_to_master(generation:Path, destination:Path) -> Path:
+    """Copy verified candidate artifacts into Master without modifying Git files.
+
+    The source build remains in the isolated Book02 worktree. The resulting
+    PDFs, EPUB and manifest are copied into a source-fingerprinted folder in
+    the author's canonical Master workspace. Never merge/reset/edit tracked
+    Master content as a side effect of exporting outputs.
+    """
+    source=ROOT/"Build"/generation.name/"book02-publication-candidates"/"book02-candidate-verification.json"
+    if not source.is_file():
+        raise RuntimeError("No completed Book Two verification report. Build both print parts and full EPUB first: "+str(source))
+    report=json.loads(source.read_text(encoding="utf-8"))
+    current_fingerprint=source_fingerprint()
+    if report.get("generation")!=generation.name or report.get("source_fingerprint_sha256")!=current_fingerprint:
+        raise RuntimeError("Candidate report source revision mismatch. Rebuild both formats before exporting into Master.")
+    parts=report.get("print_parts") or []
+    epub=report.get("epub")
+    if len(parts)!=2 or not epub or epub.get("epubcheck",{}).get("exit_code")!=0:
+        raise RuntimeError("Book Two release candidates are incomplete: require two verified print PDFs and EPUBCheck-passing full EPUB.")
+    files=[]
+    for index, part in enumerate(parts,start=1):
+        location=Path(part["candidate_path"])
+        if not location.is_file() or digest(location)!=part.get("sha256"):
+            raise RuntimeError("Candidate PDF missing or altered since verification: "+str(location))
+        files.append((location,f"From Equations to Geometry - Part {index}.pdf"))
+    epub_location=Path(epub["candidate_path"])
+    if not epub_location.is_file() or digest(epub_location)!=epub.get("sha256"):
+        raise RuntimeError("Candidate EPUB missing or altered since verification: "+str(epub_location))
+    files.append((epub_location,"From Equations to Geometry.epub"))
+    files.append((source,"book02-candidate-verification.json"))
+    # The explicit destination should be INSIDE the author's Master folder;
+    # require it to exist rather than guessing a hard-coded personal path.
+    destination=Path(destination).expanduser().resolve()
+    if not destination.is_dir():
+        raise RuntimeError("Export root must exist; supply a path inside the intended Master folder: "+str(destination))
+    version=destination/(generation.name+"-"+current_fingerprint[:12])
+    if version.exists() and not version.is_dir():
+        raise RuntimeError("Book Two export location is not a directory: "+str(version))
+    version.mkdir(parents=True,exist_ok=True)
+    copied=[]
+    for original,name in files:
+        target=version/name
+        if target.exists():
+            if not target.is_file() or digest(target)!=digest(original):
+                raise RuntimeError("Refusing to overwrite existing different Master output: "+str(target))
+        else:
+            shutil.copy2(original,target)
+        copied.append(str(target))
+    print("BOOK02_MASTER_EXPORT_OK",version)
+    for item in copied:
+        print("  "+item)
+    return version
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--generation",help="Frozen generation id, defaults to CURRENT.json")
     p.add_argument("--cover-image",type=Path,help="Book Two JPEG cover on the author\x27s Mac, for the EPUB (not the print interior)")
     p.add_argument("--check-only",action="store_true",help="Read-only source and environment preflight, without building anything")
+    p.add_argument("--export-only",action="store_true",help="Copy previously verified PDFs and EPUB into the author's Master workspace without rebuilding or changing Git history")
+    p.add_argument("--export-dir",type=Path,help="Existing target folder inside the canonical Master workspace for verified output copies")
     g=p.add_mutually_exclusive_group()
     g.add_argument("--print-only",action="store_true")
     g.add_argument("--epub-only",action="store_true")
     args=p.parse_args()
     generation=generation_path(args.generation)
+    if args.export_only:
+        if not args.export_dir:
+            p.error("--export-only requires --export-dir pointing inside Master")
+        export_candidates_to_master(generation,args.export_dir)
+        return 0
     cover_image=args.cover_image.expanduser().resolve() if args.cover_image else None
     if cover_image is not None and (not cover_image.is_file() or cover_image.suffix.lower() not in (".jpg",".jpeg")):
         p.error("Book Two EPUB cover must be an existing .jpg/.jpeg file")
