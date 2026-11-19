@@ -90,6 +90,10 @@ public:
             throw std::invalid_argument("root must be existing directory");
     }
     [[nodiscard]] Result load(const Request& request) const {
+        // Never pass an embedded NUL into a platform path API: a native
+        // C-string conversion could otherwise truncate the checked name.
+        if(request.relative.find('\0')!=std::string::npos)
+            return std::unexpected(Issue::unsafe_relative_path);
         const fs::path relative=fs::path(request.relative);
         if(!safe_relative(relative))
             return std::unexpected(Issue::unsafe_relative_path);
@@ -149,7 +153,7 @@ public:
         }
         std::suspend_always initial_suspend() const noexcept{return {};}
         std::suspend_always final_suspend() const noexcept{return {};}
-        std::suspend_always yield_value(T value) noexcept {
+        std::suspend_always yield_value(T value) {
             current.emplace(std::move(value));return {};
         }
         void unhandled_exception() noexcept{failure=std::current_exception();}
@@ -218,7 +222,8 @@ public:
                 std::size_t aggregate_budget=8U*1024U*1024U)
       : state_(std::make_shared<State>()),
         worker_([state=state_,root=std::move(root),requests=std::move(requests),
-                 aggregate_budget](std::stop_token stop) mutable {
+                 aggregate_budget=positive_budget(aggregate_budget)]
+                (std::stop_token stop) mutable {
             try {
                 auto gen=make_batch(std::move(root),std::move(requests),stop);
                 std::size_t accumulated=0;
@@ -245,13 +250,7 @@ public:
                 std::lock_guard lock(state->mutex);
                 state->failure=std::current_exception();
             }
-        }) {
-        if(aggregate_budget==0) {
-            worker_.request_stop();
-            worker_.join();
-            throw std::invalid_argument("zero aggregate byte budget");
-        }
-    }
+        }) {}
     WorkerBatch(const WorkerBatch&)=delete;
     WorkerBatch& operator=(const WorkerBatch&)=delete;
     void request_stop() noexcept {worker_.request_stop();}
@@ -262,6 +261,10 @@ public:
         return std::move(state_->results);
     }
 private:
+    static std::size_t positive_budget(std::size_t n) {
+        if(n==0) throw std::invalid_argument("zero aggregate byte budget");
+        return n;
+    }
     std::shared_ptr<State> state_;
     std::jthread worker_;
 };
