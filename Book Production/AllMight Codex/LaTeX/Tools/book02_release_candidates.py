@@ -100,6 +100,30 @@ def record_pdf(file:Path, label:str, build_log:Path) -> dict:
     }
 
 
+def latex_failure_excerpt(log_path: Path) -> str:
+    """Report the useful TeX error, not only a path the assistant can't read."""
+    if not log_path.is_file():
+        return f"(No compiler log was created at {log_path})"
+    lines=log_path.read_text(encoding="utf-8",errors="replace").splitlines()
+    matches=[]
+    for i,line in enumerate(lines):
+        if (line.startswith("! ") or "LaTeX Error:" in line or
+            ("Package " in line and " Error:" in line) or
+            any(text in line for text in ("Emergency stop.",
+                "Fatal error","Undefined control sequence",
+                "Missing $ inserted","File ended while scanning")):
+            lo=max(0,i-4)
+            hi=min(len(lines),i+9)
+            matches.append("\n".join(f"{j+1:>5}: {lines[j]}" for j in range(lo,hi)))
+            if len(matches)>=4:
+                break
+    # Some latexmk errors are only visible in its final stream summary.
+    tail="\n".join(f"{j+1:>5}: {lines[j]}" for j in
+                   range(max(0,len(lines)-45),len(lines)))
+    return (("\n\n".join(matches) if matches else "(No explicit TeX error marker found)")+
+            "\n\n---- Compiler log tail ----\n"+tail)[-9000:]
+
+
 def print_candidates(generation:Path, root:Path)->list[dict]:
     out=root/"print"
     out.mkdir(parents=True,exist_ok=True)
@@ -122,7 +146,20 @@ def print_candidates(generation:Path, root:Path)->list[dict]:
             raise RuntimeError("Missing cumulative research project")
         compile_result=compile_tex(folder,engine,env,generation)
         if compile_result["returncode"]!=0:
-            raise RuntimeError(part+" LuaLaTeX failed; see "+compile_result["compile_log_path"])
+            compiler_log=Path(compile_result["compile_log_path"])
+            detail=latex_failure_excerpt(compiler_log)
+            failure_file=root/"book02-print-failure.json"
+            failure_file.write_text(json.dumps({
+                "part":part,
+                "compiler_returncode":compile_result["returncode"],
+                "log_path":str(compiler_log),
+                "error_excerpt":detail,
+                "next_step":"Inspect source/TeX diagnostic, repair, and rebuild. No PDF was accepted."
+            },indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+            raise RuntimeError(
+                f"{part} LuaLaTeX exited {compile_result['returncode']}.\n"
+                f"Diagnostic report: {failure_file}\n"
+                f"Original compiler log: {compiler_log}\n\n{detail}")
         pdf=Path(compile_result["pdf"])
         candidate=folder/(TITLE.replace(" ","-")+"-"+part[-3:]+".pdf")
         shutil.copy2(pdf,candidate)
