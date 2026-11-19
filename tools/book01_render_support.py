@@ -68,7 +68,12 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
     for item in figures:
         token = item["token"]
         path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
-        caption = item["caption"].replace("\\", "").replace("&", r"\&").replace("%", r"\%").replace("#", r"\#").replace("_", r"\_")
+        caption = item["caption"].replace("\\", "")
+        for reserved, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"),
+                                  ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                                  ("$", r"\$"), ("~", r"\textasciitilde{}"),
+                                  ("^", r"\textasciicircum{}")):
+            caption = caption.replace(reserved, escaped)
         latex = (
             "\\par\\begin{center}\n"
             "\\includegraphics[width=.94\\linewidth,height=.36\\textheight,"
