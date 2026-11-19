@@ -141,3 +141,22 @@ capability claim is authorized or implied by this milestone.
 **Future checkpoint:** Confirm exact source revisions, compile and run all
 targets, materialize JUnit evidence, apply strict additive inserts without
 replacing original text, and conduct independent device-specific validation.
+
+
+## Pass14 Kairo/Maveb submission source ledger (read-only)
+
+The Pass14 cross-project target follows this primary evidence trail. These are **actually fetched connected GitHub files**, with the observed main-branch Git blob IDs, not assumed versions on the user's Mac.
+
+| Original repository source | Observed Git blob SHA | What the actual code shows / review action |
+| --- | --- | --- |
+| `KairoRenderer/VulkanCommand.cppm` | `ac131fdd82a6558f231de669622c41395bd8e249` | Creates one primary VkCommandBuffer from a resettable VkCommandPool; Begin resets before vkBeginCommandBuffer. Pool/buffer cannot be reset until prior submitted use completes |
+| `KairoRenderer/VulkanSync.cppm` | `8945c4d5d9a343966e4ac853395672c52e542617` | Creates a single initially-signaled in-flight fence, an image-acquisition semaphore and one render-finished binary semaphore per swapchain image; reconstruction requires an explicit device-idle contract |
+| `KairoRenderer/VulkanRenderer.cppm` | `306bba0719948ecc4475a0de0112f15a00eee9a5` | RenderGraph flows Retire(wait fence) → Acquire(image, **reset fence**) → Record → vkQueueSubmit → vkQueuePresentKHR. The reset occurs before recording/submission; an error between reset and accepted submission requires recovery or next-frame fence wait may block indefinitely. Source-level issue, **not device-reproduced** |
+| `Maveb/engine/metal/src/Renderer.cpp` | `cfe9669de8475995f82166e71dc407d0b39b3331` | Uses 3-frame dispatch semaphore, frameContexts_, MTL command-buffer commit/completed handler, readback capture; destructor waits for permits. Callback captures this but destructor's drain means **not** a proven use-after-free; investigate permit balance on all early exits |
+| `Maveb/engine/metal/src/FrameContext.cpp` | `e610d5b2e4b0e467f4e93d3fed6a7b694a47a5e6` | beginFrame executes deferred cleanup and resets upload/readback cursors; safe only after all old GPU uses of these slices finish; allocation explicitly checks alignment and a form of overflow |
+
+**Teaching impact:** CPU model `gpu_course/submission_retirement.hpp` now isolates frame-slot generation, WSI image, swapchain generation, accepted/unknown submission state, unsignaled fence recovery and explicit resource generations with CPU pins. `gpu_submit_retire_cpp23_lab.cpp` tests the discovered Kairo failure path and the Maveb frame-lifetime obligation using synthetic event inputs. The optional separate native `gpu_course/native_vulkan_submit_probe.cpp` uses real Vulkan 1.0 vkCmdFillBuffer, vkCmdPipelineBarrier to HOST, vkQueueSubmit and vkWaitForFences plus byte-for-byte mapped results only when explicitly requested with a Vulkan SDK and actual device. No GPU result was executed or verified by this source audit.
+
+**External write boundary:** Kairo, Maveb, KairoPhysics and Kyoto repositories were **not modified** by Pass14. The source observations above establish design requirements and review targets; implementation fixes in the external repos need dedicated test/build evidence and clear instruction to apply there.
+
+**Next project progression:** Chapter15 should use a real Metal 3 command buffer, drawable, storage-mode/resource-lifetime cases and validated graphics/compute output from Maveb/Kairo's Metal backend, alongside a platform-independent CPU oracle. The CUDA/Vulkan/Metal comparison must respect actual feature and ABI differences, not mechanically map identical flag values across APIs.
