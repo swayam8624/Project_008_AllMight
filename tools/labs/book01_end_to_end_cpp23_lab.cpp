@@ -398,6 +398,13 @@ void concurrent_publication_is_single_winner() {
     std::atomic<int> wins{0};
     std::vector<std::jthread> threads;
     threads.reserve(contenders);
+    // Releasing the gate is also required on a thread-construction exception.
+    // Declare this guard AFTER the worker vector, so its destructor releases
+    // already-started workers BEFORE jthread destructors join them.
+    struct GateRelease {
+        std::latch* gate;
+        ~GateRelease() { if (gate) gate->count_down(); }
+    } release{&starting_gate};
     for (int i = 0; i < contenders; ++i) {
         threads.emplace_back([&, index = i] {
             Receipt candidate = base; // independent owned value
@@ -409,6 +416,7 @@ void concurrent_publication_is_single_winner() {
         });
     }
     starting_gate.count_down();
+    release.gate = nullptr; // exactly one release, including the normal path
     for (auto& worker : threads) worker.join();
     const auto current = scene.snapshot();
     require(wins.load(std::memory_order_relaxed) == 1,
