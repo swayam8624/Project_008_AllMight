@@ -13,6 +13,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from book02_visuals import install_book02_visuals
+
 ROOT = Path(__file__).resolve().parent.parent
 BUILD_ROOT = ROOT / 'Build'
 TARGET_PAGES = 650
@@ -372,6 +374,7 @@ def prove_and_plan(generation, catalog, manifest, reuse_generation=None, selecte
         if not proof_entry.is_file():
             raise RuntimeError('Missing complete logical-stage proof entry: ' + str(proof_entry))
         shutil.copy2(proof_entry, out / 'main.tex')
+        install_book02_visuals(out / 'main.tex')
         result = compile_tex(out, engine, env)
         if result['returncode'] != 0:
             progress['status'] = 'failed'; progress['stages'].append({'id': stage['id'], **result})
@@ -422,6 +425,7 @@ def build_physical_parts(generation, part_map, selected=None):
     def run(part):
         cwd = output_root / part['id']; cwd.mkdir(parents=True, exist_ok=True)
         shutil.copy2(generation / part['id'] / 'main.tex', cwd / 'main.tex')
+        install_book02_visuals(cwd / 'main.tex')
         result = compile_tex(cwd, engine, env, generation)
         if result['returncode'] == 0:
             build_pdf = Path(result['pdf'])
