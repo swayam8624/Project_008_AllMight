@@ -52,3 +52,92 @@ Source commits and documentation should not be described as an observed successf
 The fixture checks deterministic content and source fingerprints, but its FNV-1a checksum is not cryptographic. Production release should use strong artifact digests and source provenance. The original Pass 18 path checks are not a race-free hostile-filesystem sandbox. Production async import additionally needs a bounded persistent job queue, cancellation policy under blocked I/O, actor/mutex-protected scene publication and safe lifetime transfer into the actual renderer. The memory oracle checks a conceptual model rather than a native GPU queue. Research data products must add exact numerical or geometric independent oracles, dataset validation splits, and real measured performance/effect sizes.
 
 **Book 01 is not declared complete by the number 19.** The pass provides a connected, testable capstone and an honest missing-verification ledger for the later controlled checkpoint.
+
+## Pass 20 — Actual multi-toolchain repair and evidence (19 November 2026)
+
+The initial C++23 end-to-end program is no longer merely an authored source:
+[isolated full-header Ubuntu CMake/CTest run 44473542774](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44473542774)
+compiled the real source and executed its one targeted test successfully. The
+later [run 44474079815](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44474079815)
+compiled and passed again after adding the eight-worker mutex-protected scene
+publication and its revision-overflow/exception-path checks. These are **one
+capstone test per run**, not 18 complete labs or an observed ThreadSanitizer
+proof.
+
+### The source of the original zero-job CI failures
+
+For the original four-job workflow, GitHub recorded immediate failed runs
+with zero jobs and no compiler logs. An independent executable smoke workflow
+proved runner availability. We ran `actionlint` in a genuine GitHub job and
+observed a specific invalid path-filter glob at line 16:
+`Supplementary/C++23 Project Labs/**`. Bare `+` is a special glob operator;
+the filter was not valid GitHub Actions pattern syntax. It was replaced with
+the legal `Supplementary/**`, after which GitHub actually scheduled the
+full GCC, Clang, macOS and sanitizer jobs. The failed zero-job runs preceding
+this fix were **not compiler failures**.
+
+### Real compiler and test failures exposed once CI could start
+
+- The legacy dependency-graph NROM lab attempted
+  `std::move(*parsed)` from a `const std::expected<NromCartridge,...>`.
+  The contained cartridge is move-only; const made the attempted move
+  resolve to a deleted copy. Changed the local result to non-const
+  `auto parsed` with explanatory source comments, preserving ownership.
+- A separate GPU submission/retirement test and the Metal-frame reference
+  used `check(bool,...)` directly with `std::expected<void,Error>`.
+  `std::expected::operator bool` is explicit. They now use typed
+  `std::expected<T,E>` overloads asking `has_value()`.
+- The optional Objective-C++ Metal test had braced `uint32_t` initializers
+  combining `uint32_t` coordinates with `std::size_t` modulo offsets.
+  AppleClang rejected the narrowing. The tiny modulo operands are now
+  explicitly converted after reasoning from the bounded 32-box test size.
+- Ubuntu Clang 18 combined with the runner's libstdc++ exposed no usable
+  `std::expected`, because its Concepts feature level failed the library's
+  availability gate. Linux Clang and Clang-ASan jobs now select Clang 19
+  and compile a preflight `std::expected` fixture. They do not redefine
+  standard feature-test macros to manufacture support.
+- The macOS 15/Xcode 16.4 environment lacked `std::stop_token` and
+  `std::jthread`; neither was skipped or replaced by a fake stub.
+  The Apple job now targets the macOS 26 image and has an explicit
+  C++23 `std::jthread`/`std::stop_token` compile-time preflight.
+
+### Observed suite receipts, source-revision qualification
+
+In [full-matrix run 44474946935](https://github.com/swayam8624/Project_008_AllMight/actions/runs/44474946935),
+from commit `0697e7e181f7d7a0e1c71d53f1f598bf52930c03`,
+the **GCC Debug job passed all 18 CTests**, the three Python unit-test
+groups (6, 8 and 5 tests), the additive original-manuscript integrity audit,
+and the source-pinned evidence collector/verification. The **Clang 19
+ASan+UBSan job also completed successfully** under that commit.
+The AppleClang job for that revision still used Xcode 16.4 and failed for
+missing standard library APIs, so this was **not an all-platform green run**.
+A later amendment switched the Apple toolchain to macOS 26 and added a
+compiler preflight, which requires an actual newer run before declaring
+macOS verification.
+
+When source or documentation changes after a test, its Git SHA/source hashes
+change. Prior green outcomes remain trustworthy historical evidence for the
+exact commit stated but are **not certificates for any later HEAD**.
+A release declaration requires all four jobs and their fail-closed evidence
+collectors to complete successfully at the same final commit. GitHub
+workflow runs are linked here rather than inventing locally executed results.
+
+### What the new concurrency lesson actually proves
+
+The existing `CPP-19E` staged lesson has a new long-form Pass20 section,
+which derives the mutex-protected revision/receipt swap as one linearizable
+publication, including no-throw move/swap constraints, a saturated revision
+refusal, owned snapshots, a start-gate guard for jthread-construction failure,
+and an eight-contender exactly-one-winner test. The numeric fixtures also
+have independent full-file FNV-1a expectations plus alpha-only/winding-flip
+metamorphic changes. An observed passing CTest establishes **tested behavior
+on the executed run**. It is not a proof against untested interleavings,
+not a ThreadSanitizer finding, and not synchronization evidence for actual
+Metal or Vulkan GPU resource retirement.
+
+**Source-preservation invariant:** The original continuous master was never
+edited, shortened, reassembled, or compiled into LaTeX. The full curriculum
+still has 16 originally mapped reading chapters in Book01, 18 staged exact
+additive lessons/test targets, and 18 registered default CTests. Pass20
+deepened the already staged CPP-19E lesson and repaired test sources; it
+did not invent a nineteenth original chapter or replace the existing book.
