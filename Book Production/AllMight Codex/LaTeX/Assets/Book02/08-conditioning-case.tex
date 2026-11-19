@@ -1,0 +1,62 @@
+% A carefully factored condition-number example, not a timing claim.
+\clearpage
+\section*{Numerical audit: why a small residual can hide a large error}
+\noindent Consider the nearly dependent matrix
+\[
+A_\delta=\begin{pmatrix}1&1\\1&1+\delta\end{pmatrix},
+\quad
+A_\delta x=b,\quad
+x_*=\begin{pmatrix}2\\-1\end{pmatrix},
+\quad
+b=\begin{pmatrix}1\\1-\delta\end{pmatrix}.
+\]
+This exact problem has a unique answer whenever \(\delta\ne0\).
+Yet uniqueness does not imply numerical stability: as \(\delta\)
+shrinks, the columns become harder to distinguish from observations.
+
+For \(\delta>0\), the trace and determinant of \(A_\delta^TA_\delta\) are
+\[
+\tau=4+2\delta+\delta^2,\qquad
+\det(A_\delta^TA_\delta)=\delta^2.
+\]
+If its eigenvalues are \(\lambda_{\max}\) and \(\lambda_{\min}\),
+their product is \(\delta^2\), and the singular values of \(A_\delta\)
+are the square roots of those eigenvalues. Thus
+\[
+\kappa_2(A_\delta)
+=\sqrt{\frac{\lambda_{\max}}{\lambda_{\min}}}
+=\frac{\lambda_{\max}}{\delta}
+\sim\frac4\delta,\qquad
+\kappa_2(A_\delta^TA_\delta)=\kappa_2(A_\delta)^2.
+\]
+At \(\delta=10^{-3}\), the condition numbers are approximately
+\(4.0020\times10^3\) and \(1.6016\times10^7\), respectively.
+Normal-equation least squares inherits squared conditioning
+\emph{before} accounting for additional floating-point rounding;
+QR and SVD avoid that particular squaring in their solution pathways.
+
+An observation-level illustration exposes the underlying information
+problem, not just the algorithmic one. Hold \(b_1=1\), but perturb
+\(b_2\) upward by \(10^{-4}\). Subtracting the two equations gives
+\(\delta x_2=-\delta+10^{-4}\); for \(\delta=10^{-3}\),
+the recovered coefficients move from \((2,-1)\) to
+\((1.9,-0.9)\). A \(10^{-4}\) change in one observation
+moves each coefficient by \(0.1\).
+The new solution may have almost zero residual for the new data and
+still be far from the true coefficients.
+
+\paragraph{Implementation contract.}
+When a dense least-squares problem is nearly rank deficient, report
+\(\lVert Ax-b\rVert\), relative residual, rank or singular-value threshold,
+the estimated condition number, and coefficient sensitivity.
+Compare pivoted QR/SVD with normal equations using the \emph{same}
+observations and numerical precision. A method can be backward stable
+yet unable to recover information the data never constrained.
+
+\paragraph{Challenge.}
+Sweep \(\delta=10^{-1},10^{-2},\ldots,10^{-8}\).
+Use a library reference implementation rather than promising that a
+handwritten \(2\times2\) inverse is a stable general-purpose solver.
+Plot condition number, observed coefficient error, and residual
+on separate labeled axes. Discuss the scale at which floating-point
+results cease to be trustworthy.
