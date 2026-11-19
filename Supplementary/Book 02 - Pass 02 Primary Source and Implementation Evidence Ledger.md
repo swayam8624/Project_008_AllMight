@@ -53,6 +53,8 @@ Both Kairo repositories' `STATUS.md` files currently explicitly reject earlier p
 - `tools/labs/book02_papers_numeric.py`: own finite-element stiffness and lumped-mass assembly; single-step implicit heat solve, normalized negative gradient and anchored Poisson distance; independent exponential least-squares fit with Huber weights and accepted LM-like trial steps.
 - `tools/labs/book02_papers_sampling.py`: two normalized proposal PDFs, inverse CDF, equal-count MIS balance estimate, independent-replicate statistics and exact analytical integral.
 - Three corresponding `test_book02_papers_*.py` suites: positive, invalid, degenerate, analytic, numerical-parity, variance, and repeatability checks.
+- `tools/labs/book02_papers_cpp23.cpp`: independent standard-library C++23 first-stage orientation sign filter that refuses uncertain values, bounded-integer exact cross-checks, P1 triangle stiffness and heat-step energy/positivity witness, a screened tiny linear solve, and a stable large-magnitude norm test. This C++ source is a teaching companion, not a replacement for Shewchuk's full adaptive precision implementation.
+- The research CI additionally compiles with `g++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic` and executes that binary; acceptance requires an actual green run.
 - Seven paper-derived LaTeX teaching sections (`21-...` through `27-...`), added at original chapter boundaries through the working-copy injection; all original stage source chapter files remain untouched.
 
 ## 5. Acceptance gates and nonclaims
