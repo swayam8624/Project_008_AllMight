@@ -416,3 +416,28 @@ production extension should add race-resistant native filesystem access,
 bounded number of jobs/consumer queue, durable file transactions and
 scene-generation-aware asset publication. Native GPU correctness must
 remain a separate verified evidence stream.
+
+
+## Pass 19 source ownership — Book 1 end-to-end C++23 receipt, reused later
+
+`CPP-19E - A Complete Asset to Evidence Trace.md` is an *additional* Book 1
+source lesson anchored at the unique original Chapter 10 reproducibility
+heading, immediately after its NES-10R addition. It is **not** original
+Chapter 19 and not permission to remove or replace existing text. The
+original 39 derived computing-foundations chapters and 16 primary lessons
+remain separately mapped. CPP-18A stays anchored under original Chapter 06.
+
+Pass 19 binds actual prior C++23 components into the trace: bounded real
+file bytes -> Pass05 typed source validation -> Pass06 generational publication
+-> Pass08 host dependency plan -> actual integer computation and Pass09 CPU
+memory/completion model -> stable receipt -> stale-identity rejection and
+revision-aware single-threaded publication. This *portable CPU oracle* is
+owned by Book 1. Book 3 later supplies geometry-wide algorithms and actual
+formats, Book 5 supplies collision correctness/solver oracles, Book 6 owns
+native Vulkan/Metal synchronization, and Book 7 owns real XR temporal
+measurements. Avoid duplicating CPP-19E verbatim into each later book:
+cross-reference the reusable contract, then teach each field's native
+implementation and independent verification separately.
+
+The full build/test and byte-preserving canonical insertion remain deferred
+to the agreed checkpoint. Source registration is not test execution.
