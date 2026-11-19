@@ -102,6 +102,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
         b"\n### BUFFERS, IMAGES, MEMORY & UPLOADS\n",
     ),
+    Insert(
+        "GPU-14F",
+        "Supplementary/C++23 Project Labs/GPU-14F - Frame Submission Synchronization and Retirement.md",
+        b"\n### VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES\n",
+    ),
 )
 
 
