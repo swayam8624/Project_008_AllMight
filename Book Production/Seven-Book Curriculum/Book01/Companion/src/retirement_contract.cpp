@@ -3,6 +3,7 @@
 // NOT a Vulkan semaphore, a Metal shared event, or a threading primitive.
 //
 // A host function returning is not enough to recycle device resources.
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <limits>
