@@ -110,7 +110,8 @@ def math_preflight(source: str, label: str) -> dict:
     if empty or broken:
         raise ValueError(f"{label}: empty math {empty}; empty boxed expressions {broken}")
     return {"display_math": len(blocks),
-            "boxed_math": sum(len(re.findall(r"\\boxed\s*\{", b)) for b in blocks)}
+            "boxed_math": sum(len(re.findall(r"\\boxed\s*\{", b)) for b in blocks),
+            "_original_math_bodies": [b.strip() for b in blocks]}
 
 
 def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path):
@@ -176,11 +177,25 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
 
 
 def check_math_rendered(source_stats: dict, tex: str, chapter: int):
+    """Require every original display formula's TeX body to survive Pandoc."""
     generated = len(re.findall(r"\\boxed\s*\{", tex))
     if generated < source_stats["boxed_math"]:
         raise ValueError(
             f"Chapter {chapter}: source has {source_stats['boxed_math']} boxed "
             f"equations but generated TeX only {generated}"
+        )
+    def normalize(s: str) -> str:
+        # Underscores inside generated texttt are escaped for compilability.
+        return re.sub(r"\s+", "", s).replace(r"\_", "_")
+    output = normalize(tex)
+    missing = [index for index, body in
+               enumerate(source_stats.get("_original_math_bodies", []), 1)
+               if normalize(body) not in output]
+    if missing:
+        raise ValueError(
+            f"Chapter {chapter}: {len(missing)} display equations were "
+            f"altered, split, or omitted in generated TeX; display-math "
+            f"block numbers: {missing[:20]}"
         )
 
 
