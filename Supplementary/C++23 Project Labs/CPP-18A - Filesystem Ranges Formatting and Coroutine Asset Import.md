@@ -288,6 +288,81 @@ Fourth connect loading to a real GPU staging command. Store the typed asset whil
 
 Fifth write a reproducible experiment report. Record source bytes/digest, asset-format version, compiler/standard library, sanitizer configuration, file sizes, decode time, publication time, optional native GPU upload and rendering times separately, failure count and exact output oracle. For a speed claim, compare equivalent workloads across multiple runs with correctness checks, not a single warm cache read.
 
+#### Why a byte budget cannot bound an error queue
+
+Consider a Maveb scene archive that references 200,000 missing Gaussian-shard files, or a Kairo editor project whose stale mesh references point to nonexistent paths. The ingester has a total successful-payload budget of eight mebibytes. Nevertheless, every attempted open might produce a small typed error rather than any successful payload. If the budget checks only `OwnedAsset::bytes.size()`, the sum of accepted payload sizes remains zero, so the worker could append 200,000 errors before reaching a byte threshold. It has satisfied the byte budget while violating the actual memory-liveness contract for an interactive application.
+
+The right model has **at least three separate bounds**: a per-input byte ceiling, an aggregate successful-byte ceiling, and an input/output **record-count ceiling**. For the educational worker we also impose a maximum encoded pathname length. At construction, before starting a worker thread, the code verifies that the manifest contains at most a configurable number of requests (default 1024 and never more than 4096) and that no pathname exceeds 4096 bytes. A caller-supplied manifest with a million entries is still already allocated when it reaches the function, so this does not claim to prevent that *upstream* allocation. It does ensure that our worker does not begin processing it or accumulate an unbounded number of result events. The caller's manifest parser must independently reject untrusted oversized manifests before allocating them.
+
+The distinction becomes sharper when we derive memory requirements. Let `N` be the number of requests accepted by the constructor, `P_i` the payload size for accepted success `i`, `E_i` the memory overhead of an error record, and `B` the aggregate payload budget. We require
+
+\[
+0 \leq N \leq N_{\max},\qquad
+\sum_{\text{successful }i}P_i \leq B,\qquad
+P_i \leq B_{\mathrm{file}}.
+\]
+
+This gives a bounded count of result records, and successful retained bytes never exceed `B`. The total host allocation includes vector capacities, owned path strings, fixed state, one currently loading file and allocator overhead. It is therefore **not exactly `B`**, and the full production allocator should measure or budget those overheads explicitly. The count bound is a necessary step toward that stronger guarantee, not a proof of a hard byte-perfect process ceiling.
+
+The C++23 worker performs its preflight before it launches `std::jthread`. A useful shape is:
+
+```cpp
+// First construct the owning state, rejecting bad manifests synchronously.
+// Only then capture requests into a newly launched worker.
+static std::shared_ptr<State> checked_state(
+    const std::vector<Request>& requests,
+    std::size_t aggregate_budget,
+    std::size_t max_requests)
+{
+    if (aggregate_budget == 0)
+        throw std::invalid_argument("zero aggregate byte budget");
+
+    if (max_requests == 0 || max_requests > 4096)
+        throw std::invalid_argument("maximum requests must be 1..4096");
+
+    if (requests.size() > max_requests)
+        throw std::length_error("request manifest exceeds bound");
+
+    for (const Request& request : requests)
+        if (request.relative.size() > 4096)
+            throw std::length_error("request path exceeds 4096 bytes");
+
+    return std::make_shared<State>();
+}
+```
+
+Compare this to validating the manifest from inside the worker. In the latter design the constructor would appear successful, then an error could race with scene shutdown or a later import operation. Here an invalid request count prevents the worker from starting at all. Error records already produced by an accepted batch remain owned by the worker's result state; their number is bounded by the number of accepted requests. A downstream application still must decide whether to publish partial successes, retry failures, or abort a **whole scene transaction**. Our model does not turn a collection of independently imported files into one atomic scene commit.
+
+#### Cancellation between file chunks, not magical asynchronous filesystem I/O
+
+There are two different stopping problems. The first occurs while the coroutine is between requests. The second occurs while it is reading one large file. Earlier versions of this laboratory checked the worker stop token only between `co_yield` operations: asking a thread to stop could prevent the *next* file from starting, but the current bounded read would continue until it reached end-of-file or an error.
+
+The resumed implementation passes the same `std::stop_token` into `Root::load` and checks it before any path operation, before each 4096-byte chunk and before publishing the final owned result. This changes the cancellation invariant: if a stop request is already visible at one of those checkpoints, no partially read buffer is returned as a successful asset. A concrete minimal use is:
+
+```cpp
+std::stop_source cancellation;
+cancellation.request_stop();
+
+auto attempted = root.load(
+    Request{"assets/scene.txr4", AssetKind::texture_rgba8},
+    cancellation.get_token());
+
+// The test verifies this is Issue::cancelled, not a partial texture.
+if (attempted)
+    throw std::logic_error("cancelled request unexpectedly published");
+```
+
+This is **cooperative cancellation**. It does not interrupt an OS syscall which is already blocked inside `std::ifstream::read`, nor does it imply that the platform exposes cancellable async file handles through standard C++. The implementation also cannot guarantee that a stop request arriving immediately after the final checkpoint prevents a completed read from being observed; concurrent cancellation is a temporal protocol, and a caller that wants to suppress stale results should additionally validate the **scene generation/revision at publication time**. That connection matters in Kairo's editor and Maveb's asset reload: the scene may have changed while a perfectly valid old file was loading.
+
+A more complete architecture would give each batch a scene-revision token, receive owning results into a bounded completion queue, and atomically check that the revision is still current before committing to the generational registry. A stale scene's read result could be discarded without invalidating assets already in use by render queues. That is a genuine next project milestone, not something our simple cooperative stop token silently guarantees.
+
+#### The exact test evidence this revision earned
+
+The two modified source files were reconstructed byte-identically to the committed GitHub blobs in the local standalone workspace, then rebuilt and run with a strict GCC 14.2 C++23 CMake/CTest configuration and a Clang 17 C++23 ASan/UBSan configuration. Both one-test suites passed. The negative cases cover too many requests, zero request-capacity, overlong pathnames, pre-requested cancellation and bounded error outcomes, in addition to the original bounded file reads, coroutine ownership, range sorting/filtering and formatting diagnostics.
+
+These **are real executed local standalone test outcomes**, with machine-readable JUnit receipts recorded in the Pass 18 evidence ledger. They are not a successful build of the entire seventeen-target Book 1 course. The standalone include tree intentionally lacks the earlier Pass06 registry header, so the runtime branch that calls the actual typed generational registry was not executed in this environment. The full Book01 CMake build continues to demand that real registry header rather than silently skipping it. A research-grade or production-ready asset pipeline also requires native race-resistant file descriptor handling, trusted root ownership, source signature/version validation, durable scene revisions and explicit GPU-upload retirement. None of those properties should be inferred from this one passing CTest.
+
+
 **Acceptance boundary of Pass 18:** substantive narrative covering actual C++23 filesystem/ranges/format/print/coroutine semantics and common real-world pitfalls; an owned, locally compiled portable asset-ingestion implementation; a new CMake/Ctest lab designed to integrate the previous typed decoders and generational asset registry; explicit failure and cancellation tests; byte-preserving manuscript insertion staging. The entire seventeen-target course build, native devices and production filesystem/security race defenses remain independently verifiable work.
 
 **Primary documentation referenced:** [C++ coroutines and coroutine frame lifetime](https://en.cppreference.com/w/cpp/language/coroutines), [C++ ranges and borrowed ranges](https://en.cppreference.com/w/cpp/ranges), [C++ formatting library](https://en.cppreference.com/w/cpp/utility/format), [C++23 printing](https://en.cppreference.com/w/cpp/io/print), [C++ filesystem status and symlink_status](https://en.cppreference.com/w/cpp/filesystem/status), [C++ standard feature test macros](https://en.cppreference.com/w/cpp/feature_test), and the actual previously committed Pass05 `typed_asset_pipeline.hpp` / Pass06 `generational_asset_registry.hpp` source. Relevant native OS directory traversal rules must be validated per platform rather than inferred from portable filesystem APIs.
