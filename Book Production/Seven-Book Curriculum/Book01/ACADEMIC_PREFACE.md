@@ -20,6 +20,8 @@ First reconstruct the mechanism in words and identify the assumptions. For a num
 
 Next reproduce the example with the specified toolchain. Record its inputs and expected behavior before running it. Repeat with at least one boundary case and one deliberately invalid case. For a performance result, separate an independent correctness oracle from the timed region and record the hardware, software versions, data set, warm-up, and measurement method. A faster incorrect result is not an optimization.
 
+Every chapter ends with three explicit obligations: **Reconstruct** the mechanism without copying a diagram, **Falsify** an assumption with a controlled test, and **Transfer** the reasoning to another application. These tasks are not page-filling exercises. They are a check that a concept has become usable. A reader who completes a laboratory should retain its source, inputs, observed behavior, counterexample and environmental record.
+
 Listings are classified as complete programs, fragments, pseudocode, or GPU/API examples where the context makes that distinction material. Source paths and identifiers from the companion projects are examples of real-world engineering structures, not general language requirements. Reconstruct the abstract contract even when a particular project's implementation is unavailable.
 
 ## Conventions and scope
