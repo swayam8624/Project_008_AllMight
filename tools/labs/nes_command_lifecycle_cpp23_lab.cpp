@@ -110,17 +110,21 @@ void test_encoder_errors_and_dag_rejection() {
         make_task(1,"duplicate",dg::Domain::gpu_transfer,{r(a)}));
     check(!repeated &&
           repeated.error()==cm::CommandError::graph_rejected &&
+          stream.last_graph_failure() &&
+          stream.last_graph_failure()->kind==dg::GraphError::duplicate_task &&
           stream.command_count()==1,
-          "duplicate graph command refused without publishing new record");
+          "duplicate graph command refused with an exact diagnostic");
     const auto missing=stream.record(
         make_task(2,"unresolved",dg::Domain::gpu_compute,{r(a)},
                   {dg::TaskId{99}}));
     check(missing.has_value(),"forward dependency allowed while recording");
     const auto bad_seal=stream.seal();
     check(!bad_seal && bad_seal.error()==cm::CommandError::graph_rejected &&
+          stream.last_graph_failure() &&
+          stream.last_graph_failure()->kind==dg::GraphError::missing_dependency &&
           stream.state()==cm::State::recording &&
           stream.plan()==nullptr,
-          "unresolved dependency fails seal atomically");
+          "unresolved dependency fails seal atomically with exact cause");
     check(stream.abandon().has_value(),"unsubmitted batch may be abandoned");
     check(stream.state()==cm::State::initial &&
           stream.command_count()==0,"abandon clears recorded work");
@@ -131,8 +135,10 @@ void test_encoder_errors_and_dag_rejection() {
                                  {dg::TaskId{20}})).has_value(),"A");
     check(cycle.record(make_task(20,"B",dg::Domain::gpu_compute,{},
                                  {dg::TaskId{10}})).has_value(),"B");
-    check(!cycle.seal() && cycle.state()==cm::State::recording,
-          "two-command directed cycle refused before queue submission");
+    check(!cycle.seal() && cycle.state()==cm::State::recording &&
+          cycle.last_graph_failure() &&
+          cycle.last_graph_failure()->kind==dg::GraphError::directed_cycle,
+          "two-command directed cycle refused with exact graph cause");
     check(cycle.abandon().has_value(),"cycle can be safely abandoned");
 
     auto original=make_valid_stream();
