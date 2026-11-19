@@ -393,8 +393,11 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             render.check_math_tokens(reading_text, math_entries, num, "reader reflow")
             before_editorial = reading_text
             reading_text, editorial = publication.apply_reader_edits(reading_text, num)
-            render.verify_fenced_blocks_unchanged(before_editorial, reading_text, num,
-                                                   "editorial cleanup", allow_pseudocode_labels=True)
+            render.verify_fenced_blocks_unchanged(
+                before_editorial, reading_text, num, "editorial cleanup",
+                allow_pseudocode_labels=True,
+                allowed_new_shell_listings=editorial["promoted_build_commands"],
+            )
             render.check_math_tokens(reading_text, math_entries, num, "editorial cleanup")
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
             source_figure_count = len(render.MERMAID.findall(shielded_source))
