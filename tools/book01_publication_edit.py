@@ -20,12 +20,12 @@ EDITOR_SENTENCES = (
     re.compile(r"(?im)^(?:This pass (?:begins|closes)|Pass \d{1,2} (?:begins|ends|closed|completes))\b.{5,650}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^The original source contract calls this\b.{5,480}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^This is an authored reconstruction of M\d+\b.{5,460}?(?=\n\n|\Z)", re.S),
-    re.compile(r"(?im)^The exact curriculum ownership is:\b.{5,650}?(?=\n\n|\Z)", re.S),
+    re.compile(r"(?im)^The exact curriculum ownership is:.{5,650}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^This addition belongs before the chapter.{5,500}?(?=\n\n|\Z)", re.S),
 )
 MERGE_HEADING = re.compile(
     r"(?im)^#{1,6}\s*(?:Next\s*[—-]\s*Pass\s+\d+|"
-    r"(?:Pass|Phase)\\s+\\d+\\s*[:—-]\\s*M\\d+|\\+\\s*M\\d{3})"
+    r"(?:Pass|Phase)\s+\d+\s*[:—-]\s*M\d+|\+\s*M\d{3})"
     r"[^\n]*$", re.M,
 )
 REDUNDANT_TITLE = re.compile(
@@ -50,10 +50,6 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
     source = source.replace(
         "one of the first mental separations I want permanently burned in",
         "one of the most important conceptual distinctions"
-    )
-    source = source.replace(
-        "the user has reserved the final pull, manuscript application and comprehensive native verification",
-        "the working release still requires final source application and independent native verification"
     )
 
     def edit_prose(fragment: str) -> str:
