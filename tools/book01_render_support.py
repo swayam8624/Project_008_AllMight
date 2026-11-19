@@ -66,22 +66,24 @@ THEMATIC_REST = re.compile(r"(?m)^[ \t]*---[ \t]*$")
 
 
 
-def verify_fenced_blocks_unchanged(original: str, edited: str,
-                                   chapter: int, stage: str,
-                                   *, allow_pseudocode_labels: bool = False) -> None:
-    """Fail if a reader edit drops, fuses, or rewrites ANY fenced block.
+def verify_fenced_blocks_unchanged(
+    original: str, edited: str, chapter: int, stage: str,
+    *, allow_pseudocode_labels: bool = False,
+    allowed_new_shell_listings: int = 0,
+) -> None:
+    """Fail if any source code or diagram changes, disappears or moves.
 
-    Captures the entire source code and diagram payload byte-for-byte, in
-    order. The only permitted header edit at this stage is cpp -> text for
-    explicitly labeled pseudocode; original source code is never deleted.
-    This prevents heading regexes from consuming the newline before a
-    Mermaid fence and silently printing the diagram language as prose.
+    Reader editing may introduce a shell *listing* by promoting a long
+    inline build command into a copyable block. That is an intentional,
+    counted addition. Existing blocks still have to match in order, with
+    identical payload hashes. An unexpected new Mermaid or C++ fence is
+    not silently accepted.
     """
     def unpack(source: str) -> list[tuple[str, str]]:
         blocks = []
         for match in FENCE.finditer(source):
-            body = match.group(0)
-            header, _, rest = body.partition("\n")
+            raw = match.group(0)
+            header, _, rest = raw.partition("\n")
             payload, delimiter, _ = rest.rpartition("\n" + chr(96) * 3)
             if not delimiter:
                 raise ValueError("Malformed closing code-fence marker")
@@ -90,31 +92,43 @@ def verify_fenced_blocks_unchanged(original: str, edited: str,
 
     before = unpack(original)
     after = unpack(edited)
-    if len(before) != len(after):
+    if len(after) != len(before) + allowed_new_shell_listings:
         raise ValueError(
             f"Chapter {chapter}: fenced-block count changed during {stage}; "
-            f"{len(before)} source blocks, {len(after)} reader blocks"
+            f"{len(before)} source blocks, {len(after)} reader blocks, "
+            f"{allowed_new_shell_listings} authorized shell additions"
         )
-    for number, ((old_head, old_hash), (new_head, new_hash)) in enumerate(
-        zip(before, after), 1
-    ):
-        if old_hash != new_hash:
-            raise ValueError(
-                f"Chapter {chapter}: fenced-block {number} payload altered "
-                f"during {stage}"
-            )
-        if old_head != new_head:
-            permitted = (
-                allow_pseudocode_labels and old_head.startswith(chr(96) * 3 + "cpp")
+    consumed = 0
+    new_shell = 0
+    for new_head, new_hash in after:
+        matched = False
+        if consumed < len(before):
+            old_head, old_hash = before[consumed]
+            permitted_label = (
+                allow_pseudocode_labels
+                and old_head.startswith(chr(96) * 3 + "cpp")
                 and new_head == old_head.replace(chr(96) * 3 + "cpp",
                                                  chr(96) * 3 + "text", 1)
             )
-            if not permitted:
-                raise ValueError(
-                    f"Chapter {chapter}: fenced-block {number} language or "
-                    f"metadata changed during {stage}: {old_head!r} -> "
-                    f"{new_head!r}"
-                )
+            matched = (old_hash == new_hash and
+                       (old_head == new_head or permitted_label))
+        if matched:
+            consumed += 1
+            continue
+        if (new_shell < allowed_new_shell_listings
+                and new_head == chr(96) * 3 + "sh"):
+            new_shell += 1
+            continue
+        raise ValueError(
+            f"Chapter {chapter}: original fenced-block {consumed + 1} "
+            f"altered, reordered or replaced during {stage}; unexpected "
+            f"reader header {new_head!r}"
+        )
+    if consumed != len(before) or new_shell != allowed_new_shell_listings:
+        raise ValueError(
+            f"Chapter {chapter}: missing original fenced block or "
+            f"unaccounted shell conversion during {stage}"
+        )
 
 
 def prepare_reading_structure(source: str) -> tuple[str, dict]:
