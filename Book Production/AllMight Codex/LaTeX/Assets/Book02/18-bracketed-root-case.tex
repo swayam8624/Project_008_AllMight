@@ -1,0 +1,37 @@
+% Finite-iteration root bracket with exact interval width.
+\clearpage
+\section*{Verification case: a root finder must certify its answer}
+\noindent Find the positive real solution of \(f(x)=x^3-2=0\).
+The function is continuous and strictly increasing on \([1,2]\);
+\(f(1)=-1\) and \(f(2)=6\). Therefore at least one root lies in
+the interval, and monotonicity makes it unique.
+
+Bisection maintains an interval \([a_n,b_n]\) whose endpoints
+bracket the root. After \(n\) successful halvings,
+\[
+b_n-a_n=\frac{b_0-a_0}{2^n}=\frac1{2^n}.
+\]
+Choosing its midpoint \(m_n\) gives the \emph{certified} bound
+\[
+|m_n-x_*|\le\frac1{2^{n+1}}.
+\]
+Ten halvings therefore guarantee error no greater than
+\(1/2048\approx0.00048828125\), independent of derivatives.
+The exact root is \(2^{1/3}\approx1.25992105\).
+
+Newton's method instead updates
+\(x_{n+1}=x_n-(x_n^3-2)/(3x_n^2)\).
+When started at \(x_0=0\), the derivative vanishes and this
+formula is undefined. When started elsewhere, local rapid
+convergence can be useful, but iteration count alone is not an
+error certificate. Bracket safeguards can retain correctness while
+allowing faster steps when their assumptions are satisfied.
+
+\paragraph{Reconstruction.}
+Implement bisection and a safeguarded Newton solver.
+Return not only a floating-point estimate but also a final interval,
+residual, iteration count and failure status.
+Test exact endpoint roots, reversed endpoints, nonfinite values,
+non-bracketing intervals, and a flat derivative at the initial guess.
+Explain the difference between the width-based guarantee and a
+residual that becomes small because \(f'\) is also small.
