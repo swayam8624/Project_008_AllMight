@@ -4,6 +4,10 @@ The reader currently assembles Chapters 01–16 of a 39-chapter foundation
 manuscript. These are editorial titles, not assertions of complete ISO C++23
 coverage or a rewrite of the original chapter content.
 """
+SERIES_TITLE = "From Bits to Research"
+SERIES_SUBTITLE = "Computing, Mathematics, Graphics, Simulation, and Scientific Discovery"
+SERIES_POSITION = "Book One of Seven"
+
 BOOK_TITLE = "From Bits to Parallel Systems"
 BOOK_SUBTITLE = "C++23, CPU Execution, GPU Memory, and Reliable Software"
 PRINT_VOLUMES = (
