@@ -23,13 +23,17 @@ jobs:
     steps:
       - name: Checkout exact source revision
         uses: actions/checkout@v4
+      - name: Configure Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Install Python and Pandoc
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
           python3 --version
           pandoc --version | head -n 2
-          python3 -m pip install --user pymupdf pypdf
+          python3 -m pip install --upgrade pymupdf pypdf
       - name: Check Python syntax and editorial regression tests
         run: |
           python3 -m py_compile \
