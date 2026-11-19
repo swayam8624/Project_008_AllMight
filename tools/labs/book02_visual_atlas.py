@@ -502,7 +502,7 @@ def mis(output: Path) -> dict:
     decorate(axs[0], "Estimate − (e − 1)", "Independent replicates")
     axs[1].set_xscale("log", base=2)
     axs[1].set_yscale("log")
-    axs[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+    # Explicit ticks are essential on a log budget axis: MaxNLocator can\n    # produce unreadable crowded scientific notation after log scaling.\n    axs[1].set_xticks(budgets)\n    axs[1].set_xticklabels([str(x) for x in budgets], fontsize=7.4)\n    axs[1].set_xlim(35, 720)
     axs[1].set_title("Variance vs equal sample budget", loc="left")
     decorate(axs[1], "Integrand evaluations per replicate", "Sample variance of estimates")
     axs[1].legend(loc="upper right", fontsize=7.6)
