@@ -371,27 +371,41 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
           "chapters,", metadata["addition_count"], "lessons, four LaTeX parts")
 
 
-def compile_parts(rows: list[dict], metadata: dict, part: int | None) -> None:
+def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: bool = False) -> None:
     verify_prepared(rows, metadata)
     engine = shutil.which("latexmk")
-    if not engine:
-        raise RuntimeError("LuaLaTeX build requires latexmk: install MacTeX (or BasicTeX plus required packages)")
-    if not shutil.which("lualatex"):
+    lualatex = shutil.which("lualatex")
+    if not lualatex:
         raise RuntimeError("lualatex unavailable: install a compatible TeX Live/MacTeX distribution")
+    # BasicTeX often has LuaLaTeX but not latexmk. Re-run LuaLaTeX itself
+    # for cross-references/TOC rather than forcing installation of full MacTeX.
     selected = [part] if part else range(1, 5)
     for number in selected:
         directory = OUTPUT / f"book01-expanded-p{number:02d}"
         (directory / "build").mkdir(exist_ok=True)
-        cmd = [engine, "-g", "-lualatex", "-interaction=nonstopmode",
-               "-halt-on-error", "-file-line-error", "-outdir=build", "main.tex"]
+        if engine:
+            commands = [[engine, "-g", "-lualatex", "-interaction=nonstopmode",
+                         "-halt-on-error", "-file-line-error", "-outdir=build", "main.tex"]]
+        else:
+            commands = [[lualatex, "-interaction=nonstopmode", "-halt-on-error",
+                         "-file-line-error", "-output-directory=build", "main.tex"]] * 3
         print("Compiling", directory.name, flush=True)
-        result = subprocess.run(cmd, cwd=directory)
         pdf = directory / "build/main.pdf"
-        if result.returncode or not pdf.is_file():
-            raise RuntimeError("LaTeX compilation failed; see " + str(directory / "build/main.log"))
+        for command in commands:
+            result = subprocess.run(command, cwd=directory)
+            if result.returncode:
+                raise RuntimeError("LaTeX compilation failed; see " + str(directory / "build/main.log"))
+        if not pdf.is_file() or not pdf.stat().st_size:
+            raise RuntimeError("LaTeX produced no PDF; see " + str(directory / "build/main.log"))
         destination = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
         shutil.copy2(pdf, destination)
         print("PDF:", destination)
+        if open_pdf:
+            opener = shutil.which("open") if sys.platform == "darwin" else shutil.which("xdg-open")
+            if opener:
+                subprocess.Popen([opener, str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                print("PDF opener not available; open manually:", destination)
 
 
 def main() -> int:
@@ -403,7 +417,10 @@ def main() -> int:
     choice.add_argument("--compile", action="store_true", help="Explicitly compile PDFs on this machine")
     parser.add_argument("--part", type=int, choices=(1, 2, 3, 4),
                         help="For --compile, build only this part")
+    parser.add_argument("--open", action="store_true", help="Open each successfully compiled PDF in the default viewer")
     args = parser.parse_args()
+    if args.open and not args.compile:
+        parser.error("--open requires --compile")
     if args.part and not args.compile:
         parser.error("--part is only meaningful with --compile")
     try:
@@ -415,7 +432,7 @@ def main() -> int:
         elif args.verify_prepared:
             verify_prepared(rows, metadata)
         elif args.compile:
-            compile_parts(rows, metadata, args.part)
+            compile_parts(rows, metadata, args.part, args.open)
     except (OSError, ValueError, RuntimeError, AssertionError, UnicodeError) as exc:
         print("Book01 release refused:", exc, file=sys.stderr)
         return 1
