@@ -75,5 +75,5 @@ int main() {
     catch (const std::runtime_error&) { rejected = true; }
     if (!rejected) throw std::runtime_error("truncated instruction accepted");
 
-    std::cout << "TinyCPU: output 4; invalid opcode and truncation rejected\\n";
+    std::cout << "TinyCPU: output 4; invalid opcode and truncation rejected\n";
 }
