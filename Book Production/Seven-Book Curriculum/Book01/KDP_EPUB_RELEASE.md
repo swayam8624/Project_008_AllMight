@@ -1,12 +1,14 @@
-# Book One — KDP eBook and Digital-PDF Release
+# Book One — Ebook-Only Release
 
 **Book:** From Bits to Parallel Systems — C++23, CPU Execution, GPU Memory, and Reliable Software  
 **Series:** From Bits to Research, Book One of Seven  
 **Author:** Swayam Singal
 
+This release is **an EPUB ebook only**. There is no need to build a paperback, PDF interior, spine, print wrap or 828-page-limited volume. A future publisher can handle a physical edition separately.
+
 ## Original cover artwork
 
-Save the actual user-provided artwork as a real RGB JPEG or PNG file on the Mac. Do not synthesize a similar-looking image or silently substitute a title-page screenshot. The marketing cover for KDP is uploaded separately from the EPUB, which also embeds an internal cover.
+Use the actual cover file already in Downloads, e.g. `~/Downloads/From Bits to Parallel Systems(1).png`. The builder will convert RGBA PNG to RGB JPEG and upscale/pad the portrait artwork to 1600×2560 if necessary while leaving the original unchanged. Install Pillow in `.venv-book01` first. Do not synthesize a similar-looking image or silently substitute a title-page screenshot. The marketing cover for KDP is uploaded separately from the EPUB, which also embeds an internal cover.
 
 For best quality prepare a JPEG approximately **1600 × 2560 pixels** (portrait). Keep the text legible at thumbnail size and preserve aspect ratio when scaling. Official sources: [KDP eBook cover](https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX), [EPUB upload](https://kdp.amazon.com/en_US/help/topic/G200634390), [Kindle Previewer](https://kdp.amazon.com/en_US/help/topic/G202131170).
 
@@ -26,20 +28,17 @@ git pull --ff-only origin curriculum/cpp23-nes-project-pass01
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --prepare
 .venv-book01/bin/python tools/build_book01_expanded_reader.py --verify-prepared
 
-# Point to the exact cover JPEG file.
-COVER="$HOME/Downloads/book01-original-cover.jpg"
+# Use the actual PNG from Downloads, not a copied or invented placeholder.
+COVER="$HOME/Downloads/From Bits to Parallel Systems(1).png"
+.venv-book01/bin/python -m pip install Pillow
 
-# Exact art on the first page of the continuous digital PDF.
-.venv-book01/bin/python tools/stage_book01_cover.py --cover "$COVER"
-.venv-book01/bin/python tools/build_book01_expanded_reader.py --compile
-
-# Source-based EPUB 3 — not a PDF-to-image conversion.
+# Source-based EPUB 3 — no PDF compilation required.
 .venv-book01/bin/python tools/build_book01_kdp_epub.py --cover "$COVER"
 ~~~
 
-The EPUB output should be written to build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-KDP.epub. A structural QA report is in build/book01-expanded-reader/epub-preflight/epub-preflight.json.
+The EPUB output should be written to build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-EBOOK.epub. A structural QA report is in build/book01-expanded-reader/epub-preflight/epub-preflight.json.
 
-**Important:** a syntactically valid EPUB does not establish Kindle compatibility. Do not publish without the final Kindle Previewer checks.
+**Important:** a syntactically valid EPUB does not establish Kindle compatibility or full chapter-by-chapter technical accuracy. Do not publish without the final Kindle Previewer checks.
 
 ## Final independent publication gates
 
