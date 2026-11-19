@@ -329,7 +329,7 @@ def export_candidates_to_master(generation:Path, destination:Path) -> Path:
     destination=Path(destination).expanduser().resolve()
     if not destination.is_dir():
         raise RuntimeError("Export root must exist; supply a path inside the intended Master folder: "+str(destination))
-    version=destination/(generation.name+"-"+current_fingerprint[:12])
+    version=destination/("Book02-From-Equations-to-Geometry-"+generation.name.lstrip(".")+"-"+current_fingerprint[:12])
     if version.exists() and not version.is_dir():
         raise RuntimeError("Book Two export location is not a directory: "+str(version))
     version.mkdir(parents=True,exist_ok=True)
