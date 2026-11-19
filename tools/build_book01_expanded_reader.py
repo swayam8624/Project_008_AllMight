@@ -46,6 +46,16 @@ SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
 PARTS = ((1, 4), (5, 8), (9, 12), (13, 16))
 NUMBER_OF_CHAPTERS = 16
 EXPECTED_ADDITIONS = 18
+ENRICHMENT_FILES = {
+    n: ROOT / "Book Production/Seven-Book Curriculum/Book01/Enrichments" / filename
+    for n, filename in {
+        1: "CH01_CPU_FROM_LOGIC.md",
+        5: "CH05_CPP23_FEATURE_CONTRACTS.md",
+        9: "CH09_GPU_MEMORY_VISUAL_LAB.md",
+        12: "CH12_GPU_LIFETIME_TIMELINE.md",
+        16: "CH16_MEASUREMENT_AND_EVIDENCE.md",
+    }.items()
+}
 # Original foundation master before this branch's additive work. The exact
 # same identity is required after reversing any already-applied lesson
 # blocks; otherwise the derived Chapter Edition may be stale.
@@ -229,6 +239,8 @@ def audit_sources() -> tuple[list[dict], dict]:
         "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
         "second_volume_preface_sha256": sha256(SECOND_VOLUME_PREFACE.read_bytes()),
         "academic_backmatter_sha256": sha256(ACADEMIC_BACKMATTER.read_bytes()),
+        "academic_enrichment_sha256": {str(n): sha256(source.read_bytes())
+                                        for n, source in ENRICHMENT_FILES.items()},
         "academic_title": BOOK_TITLE,
         "academic_subtitle": BOOK_SUBTITLE,
         "part_ranges": [list(x) for x in PARTS],
@@ -272,7 +284,8 @@ def prepare(rows: list[dict], metadata: dict) -> None:
     fonts = LATEX / "Assets/Fonts"
     if not style.is_file() or not READER_STYLE.is_file() or not (fonts / "NotoEmoji-Static.ttf").is_file():
         raise FileNotFoundError("The existing LaTeX profile and its bundled local font must be available")
-    report = {**metadata, "parts": [], "chapters": [], "diagrams": [], "publication_edits": []}
+    report = {**metadata, "parts": [], "chapters": [], "diagrams": [],
+              "publication_edits": [], "enrichments": []}
     for part_number, (low, high) in enumerate(PARTS, 1):
         name = f"book01-expanded-p{part_number:02d}"
         directory = OUTPUT / name
@@ -353,6 +366,49 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "latex_path": (tex_path.relative_to(OUTPUT)).as_posix()})
             report["chapters"].append(clean)
             part_rows.append(num)
+            if num in ENRICHMENT_FILES:
+                extra_source = ENRICHMENT_FILES[num]
+                extra_bytes = extra_source.read_bytes()
+                extra_md = content_dir / f"academic-ch{num:02d}.md"
+                extra_rendered = content_dir / f"academic-ch{num:02d}.reader.md"
+                extra_tex = content_dir / f"academic-ch{num:02d}.tex"
+                extra_md.write_bytes(extra_bytes)
+                extra_text = extra_bytes.decode("utf-8")
+                extra_stats = render.math_preflight(extra_text, f"Enrichment {num}")
+                extra_figured, extra_diagrams = render.plan_figures(
+                    extra_text, num, part_number, directory, OUTPUT,
+                    first_index=len(figures) + 1,
+                )
+                extra_ready, extra_math = render.plan_math(extra_figured, num)
+                extra_ready, extra_code_ids = render.normalize_code_fence_metadata(extra_ready)
+                if len(extra_math) != extra_stats["display_math"]:
+                    raise ValueError(f"Enrichment {num} lost display math before Pandoc")
+                extra_rendered.write_text(extra_ready, encoding="utf-8")
+                report["diagrams"].extend(extra_diagrams)
+                cmd = [pandoc, "-f",
+                       "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
+                       "-t", "latex", "--top-level-division=section",
+                       "--wrap=none", "--no-highlight",
+                       "-o", str(extra_tex), str(extra_rendered)]
+                run = subprocess.run(cmd, capture_output=True, text=True)
+                if run.returncode or not extra_tex.is_file():
+                    raise RuntimeError(f"Pandoc could not render academic enrichment {num}: " + run.stderr[:2500])
+                amend_generated_tex(extra_tex, extra_diagrams, extra_stats, num, extra_math)
+                tex.append(r"\input{content/academic-ch" + f"{num:02d}" + "}")
+                report["enrichments"].append({
+                    "chapter": num,
+                    "source_path": extra_source.relative_to(ROOT).as_posix(),
+                    "source_sha256": sha256(extra_bytes),
+                    "markdown_path": extra_md.relative_to(OUTPUT).as_posix(),
+                    "markdown_sha256": sha256(extra_md.read_bytes()),
+                    "render_markdown_path": extra_rendered.relative_to(OUTPUT).as_posix(),
+                    "render_markdown_sha256": sha256(extra_rendered.read_bytes()),
+                    "latex_path": extra_tex.relative_to(OUTPUT).as_posix(),
+                    "latex_sha256": sha256(extra_tex.read_bytes()),
+                    "figure_count": len(extra_diagrams),
+                    "protected_math_displays": len(extra_math),
+                    "code_fence_metadata_normalized": extra_code_ids,
+                })
         # The multi-project competency chapter belongs AFTER all sixteen
         # original chapters. It has its own documented source identity and
         # does not masquerade as a nineteenth exact-anchor insertion.
@@ -451,6 +507,9 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\input{../book01-expanded-p" + f"{part_number:02d}" +
             r"/content/chapter-" + f"{number:02d}" + "}"
         )
+        if number in ENRICHMENT_FILES:
+            book.append(r"\input{../book01-expanded-p" + f"{part_number:02d}" +
+                        r"/content/academic-ch" + f"{number:02d}" + "}")
     book.extend([
         r"\input{../book01-expanded-p04/content/final-mastery}",
         r"\appendix",
@@ -523,6 +582,9 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             volume.append(
                 r"\input{../book01-expanded-p" + f"{source_part:02d}" +
                 r"/content/chapter-" + f"{number:02d}" + "}")
+            if number in ENRICHMENT_FILES:
+                volume.append(r"\input{../book01-expanded-p" + f"{source_part:02d}" +
+                              r"/content/academic-ch" + f"{number:02d}" + "}")
         if volume_number == len(PRINT_VOLUMES):
             volume.append(r"\input{../book01-expanded-p04/content/final-mastery}")
         volume.extend([
@@ -574,6 +636,17 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
             path = OUTPUT / recorded[kind + "_path"]
             if not path.is_file() or sha256(path.read_bytes()) != recorded[kind + "_sha256"]:
                 raise ValueError("Prepared chapter " + kind + " altered or missing: " + str(path))
+    if len(data.get("enrichments", [])) != len(ENRICHMENT_FILES):
+        raise ValueError("Academic enrichment sources missing in generated reader")
+    for extra in data["enrichments"]:
+        chapter = extra["chapter"]
+        source = ENRICHMENT_FILES[chapter]
+        if sha256(source.read_bytes()) != extra["source_sha256"]:
+            raise ValueError("Academic enrichment source changed: " + str(source))
+        for kind in ("markdown", "render_markdown", "latex"):
+            path = OUTPUT / extra[kind + "_path"]
+            if not path.is_file() or sha256(path.read_bytes()) != extra[kind + "_sha256"]:
+                raise ValueError("Generated academic enrichment changed: " + str(path))
     capstone = data.get("final_capstone")
     if not isinstance(capstone, dict):
         raise ValueError("Missing multi-project final mastery chapter")
@@ -612,7 +685,7 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
         path = OUTPUT / fig["source"]
         if not path.is_file() or sha256(path.read_bytes()) != fig["diagram_sha256"]:
             raise ValueError("Mermaid source missing or modified: " + str(path))
-    if sum(record.get("figure_count", 0) for record in data["chapters"]) + capstone.get("figure_count", 0) != len(data.get("diagrams", [])):
+    if sum(record.get("figure_count", 0) for record in data["chapters"]) + sum(extra.get("figure_count", 0) for extra in data["enrichments"]) + capstone.get("figure_count", 0) != len(data.get("diagrams", [])):
         raise ValueError("Diagram manifest does not account for all figures")
     for record in data["parts"]:
         reader_style = OUTPUT / record["id"] / "book01-reader.sty"
