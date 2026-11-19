@@ -99,6 +99,28 @@ The public curriculum repository is [Project AllMight](https://github.com/swayam
 
 A code listing in this textbook may represent a complete program, a function fragment, deliberately invalid code, algorithmic pseudocode, or an API-specific operation. Only a complete program accompanied by its dependencies, compile command and oracle is asserted to be independently runnable. Pseudocode must not be described as valid C++23 merely because it resembles a C++ loop.
 
+## Four independently testable companion programs
+
+The public repository also contains a self-contained **Companion** folder at `Book Production/Seven-Book Curriculum/Book01/Companion/`. It uses C++23, CMake and CTest without any private engine dependency. These are deliberately limited teaching machines; none is presented as a commercial emulator or actual Vulkan/Metal implementation.
+
+| Companion file | Exercise | Independent negative or boundary case |
+|---|---|---|
+| `src/binary_cpu.cpp` | Execute a minimal eight-bit load/add/store/halt instruction set | Truncated opcode, unknown opcode, execution budget |
+| `src/generational_handles.cpp` | Allocate, erase, recycle and resolve generation-checked registry handles | Reject stale handle and duplicate erase |
+| `src/parallel_scan.cpp` | Compute exclusive scan and stable scatter with a serial reference | Reject invalid predicate or mismatched extent; 200 seeded cases |
+| `src/retirement_contract.cpp` | Simulate pending device uses and completion-controlled retirement | Reject premature retirement, duplicate completion, re-submission after retirement |
+
+Build them from the checkout root:
+
+```sh
+cmake -S "Book Production/Seven-Book Curriculum/Book01/Companion" -B build/book01-companion -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/book01-companion --parallel
+ctest --test-dir build/book01-companion --output-on-failure
+```
+
+A passing CTest run is evidence for these models on that compiler and host. It does not establish compatibility with an actual NES cartridge, correctness of Vulkan or Metal synchronization, or performance on a GPU. Readers should inspect and extend each oracle before treating it as a research benchmark. For the print release, cite the immutable source revision printed on the imprint page rather than assuming the branch head will remain unchanged.
+
+
 # Experimental Record and Reproducibility
 
 A credible experiment records a question, a predicted result, a reference answer, and the environment in which the observation was made. For each laboratory, maintain an experiment record with the following fields.
