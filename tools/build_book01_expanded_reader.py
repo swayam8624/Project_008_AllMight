@@ -426,10 +426,20 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
                          "-file-line-error", "-output-directory=build", "main.tex"]] * 3
         print("Compiling", directory.name, flush=True)
         pdf = directory / "build/main.pdf"
-        for command in commands:
-            result = subprocess.run(command, cwd=directory)
+        for pass_number, command in enumerate(commands, 1):
+            result = subprocess.run(command, cwd=directory, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, text=True, errors="replace")
+            (directory / "build" / f"compile-pass-{pass_number}.txt").write_text(
+                result.stdout, encoding="utf-8")
             if result.returncode:
-                raise RuntimeError("LaTeX compilation failed; see " + str(directory / "build/main.log"))
+                excerpt = "\\n".join(result.stdout.splitlines()[-35:])
+                raise RuntimeError(
+                    "LaTeX compilation failed in " + directory.name +
+                    " (pass " + str(pass_number) + "); see " +
+                    str(directory / "build/main.log") + "\\n" + excerpt)
+            overfull = result.stdout.count("Overfull \\hbox")
+            print("  TeX pass", pass_number, "OK;",
+                  overfull, "overfull line warnings")
         if not pdf.is_file() or not pdf.stat().st_size:
             raise RuntimeError("LaTeX produced no PDF; see " + str(directory / "build/main.log"))
         destination = OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{number:02d}.pdf"
