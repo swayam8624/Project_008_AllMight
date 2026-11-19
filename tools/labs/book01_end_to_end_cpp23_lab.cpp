@@ -348,6 +348,9 @@ void end_to_end_happy_path_and_scene_revision() {
     require(first->luma == 297 &&
             first->signed_twice_area_q16 == 65536,
             "independent exact integer workload answers");
+    require(first->texture_source_fingerprint == 8952040735453606912ULL &&
+            first->mesh_source_fingerprint == 9136700281888616565ULL,
+            "independent fixed FNV-1a fixture answers, not the same function again");
     require(first->texture_source_fingerprint == ingestion::fnv1a(tx) &&
             first->mesh_source_fingerprint == ingestion::fnv1a(ms),
             "receipt fingerprints reflect the actual on-disk source bytes");
@@ -384,12 +387,41 @@ void end_to_end_failure_is_not_success() {
             bad_texture.error() == PipelineError::decode_failure,
             "invalid RGBA8 payload cannot appear as valid frame output");
 }
+// Metamorphic tests distinguish source identity from derived computation.
+// If only alpha changes, a source byte hash changes but the RGB sum does not.
+// Reversing triangle winding changes signed area, not unsigned shape extent.
+void source_mutations_have_predictable_effects() {
+    Fixture fixture;
+    auto tx = valid_texture();
+    auto ms = valid_mesh();
+    fixture.file("assets/tex.txr4", tx);
+    fixture.file("models/tri.msh1", ms);
+    const auto baseline = run_pipeline(fixture.root);
+    require(baseline.has_value(), "baseline metamorphic fixture must decode");
+    tx[15] = 0; // first alpha channel only
+    fixture.file("assets/tex.txr4", tx);
+    const auto alpha = run_pipeline(fixture.root);
+    require(alpha && alpha->luma == baseline->luma &&
+            alpha->texture_source_fingerprint !=
+                baseline->texture_source_fingerprint,
+            "alpha-only source mutation changes provenance, not RGB reduction");
+    tx = valid_texture();
+    fixture.file("assets/tex.txr4", tx);
+    std::swap(ms[32], ms[34]); // triangle index 1 and index 2 low bytes
+    fixture.file("models/tri.msh1", ms);
+    const auto reversed = run_pipeline(fixture.root);
+    require(reversed &&
+            reversed->signed_twice_area_q16 == -65536 &&
+            reversed->mesh_source_fingerprint != baseline->mesh_source_fingerprint,
+            "winding reversal changes sign and mesh source fingerprint");
+}
 } // namespace
 
 int main() {
     try {
         end_to_end_happy_path_and_scene_revision();
         end_to_end_failure_is_not_success();
+        source_mutations_have_predictable_effects();
         std::cout << "Pass19: REAL file->typed registry->host DAG->CPU reduction/"
                      "memory oracle->checked retirement->stable receipt: OK\n";
         std::cout << "Not executed: native Metal/Vulkan, real GPU synchronization,"
