@@ -87,6 +87,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson15 = self.root / "Supplementary/C++23 Project Labs/GPU-15M - Execute Verify and Measure a Metal Frame.md"
         self.lesson16 = self.root / "Supplementary/C++23 Project Labs/GPU-16P - GPU Profiling and Apple Callback Ownership.md"
         self.lesson17 = self.root / "Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md"
+        self.lesson18 = self.root / "Supplementary/C++23 Project Labs/CPP-19E - A Complete Asset to Evidence Trace.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
@@ -104,6 +105,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson15.write_text("### GPU-15M — A tested Metal frame\n\nOriginal GPU-15M addition.\n")
         self.lesson16.write_text("### GPU-16P — A tested GPU profile owner\n\nOriginal GPU-16P addition.\n")
         self.lesson17.write_text("### CPP-18A — A tested modern asset service\n\nOriginal CPP-18A addition.\n")
+        self.lesson18.write_text("### CPP-19E — A tested end-to-end trace\n\nOriginal CPP-19E addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -145,14 +147,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU15M-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-GPU16P-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-CPP18A-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-CPP19E-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the seventeen
+        # Stronger preservation oracle: surgically delete only the eighteen
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q", b"GPU13D", b"GPU14F", b"GPU15M", b"GPU16P", b"CPP18A"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R", b"NES11B", b"NES12Q", b"GPU13D", b"GPU14F", b"GPU15M", b"GPU16P", b"CPP18A", b"CPP19E"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
