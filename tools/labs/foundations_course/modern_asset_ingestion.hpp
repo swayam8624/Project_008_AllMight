@@ -89,7 +89,9 @@ public:
         if(ec || !fs::is_directory(path_))
             throw std::invalid_argument("root must be existing directory");
     }
-    [[nodiscard]] Result load(const Request& request) const {
+    [[nodiscard]] Result load(const Request& request,
+                              std::stop_token stop = {}) const {
+        if(stop.stop_requested()) return std::unexpected(Issue::cancelled);
         // Never pass an embedded NUL into a platform path API: a native
         // C-string conversion could otherwise truncate the checked name.
         if(request.relative.find('\0')!=std::string::npos)
@@ -119,6 +121,7 @@ public:
         std::vector<Byte> bytes;
         std::array<char,4096> chunk{};
         while(in) {
+            if(stop.stop_requested()) return std::unexpected(Issue::cancelled);
             in.read(chunk.data(),static_cast<std::streamsize>(chunk.size()));
             const auto n=in.gcount();
             if(n<0) return std::unexpected(Issue::io_failure);
@@ -129,6 +132,7 @@ public:
                 bytes.push_back(static_cast<Byte>(static_cast<unsigned char>(chunk[i])));
             if(in.bad()) return std::unexpected(Issue::io_failure);
         }
+        if(stop.stop_requested()) return std::unexpected(Issue::cancelled);
         if(!in.eof()) return std::unexpected(Issue::io_failure);
         const auto hash=fnv1a(bytes);
         return OwnedAsset{request.relative,request.kind,std::move(bytes),hash};
@@ -204,7 +208,7 @@ private:
         }
         previous=request.relative;
         has_previous=true;
-        co_yield root.load(request);
+        co_yield root.load(request,stop);
     }
 }
 
@@ -219,10 +223,11 @@ class WorkerBatch {
     };
 public:
     WorkerBatch(Root root,std::vector<Request> requests,
-                std::size_t aggregate_budget=8U*1024U*1024U)
-      : state_(std::make_shared<State>()),
+                std::size_t aggregate_budget=8U*1024U*1024U,
+                std::size_t max_requests=1024)
+      : state_(checked_state(requests.size(),aggregate_budget,max_requests)),
         worker_([state=state_,root=std::move(root),requests=std::move(requests),
-                 aggregate_budget=positive_budget(aggregate_budget)]
+                 aggregate_budget]
                 (std::stop_token stop) mutable {
             try {
                 auto gen=make_batch(std::move(root),std::move(requests),stop);
@@ -261,9 +266,16 @@ public:
         return std::move(state_->results);
     }
 private:
-    static std::size_t positive_budget(std::size_t n) {
-        if(n==0) throw std::invalid_argument("zero aggregate byte budget");
-        return n;
+    static std::shared_ptr<State> checked_state(std::size_t count,
+                    std::size_t budget,std::size_t max_requests) {
+        // Validate BEFORE starting std::jthread or moving its manifest.
+        // Error records and duplicate inputs occupy space even when file
+        // bytes are zero, so a byte cap alone is not a memory cap.
+        if(budget==0) throw std::invalid_argument("zero aggregate byte budget");
+        if(max_requests==0 || max_requests>4096)
+            throw std::invalid_argument("maximum requests must be 1..4096");
+        if(count>max_requests) throw std::length_error("request manifest exceeds bound");
+        return std::make_shared<State>();
     }
     std::shared_ptr<State> state_;
     std::jthread worker_;
