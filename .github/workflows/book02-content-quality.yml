@@ -7,6 +7,10 @@ on:
     paths:
       - 'tools/labs/book02_coverage_oracle.py'
       - 'tools/labs/test_book02_coverage_oracle.py'
+      - 'tools/labs/test_book02_content_bridge.py'
+      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/36-from-probability-to-pixels.tex'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_epub_supplements.py'
       - 'tools/labs/book02_coverage_visual.py'
       - '.github/workflows/book02-content-quality.yml'
   workflow_dispatch:
@@ -31,12 +35,12 @@ jobs:
         run: python -m pip install numpy==2.2.6 matplotlib==3.10.5
       - name: Check the mathematical teaching source syntax
         run: |
-          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py tools/labs/book02_coverage_visual.py
+          python -m py_compile tools/labs/book02_coverage_oracle.py tools/labs/test_book02_coverage_oracle.py tools/labs/book02_content_bridge.py tools/labs/book02_coverage_visual.py
       - name: Execute independent exact-cover and sampling contracts
         working-directory: tools/labs
         run: |
-          python -m unittest -v test_book02_coverage_oracle
-          python -O -m unittest -v test_book02_coverage_oracle
+          python -m unittest -v test_book02_coverage_oracle test_book02_content_bridge
+          python -O -m unittest -v test_book02_coverage_oracle test_book02_content_bridge
       - name: Show independently reproducible analytical oracle
         run: python tools/labs/book02_coverage_oracle.py
       - name: Produce actual mathematical figure and 60-replication CSV
