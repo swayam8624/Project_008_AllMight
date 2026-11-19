@@ -10,8 +10,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-FENCE = re.compile(r"(?ms)^" + re.escape(chr(96) * 3) +
-                   r"[^\n]*\n.*?^" + re.escape(chr(96) * 3) + r"[ \t]*$")
+FENCE = re.compile(r"(?ms)^(?P<marker>`{3,}|~{3,})[^\n]*\n"
+                   r".*?^(?P=marker)[ \t]*$")
 HEAD = re.compile(r"(?m)^(#{1,6})[ \t]+(.+?)[ \t]*$")
 EDITOR_SENTENCES = (
     re.compile(r"(?im)^This addition belongs (?:immediately |directly |before |after |at ).{15,600}?(?=\n\n|\Z)", re.S),
