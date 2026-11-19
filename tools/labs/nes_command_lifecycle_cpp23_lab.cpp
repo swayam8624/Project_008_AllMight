@@ -301,6 +301,24 @@ void test_unknown_submission_quarantine_and_confirmation() {
     // This test deliberately does NOT fake freeing in-flight GPU storage.
 }
 
+void test_foreign_frame_writer_refused_before_publication() {
+    Ring correct(64),foreign(64);
+    Queue queue(correct);
+    auto stream=make_valid_stream();
+    auto writer=foreign.begin();
+    check(writer.has_value(),"foreign ring provides its own writer");
+    stage(*writer);
+    const auto bad=queue.submit(
+        stream,*writer,{1,2,3},cm::SimulatedSubmit::accepted);
+    check(!bad &&
+          bad.error()==cm::CommandError::foreign_frame_writer &&
+          stream.state()==cm::State::executable &&
+          writer->staged_size()==4 && foreign.available()==2 &&
+          correct.available()==3 && queue.outstanding()==0,
+          "queue cannot publish a frame it does not own or retire");
+    // Drop foreign writer: RAII will cancel without consuming queue slots.
+}
+
 void test_bounded_journal_and_command_wrapper_lifetime() {
     Ring ring(64);
     Queue queue(ring,1);
@@ -449,6 +467,7 @@ int main() {
         test_encoder_errors_and_dag_rejection();
         test_rejection_retry_and_exactly_once_completion();
         test_unknown_submission_quarantine_and_confirmation();
+        test_foreign_frame_writer_refused_before_publication();
         test_bounded_journal_and_command_wrapper_lifetime();
         test_actual_nes_texture_cpu_and_submission_contract();
         std::cout<<"NES-12Q: command encode/seal, DAG hazards, definite "
