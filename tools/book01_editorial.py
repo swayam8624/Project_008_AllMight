@@ -7,9 +7,9 @@ coverage or a rewrite of the original chapter content.
 BOOK_TITLE = "From Bits to Parallel Systems"
 BOOK_SUBTITLE = "C++23, CPU Execution, GPU Memory, and Reliable Software"
 PRINT_VOLUMES = (
-    (1, 8, "From Bits to Programs",
+    (1, 8, "Volume I — From Bits to Programs",
      "Representation, Ownership, and Reliable C++23"),
-    (9, 16, "From Programs to GPUs",
+    (9, 16, "Volume II — From Programs to GPUs",
      "Memory Models, Parallel Execution, Vulkan, and Metal"),
 )
 CHAPTER_TITLES = (
