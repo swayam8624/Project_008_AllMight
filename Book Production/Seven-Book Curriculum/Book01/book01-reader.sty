@@ -49,6 +49,11 @@
   top=0.80in,bottom=0.82in,
   includeheadfoot,headheight=13pt,headsep=0.20in,footskip=0.28in
 }
+% The shared print profile initializes fancyhdr at a different paper size.
+% After our 7x10 geometry override, its old 449.5pt header width persisted
+% against a 388.1pt text measure and clipped both outside running heads.
+% Reset it AFTER geometry and BEFORE installing this volume's headers.
+\setlength{\headwidth}{\textwidth}
 \AtBeginDocument{\fontsize{10}{12.8}\selectfont}
 \AtBeginDocument{\setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
   \setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
