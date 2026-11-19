@@ -249,6 +249,11 @@ def plan_figures(source: str, chapter: int, part: int, directory: Path, output: 
 def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
     for item in figures:
         token = item["token"]
+        # Validate the marker before accessing figure layout metadata. A
+        # missing/duplicated token is an integrity failure, not a KeyError.
+        pattern = r"(?m)^" + re.escape(token) + r"$"
+        if len(re.findall(pattern, tex)) != 1:
+            raise ValueError(f"Missing/duplicate diagram marker: {token}")
         path = f'../book01-expanded-p{item["part"]:02d}/content/figures/' + Path(item["image"]).name
         caption = item["caption"].replace("\\", "")
         for reserved, escaped in (("&", r"\&"), ("%", r"\%"), ("#", r"\#"),
@@ -268,9 +273,6 @@ def replace_figure_tokens(tex: str, figures: list[dict]) -> str:
             str(item["index"]) + "}\n"
             "\\end{center}\\smallskip\n"
         )
-        pattern = r"(?m)^" + re.escape(token) + r"$"
-        if len(re.findall(pattern, tex)) != 1:
-            raise ValueError(f"Missing/duplicate diagram marker: {token}")
         tex = re.sub(pattern, lambda _: latex, tex, count=1)
     if "ALLMIGHTFIGURECH" in tex:
         raise ValueError("Unresolved Mermaid marker in TeX")
