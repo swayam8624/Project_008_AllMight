@@ -433,65 +433,111 @@ def render_figures(manifest: dict, output: Path):
 
 
 def reflow_long_textual_displays(tex: str) -> str:
-    """Reflow long English claims and pipeline chains in generated TeX only.
+    """Avoid clipping long prose and pipeline math in generated TeX only.
 
-    Source mathematics has already been checked for exact preservation before
-    this *presentation* step. A mathematical \boxed{...} expression is never
-    rewritten; only a solitary \boxed{\text{English sentence}} longer than
-    67 characters becomes a small framed, wrappable proposition. A sequence
-    consisting entirely of textual labels joined by \rightarrow receives
-    line breaks at stage boundaries. The visible words and order are retained.
+    The manuscript's exact math-body and boxed-equation checks already ran
+    before this function. No source Markdown is changed. We alter only
+    visual presentation of long labeled chains, additive plans, enumerated
+    properties, or prose-only boxes. Genuine short formulae are unchanged.
     """
     display = re.compile(r"\\\[\s*(.*?)\s*\\\]", re.DOTALL)
-    boxed_text = re.compile(r"\\boxed\{\s*\\text\{([^{}]+)\}\s*\}", re.DOTALL)
-    textual_stage = re.compile(r"\\text\{[^{}]+\}[.!?]?", re.DOTALL)
 
-    def reflow(match: re.Match[str]) -> str:
-        body = match.group(1).strip()
-        prose = boxed_text.fullmatch(body)
-        if prose and len(prose.group(1)) >= 68:
-            # Use a true text box, not an unbreakable equation that extends
-            # beyond the trim boundary. No word is dropped or abbreviated.
-            return (
-                "\\begin{center}\n"
-                "\\fbox{\\parbox{0.82\\linewidth}{\\centering\\small\\itshape "
-                + prose.group(1)
-                + "}}\n\\end{center}"
+    def top_level_parts(text: str, delimiter: str) -> list[str]:
+        """Split only between math terms, never inside TeX curly braces."""
+        parts: list[str] = []
+        depth = 0
+        beginning = 0
+        pos = 0
+        while pos < len(text):
+            if text[pos] == "{":
+                depth += 1
+            elif text[pos] == "}":
+                depth -= 1
+            if depth == 0 and text.startswith(delimiter, pos):
+                parts.append(text[beginning:pos].strip())
+                pos += len(delimiter)
+                beginning = pos
+                continue
+            pos += 1
+        parts.append(text[beginning:].strip())
+        return parts
+
+    def wrap_terms(parts: list[str], operator: str, max_chars: int) -> str | None:
+        rows: list[list[str]] = []
+        row: list[str] = []
+        row_length = 0
+        for term in parts:
+            width = len(term) + 4
+            if row and row_length + width > max_chars:
+                rows.append(row)
+                row = []
+                row_length = 0
+            row.append(term)
+            row_length += width
+        if row:
+            rows.append(row)
+        if len(rows) < 2:
+            return None
+        written: list[str] = []
+        for number, terms in enumerate(rows):
+            body = operator.join(terms)
+            if number and operator != ", ":
+                body = operator.strip() + " " + body
+            if operator == ", " and number < len(rows) - 1:
+                body += ","
+            written.append("& " + body)
+        return "\\begin{aligned}\n" + (" \\\\\n").join(written) + "\n\\end{aligned}"
+
+    def correct(match: re.Match[str]) -> str:
+        raw = match.group(1).strip()
+        if r"\begin{aligned}" in raw:
+            return match.group(0)
+        body = " ".join(raw.split())
+        boxed = body.startswith(r"\boxed{") and body.endswith("}")
+        inner = body[len(r"\boxed{"):-1].strip() if boxed else body
+
+        # \boxed{\text{an entire English sentence or engineering claim}}
+        # is a non-breaking mathematical box, not a readable proposition.
+        if boxed and len(inner) > 75:
+            visible = re.sub(
+                r"\\text\{([^{}]*)\}", lambda found: found.group(1), inner
             )
-        if body.count(r"\rightarrow") < 3:
-            return match.group(0)
-        stages = [stage.strip() for stage in body.split(r"\rightarrow")]
-        if not all(textual_stage.fullmatch(stage) for stage in stages):
-            return match.group(0)
-        lines: list[list[str]] = []
-        line: list[str] = []
-        length = 0
-        for stage in stages:
-            visible = re.sub(r"\\text\{|\}", "", stage)
-            cost = len(visible) + 3
-            if line and length + cost > 62:
-                lines.append(line)
-                line = []
-                length = 0
-            line.append(stage)
-            length += cost
-        if line:
-            lines.append(line)
-        if len(lines) < 2:
-            return match.group(0)
-        rows: list[str] = []
-        for number, row in enumerate(lines):
-            expression = r"\rightarrow ".join(row)
-            if number:
-                expression = r"\rightarrow " + expression
-            rows.append("& " + expression)
-        return (
-            "\\[\n\\begin{aligned}\n"
-            + (" \\\\\n").join(rows)
-            + "\n\\end{aligned}\n\\]"
-        )
+            if "\\" not in visible and len(visible) >= 65:
+                return (
+                    "\\begin{center}\n"
+                    "\\fbox{\\parbox{0.82\\linewidth}{\\centering\\small\\itshape "
+                    + visible + "}}\n\\end{center}"
+                )
 
-    return display.sub(reflow, tex)
+        if inner.count(r"\rightarrow") >= 2 and len(inner) > 76:
+            parts = top_level_parts(inner, r"\rightarrow")
+            if len(parts) >= 3:
+                arranged = wrap_terms(parts, r"\rightarrow ", 62)
+                if arranged:
+                    if boxed:
+                        arranged = r"\boxed{" + arranged + "}"
+                    return "\\[\n" + arranged + "\n\\]"
+
+        if inner.count(" + ") >= 3 and len(inner) > 80:
+            parts = top_level_parts(inner, " + ")
+            if len(parts) >= 4:
+                arranged = wrap_terms(parts, " + ", 78)
+                if arranged:
+                    if boxed:
+                        arranged = r"\boxed{" + arranged + "}"
+                    return "\\[\n" + arranged + "\n\\]"
+
+        if not boxed and inner.count(",") >= 5 and len(inner) >= 80:
+            # A bare list of sampler options is not a scalar equation.
+            if "\\" not in inner:
+                parts = top_level_parts(inner, ",")
+                arranged = wrap_terms(parts, ", ", 57)
+                if arranged:
+                    return "\\[\n" + arranged + "\n\\]"
+
+        return match.group(0)
+
+    return display.sub(correct, tex)
 
 
 def pdf_preflight(pdf: Path, *, paperback: bool) -> int:
