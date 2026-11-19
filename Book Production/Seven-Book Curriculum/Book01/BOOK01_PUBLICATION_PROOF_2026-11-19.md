@@ -44,6 +44,18 @@ final production proof. Both paperbacks have substantial headroom below
 the 828-page maximum; the digital book is intentionally not forced into
 that paperback limit.
 
+### Title-page visual proof
+
+A contact sheet of the indexed print PDFs exposed an awkward title-page
+hyphenation in Volume I, which previously split **"Programs"** as
+"Pro-grams". The publication builder now gives each paperback a deliberate
+two-line title: a separate **Volume I / Volume II** label above the complete
+**From Bits to Programs / From Programs to GPUs** title. Both variants
+successfully compiled in one-page LuaLaTeX smoke proofs with the working
+publication style. The full, unbroken text remains in document metadata and
+the imprint page. A regression test protects this printing-only title break;
+the digital title and chapter contents are unchanged.
+
 ## Defects identified and permanently guarded
 
 1. Chapter 9 contained `\\texttt{simd_sum}` and `\\texttt{simd_prefix_exclusive_sum}` in source-protected display math. Raw TeX text macros require escaped underscores. The math renderer now escapes text-mode specials while keeping real mathematical subscripts unchanged. Regression tests cover both Chapter 9 expressions.
