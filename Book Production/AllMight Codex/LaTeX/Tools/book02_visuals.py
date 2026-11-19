@@ -55,7 +55,7 @@ RICH_FIGURES = {
     ),
     "02-foundations-ii-ch027": ("32-atlas-fitting.tex",),
     "02-foundations-ii-ch030": ("33-atlas-sampling.tex",),
-    "02-foundations-ii-ch031": ("34-atlas-ransac.tex",),
+    "02-foundations-ii-ch031": ("34-atlas-ransac.tex", "36-from-probability-to-pixels.tex"),
 }
 ATLAS_SCRIPT = Path(__file__).resolve().parents[4] / "tools" / "labs" / "book02_visual_atlas.py"
 PRELUDE_CHAPTER = "01-foundations-i-ch017"
@@ -152,6 +152,11 @@ def install_book02_visuals(tex_path: str | Path, *, include_rich_atlas: bool = F
                                      for rich in group
                                  }))
         )
+        if "36-from-probability-to-pixels.tex" in installed:
+            for fmt in ("pdf", "svg", "png"):
+                file = root / "rendered" / "coverage" / ("triangle-pixel-coverage." + fmt)
+                if not file.is_file() or file.stat().st_size < 600:
+                    raise RuntimeError("Missing verified pixel-coverage illustration: " + str(file))
         for slug in needed:
             for fmt in ("pdf", "svg", "png"):
                 file = root / "rendered" / "figures" / (slug + "." + fmt)
