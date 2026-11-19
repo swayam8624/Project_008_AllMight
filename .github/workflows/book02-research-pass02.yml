@@ -11,6 +11,7 @@ on:
       - 'tools/labs/test_book02_papers_numeric.py'
       - 'tools/labs/book02_papers_sampling.py'
       - 'tools/labs/test_book02_papers_sampling.py'
+      - 'tools/labs/book02_papers_cpp23.cpp'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - '.github/workflows/book02-research-pass02.yml'
@@ -46,6 +47,10 @@ jobs:
       - name: Mathematical paper witnesses and SciPy comparisons
         working-directory: tools/labs
         run: python -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling
+      - name: Compile and run standalone C++23 mathematics witness
+        run: |
+          g++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic tools/labs/book02_papers_cpp23.cpp -o /tmp/book02_papers_cpp23
+          /tmp/book02_papers_cpp23
       - name: Verify numerical checks under optimized Python
         working-directory: tools/labs
         run: python -O -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling
