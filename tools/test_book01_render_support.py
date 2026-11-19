@@ -32,11 +32,26 @@ class Book01ProductionTests(unittest.TestCase):
                 self.assertTrue((root / entry["source"]).exists())
 
     def test_missing_or_duplicate_figure_fails(self):
-        item = {"part": 1, "image": "asset.png",
-                "token": "ALLMIGHTFIGURECH01INDEX001",
-                "caption": "Figure 1.1: Dependency"}
-        with self.assertRaises(ValueError):
-            book.replace_figure_tokens("There was no image here", [item])
+        # Even if optional figure metadata is absent, an invalid marker must
+        # be reported as a ValueError before layout information is consulted.
+        token = "ALLMIGHTFIGURECH01INDEX001"
+        marker_only = {"token": token}
+        with self.assertRaisesRegex(ValueError, "Missing/duplicate diagram marker"):
+            book.replace_figure_tokens("There was no image here", [marker_only])
+        with self.assertRaisesRegex(ValueError, "Missing/duplicate diagram marker"):
+            book.replace_figure_tokens(token + "\n" + token, [marker_only])
+
+        # A valid figure entry still renders with its expected caption and
+        # numbered label: protection must not disable successful conversion.
+        complete = {
+            "chapter": 1, "index": 1, "part": 1,
+            "image": "asset.png", "token": token,
+            "caption": "Figure 1.1: Dependency",
+        }
+        rendered = book.replace_figure_tokens(token, [complete])
+        self.assertIn(r"\captionof{figure}{Dependency}", rendered)
+        self.assertIn(r"\label{fig:book01:1:1}", rendered)
+        self.assertNotIn(token, rendered)
 
     def test_boxed_math_source_and_render_are_checked(self):
         src = (
