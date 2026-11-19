@@ -31,6 +31,39 @@ For a single-stop shell sequence, use `set -e` (exit on first failure)
 or chain the commands with `&&`. Do not upload an incomplete PDF.
 
 
+### LuaLaTeX runaway boxed formula and collapsed code-fence fix
+
+On 19 November 2026, the user completed diagram rendering (18 diagrams)
+and Pandoc preparation, then compilation failed in Chapter 9 after PDF
+page 477 with `File ended while scanning use of \\boxed`. The source
+contains an explanatory boxed formula with `99%` and `1%` as literal
+text. Raw TeX interprets an unescaped percent as a comment, hiding the
+closing brace. Chapter 12 has a similar `5%` expression. **The
+render-only math-restoration step now converts unescaped literal percentages
+to `\\%` before LuaLaTeX**, preserving all original mathematical words
+and values. The equation-integrity comparison normalizes that presentation
+escape; no original source equations are removed. A small LuaLaTeX smoke
+render of these percentage formulas and SIMD identifiers succeeded in
+the authoring environment, but the complete Mac book build remains an
+independent acceptance gate.
+
+The same log exposed collapsed and overflowing text resembling
+`cpp id="x1rcxl"`. Pandoc treats Obsidian-style code fence headers of
+the form `language id="token"` as an inline literal rather than a fenced
+block. The derived reader now strips *only* that fence metadata before
+Pandoc, preserving the whole code body and its language. The repository
+contains representative `cpp`, `text`, `metal`, and other code fences.
+LuaLaTeX code typography also selects a monospaced font with support
+for arrows and box-drawing characters where available so textual diagrams
+do not silently lose their semantic glyphs.
+
+The `--compile --part 3` option is a useful diagnostic: it typesets
+Chapters 9–12, exercising both raw-percentage examples before running
+the entire digital book. This diagnostic is not a replacement for the
+complete one-volume master. Unit tests now check raw-percentage
+restoration, exact boxed-math integrity, and code-fence conversion.
+
+
 ## Current academic production pipeline — 19 November 2026
 
 **This section supersedes earlier PDF/format instructions below.** The
