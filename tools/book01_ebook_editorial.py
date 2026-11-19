@@ -27,6 +27,7 @@ ADDITIVE_MARKER = re.compile(
 EDITORIAL_ONLY_STARTS = (
     r"The original Phase\s+\d+\s+(?:curriculum\s+)?assigns\b",
     r"The original curriculum sequence confirms\b",
+    r"The original source contract calls this\b",
     r"The original Chapter\s+\d+\s+(?:already|contains|is)\b",
     r"The existing Chapter\s+\d+\s+(?:already|contains|has)\b",
     r"Continue the original (?:Chapter|chapter)\b",
@@ -65,13 +66,16 @@ PHRASES = (
     (r"\bThe Phase \d+ lab\b", "The corresponding lab"),
     (r"\bPhase 2 owner\b", "earlier resource owner"),
     (r"\bPass \d{1,2} application\b", "companion application"),
+    (r"\bWhat this pass establishes\b", "What this laboratory establishes"),
+    (r"\bPhase 22 begins\b", "The next stage begins"),
     (r"\bthis pass\b", "this laboratory"),
 )
 PHRASE_PATTERNS = [(re.compile(p, re.I), v) for p, v in PHRASES]
 PRODUCTION_LEAK = re.compile(
     r"ALLMIGHT-CPP23-[A-Z0-9-]+-ADDITIVE-(?:START|END)"
     r"|the user has reserved|the user requested no intermediate"
-    r"|the next engineering pass should compile",
+    r"|the next engineering pass should compile"
+    r"|Phase 22 begins|the original source contract calls this",
     re.I,
 )
 
