@@ -7,6 +7,9 @@ on:
     paths:
       - ".github/workflows/allmight-book01-expanded-reader.yml"
       - "tools/build_book01_expanded_reader.py"
+      - "tools/book01_*.py"
+      - "tools/test_book01_*.py"
+      - "Book Production/Seven-Book Curriculum/Book01/Companion/**"
       - "tools/apply_cpp23_project_inserts.py"
       - "tools/tests/test_book01_expanded_reader.py"
       - "Chapter Edition/01 - Computing Foundations/**"
@@ -28,6 +31,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Prove reader helper behavior before touching the full manuscript
+        run: |
+          python3 -m pip install --upgrade pypdf "pymupdf<2.2"
+          python3 -m py_compile tools/book01_render_support.py tools/book01_publication_edit.py tools/book01_index.py tools/book01_pdf_proof.py tools/build_book01_expanded_reader.py
+          python3 tools/test_book01_render_support.py
+          python3 tools/test_book01_publication_edit.py
+          python3 tools/test_book01_pdf_proof.py
       - name: Check byte-preserving 16-chapter and 18-lesson assembly
         run: |
           python3 tools/build_book01_expanded_reader.py --check
@@ -42,6 +52,11 @@ jobs:
           python3 tools/build_book01_expanded_reader.py --prepare
           python3 tools/build_book01_expanded_reader.py --verify-prepared
           find build/book01-expanded-reader -type f -name '*.tex' | sort
+      - name: Compile and execute all four standalone Book 1 C++23 examples
+        run: |
+          cmake -S "Book Production/Seven-Book Curriculum/Book01/Companion" -B build/book01-companion -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build/book01-companion --parallel 2
+          ctest --test-dir build/book01-companion --output-on-failure
       - name: Prove generated manuscript has all exact additive lesson markers
         run: |
           python3 - <<'PY'
