@@ -209,7 +209,8 @@ def replace_math_tokens(tex: str, equations: list[dict]) -> str:
     return tex
 
 
-def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path):
+def plan_figures(source: str, chapter: int, part: int, directory: Path, output: Path,
+                 first_index: int = 1):
     """Plan every Mermaid figure without changing the canonical chapter."""
     figure_dir = directory / "content" / "figures"
     figure_dir.mkdir(parents=True, exist_ok=True)
@@ -219,7 +220,7 @@ def plan_figures(source: str, chapter: int, part: int, directory: Path, output: 
         body = match.group("body").strip() + "\n"
         if not body.strip():
             raise ValueError(f"Chapter {chapter}: empty Mermaid code")
-        idx = len(entries) + 1
+        idx = first_index + len(entries)
         basename = f"chapter-{chapter:02d}-diagram-{idx:02d}"
         mmd = figure_dir / (basename + ".mmd")
         png = figure_dir / (basename + ".png")
