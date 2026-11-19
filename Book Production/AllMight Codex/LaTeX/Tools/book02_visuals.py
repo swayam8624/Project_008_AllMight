@@ -164,5 +164,27 @@ def install_book02_visuals(tex_path: str | Path, *, include_rich_atlas: bool = F
         "\n" + rf"\input{{{FIGURE_DESTINATION}/preamble.tex}}",
         1,
     )
+    # Public-facing title uses the verified seven-volume series name;
+    # source chapter IDs and physical cross-book link target paths do not move.
+    # Only the copied main.tex is modified, never the frozen generation.
+    source = source.replace(
+        r"\\SetBookStage{2}{Mathematics for Visual Computing}",
+        r"\\SetBookStage{2}{From Equations to Geometry}", 1
+    )
+    source = source.replace(
+        r"\\title{Mathematics for Visual Computing}",
+        r"\\title{From Equations to Geometry\\\\{\\large Mathematics, Numerical Methods, Optimization, and Visual Computing}}", 1
+    )
+    source = source.replace(
+        r"\\AllMightStageMark{2}{Mathematics for Visual Computing}",
+        r"\\AllMightStageMark{2}{From Equations to Geometry}", 1
+    )
+    source = source.replace("This is Mathematics for Visual Computing --- Part",
+                            "This is From Equations to Geometry --- Part")
+    source = source.replace("Stage 2: Mathematics for Visual Computing ---",
+                            "Stage 2: From Equations to Geometry ---")
+    source = source.replace("Mathematics for Visual Computing — Part",
+                            "From Equations to Geometry — Part")
+
     tex_path.write_text(source, encoding="utf-8")
     return installed
