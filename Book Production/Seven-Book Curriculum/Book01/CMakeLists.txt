@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.23)
 
-# This module deliberately builds without the platform-dependent KairoNES GUI.
-# A C++23 compiler and standard library are sufficient for NES-01.
-project(AllMight_NES_01 LANGUAGES CXX)
+# Cross-project Book01 foundational C++23 labs: NES binary/CPU proof,
+# Kairo/Maveb asset and GPU contracts, Vulkan/Metal and numerical oracles.
+# Native graphics probes remain opt-in; portable labs need only C++23.
+project(AllMight_Book01_Cpp23 LANGUAGES CXX)
 
 # Public C++23 usage requirements for all independent NES course clients.
 add_library(nes_course_public_api INTERFACE)
