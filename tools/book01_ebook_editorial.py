@@ -52,10 +52,10 @@ AUTHOR_SENTENCES = (
     ),
 )
 PHRASES = (
-    (r"\bthe original chapter\b", "earlier sections"),
-    (r"\bthe existing chapter\b", "earlier sections"),
-    (r"\bthe original Chapter\s+\d+\b", "earlier sections"),
-    (r"\bthe existing Chapter\s+\d+\b", "earlier sections"),
+    (r"\bthe original chapter\b", "the earlier discussion"),
+    (r"\bthe existing chapter\b", "the earlier discussion"),
+    (r"\bthe original Chapter\s+\d+\b", "the earlier discussion"),
+    (r"\bthe existing Chapter\s+\d+\b", "the earlier discussion"),
     (r"\bFor this pass\b", "For this laboratory"),
     (r"\bIn this pass\b", "In this laboratory"),
     (r"\bThis pass adds\b", "The companion laboratory includes"),
@@ -110,7 +110,12 @@ def clean_reader_markdown(markdown: str, chapter: int) -> tuple[str, dict]:
                 item, count = rule.subn("", item)
                 stats["authoring_sentences_removed"] += count
             for rule, replacement in PHRASE_PATTERNS:
-                item, count = rule.subn(replacement, item)
+                def replace_with_case(match: re.Match[str]) -> str:
+                    if (match.group(0)[0].isupper()
+                            and replacement.startswith("the earlier")):
+                        return "The" + replacement[3:]
+                    return replacement
+                item, count = rule.subn(replace_with_case, item)
                 stats["reader_phrases_rewritten"] += count
             result.append(item)
         return "".join(result)
