@@ -452,10 +452,10 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"/content/chapter-" + f"{number:02d}" + "}"
         )
     book.extend([
-        r"\\input{../book01-expanded-p04/content/final-mastery}",
-        r"\\appendix",
-        r"\\input{backmatter}",
-        r"\\end{document}",
+        r"\input{../book01-expanded-p04/content/final-mastery}",
+        r"\appendix",
+        r"\input{backmatter}",
+        r"\end{document}",
     ])
     def prepare_preface(directory: Path, source: Path = ACADEMIC_PREFACE) -> dict:
         path = directory / "frontmatter.tex"
@@ -526,9 +526,9 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         if volume_number == len(PRINT_VOLUMES):
             volume.append(r"\input{../book01-expanded-p04/content/final-mastery}")
         volume.extend([
-            r"\\appendix",
-            r"\\input{backmatter}",
-            r"\\end{document}",
+            r"\appendix",
+            r"\input{backmatter}",
+            r"\end{document}",
         ])
         master = directory / "main.tex"
         master.write_text("\n".join(volume) + "\n", encoding="utf-8")
