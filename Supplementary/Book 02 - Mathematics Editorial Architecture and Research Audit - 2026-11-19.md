@@ -3,7 +3,7 @@
 **Series:** From Bits to Research · Book Two of Seven
 **Subtitle:** Mathematics, Numerical Methods, Optimization, and Visual Computing
 **Audit started:** 2026-11-19
-**Status:** analysis and editorial blueprint; **not** a claim that source-level refinement or full verification is complete.
+**Status:** editorial Pass 1 completed for its defined scope and verified by branch CI. **Full source-paper reproduction, projects, PDF/EPUB parity and complete manuscript mathematical acceptance are still pending in Passes 2–4.** See [[Supplementary/Book 02 - Pass 01 Completion and Verification - 2026-11-19|Pass 01 completion ledger]].
 
 > This is an additive planning and evidence file. Do not delete substantial source teaching. Canonical masters and their 16 assigned production chapters retain ownership; generated LaTeX is an output, not an authoring source. The Book One development branch is retained as the base of this branch.
 
