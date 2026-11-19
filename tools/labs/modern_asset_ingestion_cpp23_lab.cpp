@@ -93,6 +93,12 @@ void test_real_bounded_file_io_and_path_policy() {
     rejection(std::string("models/tri.msh1\0/evil",20),a::Issue::unsafe_relative_path);
     rejection("missing.msh1",a::Issue::missing_file);
     rejection("assets",a::Issue::not_regular);
+    std::stop_source stopped;
+    stopped.request_stop();
+    const auto pre_cancel=root.load({"assets/tex.txr4",a::AssetKind::texture_rgba8},
+                                    stopped.get_token());
+    require(!pre_cancel && pre_cancel.error()==a::Issue::cancelled,
+            "direct file reader respects pre-requested cooperative stop");
     const auto limited=a::Root(fixture.root,16).load({"assets/tex.txr4",a::AssetKind::texture_rgba8});
     require(!limited && limited.error()==a::Issue::too_large,"bounded file cap rejects header+payload");
     // POSIX/macOS can normally create symlinks; Windows security settings
@@ -193,6 +199,33 @@ void test_aggregate_budget_prevents_unbounded_publication() {
             result[1].error()==a::Issue::aggregate_budget,
             "worker refuses next owned asset when cumulative byte budget exhausted");
 }
+void test_worker_manifest_and_error_bound() {
+    Fixture fixture;
+    fixture.file("assets/tex.txr4",texture());
+    const a::Root root(fixture.root,64);
+    bool rejected=false;
+    try {
+        a::WorkerBatch invalid(root,{{"missing-1",a::AssetKind::triangle_mesh},
+                                     {"missing-2",a::AssetKind::triangle_mesh},
+                                     {"missing-3",a::AssetKind::triangle_mesh}},
+                               64,2);
+    } catch(const std::length_error&) { rejected=true; }
+    require(rejected,"request count bounded before launching worker");
+    rejected=false;
+    try {
+        a::WorkerBatch invalid(root,{},64,0);
+    } catch(const std::invalid_argument&) { rejected=true; }
+    require(rejected,"zero request cap rejected before launching worker");
+    a::WorkerBatch accepted(root,{{"missing-1",a::AssetKind::triangle_mesh},
+                                   {"missing-2",a::AssetKind::triangle_mesh}},64,2);
+    const auto outcomes=accepted.finish();
+    require(outcomes.size()==2 && !outcomes[0] && !outcomes[1],
+            "error record count bounded by accepted request manifest");
+    const auto label=a::diagnostic(a::Issue::missing_file,"assets/test.txr4");
+    require(label.find("assets/test.txr4")!=std::string::npos &&
+            label.find("code")!=std::string::npos,
+            "formatting/diagnostic path retains context");
+}
 void test_existing_registry_integration() {
 #if ALLMIGHT_HAS_REGISTRY
     // This is the ACTUAL shared typed NROM/TXR4/MSH1 decoder + generational
@@ -232,6 +265,7 @@ int main(){
         test_coawait_suspend_resume_and_frame_ownership();
         test_real_host_async_batch();
         test_aggregate_budget_prevents_unbounded_publication();
+        test_worker_manifest_and_error_bound();
         test_existing_registry_integration();
         a::announce_success(2);
         std::cout << "Pass18: filesystem/ranges/format/coroutines and host jthread "
