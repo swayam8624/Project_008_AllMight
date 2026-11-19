@@ -54,23 +54,25 @@ ENRICHMENT_FILES = {
     n: ROOT / "Book Production/Seven-Book Curriculum/Book01/Enrichments" / filename
     for n, filename in {
         1: "CH01_CPU_FROM_LOGIC.md",
-        7: "CH07_CPU_EXECUTION_TRACE.md",
-        11: "CH11_BORROWING_AND_ASYNC.md",
-        5: "CH05_CPP23_FEATURE_CONTRACTS.md",
-        9: "CH09_GPU_MEMORY_VISUAL_LAB.md",
-        12: "CH12_GPU_LIFETIME_TIMELINE.md",
-        16: "CH16_MEASUREMENT_AND_EVIDENCE.md",
-        13: "CH13_VULKAN_RESOURCE_GRAPH.md",
-        14: "CH14_VULKAN_SYNC_TIMELINE.md",
-        15: "CH15_METAL_EXECUTION_MAP.md",
-
         2: "CH02_STORAGE_OBJECT_LIFETIME.md",
         3: "CH03_TRANSACTIONAL_OWNERSHIP.md",
         4: "CH04_FAILURE_MATRIX.md",
+        5: "CH05_CPP23_FEATURE_CONTRACTS.md",
         6: "CH06_GENERATIONAL_HANDLES.md",
+        7: "CH07_CPU_EXECUTION_TRACE.md",
         8: "CH08_SCAN_SCATTER_PROOF.md",
-        10: "CH10_BUILD_EVIDENCE_CHAIN.md",    }.items()
+        9: "CH09_GPU_MEMORY_VISUAL_LAB.md",
+        10: "CH10_BUILD_EVIDENCE_CHAIN.md",
+        11: "CH11_BORROWING_AND_ASYNC.md",
+        12: "CH12_GPU_LIFETIME_TIMELINE.md",
+        13: "CH13_VULKAN_RESOURCE_GRAPH.md",
+        14: "CH14_VULKAN_SYNC_TIMELINE.md",
+        15: "CH15_METAL_EXECUTION_MAP.md",
+        16: "CH16_MEASUREMENT_AND_EVIDENCE.md",
+    }.items()
 }
+if set(ENRICHMENT_FILES) != set(range(1, NUMBER_OF_CHAPTERS + 1)):
+    raise RuntimeError("Every reading chapter requires its dedicated academic enrichment")
 # Original foundation master before this branch's additive work. The exact
 # same identity is required after reversing any already-applied lesson
 # blocks; otherwise the derived Chapter Edition may be stale.
