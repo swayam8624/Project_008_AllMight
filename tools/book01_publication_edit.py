@@ -23,6 +23,17 @@ EDITOR_SENTENCES = (
     re.compile(r"(?im)^The exact curriculum ownership is:.{5,650}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^This addition belongs before the chapter.{5,500}?(?=\n\n|\Z)", re.S),
 )
+PUBLICATION_REPHRASES = (
+    (r"(?i)\bthe source attachment's central project-shaped finding\b",
+     "the central language-level finding"),
+    (r"(?i)\bthe source attachment\b", "the earlier source example"),
+    (r"(?i)\bthe attachment's\b", "the earlier example's"),
+    (r"(?i)\bthe attachment\b", "the earlier example"),
+    (r"(?i)\bthe supplied source notes\b", "The cited project notes"),
+    (r"(?i)\bthe supplied source\b", "the cited project source"),
+    (r"(?i)\bThis pass \*\*closes Phase \d+\*\*\.", 
+     "This section completes the argument established so far."),
+)
 MERGE_HEADING = re.compile(
     r"(?im)^#{1,6}\s*(?:Next\s*[—-]\s*Pass\s+\d+|"
     r"(?:Pass|Phase)\s+\d+\s*[:—-]\s*M\d+|\+\s*M\d{3})"
@@ -69,6 +80,10 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
 
     def edit_prose(fragment: str) -> str:
         nonlocal notes
+        # Names of private attachments have no meaning to a published reader.
+        # These are prose-only substitutions; code and math files are retained.
+        for phrase, replacement in PUBLICATION_REPHRASES:
+            fragment = re.sub(phrase, replacement, fragment)
         for regex in EDITOR_SENTENCES:
             def remove(match: re.Match[str]) -> str:
                 notes.append(match.group(0).strip())
