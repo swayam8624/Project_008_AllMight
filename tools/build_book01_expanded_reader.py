@@ -330,7 +330,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                r"\author{Swayam Singal}",
                r"\begin{document}", r"\frontmatter", r"\maketitle",
                book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
-               r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\mainmatter",
+               r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\listoffigures", r"\mainmatter",
                r"\setcounter{chapter}{" + str(low - 1) + "}"]
         part_rows = []
         for row in rows[low - 1:high]:
@@ -523,6 +523,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
         r"\setcounter{tocdepth}{1}",
         r"\tableofcontents",
+        r"\listoffigures",
         r"\input{frontmatter}",
         r"\mainmatter",
     ]
@@ -602,7 +603,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\begin{document}",
             r"\frontmatter", r"\maketitle",
             book_imprint(title, subtitle, metadata["source_revision"]),
-            r"\setcounter{tocdepth}{1}", r"\tableofcontents",
+            r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\listoffigures",
             r"\input{frontmatter}", r"\mainmatter",
             r"\setcounter{chapter}{" + str(low - 1) + "}",
         ]
