@@ -51,6 +51,8 @@ ENRICHMENT_FILES = {
     n: ROOT / "Book Production/Seven-Book Curriculum/Book01/Enrichments" / filename
     for n, filename in {
         1: "CH01_CPU_FROM_LOGIC.md",
+        7: "CH07_CPU_EXECUTION_TRACE.md",
+        11: "CH11_BORROWING_AND_ASYNC.md",
         5: "CH05_CPP23_FEATURE_CONTRACTS.md",
         9: "CH09_GPU_MEMORY_VISUAL_LAB.md",
         12: "CH12_GPU_LIFETIME_TIMELINE.md",
