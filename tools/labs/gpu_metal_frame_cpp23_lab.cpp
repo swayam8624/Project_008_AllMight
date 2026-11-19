@@ -165,32 +165,52 @@ void test_capture_pitch_crop_and_failure_cases() {
     const auto malformed=frames.observe_terminal(
         *frame,Terminal::completed,std::nullopt,
         m::Readback{3,2,12,pitched});
-    check(!malformed &&
-          malformed.error()==Error::malformed_capture &&
-          frames.available()==0 &&
-          frames.state(0)==Phase::submitted,
-          "invalid capture metadata cannot publish a successful result");
+    check(malformed && frames.available()==1 &&
+          frames.state(0)==Phase::free,
+          "terminal GPU completion releases permit even when capture fails");
+    auto badEvents=frames.drain_events();
+    check(badEvents.size()==1 &&
+          badEvents[0].status==Terminal::completed &&
+          badEvents[0].capture_error==Error::malformed_capture &&
+          !badEvents[0].capture,
+          "CPU capture failure is reported without inventing valid pixels");
+
+    auto next=frames.begin(Project::maveb_gaussian);
+    check(next && frames.stage(*next,pixel,16) &&
+          frames.seal(*next) && frames.commit(*next),
+          "next frame may proceed after previous capture-processing failure");
     const auto shortSource=frames.observe_terminal(
-        *frame,Terminal::completed,std::nullopt,
+        *next,Terminal::completed,std::nullopt,
         m::Readback{3,2,256,
                     std::span<const m::Byte>(pitched.data(),256)});
-    check(!shortSource && shortSource.error()==Error::malformed_capture,
+    check(shortSource && frames.available()==1,
+          "short CPU capture source cannot strand a terminal frame");
+    badEvents=frames.drain_events();
+    check(badEvents.size()==1 &&
+          badEvents[0].capture_error==Error::malformed_capture &&
+          !badEvents[0].capture,
           "readback cannot overrun incomplete mapped bytes");
+
+    auto last=frames.begin(Project::maveb_gaussian);
+    check(last && frames.stage(*last,pixel,16) &&
+          frames.seal(*last) && frames.commit(*last),
+          "third independent frame prepared after terminal cleanup");
     check(frames.observe_terminal(
-        *frame,Terminal::completed,m::RawTiming{22.0,22.004},source),
+        *last,Terminal::completed,m::RawTiming{22.0,22.004},source),
         "valid terminal completion includes checked readback");
     const auto events=frames.drain_events();
     check(events.size()==1 && events[0].capture &&
+          !events[0].capture_error &&
           events[0].capture->bgra8_tightly_packed==
               compact->bgra8_tightly_packed &&
           events[0].measured_gpu_milliseconds &&
           std::fabs(*events[0].measured_gpu_milliseconds-4.0)<1e-9,
-          "only completed command publishes pixels plus valid GPU timestamp");
+          "completed command publishes owned pixels plus valid GPU timestamp");
     pitched.assign(pitched.size(),0);
     check(events[0].capture->bgra8_tightly_packed[23]==61,
           "captured image has independent ownership after temporary buffer ends");
     const auto doubleTerminal=frames.observe_terminal(
-        *frame,Terminal::completed);
+        *last,Terminal::completed);
     check(!doubleTerminal &&
           doubleTerminal.error()==Error::stale_generation,
           "duplicate completed handler cannot release same permit twice");
