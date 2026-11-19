@@ -155,6 +155,28 @@ class PublicationTransformTests(unittest.TestCase):
             for entry in entries:
                 self.assertEqual(result.stdout.count(entry["command"]), 1)
 
+    def test_heading_does_not_consume_mermaid_or_code_fence(self):
+        sample = (
+            "## Figure B2: an actual diagram\n\n"
+            + f"{BACKTICKS}mermaid\n"
+            + "flowchart LR\n  A[CPU] --> B[GPU]\n"
+            + f"{BACKTICKS}\n\n"
+            + "### A complete code example\n\n"
+            + f"{BACKTICKS}cpp\n"
+            + "int main() { return 0; }\n"
+            + f"{BACKTICKS}\n"
+        )
+        reader, _ = editor.apply_reader_edits(sample, 1)
+        self.assertIn("\n\n" + BACKTICKS + "mermaid\n", reader)
+        self.assertIn("\n\n" + BACKTICKS + "cpp\n", reader)
+        render.verify_fenced_blocks_unchanged(sample, reader, 1, "editorial")
+        with self.assertRaisesRegex(ValueError, "fenced-block count changed"):
+            render.verify_fenced_blocks_unchanged(
+                sample, reader.replace("\n\n" + BACKTICKS + "mermaid",
+                                       BACKTICKS + "mermaid"),
+                1, "broken heading"
+            )
+
     def test_source_mathematics_and_mermaid_remain_compatible(self):
         source = (
             "# GPU memory\n\n"
