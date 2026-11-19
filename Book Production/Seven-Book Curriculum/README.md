@@ -1,4 +1,10 @@
-# Project AllMight — Seven-book C++23 curriculum (in progress)
+# From Bits to Research — Project AllMight's seven-book curriculum
+
+**Series:** *From Bits to Research* — Computing, Mathematics, Graphics, Simulation, and Scientific Discovery. **Book One:** *From Bits to Parallel Systems: C++23, CPU Execution, GPU Memory, and Reliable Software*. The two physical print volumes of Book One do **not** count as Books One and Two of the seven-book sequence.
+
+This programme aims to teach not only how to write, measure and research systems, graphics, simulation, vision, XR and AI, but also how to **communicate research visually**: clear plots, reproducible experimental figures, algorithm diagrams, truthful comparative animations, scientific visualisation, camera/light/design decisions and publication-quality presentations. Ambitious visuals are a learnable engineering discipline, and an attractive result must never obscure errors or uncertainty.
+
+The [series-wide editorial and citation policy](SERIES_EDITORIAL_AND_CITATION_POLICY.md) specifies the shared cover identity, bibliography rules, verified source links, DOI/ISBN practice, visual evidence standard and preservation boundary for future books.
 
 ## Book 1 foundations authoring checkpoint — ready for the user's four-part LaTeX build
 
@@ -64,7 +70,7 @@ The script refuses ambiguous anchors and modified partial insertions, checks tha
 | 04 — Light Transport and Image Synthesis | How do physical light models become rendered pixels? | **KairoRayTracer, Maveb**: ray intersections → BVH → path tracing → validation |
 | 05 — Spatial Worlds, Engine State and Simulation | How do worlds change without violating identity or physics? | **KairoECS, KairoPhysicsEngine, Kyoto Common Contact**: components → spatial indices → contacts → stable simulation |
 | 06 — GPU Architecture and Real-Time Rendering | How do CPU intentions execute as efficient GPU work? | **KairoRenderer, KairoGameEngine, Maveb**: buffers → rasterization → PBR → Vulkan/Metal render graphs |
-| 07 — Vision, XR and Playable Worlds | How do observation, perception and interaction close the loop? | **Maveb, Vulkax, FoveaBench/ILLIXR, KairoGameEngine**: vision → XR → gameplay → research replication |
+| 07 — Vision, XR, Research and Visual Evidence | How do observation, interaction, rigorous experiments and their visual communication close the loop? | **Maveb, Vulkax, FoveaBench/ILLIXR, KairoGameEngine**: vision → XR → gameplay → research replication → scientific graphics, plots and visual demonstrations |
 
 Projects are grounded in the listed *repositories*, not presumed to be production-correct. Every reused implementation must be inspected at an exact commit, its defects noted, and its platform/verification scope stated. Existing Python, C, C# or Java systems can serve as sources to understand or compare; the **learner's primary implementations are C++23**. Graphics APIs, shaders, operating-system SDKs and external research tooling may require other languages at interop boundaries; explain these boundaries rather than misrepresenting them as C++ language features.
 
