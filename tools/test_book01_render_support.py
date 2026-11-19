@@ -198,6 +198,29 @@ class Book01ProductionTests(unittest.TestCase):
         self.assertNotIn("GENERAL COMPUTE & PARALLEL ALGORITHMS", result)
         self.assertGreaterEqual(report["promoted_concept_headings"], 1)
 
+    def test_editorial_shell_addition_cannot_hide_lost_source_code(self):
+        original = (
+            "## Example\n\n"
+            + f"{TICK}cpp\nint main() {{ return 0; }}\n{TICK}\n"
+        )
+        derived = (
+            f"{TICK}sh\nc++ -std=c++23 sample.cpp\n{TICK}\n\n"
+            + original
+        )
+        book.verify_fenced_blocks_unchanged(
+            original, derived, 4, "compiler promotion",
+            allowed_new_shell_listings=1,
+        )
+        with self.assertRaisesRegex(ValueError, "fenced-block count changed"):
+            book.verify_fenced_blocks_unchanged(
+                original, derived, 4, "unapproved addition",
+            )
+        with self.assertRaisesRegex(ValueError, "altered, reordered or replaced"):
+            book.verify_fenced_blocks_unchanged(
+                original, derived.replace("int main()", "int false()"),
+                4, "deleted program", allowed_new_shell_listings=1,
+            )
+
     def test_long_textual_math_is_reflowed_without_changing_equations(self):
         long_claim = (
             r"\[\boxed{\text{Can another machine, OS, compiler and CI worker "
