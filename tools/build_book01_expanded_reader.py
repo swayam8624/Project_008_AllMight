@@ -325,6 +325,9 @@ def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stat
     content = render.replace_figure_tokens(content, figures or [])
     if math_stats is not None:
         render.check_math_rendered(math_stats, content, chapter)
+    # Mathematical/source equality must be checked before this strictly visual
+    # layout normalization; equations and the canonical Markdown stay intact.
+    content = render.reflow_long_textual_displays(content)
     path.write_text(content, encoding="utf-8")
 
 
