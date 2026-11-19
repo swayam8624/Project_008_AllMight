@@ -52,6 +52,39 @@ jobs:
           python3 tools/build_book01_expanded_reader.py --prepare
           python3 tools/build_book01_expanded_reader.py --verify-prepared
           find build/book01-expanded-reader -type f -name '*.tex' | sort
+      - name: Configure Node for actual Mermaid rendering
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Render every required figure in a headless Chromium proof
+        run: |
+          npm install -g @mermaid-js/mermaid-cli@12.2.0
+          mmdc --version
+          if command -v google-chrome >/dev/null 2>&1; then
+            export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          elif command -v chromium >/dev/null 2>&1; then
+            export PUPPETEER_EXECUTABLE_PATH="$(command -v chromium)"
+          else
+            echo "Chromium browser unavailable for Mermaid proof" >&2
+            exit 1
+          fi
+          printf '%s\n' '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/book01-puppeteer.json
+          export ALLMIGHT_MERMAID_PUPPETEER_CONFIG=/tmp/book01-puppeteer.json
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, "tools")
+          import book01_render_support as render
+          output = Path("build/book01-expanded-reader")
+          manifest = json.loads((output / "manifest.json").read_text("utf-8"))
+          render.render_figures(manifest, output)
+          diagrams = manifest["diagrams"]
+          assert diagrams and len(diagrams) >= 30
+          for entry in diagrams:
+              png = output / entry["image"]
+              assert png.is_file() and png.stat().st_size > 500, png
+          print(f"PASS: all {len(diagrams)} Mermaid diagrams rendered as real PNGs")
+          PY
       - name: Compile and execute all four standalone Book 1 C++23 examples
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01/Companion" -B build/book01-companion -DCMAKE_BUILD_TYPE=Debug
