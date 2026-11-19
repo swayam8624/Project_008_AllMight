@@ -343,7 +343,7 @@ at compile time** if that original header is unavailable, instead of
 silently skipping the important cross-pass integration.
 
 **Substantive new teaching:** `Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md`
-is ~42K+ characters. It directly closes the identified worked-example
+now exceeds 50K characters after bounded-input and cancellation repairs. It directly closes the identified worked-example
 gaps for `std::filesystem` and `std::ifstream`/binary reads,
 `std::ranges::sort` and `std::views::filter` with owned range lifetimes,
 `std::format` and `std::println` with library feature gating, a
@@ -389,6 +389,25 @@ must be read from an actual runner before asserting full-course success.
 CMake/project preset *display labels* now reflect Book01 cross-project
 work rather than NES exclusively, without renaming the earlier targets
 or touching the original prose.
+
+**Resumed Pass18 source and test hardening:** Request-count bounds (default
+1024, maximum 4096) and a 4096-byte per-path ceiling now reject enormous
+manifests synchronously before starting `std::jthread`. This closes the
+bounded-error-queue hole left by a budget that counted only successful
+payload bytes. `Root::load` now accepts the worker's `std::stop_token` and
+checks it before path resolution, between 4096-byte file chunks and
+before publication; it does not falsely promise preemption of a blocked
+native I/O syscall or race-free path resolution.
+
+**Observed byte-identical standalone source revisions:** header
+`23a581956e35b8ffd6116e5483ff96a49e790be6`; test
+`28369c2bb8ac68d0c08b529b02152c6d5038c46c`. After rebuilding
+those exact Git blobs locally, GCC 14.2 C++23 strict warnings and
+Clang 17 C++23 with ASan/UBSan each executed one CTest successfully,
+with zero failures and recorded standalone JUnit receipts. The *full*
+17-target course and Pass06 registry runtime integration were not run
+in that working container, and no CI/native hardware success is claimed.
+The evidence ledger contains the exact measurement boundary.
 
 **Next high-priority gate:** Full repository 17-target GCC/Clang/AppleClang
 build, sanitizer tests, actual legacy-registry integration and JUnit
