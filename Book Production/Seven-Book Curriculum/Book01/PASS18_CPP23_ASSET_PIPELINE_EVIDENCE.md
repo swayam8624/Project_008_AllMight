@@ -58,6 +58,26 @@ were subsequently reproduced and committed through the connected GitHub
 connector, so exact Git blob-equivalent compilation is also a separate
 check. No result here is presented as an observed full 17-target build.
 
+**Additional actual isolated CMake/CTest evidence:** A dedicated, local
+throwaway CMake project was configured and built with Ninja and `g++`
+(C++23, strict warnings), and with `clang++` (C++23, strict warnings,
+ASan+UBSan). Both executed their single standalone CTest and produced
+JUnit XML. Observed results:
+
+```text
+GCC Debug:           1/1 tests passed (0 failed)
+Clang ASan+UBSan:    1/1 tests passed (0 failed)
+```
+
+This is **two standalone 1/1 CTest outcomes**, not the repository's
+seventeen-target CTest or a source-pinned course JUnit acceptance receipt.
+The local compiler also intentionally tried
+`-DALLMIGHT_COURSE_REQUIRE_REGISTRY=1` without the earlier headers,
+and **observed a compile-time #error**. This fail-closed condition
+is now enabled by the real Book01 CMake target, meaning the full
+course cannot advertise a passing test while silently skipping the
+previous generational registry integration.
+
 A GitHub Actions workflow already registers GCC, Clang, AppleClang and
 sanitizer jobs plus strict source-pinned JUnit receipts; their successful
 execution was not observed at this authoring checkpoint. No native
