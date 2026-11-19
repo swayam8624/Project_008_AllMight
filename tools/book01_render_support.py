@@ -65,6 +65,58 @@ THEMATIC_BOLD = re.compile(
 THEMATIC_REST = re.compile(r"(?m)^[ \t]*---[ \t]*$")
 
 
+
+def verify_fenced_blocks_unchanged(original: str, edited: str,
+                                   chapter: int, stage: str,
+                                   *, allow_pseudocode_labels: bool = False) -> None:
+    """Fail if a reader edit drops, fuses, or rewrites ANY fenced block.
+
+    Captures the entire source code and diagram payload byte-for-byte, in
+    order. The only permitted header edit at this stage is cpp -> text for
+    explicitly labeled pseudocode; original source code is never deleted.
+    This prevents heading regexes from consuming the newline before a
+    Mermaid fence and silently printing the diagram language as prose.
+    """
+    def unpack(source: str) -> list[tuple[str, str]]:
+        blocks = []
+        for match in FENCE.finditer(source):
+            body = match.group(0)
+            header, _, rest = body.partition("\n")
+            payload, delimiter, _ = rest.rpartition("\n" + chr(96) * 3)
+            if not delimiter:
+                raise ValueError("Malformed closing code-fence marker")
+            blocks.append((header, digest(payload.encode("utf-8"))))
+        return blocks
+
+    before = unpack(original)
+    after = unpack(edited)
+    if len(before) != len(after):
+        raise ValueError(
+            f"Chapter {chapter}: fenced-block count changed during {stage}; "
+            f"{len(before)} source blocks, {len(after)} reader blocks"
+        )
+    for number, ((old_head, old_hash), (new_head, new_hash)) in enumerate(
+        zip(before, after), 1
+    ):
+        if old_hash != new_hash:
+            raise ValueError(
+                f"Chapter {chapter}: fenced-block {number} payload altered "
+                f"during {stage}"
+            )
+        if old_head != new_head:
+            permitted = (
+                allow_pseudocode_labels and old_head.startswith(chr(96) * 3 + "cpp")
+                and new_head == old_head.replace(chr(96) * 3 + "cpp",
+                                                 chr(96) * 3 + "text", 1)
+            )
+            if not permitted:
+                raise ValueError(
+                    f"Chapter {chapter}: fenced-block {number} language or "
+                    f"metadata changed during {stage}: {old_head!r} -> "
+                    f"{new_head!r}"
+                )
+
+
 def prepare_reading_structure(source: str) -> tuple[str, dict]:
     """Format-only reflow with provenance; never change code or math text."""
     report = {"promoted_concept_headings": 0, "compacted_separators": 0,
