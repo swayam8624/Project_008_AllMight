@@ -87,6 +87,7 @@ void test_real_bounded_file_io_and_path_policy() {
     rejection("assets/../models/tri.msh1",a::Issue::unsafe_relative_path);
     rejection("/etc/passwd",a::Issue::unsafe_relative_path);
     rejection("",a::Issue::unsafe_relative_path);
+    rejection(std::string("models/tri.msh1\0/evil",20),a::Issue::unsafe_relative_path);
     rejection("missing.msh1",a::Issue::missing_file);
     rejection("assets",a::Issue::not_regular);
     const auto limited=a::Root(fixture.root,16).load({"assets/tex.txr4",a::AssetKind::texture_rgba8});
@@ -174,6 +175,13 @@ void test_aggregate_budget_prevents_unbounded_publication() {
     Fixture fixture;
     fixture.file("assets/tex.txr4",texture());
     fixture.file("models/tri.msh1",mesh());
+    bool refused_zero_budget=false;
+    try {
+        a::WorkerBatch invalid(a::Root(fixture.root,64),{},0);
+    } catch(const std::invalid_argument&) {
+        refused_zero_budget=true;
+    }
+    require(refused_zero_budget,"zero budget refused before launching worker");
     a::WorkerBatch batch(a::Root(fixture.root,64),
         {{"assets/tex.txr4",a::AssetKind::texture_rgba8},
          {"models/tri.msh1",a::AssetKind::triangle_mesh}},24);
