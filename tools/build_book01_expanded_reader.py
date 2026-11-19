@@ -245,6 +245,10 @@ def audit_sources() -> tuple[list[dict], dict]:
         "academic_subtitle": BOOK_SUBTITLE,
         "part_ranges": [list(x) for x in PARTS],
     }
+    git_revision = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"],
+                                  cwd=ROOT, capture_output=True, text=True)
+    metadata["source_revision"] = (git_revision.stdout.strip() if git_revision.returncode == 0
+                                   else "unresolved")
     return rows, metadata
 
 
@@ -253,6 +257,17 @@ def tex_escape(text: str) -> str:
                "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#",
                "_": r"\_", "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
     return "".join(mapping.get(char, char) for char in text)
+
+
+def book_pdf_metadata(title: str, subtitle: str) -> str:
+    """Populate actual PDF document information independently of cover text."""
+    return (r"\hypersetup{pdftitle={" + tex_escape(title) +
+            r"},pdfauthor={Swayam Singal},pdfsubject={" + tex_escape(subtitle) +
+            r"},pdfkeywords={computing, systems programming, C++23, CPU, GPU, Vulkan, Metal}}")
+
+def book_imprint(title: str, subtitle: str, revision: str) -> str:
+    return (r"\BookImprintPage{" + tex_escape(title) + "}{" +
+            tex_escape(subtitle) + "}{" + tex_escape(revision) + "}")
 
 
 def pandoc_binary() -> str:
@@ -307,11 +322,13 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         tex = [r"\documentclass[11pt,twoside,openany]{book}",
                r"\usepackage[ebook]{allmight-book}",
                r"\usepackage{book01-reader}",
+               book_pdf_metadata(BOOK_TITLE, BOOK_SUBTITLE),
                r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
                r"\title{" + tex_escape(BOOK_TITLE) + " — Diagnostic Part " + str(part_number) + "}",
                r"\author{Swayam Singal}",
-               r"\begin{document}", r"\maketitle",
-               r"\tableofcontents", r"\mainmatter",
+               r"\begin{document}", r"\frontmatter", r"\maketitle",
+               book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
+               r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\mainmatter",
                r"\setcounter{chapter}{" + str(low - 1) + "}"]
         part_rows = []
         for row in rows[low - 1:high]:
@@ -488,12 +505,14 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"\documentclass[10pt,twoside,openany]{book}",
         r"\usepackage[ebook]{allmight-book}",
         r"\usepackage{book01-reader}",
+        book_pdf_metadata(BOOK_TITLE, BOOK_SUBTITLE),
         r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
         r"\title{" + tex_escape(BOOK_TITLE) + r"\\[0.6em]\large " + tex_escape(BOOK_SUBTITLE) + "}",
         r"\author{Swayam Singal}",
         r"\begin{document}",
         r"\frontmatter",
         r"\maketitle",
+        book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
         r"\setcounter{tocdepth}{1}",
         r"\tableofcontents",
         r"\input{frontmatter}",
@@ -567,11 +586,13 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\documentclass[10pt,twoside,openany]{book}",
             r"\usepackage[print]{allmight-book}",
             r"\usepackage{book01-reader}",
+            book_pdf_metadata(title, subtitle),
             r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
             r"\title{" + tex_escape(title) + r"\\[0.6em]\large " + tex_escape(subtitle) + "}",
             r"\author{Swayam Singal}",
             r"\begin{document}",
             r"\frontmatter", r"\maketitle",
+            book_imprint(title, subtitle, metadata["source_revision"]),
             r"\setcounter{tocdepth}{1}", r"\tableofcontents",
             r"\input{frontmatter}", r"\mainmatter",
             r"\setcounter{chapter}{" + str(low - 1) + "}",
