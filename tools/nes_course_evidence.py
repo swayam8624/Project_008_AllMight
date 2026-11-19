@@ -51,6 +51,7 @@ EXPECTED = (
     ("GPU-13D", "gpu_device_resource_cpp23_lab", "tools/labs/gpu_device_resource_cpp23_lab.cpp"),
     ("GPU-14F", "gpu_submit_retire_cpp23_lab", "tools/labs/gpu_submit_retire_cpp23_lab.cpp"),
     ("GPU-15M", "gpu_metal_frame_cpp23_lab", "tools/labs/gpu_metal_frame_cpp23_lab.cpp"),
+    ("GPU-16P", "gpu_profile_ownership_cpp23_lab", "tools/labs/gpu_profile_ownership_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -75,6 +76,9 @@ EXTRA_SOURCES = (
     "tools/labs/gpu_course/metal_frame_contracts.hpp",
     "tools/labs/gpu_course/native_metal_compute_probe.mm",
     "tools/labs/gpu_course/native_metal_unavailable.cpp",
+    "tools/labs/gpu_course/gpu_profile_ownership.hpp",
+    "tools/labs/gpu_course/native_metal_callback_probe.mm",
+    "tools/labs/gpu_course/native_metal_callback_unavailable.cpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -122,6 +126,7 @@ def source_paths() -> tuple[str, ...]:
         "GPU-13D": "GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
         "GPU-14F": "GPU-14F - Frame Submission Synchronization and Retirement.md",
         "GPU-15M": "GPU-15M - Execute Verify and Measure a Metal Frame.md",
+        "GPU-16P": "GPU-16P - GPU Profiling and Apple Callback Ownership.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
