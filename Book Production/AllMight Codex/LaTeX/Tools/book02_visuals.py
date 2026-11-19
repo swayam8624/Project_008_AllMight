@@ -14,13 +14,25 @@ FIGURE_SOURCE = Path(__file__).resolve().parents[1] / "Assets" / "Book02"
 FIGURE_DESTINATION = "book02-figures"
 
 # Source chapter -> figure(s) presented immediately after that chapter's text.
+# Supplemental teaching stays separate from the original chapters and source
+# generation. It is inserted into build copies at stable source boundaries.
 FIGURES = {
-    "01-foundations-i-ch019": ("01-linear-transformation.tex",),
+    "01-foundations-i-ch019": (
+        "01-linear-transformation.tex", "07-metric-gradient-case.tex"
+    ),
+    "01-foundations-i-ch020": ("08-conditioning-case.tex",),
     "02-foundations-ii-ch024": ("02-gaussian-uncertainty.tex",),
-    "02-foundations-ii-ch025": ("04-heat-diffusion.tex",),
-    "02-foundations-ii-ch027": ("03-optimization-landscape.tex",),
+    "02-foundations-ii-ch025": (
+        "04-heat-diffusion.tex", "09-heat-stability-case.tex"
+    ),
+    "02-foundations-ii-ch027": (
+        "03-optimization-landscape.tex", "10-gauge-nullspace-case.tex"
+    ),
     "02-foundations-ii-ch029": ("05-convergence-study.tex",),
+    "02-foundations-ii-ch031": ("11-sampling-support-case.tex",),
 }
+PRELUDE_CHAPTER = "01-foundations-i-ch017"
+PRELUDE_FILE = "06-reader-contract.tex"
 PACKAGE_MARKER = r"\usepackage[print]{allmight-book}"
 STAGE_MARKER = r"\SetBookStage{2}{Mathematics for Visual Computing}"
 INJECTION_MARKER = "% AllMight Book02 reproducible scientific figures"
@@ -60,6 +72,22 @@ def install_book02_visuals(tex_path: str | Path) -> list[str]:
         )
         source = chapter_input.sub(lambda m: m.group(1) + "\n" + lines, source)
         installed.extend(figure_names)
+
+    # The new entry must occur before the original first chapter, so the
+    # mathematical objects/units contract precedes Python performance detail.
+    prelude_input = re.compile(
+        r"(\\input\{\.\./current/[^}\n]+/content/" +
+        re.escape(PRELUDE_CHAPTER) + r"\.tex\})"
+    )
+    prelude_matches = list(prelude_input.finditer(source))
+    if len(prelude_matches) > 1:
+        raise RuntimeError("Ambiguous Book02 prelude anchor")
+    if prelude_matches:
+        source = prelude_input.sub(
+            lambda m: rf"\input{{{FIGURE_DESTINATION}/{PRELUDE_FILE}}}" +
+            "\n" + m.group(1), source
+        )
+        installed.insert(0, PRELUDE_FILE)
 
     if not installed:
         raise RuntimeError("Book02 has no matching chapter anchors in " + str(tex_path))
