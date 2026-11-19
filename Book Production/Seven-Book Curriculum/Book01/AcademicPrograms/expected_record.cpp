@@ -30,5 +30,5 @@ int main() {
     if (second.error() != DecodeError::unsupported_version ||
         third.error() != DecodeError::too_short)
         throw std::runtime_error("incorrect error classification");
-    std::cout << "Expected: valid zero and two error classes distinguished\\n";
+    std::cout << "Expected: valid zero and two error classes distinguished\n";
 }
