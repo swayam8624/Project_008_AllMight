@@ -308,6 +308,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             reading_text, structure = render.prepare_reading_structure(source_text)
             converted, figures = render.plan_figures(reading_text, num, part_number, directory, OUTPUT)
             prepared_math, math_entries = render.plan_math(converted, num)
+            prepared_math, fence_metadata_removed = render.normalize_code_fence_metadata(prepared_math)
             if len(math_entries) != math_stats["display_math"]:
                 raise ValueError(f"Chapter {num}: display math count changed during reader reflow")
             render_path = content_dir / (fragment + ".reader.md")
@@ -333,6 +334,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "math_preflight": {key: value for key, value in math_stats.items() if not key.startswith("_")},
                           "layout_reflow": structure,
                           "protected_math_displays": len(math_entries),
+                          "code_fence_metadata_normalized": fence_metadata_removed,
                           "figure_count": len(figures),
                           "reader_title": CHAPTER_TITLES[num - 1],
                           "latex_sha256": sha256(tex_path.read_bytes()),
@@ -351,6 +353,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             challenge_stats = render.math_preflight(challenge_bytes.decode("utf-8"), "Final capstone")
             cap_figured, cap_figures = render.plan_figures(challenge_bytes.decode("utf-8"), 17, part_number, directory, OUTPUT)
             cap_prepared, cap_math = render.plan_math(cap_figured, 17)
+            cap_prepared, cap_fences = render.normalize_code_fence_metadata(cap_prepared)
             if len(cap_math) != challenge_stats["display_math"]:
                 raise ValueError("Final capstone lost display math before Pandoc")
             cap_reader = content_dir / "final-mastery.reader.md"
@@ -385,6 +388,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                 "render_markdown_path": cap_reader.relative_to(OUTPUT).as_posix(),
                 "render_markdown_sha256": sha256(cap_reader.read_bytes()),
                 "protected_math_displays": len(cap_math),
+                "code_fence_metadata_normalized": cap_fences,
                 "figure_count": len(cap_figures),
                 "latex_path": challenge_tex.relative_to(OUTPUT).as_posix(),
                 "latex_sha256": sha256(challenge_tex.read_bytes()),
