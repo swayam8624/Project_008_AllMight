@@ -14,7 +14,7 @@ import re
 import sys
 
 KDP_BW_WHITE_PAGE_LIMIT = 828
-SKIP_FRONT_TEXT = 100
+SKIP_FRONT_TEXT = 12
 FATAL = {"trim", "page_limit", "missing_metadata", "duplicate_footers",
          "overlapping_headers", "clipped_text", "tiny_code", "missing_figures"}
 LEAKS = (
