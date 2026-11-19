@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed provenance and CTest evidence for Project AllMight NES labs.
+"""Fail-closed provenance and CTest evidence for Project AllMight cross-project labs.
 
 This script NEVER compiles LaTeX, changes manuscript content, or reports that
 a test passed merely because its source file or CTest registration exists.
@@ -50,6 +50,7 @@ EXPECTED = (
     ("NES-12Q", "nes_command_lifecycle_cpp23_lab", "tools/labs/nes_command_lifecycle_cpp23_lab.cpp"),
     ("GPU-13D", "gpu_device_resource_cpp23_lab", "tools/labs/gpu_device_resource_cpp23_lab.cpp"),
     ("GPU-14F", "gpu_submit_retire_cpp23_lab", "tools/labs/gpu_submit_retire_cpp23_lab.cpp"),
+    ("GPU-15M", "gpu_metal_frame_cpp23_lab", "tools/labs/gpu_metal_frame_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -71,6 +72,9 @@ EXTRA_SOURCES = (
     "tools/labs/gpu_course/native_vulkan_probe.cpp",
     "tools/labs/gpu_course/submission_retirement.hpp",
     "tools/labs/gpu_course/native_vulkan_submit_probe.cpp",
+    "tools/labs/gpu_course/metal_frame_contracts.hpp",
+    "tools/labs/gpu_course/native_metal_compute_probe.mm",
+    "tools/labs/gpu_course/native_metal_unavailable.cpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -117,6 +121,7 @@ def source_paths() -> tuple[str, ...]:
         "NES-12Q": "NES-12Q - Command Lifecycles and Uncertain Submission.md",
         "GPU-13D": "GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
         "GPU-14F": "GPU-14F - Frame Submission Synchronization and Retirement.md",
+        "GPU-15M": "GPU-15M - Execute Verify and Measure a Metal Frame.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
