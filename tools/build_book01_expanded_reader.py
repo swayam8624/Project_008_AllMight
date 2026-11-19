@@ -299,20 +299,27 @@ def amend_generated_tex(path: Path, figures: list[dict] | None = None, math_stat
     """Correct only generated TeX, never the original teaching Markdown."""
     content = path.read_text("utf-8")
     content = idx.replace_index_tokens(content, index_entries or [])
-    content = render.replace_math_tokens(content, math_entries or [])
     def correct(match: re.Match[str]) -> str:
-        rendered = re.sub(r"(?<!\\)_", r"\\_", match.group(1))
-        # Long inline identifiers/commands otherwise become unbreakable,
-        # producing hard clipping in KDP. \allowbreak adds no visible glyph
-        # and leaves the original words, punctuation and bytes unchanged.
-        if len(match.group(1)) >= 58:
-            rendered = rendered.replace(" ", " " + r"\allowbreak{}")
+        raw = match.group(1)
+        # Pandoc renders file paths and identifiers as \texttt{...}, which
+        # TeX otherwise treats as an unbreakable word. Source Markdown and
+        # code listings are never modified. A 24-character path can overflow
+        # a 7-inch page, so the former >=58 cutoff was insufficient.
+        rendered = re.sub(r"(?<!\\)_", r"\\_", raw)
+        if len(raw) >= 24:
+            # Break only at existing punctuation: no inserted visible
+            # characters or spelling changes. In particular, escaped
+            # underscores are valid path-break opportunities in TeX.
             rendered = re.sub(
-                r"(?<!\\)([\/,;=\-])", lambda m: m.group(1) + r"\allowbreak{}",
+                r"(\\_|[/.,;=\-])",
+                lambda match: match.group(0) + r"\allowbreak{}",
                 rendered,
             )
         return r"\texttt{" + rendered + "}"
+    # Restore protected display math only AFTER altering Pandoc's inline
+    # \texttt expressions; this preserves the source equations exactly.
     content = re.sub(r"\\texttt\{([^{}\n]*)\}", correct, content)
+    content = render.replace_math_tokens(content, math_entries or [])
     content = content.replace(r"\begin{verbatim}", r"\begin{BookCode}")
     content = content.replace(r"\end{verbatim}", r"\end{BookCode}")
     content = render.replace_figure_tokens(content, figures or [])
