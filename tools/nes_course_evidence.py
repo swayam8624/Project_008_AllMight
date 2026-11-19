@@ -49,6 +49,7 @@ EXPECTED = (
     ("NES-11B", "nes_scoped_frame_upload_cpp23_lab", "tools/labs/nes_scoped_frame_upload_cpp23_lab.cpp"),
     ("NES-12Q", "nes_command_lifecycle_cpp23_lab", "tools/labs/nes_command_lifecycle_cpp23_lab.cpp"),
     ("GPU-13D", "gpu_device_resource_cpp23_lab", "tools/labs/gpu_device_resource_cpp23_lab.cpp"),
+    ("GPU-14F", "gpu_submit_retire_cpp23_lab", "tools/labs/gpu_submit_retire_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -68,6 +69,8 @@ EXTRA_SOURCES = (
     "tools/labs/nes_course/command_submission_lifecycle.hpp",
     "tools/labs/gpu_course/device_resource_contracts.hpp",
     "tools/labs/gpu_course/native_vulkan_probe.cpp",
+    "tools/labs/gpu_course/submission_retirement.hpp",
+    "tools/labs/gpu_course/native_vulkan_submit_probe.cpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -113,6 +116,7 @@ def source_paths() -> tuple[str, ...]:
         "NES-11B": "NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md",
         "NES-12Q": "NES-12Q - Command Lifecycles and Uncertain Submission.md",
         "GPU-13D": "GPU-13D - Cross-Project Vulkan Devices and Resource Contracts.md",
+        "GPU-14F": "GPU-14F - Frame Submission Synchronization and Retirement.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
