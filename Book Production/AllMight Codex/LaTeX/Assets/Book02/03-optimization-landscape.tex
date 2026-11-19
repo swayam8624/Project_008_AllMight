@@ -41,5 +41,7 @@ derivation check.}
 \end{figure}
 \noindent\textbf{Reconstruct it:} implement the iteration, log objective
 and gradient norms, and verify every plotted position. Repeat with
-\(\alpha=0.3\), which causes the \(y\)-component to alternate and decay,
-and with \(\alpha=0.5\), where the \(y\)-component ceases to contract.
+\(\alpha=0.2\), where the \(y\)-component alternates and decays, and
+with \(\alpha=0.3\), where it alternates but diverges because
+\(\lvert 1-8\alpha\rvert>1\). The stability interval in this direction
+is \(0<\alpha<\tfrac14\).
