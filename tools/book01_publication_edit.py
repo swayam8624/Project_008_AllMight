@@ -12,7 +12,7 @@ from typing import Any
 
 FENCE = re.compile(r"(?ms)^" + re.escape(chr(96) * 3) +
                    r"[^\n]*\n.*?^" + re.escape(chr(96) * 3) + r"[ \t]*$")
-HEAD = re.compile(r"(?m)^(#{1,6})[ \t]+(.+?)\s*$")
+HEAD = re.compile(r"(?m)^(#{1,6})[ \t]+(.+?)[ \t]*$")
 EDITOR_SENTENCES = (
     re.compile(r"(?im)^This addition belongs (?:immediately |directly |before |after |at ).{15,600}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^It does not replace those explanations.{5,500}?(?=\n\n|\Z)", re.S),
@@ -35,7 +35,7 @@ PUBLICATION_REPHRASES = (
      "This section completes the argument established so far."),
 )
 MERGE_HEADING = re.compile(
-    r"(?im)^#{1,6}\s*(?:Next\s*[—-]\s*Pass\s+\d+|"
+    r"(?im)^#{1,6}[ \t]*(?:Next\s*[—-]\s*Pass\s+\d+|"
     r"(?:Pass|Phase)\s+\d+\s*[:—-]\s*M\d+|\+\s*M\d{3})"
     r"[^\n]*$", re.M,
 )
