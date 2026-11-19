@@ -46,6 +46,34 @@ MAX_PAGES_PER_PHYSICAL_BOOK = 800
 def digest(file: Path) -> str:
     return hashlib.sha256(file.read_bytes()).hexdigest()
 
+def source_fingerprint()->str:
+    """Identify all versioned Book Two additions and figure generators.
+
+    This prevents combining a PDF from an old local addendum with a newly
+    generated EPUB just because CURRENT.json still names the same 16-chapter
+    frozen generation.
+    """
+    files=sorted((ROOT/"Assets"/"Book02").glob("??-*.tex"))
+    files.extend([
+        ROOT/"Tools"/"book02_visuals.py",
+        ROOT/"Tools"/"book02_epub_supplements.py",
+        ROOT/"Tools"/"build_epubs.py",
+        Path(__file__).resolve(),
+        ROOT.parent.parent.parent/"tools"/"labs"/"book02_visual_atlas.py",
+        ROOT.parent.parent.parent/"tools"/"labs"/"book02_coverage_oracle.py",
+        ROOT.parent.parent.parent/"tools"/"labs"/"book02_coverage_visual.py",
+    ])
+    h=hashlib.sha256()
+    for path in files:
+        if not path.is_file():
+            raise RuntimeError("Missing source for candidate fingerprint: "+str(path))
+        h.update(str(path.relative_to(ROOT.parents[2])).encode("utf-8"))
+        h.update(b"\0")
+        h.update(path.read_bytes())
+        h.update(b"\0")
+    return h.hexdigest()
+
+
 
 def record_pdf(file:Path, label:str, build_log:Path) -> dict:
     if not file.is_file():
@@ -241,6 +269,7 @@ def main():
         print(json.dumps(status,indent=2,ensure_ascii=False))
         return 0 if status["ready_for_candidate_build"] else 2
     result={"generation":generation.name,"title":TITLE,
+            "source_fingerprint_sha256":source_fingerprint(),
             "source_lock":audit(),"print_parts":[],"epub":None,
             "declaration":"Candidate export only. Full original text mathematical correctness and reader/trim visual acceptance remain editorial gates."}
     output=ROOT/"Build"/generation.name/"book02-publication-candidates"
@@ -253,6 +282,8 @@ def main():
         old=json.loads(file.read_text(encoding="utf-8"))
         if old.get("generation")!=generation.name:
             raise RuntimeError("Existing candidate report belongs to another frozen generation")
+        if old.get("source_fingerprint_sha256")!=result["source_fingerprint_sha256"]:
+            raise RuntimeError("Book Two source changed since the last candidate report; archive or rename old candidate output before rebuilding both formats")
         result["print_parts"]=old.get("print_parts",[])
         result["epub"]=old.get("epub")
     if not args.epub_only:
