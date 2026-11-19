@@ -111,7 +111,7 @@ def latex_failure_excerpt(log_path: Path) -> str:
             ("Package " in line and " Error:" in line) or
             any(text in line for text in ("Emergency stop.",
                 "Fatal error","Undefined control sequence",
-                "Missing $ inserted","File ended while scanning")):
+                "Missing $ inserted","File ended while scanning"))):
             lo=max(0,i-4)
             hi=min(len(lines),i+9)
             matches.append("\n".join(f"{j+1:>5}: {lines[j]}" for j in range(lo,hi)))
