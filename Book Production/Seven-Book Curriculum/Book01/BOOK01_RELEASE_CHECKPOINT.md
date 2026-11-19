@@ -1,3 +1,9 @@
+# Current release guidance
+
+**For publication-proof v0.4, use [BOOK01_PUBLICATION_V04_CHECKPOINT.md](BOOK01_PUBLICATION_V04_CHECKPOINT.md).** It supersedes the older instructions below, including the earlier four-part release procedure. The required PDF geometry/metadata proof depends on `pymupdf`; the complete digital book and two physical volumes are the publication targets. Prior diagnostic part masters and source-history notes are retained for traceability.
+
+---
+
 # Book 01 — additive manuscript release checkpoint and Mac build
 
 **Revision branch:** `curriculum/cpp23-nes-project-pass01`. **Date:** 19 November 2026.
