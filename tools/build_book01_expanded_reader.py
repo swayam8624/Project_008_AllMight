@@ -31,6 +31,7 @@ import book01_render_support as render
 import book01_publication_edit as publication
 import book01_index as idx
 import book01_learning_gates as gates
+import book01_pdf_proof as pdfproof
 from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -842,8 +843,37 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
                 raise RuntimeError("Index has entries but generated no index output")
         if not pdf.is_file() or not pdf.stat().st_size:
             raise RuntimeError("No PDF from " + directory.name + "; see " + str(directory / "build/main.log"))
-        # Do not publish a file under the KDP release name until preflight passes.
+        # Count only the figures intended for this physical output.
+        if paperback:
+            volume_number = int(directory.name.rsplit("v", 1)[-1])
+            first, last = PRINT_VOLUMES[volume_number - 1][:2]
+            required_figures = sum(
+                first <= f["chapter"] <= last or
+                (volume_number == len(PRINT_VOLUMES) and f["chapter"] == 17)
+                for f in manifest.get("diagrams", [])
+            )
+        elif part is not None:
+            first, last = PARTS[part - 1]
+            required_figures = sum(
+                first <= f["chapter"] <= last or (part == 4 and f["chapter"] == 17)
+                for f in manifest.get("diagrams", [])
+            )
+        else:
+            required_figures = len(manifest.get("diagrams", []))
+        # Do not publish a file under the release name until both structural
+        # and visual/text geometry checks pass. The JSON is inspectable.
         pages = render.pdf_preflight(pdf, paperback=paperback)
+        qa = pdfproof.inspect(pdf, paperback=paperback,
+                              expect_figures=required_figures)
+        qa_path = directory / "build" / "publication-proof.json"
+        qa_path.write_text(json.dumps(qa, ensure_ascii=False, indent=2) + "\n",
+                           encoding="utf-8")
+        if qa["fatal_count"]:
+            raise RuntimeError(
+                f"PDF proof found {qa['fatal_count']} publication blockers in "
+                + directory.name + "; see " + str(qa_path)
+                + ". Do not distribute this PDF."
+            )
         shutil.copy2(pdf, destination)
         print("PDF:", destination, "—", pages, "pages")
         if not paperback and pages > render.KDP_MAX_WHITE_BW:
