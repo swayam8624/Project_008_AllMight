@@ -94,6 +94,8 @@ public:
         if(stop.stop_requested()) return std::unexpected(Issue::cancelled);
         // Never pass an embedded NUL into a platform path API: a native
         // C-string conversion could otherwise truncate the checked name.
+        if(request.relative.size()>4096)
+            return std::unexpected(Issue::unsafe_relative_path);
         if(request.relative.find('\0')!=std::string::npos)
             return std::unexpected(Issue::unsafe_relative_path);
         const fs::path relative=fs::path(request.relative);
@@ -225,7 +227,7 @@ public:
     WorkerBatch(Root root,std::vector<Request> requests,
                 std::size_t aggregate_budget=8U*1024U*1024U,
                 std::size_t max_requests=1024)
-      : state_(checked_state(requests.size(),aggregate_budget,max_requests)),
+      : state_(checked_state(requests,aggregate_budget,max_requests)),
         worker_([state=state_,root=std::move(root),requests=std::move(requests),
                  aggregate_budget]
                 (std::stop_token stop) mutable {
@@ -266,7 +268,7 @@ public:
         return std::move(state_->results);
     }
 private:
-    static std::shared_ptr<State> checked_state(std::size_t count,
+    static std::shared_ptr<State> checked_state(const std::vector<Request>& requests,
                     std::size_t budget,std::size_t max_requests) {
         // Validate BEFORE starting std::jthread or moving its manifest.
         // Error records and duplicate inputs occupy space even when file
@@ -274,7 +276,11 @@ private:
         if(budget==0) throw std::invalid_argument("zero aggregate byte budget");
         if(max_requests==0 || max_requests>4096)
             throw std::invalid_argument("maximum requests must be 1..4096");
-        if(count>max_requests) throw std::length_error("request manifest exceeds bound");
+        if(requests.size()>max_requests)
+            throw std::length_error("request manifest exceeds bound");
+        for(const auto& request:requests)
+            if(request.relative.size()>4096)
+                throw std::length_error("request path exceeds 4096 bytes");
         return std::make_shared<State>();
     }
     std::shared_ptr<State> state_;
