@@ -17,6 +17,91 @@ def digest(payload: bytes) -> str:
     return sha256(payload).hexdigest()
 
 
+
+# Earlier drafts used hundreds of Markdown thematic breaks as chapter dividers.
+# Pandoc turns them into drawn rules plus white space. In the reader edition
+# only, promote a following single-line bold concept to a compact heading;
+# otherwise convert a thematic break to a very small, deliberate space.
+# Fenced source/diagram blocks must remain bit-for-bit unchanged.
+ACADEMIC_HEADINGS = {
+    "GPU EXECUTION ARCHITECTURE": "GPU Execution Architecture",
+    "MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING":
+        "GPU Memory, Divergence, Subgroups, Atomics, and Ordering",
+    "GENERAL COMPUTE & PARALLEL ALGORITHMS":
+        "General-Purpose Compute and Parallel Algorithms",
+    "THE BUILD GRAPH ITSELF": "The Build Dependency Graph",
+    "REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW":
+        "Reproducibility, Continuous Integration, Testing, and Profiling",
+    "GPU-RESIDENT DATA STRUCTURES & GPU-DRIVEN WORK":
+        "GPU-Resident Data Structures and Device-Driven Work",
+    "COMMAND EXECUTION, ASYNC WORK & MEMORY LIFETIMES":
+        "Asynchronous Execution and Memory Lifetimes",
+    "PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN":
+        "Performance Models and Evidence-Guided GPU Design",
+    "VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE & SWAPCHAIN":
+        "Vulkan: Instances, Devices, Queues, Surfaces, and Swapchains",
+    "BUFFERS, IMAGES, MEMORY & UPLOADS":
+        "Buffers, Images, Memory, and Uploads",
+    "DESCRIPTORS, PIPELINE LAYOUTS, SHADERS & RENDERING STATE":
+        "Descriptors, Pipeline Layouts, Shaders, and Render State",
+    "COMMAND POOLS, COMMAND BUFFERS, SUBMISSION & SEMAPHORES":
+        "Command Pools, Submission, and Semaphores",
+    "VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES":
+        "Vulkan Memory Dependencies and Multi-Frame Lifetimes",
+    "TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK & EXPLICIT RAII":
+        "Timestamps, Validation, Device Loss, MoltenVK, and RAII",
+    "METAL'S CORE EXECUTION MODEL": "The Metal Execution Model",
+    "STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS & SYNCHRONIZATION":
+        "Storage, Tile Memory, Frame Resources, and Synchronization",
+    "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES":
+        "Profiling and Apple Platform Ownership Boundaries",
+}
+FENCE = re.compile(r"(?ms)^" + re.escape(chr(96) * 3) +
+                   r"[^\n]*\n.*?^" + re.escape(chr(96) * 3) + r"[ \t]*$")
+THEMATIC_BOLD = re.compile(
+    r"(?m)^[ \t]*---[ \t]*\n(?:[ \t]*\n)*\*\*([^\n*]{3,120})\*\*[ \t]*\n"
+)
+THEMATIC_REST = re.compile(r"(?m)^[ \t]*---[ \t]*$")
+
+
+def prepare_reading_structure(source: str) -> tuple[str, dict]:
+    """Format-only reflow with provenance; never change code or math text."""
+    report = {"promoted_concept_headings": 0, "compacted_separators": 0,
+              "academic_heading_edits": 0}
+
+    def prose(segment: str) -> str:
+        def rename(match: re.Match[str]) -> str:
+            title = match.group(2)
+            replacement = ACADEMIC_HEADINGS.get(title)
+            if replacement:
+                report["academic_heading_edits"] += 1
+                return match.group(1) + replacement
+            return match.group(0)
+
+        segment = re.sub(r"(?m)^(#{2,5} +)([^\n]+)$", rename, segment)
+        def promote(match: re.Match[str]) -> str:
+            text = match.group(1).strip()
+            if text.endswith(".") or len(text) > 105:
+                return "\\smallskip\n\n**" + text + "**\n"
+            report["promoted_concept_headings"] += 1
+            return "\n\n#### " + text + "\n\n"
+
+        segment = THEMATIC_BOLD.sub(promote, segment)
+        count = len(THEMATIC_REST.findall(segment))
+        report["compacted_separators"] += count
+        segment = THEMATIC_REST.sub(r"\\smallskip", segment)
+        return segment
+
+    pieces: list[str] = []
+    offset = 0
+    for match in FENCE.finditer(source):
+        pieces.append(prose(source[offset:match.start()]))
+        pieces.append(match.group(0))
+        offset = match.end()
+    pieces.append(prose(source[offset:]))
+    return "".join(pieces), report
+
+
 def math_preflight(source: str, label: str) -> dict:
     no_code = re.sub(r"(?ms)^```[^\n]*\n.*?^```[ \t]*$", "", source)
     blocks = DISPLAY_MATH.findall(no_code)
