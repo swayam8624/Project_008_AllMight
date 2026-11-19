@@ -512,6 +512,78 @@ def reflow_inline_monospace(tex: str) -> str:
     return "".join(result)
 
 
+def reflow_long_cpp_verbatim(tex: str, width: int = 64) -> str:
+    """Wrap long *displayed* C++ lines at token-safe boundaries.
+
+    Pandoc's verbatim blocks have no semantic line-break policy. LaTeX
+    listings otherwise splits long expressions in the middle of brackets,
+    identifiers or a final semicolon. This changes only generated TeX:
+    source Markdown and all checksum/provenance comparisons remain intact.
+    Other languages, preprocessor directives, and ambiguous raw strings or
+    comments are left for the standard listings fallback.
+    """
+    blocks = re.compile(r"(?s)(\\begin\{verbatim\}\n)(.*?)(\n\\end\{verbatim\})")
+
+    def wrap(line: str) -> list[str]:
+        if (len(line.expandtabs(4)) <= width
+                or line.lstrip().startswith(("#", "//"))
+                or "//" in line or 'R"' in line
+                or line.rstrip().endswith("\\") or "\t" in line):
+            return [line]
+        baseindent = len(line) - len(line.lstrip())
+        continuation = " " * min(baseindent + 4, 20)
+        out: list[str] = []
+        current = line
+        for _ in range(5):
+            if len(current) <= width:
+                break
+            candidates: list[tuple[int, int]] = []
+            quote: str | None = None
+            escape = False
+            for i, character in enumerate(current):
+                if quote is not None:
+                    if escape:
+                        escape = False
+                    elif character == "\\":
+                        escape = True
+                    elif character == quote:
+                        quote = None
+                    continue
+                if character in ('"', "'"):
+                    quote = character
+                    continue
+                if i < baseindent + 10 or i > width - 3:
+                    continue
+                if character in ("(", ","):
+                    candidates.append((i + 1, 2))
+                elif character == " " and i + 1 < len(current):
+                    candidates.append((i + 1, 1))
+            if not candidates:
+                break
+            # Later legal breaks are preferable to token-breaking at the
+            # margin. A small bonus favours punctuation over bare spaces.
+            cut = max(candidates, key=lambda item: item[0] + 2 * item[1])[0]
+            head, tail = current[:cut].rstrip(), current[cut:].lstrip()
+            if not head or not tail:
+                break
+            out.append(head)
+            current = continuation + tail
+        out.append(current)
+        return out
+
+    def fix(match: re.Match[str]) -> str:
+        code = match.group(2)
+        if not re.search(
+            r"(#include\s*<|std::|\b(?:struct|class|template)\s+[A-Za-z_])",
+            code,
+        ):
+            return match.group(0)
+        expanded = [part for line in code.split("\n") for part in wrap(line)]
+        return match.group(1) + "\n".join(expanded) + match.group(3)
+
+    return blocks.sub(fix, tex)
+
+
 def reflow_long_textual_displays(tex: str) -> str:
     """Avoid clipping long prose and pipeline math in generated TeX only.
 
