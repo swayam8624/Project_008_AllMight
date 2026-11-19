@@ -130,7 +130,9 @@ def clean_reader_markdown(markdown: str, chapter: int) -> tuple[str, dict]:
         raise ValueError(f"Book 1 chapter {chapter}: editorial cleanup changed math")
     if re.findall(r"ALLMIGHTFIGURECH\d+INDEX\d+", cleaned) != figure_before:
         raise ValueError(f"Book 1 chapter {chapter}: editorial cleanup changed figures")
-    if PRODUCTION_LEAK.search(cleaned):
+    # A literal code example may legitimately quote an authoring token.
+    # The publication gate applies to visible prose, never to code payloads.
+    if PRODUCTION_LEAK.search(MARKDOWN_FENCE.sub("", cleaned)):
         raise ValueError(
             f"Book 1 chapter {chapter}: development-only authoring text "
             "survived EPUB reader cleanup"
