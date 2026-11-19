@@ -52,12 +52,16 @@ class Book01ProductionTests(unittest.TestCase):
             book.check_math_rendered(stat, "\\[x+y\\]", 9)
 
     def test_math_protection_preserves_boxed_cuda_gpu_and_cpp_expressions(self):
+        math_delim = chr(36) * 2
         source = (
-            "A scheduling rule.\n\n$\n"
-            "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
-            "$\n\n"
-            + f"{TICK}cpp\n// literal $ and \\boxed{{x}} in code\n{TICK}\n\n"
-            + "$\n\\texttt{simd_sum} = 256\n$\n"
+            "A scheduling rule.\n\n"
+            + math_delim + "\n"
+            + "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
+            + math_delim + "\n\n"
+            + f"{TICK}cpp\n// literal display delimiter {math_delim} "
+              f"and \\boxed{{x}} in code\n{TICK}\n\n"
+            + math_delim + "\n\\texttt{simd_sum} = 256\n"
+            + math_delim + "\n"
         )
         stats = book.math_preflight(source, "Chapter 9")
         prepared, protected = book.plan_math(source, 9)
@@ -65,7 +69,7 @@ class Book01ProductionTests(unittest.TestCase):
         self.assertEqual(len(protected), 2)
         self.assertEqual(stats["boxed_math"], 1)
         self.assertIn("ALLMIGHTMATHCH09INDEX0001", prepared)
-        self.assertIn(f"{TICK}cpp\n// literal $", prepared)
+        self.assertIn(f"{TICK}cpp\n// literal display delimiter", prepared)
         rendered = book.replace_math_tokens(prepared, protected)
         self.assertIn(
             "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}",
@@ -86,10 +90,14 @@ class Book01ProductionTests(unittest.TestCase):
         import subprocess
         if not shutil.which("pandoc"):
             self.skipTest("Pandoc is optional for this unit test")
+        math_delim = chr(36) * 2
         sample = (
             "GPU compute uses a logical grid.\n\n"
-            "$\n\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n$\n\n"
-            "$\n\\texttt{simd_sum} = 256\n$\n"
+            + math_delim + "\n"
+            + "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
+            + math_delim + "\n\n"
+            + math_delim + "\n\\texttt{simd_sum} = 256\n"
+            + math_delim + "\n"
         )
         stats = book.math_preflight(sample, "Chapter 9")
         markdown, formulas = book.plan_math(sample, 9)
