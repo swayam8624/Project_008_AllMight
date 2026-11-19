@@ -564,6 +564,89 @@ references and truthful performance reports rather than another
 NES-only detour.
 
 
+## Pass 16 — Book 01, Chapter 16: Profile GPUs and Respect Apple Ownership Boundaries
+
+**Primary project:** Real Maveb Metal rendering/FrameContext and Kairo's
+Objective-C++ Metal implementation, with Kyoto pair correctness and XR
+frame/gaze timing as independent clients. NES remains part of the early
+computing/binary/project thread, not the default for every new concept.
+
+**Original chapter untouched:** Chapter 16 contains 2,467 existing lines /
+~90,695 characters spanning GPU profiling/counters, render-graph/resource
+lifetimes, Metal/Objective-C++/SwiftUI boundaries, Vulkan host allocator
+callbacks, generated binding boundaries and systems continuation. All that
+substantive prose remains authoritative. The additional [GPU-16P — GPU
+Profiling and Apple Callback
+Ownership](../../Supplementary/C++23%20Project%20Labs/GPU-16P%20-%20GPU%20Profiling%20and%20Apple%20Callback%20Ownership.md)
+(~44,409 characters) is staged before the original `### Distinguish host
+allocation callbacks from device-memory allocation` heading, after the
+original Apple/Metal narrative rather than replacing its explanations.
+
+**Portable C++23 concurrent callback engine:**
+`tools/labs/gpu_course/gpu_profile_ownership.hpp` and
+`tools/labs/gpu_profile_ownership_cpp23_lab.cpp` implement a
+`std::shared_ptr`-owned internal mailbox and frame slot/generation identity;
+callbacks do **not** retain a raw renderer/UI pointer. Three concurrent
+`std::jthread` HOST callbacks, duplicate/foreign/stale event rejection,
+known-before-submit abort, unknown submission quarantine, late callback
+after wrapper/UI destruction, terminal status and missing/unusable timing
+are tested with SYNTHETIC GPU observation fixtures. The app is responsible
+for handing events to the Swift/SwiftUI main actor; this model does not
+write UI state from an arbitrary native callback thread.
+
+**Fail-closed profiling evidence:** `Configuration`, `FrameSample`,
+`CounterValue` and `summarize_native_verified` require consistent
+device, SDK, source, shader, workload, capture tool, extent, successful
+terminal and independent pixel/pair correctness, valid CPU/GPU intervals,
+and supported/non-fabricated GPU counters. The tests intentionally change
+one field at a time and prove rejection. An origin enum can be spoofed in a
+synthetic fixture; it is **not** hardware attestation. Actual native run
+logs and exact source identity are indispensable for research claims.
+
+**Optional REAL Metal callback and compute:** On Apple with compatible
+ObjC++23 compiler, Metal and Foundation frameworks, `tools/labs/gpu_course/
+native_metal_callback_probe.mm` registers an actual Objective-C ARC
+`addCompletedHandler:` block for a real Metal 64-word compute kernel. The
+native test destroys its original mailbox wrapper and weak UI observer
+before command commitment, retains only internal completion state,
+waits for native callback and terminal status, independently verifies all
+GPU words against CPU arithmetic, and labels valid GPU command time as
+**one diagnostic sample only**. No Metal execution occurred in this
+authoring turn. With absent toolchain/device, the explicit fallback file
+`native_metal_callback_unavailable.cpp` reports code 77/unavailable.
+
+**Actual source inspected, NOT edited:** Maveb `Renderer.cpp`,
+`FrameContext.cpp` and `FrameContext.hpp`; KairoRenderer
+`MetalRenderer.cppm` and `detail/MetalBackend.mm`. Exact Git blob
+identities and source-level permit, callback, blocking capture and
+timing observations are recorded in [project-lab-matrix.md](project-lab-matrix.md).
+An observed `this` callback capture with a destructor draining permits
+is a review target, **not** proof of a use-after-free; likewise, a
+potential callback timing issue is not a reproduced native failure.
+
+**Cumulative installation:** 16 CMake C++23 executables and normal CTest
+targets, 16 exact marker-delimited byte-preserving manuscript inserts,
+updated source-restoration/idempotence/conflict tests, and a strict
+source-pinned source-hash/CTest JUnit evidence manifest for all 16.
+The canonical source file is still unchanged on the revision branch.
+There is no LaTeX build, user-local command, or new native GPU result.
+
+**Real evidence still pending:** Cross-compiler build/CTest, macOS
+ObjC++23 compilation, actual native Metal callback/kernels, Xcode GPU
+capture, device-specific hardware counter sampling, multi-run performance
+statistics, and any performance/ownership changes to Maveb or Kairo.
+Neither a registered test nor a prepared native source file is a passing
+runtime certificate.
+
+**Next:** Book01 Chapter17 — "Python and Numerical Tools for Graphics
+Systems." Shift from Apple GPU ownership to numerical/scientific Python
+reproduction integrated with real Maveb Gaussian/geometry, Kyoto collision
+benchmark statistical validation, Vulkax physics controls and C++23/NumPy
+cross-language error checks. Inspect the actual project/source data first,
+then produce a substantive additive chapter and independent runnable
+oracles without shortening prior material.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
