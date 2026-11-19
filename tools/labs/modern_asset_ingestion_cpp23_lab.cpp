@@ -93,6 +93,7 @@ void test_real_bounded_file_io_and_path_policy() {
     rejection(std::string("models/tri.msh1\0/evil",20),a::Issue::unsafe_relative_path);
     rejection("missing.msh1",a::Issue::missing_file);
     rejection("assets",a::Issue::not_regular);
+    rejection(std::string(4097,'a'),a::Issue::unsafe_relative_path);
     std::stop_source stopped;
     stopped.request_stop();
     const auto pre_cancel=root.load({"assets/tex.txr4",a::AssetKind::texture_rgba8},
@@ -216,6 +217,11 @@ void test_worker_manifest_and_error_bound() {
         a::WorkerBatch invalid(root,{},64,0);
     } catch(const std::invalid_argument&) { rejected=true; }
     require(rejected,"zero request cap rejected before launching worker");
+    rejected=false;
+    try {
+        a::WorkerBatch invalid(root,{{std::string(4097,'x'),a::AssetKind::texture_rgba8}},64,2);
+    } catch(const std::length_error&) { rejected=true; }
+    require(rejected,"oversized manifest pathname refused before thread spawn");
     a::WorkerBatch accepted(root,{{"missing-1",a::AssetKind::triangle_mesh},
                                    {"missing-2",a::AssetKind::triangle_mesh}},64,2);
     const auto outcomes=accepted.finish();
