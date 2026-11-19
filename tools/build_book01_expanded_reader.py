@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MASTER = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
 EDITION = ROOT / "Chapter Edition/01 - Computing Foundations"
 LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
+CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
 OUTPUT = ROOT / "build/book01-expanded-reader"
 SOURCE_BEGIN = b"<!-- CHAPTER-SOURCE-BEGIN -->\n"
 SOURCE_END = b"<!-- CHAPTER-SOURCE-END -->"
@@ -185,8 +186,14 @@ def audit_sources() -> tuple[list[dict], dict]:
     total = sum(len(x["lesson_receipts"]) for x in rows)
     if total != EXPECTED_ADDITIONS:
         raise AssertionError("Incomplete source lesson coverage")
+    capstone_data = CAPSTONE.read_bytes()
+    if not capstone_data.startswith(b"# Book 1 ") or len(capstone_data) < 5000:
+        raise ValueError("Final capstone is missing, abbreviated or incorrectly headed")
+    capstone_data.decode("utf-8")
     metadata = {
         "schema": "allmight-book01-expanded-reader-v1",
+        "final_capstone_source": CAPSTONE.relative_to(ROOT).as_posix(),
+        "final_capstone_sha256": sha256(capstone_data),
         "scope": "16 original Foundations chapters, 18 additive lessons; distinct from the archived seven-stage typeset snapshots",
         "canonical_source": MASTER.relative_to(ROOT).as_posix(),
         "canonical_source_sha256": sha256(master),
@@ -272,6 +279,29 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                           "latex_path": (tex_path.relative_to(OUTPUT)).as_posix()})
             report["chapters"].append(clean)
             part_rows.append(num)
+        # The multi-project competency chapter belongs AFTER all sixteen
+        # original chapters. It has its own documented source identity and
+        # does not masquerade as a nineteenth exact-anchor insertion.
+        if part_number == 4:
+            challenge_md = content_dir / "final-mastery.md"
+            challenge_tex = content_dir / "final-mastery.tex"
+            challenge_bytes = CAPSTONE.read_bytes()
+            challenge_md.write_bytes(challenge_bytes)
+            command = [pandoc, "-f",
+                       "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
+                       "-t", "latex", "--top-level-division=chapter",
+                       "--wrap=none", "--no-highlight",
+                       "-o", str(challenge_tex), str(challenge_md)]
+            run = subprocess.run(command, capture_output=True, text=True)
+            if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
+                raise RuntimeError("Pandoc could not render the final capstone: " + run.stderr[:3000])
+            tex.append(r"\input{content/final-mastery}")
+            report["final_capstone"] = {
+                "markdown_path": challenge_md.relative_to(OUTPUT).as_posix(),
+                "markdown_sha256": sha256(challenge_bytes),
+                "latex_path": challenge_tex.relative_to(OUTPUT).as_posix(),
+                "latex_sha256": sha256(challenge_tex.read_bytes()),
+            }
         tex.append(r"\end{document}")
         master_path = directory / "main.tex"
         master_path.write_text("\n".join(tex) + "\n", encoding="utf-8")
@@ -306,6 +336,15 @@ def verify_prepared(rows: list[dict], metadata: dict) -> None:
             path = OUTPUT / recorded[kind + "_path"]
             if not path.is_file() or sha256(path.read_bytes()) != recorded[kind + "_sha256"]:
                 raise ValueError("Prepared chapter " + kind + " altered or missing: " + str(path))
+    capstone = data.get("final_capstone")
+    if not isinstance(capstone, dict):
+        raise ValueError("Missing multi-project final mastery chapter")
+    for kind in ("markdown", "latex"):
+        path = OUTPUT / capstone[kind + "_path"]
+        if not path.is_file() or sha256(path.read_bytes()) != capstone[kind + "_sha256"]:
+            raise ValueError("Final mastery " + kind + " missing or changed: " + str(path))
+    if capstone["markdown_sha256"] != metadata["final_capstone_sha256"]:
+        raise ValueError("Final capstone does not match committed source")
     for record in data["parts"]:
         path = OUTPUT / record["master_path"]
         if not path.is_file() or sha256(path.read_bytes()) != record["master_sha256"]:
