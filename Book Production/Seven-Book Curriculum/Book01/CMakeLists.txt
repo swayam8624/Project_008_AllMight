@@ -164,6 +164,10 @@ add_executable(modern_asset_ingestion_cpp23_lab
     ../../../tools/labs/modern_asset_ingestion_cpp23_lab.cpp
 )
 target_compile_features(modern_asset_ingestion_cpp23_lab PRIVATE cxx_std_23)
+# Fail closed: full Book01 must compile against the REAL Pass06 shared header.
+# A standalone source-only smoke may omit it, but CTest may never silently skip.
+target_compile_definitions(modern_asset_ingestion_cpp23_lab PRIVATE
+    ALLMIGHT_COURSE_REQUIRE_REGISTRY=1)
 set_target_properties(modern_asset_ingestion_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
 
 # Pass16: Metal profiling/ownership; opt-in native callback, portable CPU test.
