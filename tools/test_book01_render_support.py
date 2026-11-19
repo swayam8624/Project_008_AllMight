@@ -47,7 +47,7 @@ class Book01ProductionTests(unittest.TestCase):
         stat = book.math_preflight(src, "Ch09")
         self.assertEqual(stat["boxed_math"], 1)
         book.check_math_rendered(stat,
-                                 "\\[\\boxed{\\text{run this kernel}}\\]", 9)
+                                 "\\[\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\\]", 9)
         with self.assertRaises(ValueError):
             book.check_math_rendered(stat, "\\[x+y\\]", 9)
 
