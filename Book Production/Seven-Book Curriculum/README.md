@@ -715,6 +715,84 @@ The prior “4–5 passes remaining” is a planning estimate, **not a
 guaranteed completion count**; new issues may require more passes.
 
 
+## Pass 18 — Book 1 C++23 completeness: real filesystem, ranges and owned coroutines
+
+**Closing a verified curriculum gap:** The Pass17 lexical review of the 39
+derived original reading chapters and 16 earlier supplements found no
+worked `std::filesystem`, `std::ranges`/`std::views`,
+`std::format`/`std::print` or `co_await`/`co_yield` examples by their
+standard API spellings. Pass18 adds a **42K+ character cohesive lesson**
+[CPP-18A — Filesystem Ranges Formatting and Coroutine Asset Import](../../Supplementary/C++23%20Project%20Labs/CPP-18A%20-%20Filesystem%20Ranges%20Formatting%20and%20Coroutine%20Asset%20Import.md)
+adjacent to the existing Chapter06 typed and generational registry. It
+explains a useful end-to-end ingestion design, not four detached API tips.
+
+**Real file/data and earlier project interop:**
+`tools/labs/foundations_course/modern_asset_ingestion.hpp` and
+`tools/labs/modern_asset_ingestion_cpp23_lab.cpp` implement a bounded
+binary `std::ifstream` source, per-component symbolic-link and path
+policy with explicit TOCTOU caveat, owned file bytes/checksum, sorted
+`std::ranges` and lazy `std::views::filter` over manifest entries
+owned by a coroutine frame, move-only `std::coroutine_handle`
+generator using `co_yield`, manual `co_await` suspend/resume and
+cooperative `std::stop_token`, actual `std::jthread` worker with
+exception containment and 8 MiB default aggregate byte budget, and
+type-safe `std::format`/`std::println` where available. The test
+creates temporary TXR4 texture and MSH1 triangle mesh files, rejects
+invalid filesystem inputs and size limits, checks owned bytes across
+coroutine suspension and file removal, exercises bounded result
+publication and cancellation, then calls the **original Pass05/06**
+`GenerationalAssetRegistry::import/lookup/erase` under the full
+Book01 include tree. The test does **not** invent glTF/PNG/KTX support.
+
+**Observed local standalone compilation:** GCC 14.2, Clang 17, GCC
+optimized Release and Clang Address/UndefinedBehaviorSanitizer builds
+of the standalone implementation passed actual tests in the author's
+container. The full earlier typed registry source was not mounted in
+that local smoke environment, and its branch integration was **not
+executed there**. The repository CMake now defines
+`ALLMIGHT_COURSE_REQUIRE_REGISTRY=1`; any missing original registry
+header is an explicit compilation error rather than a passing CTest
+that skipped the hard part. A negative local compile verified that
+requirement. The 17th full course CTest is registered but its
+whole-repository result is **not yet observed**.
+
+**Cumulative integrity:** Seventeen C++23 executable targets and
+seventeen default CTest names; seventeen exact marker-delimited
+additions staged with conflict/idempotence/source-restoration tests;
+source/JUnit evidence requires seventeen real tests to run.
+`tools/book01_coverage_audit.py` still checks the **sixteen original
+reading chapters** but also checks that the newly added **seventeenth
+lesson** belongs to the unique original Chapter06 anchor (not an
+invented seventeenth chapter). It preserves the original master Git
+blob `d3202af31e1eb644a74565eeb63e7a3352438823` when staged.
+The source changes do not regenerate LaTeX or alter existing manuscript
+prose. Human-readable CMake project/preset names now reflect
+**AllMight Book01 cross-project C++23**, not an NES-only book.
+
+**Cross-project sequence:** Maveb/Kairo consume the typed filesystem/
+async asset interface; Kyoto collision research and Vulkax simulation
+consume source-pinned input manifests with independent correctness
+oracles; XR consumes revision-aware asynchronous tasks and separate
+gaze/display deadlines. No production engine or dataset is claimed
+modified, built or benchmarked by this source pass. The original NES
+parser/emulator is one earlier model among several, not the only
+application developed by these books.
+
+**Evidence document:** [Pass18 executable and integration-status
+ledger](Book01/PASS18_CPP23_ASSET_PIPELINE_EVIDENCE.md) records actual
+observed compiler modes, failure tests, code portability and remaining
+constraints. This report is descriptive; only future fully executed,
+source-pinned CTest/JUnit receipts can certify the whole course.
+
+**Remaining technical work:** run and repair the 17-target GCC/Clang/
+AppleClang/sanitizer build, verify registry integration and native
+Vulkan/Metal probes, add true native race-resistant file operations and
+bounded async job queues where the production threat model requires,
+then complete narrative/cross-book source routing and the
+consolidated-only manuscript insertion/release review. One new
+standalone passing program does not certify Book 1 complete.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
