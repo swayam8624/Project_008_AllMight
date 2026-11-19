@@ -63,7 +63,13 @@ ENRICHMENT_FILES = {
         13: "CH13_VULKAN_RESOURCE_GRAPH.md",
         14: "CH14_VULKAN_SYNC_TIMELINE.md",
         15: "CH15_METAL_EXECUTION_MAP.md",
-    }.items()
+
+        2: "CH02_STORAGE_OBJECT_LIFETIME.md",
+        3: "CH03_TRANSACTIONAL_OWNERSHIP.md",
+        4: "CH04_FAILURE_MATRIX.md",
+        6: "CH06_GENERATIONAL_HANDLES.md",
+        8: "CH08_SCAN_SCATTER_PROOF.md",
+        10: "CH10_BUILD_EVIDENCE_CHAIN.md",    }.items()
 }
 # Original foundation master before this branch's additive work. The exact
 # same identity is required after reversing any already-applied lesson
