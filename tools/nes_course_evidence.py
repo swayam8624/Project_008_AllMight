@@ -47,6 +47,7 @@ EXPECTED = (
     ("NES-09M", "nes_gpu_memory_contract_cpp23_lab", "tools/labs/nes_gpu_memory_contract_cpp23_lab.cpp"),
     ("NES-10R", "nes_reproducible_benchmark_cpp23_lab", "tools/labs/nes_reproducible_benchmark_cpp23_lab.cpp"),
     ("NES-11B", "nes_scoped_frame_upload_cpp23_lab", "tools/labs/nes_scoped_frame_upload_cpp23_lab.cpp"),
+    ("NES-12Q", "nes_command_lifecycle_cpp23_lab", "tools/labs/nes_command_lifecycle_cpp23_lab.cpp"),
 )
 EXPECTED_MARKERS = tuple(name.replace("-", "") for name, _, _ in EXPECTED)
 EXTRA_SOURCES = (
@@ -63,6 +64,7 @@ EXTRA_SOURCES = (
     "tools/labs/nes_course/gpu_memory_contract_oracle.hpp",
     "tools/labs/nes_course/measurement_protocol.hpp",
     "tools/labs/nes_course/scoped_frame_upload_ring.hpp",
+    "tools/labs/nes_course/command_submission_lifecycle.hpp",
     "tools/apply_cpp23_project_inserts.py",
     "tools/tests/test_cpp23_project_inserts.py",
     "tools/tests/test_nes_course_evidence.py",
@@ -105,6 +107,7 @@ def source_paths() -> tuple[str, ...]:
         "NES-09M": "NES-09M - GPU Memory and Ordering Contracts.md",
         "NES-10R": "NES-10R - Reproducibility and Evidence-Driven Profiling.md",
         "NES-11B": "NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md",
+        "NES-12Q": "NES-12Q - Command Lifecycles and Uncertain Submission.md",
     }
     return tuple(dict.fromkeys(
         [source for _, _, source in EXPECTED]
