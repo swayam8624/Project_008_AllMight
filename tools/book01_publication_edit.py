@@ -84,6 +84,13 @@ def apply_reader_edits(source: str, chapter: int) -> tuple[str, dict[str, Any]]:
         # These are prose-only substitutions; code and math files are retained.
         for phrase, replacement in PUBLICATION_REPHRASES:
             fragment = re.sub(phrase, replacement, fragment)
+        # Inline code is not a math environment: it showed a literal
+        # backslash-ldots instead of a mathematical ellipsis.
+        # Change only derived reader prose, not the canonical source.
+        fragment = fragment.replace(
+            r"`1,g,g^2,\ldots,g^k`",
+            r"$1,g,g^2,\ldots,g^k$",
+        )
         for regex in EDITOR_SENTENCES:
             def remove(match: re.Match[str]) -> str:
                 notes.append(match.group(0).strip())
