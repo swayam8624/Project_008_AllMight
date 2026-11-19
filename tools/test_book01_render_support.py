@@ -41,6 +41,9 @@ class Book01ProductionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Missing/duplicate diagram marker"):
             book.replace_figure_tokens(token + "\n" + token, [marker_only])
 
+        with self.assertRaisesRegex(ValueError, "Incomplete diagram metadata"):
+            book.replace_figure_tokens(token, [marker_only])
+
         # A valid figure entry still renders with its expected caption and
         # numbered label: protection must not disable successful conversion.
         complete = {
