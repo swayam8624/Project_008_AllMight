@@ -155,6 +155,17 @@ if(NOT ALLMIGHT_METAL_NATIVE_AVAILABLE)
         ../../../tools/labs/gpu_course/native_metal_unavailable.cpp)
 endif()
 
+
+# Pass18 — genuine C++23 filesystem, ranges/views, formatting/printing,
+# co_yield/co_await and cooperative jthread asset ingestion. This target
+# deliberately imports the *existing* typed asset/registry sources from
+# Pass05/06; no native GPU device is needed for portable CTest.
+add_executable(modern_asset_ingestion_cpp23_lab
+    ../../../tools/labs/modern_asset_ingestion_cpp23_lab.cpp
+)
+target_compile_features(modern_asset_ingestion_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(modern_asset_ingestion_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
 # Pass16: Metal profiling/ownership; opt-in native callback, portable CPU test.
 add_executable(gpu_profile_ownership_cpp23_lab
  ../../../tools/labs/gpu_profile_ownership_cpp23_lab.cpp
@@ -182,6 +193,7 @@ endif()
 find_package(Threads REQUIRED)
 target_link_libraries(nes_gpu_memory_contract_cpp23_lab PRIVATE Threads::Threads)
 target_link_libraries(gpu_profile_ownership_cpp23_lab PRIVATE Threads::Threads)
+target_link_libraries(modern_asset_ingestion_cpp23_lab PRIVATE Threads::Threads)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -209,8 +221,9 @@ if(MSVC)
     target_compile_options(gpu_submit_retire_cpp23_lab PRIVATE /W4)
     target_compile_options(gpu_metal_frame_cpp23_lab PRIVATE /W4)
     target_compile_options(gpu_profile_ownership_cpp23_lab PRIVATE /W4)
+    target_compile_options(modern_asset_ingestion_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab gpu_metal_frame_cpp23_lab gpu_profile_ownership_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab gpu_metal_frame_cpp23_lab gpu_profile_ownership_cpp23_lab modern_asset_ingestion_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -225,7 +238,8 @@ foreach(course_lab IN ITEMS
  nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab
  nes_scoped_frame_upload_cpp23_lab nes_command_lifecycle_cpp23_lab
  gpu_device_resource_cpp23_lab gpu_submit_retire_cpp23_lab
- gpu_metal_frame_cpp23_lab gpu_profile_ownership_cpp23_lab)
+ gpu_metal_frame_cpp23_lab gpu_profile_ownership_cpp23_lab
+ modern_asset_ingestion_cpp23_lab)
     target_link_libraries(${course_lab} PRIVATE nes_course_public_api)
 endforeach()
 
@@ -282,3 +296,7 @@ add_test(NAME gpu_15m_maveb_kairo_metal_frames_cpu_only
 # No native Metal invocation by ordinary CTest.
 add_test(NAME gpu_16p_cross_project_callback_ownership_and_profile_evidence_cpu_only
  COMMAND gpu_profile_ownership_cpp23_lab)
+
+# Pass18 includes real on-disk asset fixtures and earlier generational registry.
+add_test(NAME cpp_18a_file_ranges_format_coroutine_typed_asset_ingestion
+ COMMAND modern_asset_ingestion_cpp23_lab)
