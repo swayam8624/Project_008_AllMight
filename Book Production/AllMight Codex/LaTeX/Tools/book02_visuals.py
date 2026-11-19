@@ -38,7 +38,7 @@ FIGURES = {
     ),
     "02-foundations-ii-ch028": ("18-bracketed-root-case.tex",),
     "02-foundations-ii-ch029": ("05-convergence-study.tex",),
-    "02-foundations-ii-ch030": ("19-clustered-inference-case.tex",),
+    "02-foundations-ii-ch030": ("19-clustered-inference-case.tex", "27-multiple-importance-sampling.tex"),
     "02-foundations-ii-ch031": ("11-sampling-support-case.tex", "25-ransac-paper-lab.tex"),
     "03-visual-computing-i-ch012": ("20-sampling-measure-case.tex", "26-library-parity-and-limits.tex"),
 }
