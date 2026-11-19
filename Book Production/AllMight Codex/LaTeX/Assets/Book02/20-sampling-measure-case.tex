@@ -1,0 +1,40 @@
+% Mathematical bridge between density per area and density per solid angle.
+\clearpage
+\section*{Verification case: probability densities carry a measure}
+\noindent A uniform random point on a rectangular surface of area
+\(6\,\mathrm m^2\), with width \(2\,\mathrm m\) and height
+\(3\,\mathrm m\), has area-density
+\(p_A=1/6\,\mathrm m^{-2}\). Parameterize the surface with
+dimensionless \(s,t\in[0,1]\):
+\[
+x=2s\ \mathrm m,\qquad y=3t\ \mathrm m.
+\]
+Its change-of-variables Jacobian has area factor
+\(\left|\frac{\partial(x,y)}{\partial(s,t)}\right|=6\,
+\mathrm m^2\), so the unit-square parameter density is
+\(p_{s,t}=p_A\,6\,\mathrm m^2=1\).
+The different numbers express the same distribution relative to
+different measures. Confusing a density with a probability can make
+otherwise plausible sampling weights dimensionally incorrect.
+
+For a small visible surface patch at distance \(r\) and incidence
+angle \(\theta\), its solid angle is
+\(d\omega=|\cos\theta|\,dA/r^2\), where the local geometry
+defines the angle consistently. Therefore an area-density
+\(p_A\) transforms to a solid-angle density
+\[
+p_\omega=\frac{p_A\,r^2}{|\cos\theta|}.
+\]
+This formula requires compatible domains, nonzero distance and a
+well-defined non-grazing mapping. At grazing incidence the
+Jacobian degenerates; one must not silently divide by zero.
+A normalized density integrates to one only against its own
+measure.
+
+\paragraph{Reconstruction.}
+Sample the unit square, map points onto the rectangle, and
+verify the expected uniform density in each coordinate system.
+Then evaluate a visible planar patch from a fixed viewpoint and
+numerically check the area-to-solid-angle Jacobian.
+Document failures at degenerate geometry and compare any estimator's
+weight \emph{and its units} before moving to path tracing.
