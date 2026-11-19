@@ -32,7 +32,7 @@ import book01_publication_edit as publication
 import book01_index as idx
 import book01_learning_gates as gates
 import book01_pdf_proof as pdfproof
-from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES, PRINT_VOLUMES
+from book01_editorial import BOOK_TITLE, BOOK_SUBTITLE, SERIES_TITLE, SERIES_SUBTITLE, SERIES_POSITION, CHAPTER_TITLES, PRINT_VOLUMES
 
 ROOT = Path(__file__).resolve().parent.parent
 MASTER = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
@@ -261,6 +261,9 @@ def audit_sources() -> tuple[list[dict], dict]:
                                         for n, source in ENRICHMENT_FILES.items()},
         "academic_title": BOOK_TITLE,
         "academic_subtitle": BOOK_SUBTITLE,
+        "series_title": SERIES_TITLE,
+        "series_subtitle": SERIES_SUBTITLE,
+        "series_position": SERIES_POSITION,
         "part_ranges": [list(x) for x in PARTS],
     }
     git_revision = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"],
@@ -297,9 +300,13 @@ def paperback_cover_title(title: str) -> str:
     return tex_escape(title)
 
 
-def book_imprint(title: str, subtitle: str, revision: str) -> str:
+def book_imprint(title: str, subtitle: str) -> str:
+    """Show only reader-facing bibliographic and copyright information.
+
+    Exact source revisions remain in the machine-readable build manifest.
+    """
     return (r"\BookImprintPage{" + tex_escape(title) + "}{" +
-            tex_escape(subtitle) + "}{" + tex_escape(revision) + "}")
+            tex_escape(subtitle) + "}")
 
 
 def pandoc_binary() -> str:
@@ -364,7 +371,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                r"\title{" + tex_escape(BOOK_TITLE) + " — Diagnostic Part " + str(part_number) + "}",
                r"\author{Swayam Singal}",
                r"\begin{document}", r"\frontmatter", r"\maketitle",
-               book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
+               book_imprint(BOOK_TITLE, BOOK_SUBTITLE),
                r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\listoffigures", r"\mainmatter",
                r"\setcounter{chapter}{" + str(low - 1) + "}"]
         part_rows = []
@@ -604,7 +611,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         r"\begin{document}",
         r"\frontmatter",
         r"\maketitle",
-        book_imprint(BOOK_TITLE, BOOK_SUBTITLE, metadata["source_revision"]),
+        book_imprint(BOOK_TITLE, BOOK_SUBTITLE),
         r"\setcounter{tocdepth}{1}",
         r"\tableofcontents",
         r"\listoffigures",
@@ -688,7 +695,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\author{Swayam Singal}",
             r"\begin{document}",
             r"\frontmatter", r"\maketitle",
-            book_imprint(title, subtitle, metadata["source_revision"]),
+            book_imprint(title, subtitle),
             r"\setcounter{tocdepth}{1}", r"\tableofcontents", r"\listoffigures",
             r"\input{frontmatter}", r"\mainmatter",
             r"\setcounter{chapter}{" + str(low - 1) + "}",
