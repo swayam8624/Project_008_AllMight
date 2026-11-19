@@ -11,6 +11,7 @@
 \RequirePackage{makeidx}
 \makeindex
 \RequirePackage{caption}
+\RequirePackage{pdfpages} % Optional author-provided digital cover, full-size PDF page.
 \captionsetup[figure]{font=footnotesize,labelfont=bf,justification=raggedright,singlelinecheck=false,skip=5pt}
 % Text face: conventional Times-family scholarly book typography.
 % The explicit fallbacks permit compilation on smaller TeX installations.
@@ -173,6 +174,15 @@
       Graphics \textbullet\ Simulation \textbullet\ Research\par}
   \end{titlepage}}
 \makeatother
+
+% The eBook/full digital PDF can use the exact author-supplied cover artwork.
+% An absent asset means the existing typographic title page is retained.
+% A paperback's front/spine/back cover is uploaded separately on KDP.
+\newcommand{\BookTitleCover}{%
+  \IfFileExists{book01-cover.pdf}{%
+    \includepdf[pages=1,fitpaper=true,pagecommand={\thispagestyle{empty}}]{book01-cover.pdf}%
+  }{\maketitle}%
+}
 
 % A reader-facing copyright and reference page; build identities live only in
 % generated provenance manifests, never in the book's visible front matter.
