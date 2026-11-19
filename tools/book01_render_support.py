@@ -190,6 +190,28 @@ def plan_math(source: str, chapter: int) -> tuple[str, list[dict]]:
     return "".join(pieces), equations
 
 
+
+def check_math_tokens(text: str, equations: list[dict], chapter: int,
+                      stage: str) -> None:
+    """Verify that editing never loses, repeats or invents a math placeholder.
+
+    This check intentionally does not require source formulas to be valid TeX.
+    It proves a one-to-one mapping between all source math displays and the
+    exact restoration sites *before* Pandoc consumes the derived Markdown.
+    """
+    expected = {entry["token"] for entry in equations}
+    actual = re.findall(r"ALLMIGHTMATHCH\d+INDEX\d+", text)
+    missing = [entry["index"] for entry in equations
+               if actual.count(entry["token"]) != 1]
+    unexpected = sorted(set(actual) - expected)
+    if missing or unexpected or len(actual) != len(equations):
+        raise ValueError(
+            f"Chapter {chapter}: display math not preserved after {stage}; "
+            f"expected {len(equations)} source displays, found "
+            f"{len(actual)} markers; missing or duplicate indices "
+            f"{missing[:25]}; unexpected markers {unexpected[:8]}"
+        )
+
 def replace_math_tokens(tex: str, equations: list[dict]) -> str:
     """Restore original math text exactly once at its original position."""
     for entry in equations:
