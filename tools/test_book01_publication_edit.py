@@ -88,6 +88,68 @@ class PublicationTransformTests(unittest.TestCase):
         self.assertIn("./objects\n", output)
         self.assertEqual(record["promoted_build_commands"], 1)
 
+    def test_foundations_consolidation_preserves_original_lessons(self):
+        source = (
+            "## Arithmetic becomes a policy\n\n"
+            "| Policy for eight-bit unsigned $250+20$ | Result | Intended use |\n"
+            "|:---|:---|:---|\n"
+            "| Wrap modulo 256 | 14 | emulated registers |\n\n"
+            "## A stretching ruler\n\n"
+            "Floating point begins here.\n"
+        )
+        out, report = editor.apply_reader_edits(source, 1)
+        self.assertIn("Consolidation laboratory", out)
+        self.assertIn("Floating point begins here.", out)
+        self.assertIn("| Policy | Result | Intended use |", out)
+        self.assertNotIn("Policy for eight-bit unsigned", out)
+        self.assertEqual(report["new_teaching_bridges"], 1)
+
+    def test_type_promise_bridge_and_repeated_prose_consolidation(self):
+        repeated = (
+            "The classic separate-compilation model lets clients compile "
+            "against an interface while implementations are compiled separately."
+        )
+        source2 = (
+            "## Translation model\n\n"
+            + repeated + " That sentence sounds elementary.\n\n"
+            + repeated + " Conceptually, commands might look like:\n\n"
+            "## Choose a type for its promise, not its familiar size\n\n"
+            + repeated + " The easiest mistake here is believing: scope = lifetime.\n"
+        )
+        out, log = editor.apply_reader_edits(source2, 2)
+        self.assertEqual(out.count(repeated), 1)
+        self.assertIn("Why a type is a promise rather than a size", out)
+        self.assertIn("scope = lifetime", out)
+        self.assertEqual(log["repeated_sentences_consolidated"], 2)
+        self.assertEqual(log["new_teaching_bridges"], 1)
+
+        source3 = (
+            "## Public records and protected invariants\n\n"
+            "This is important. " + repeated + " These:\n\n"
+            "struct A has fields.\n"
+        )
+        out3, log3 = editor.apply_reader_edits(source3, 3)
+        self.assertNotIn(repeated, out3)
+        self.assertEqual(log3["repeated_sentences_consolidated"], 1)
+
+    def test_inline_math_ellipsis_not_printed_as_literal_backslash(self):
+        source = (
+            "## Registries\n\nCapacities: " + chr(96)
+            + r"1,g,g^2,\ldots,g^k" + chr(96) + ".\n"
+        )
+        out, _ = editor.apply_reader_edits(source, 6)
+        self.assertIn(r"$1,g,g^2,\ldots,g^k$", out)
+        self.assertNotIn(chr(96) + "1,g,g^2,", out)
+
+    def test_figures_do_not_repeat_source_brief_labels(self):
+        figure = {
+            "part": 1, "image": "test.png", "caption": "Figure 1.1: Figure B1 - Interpretation",
+            "chapter": 1, "index": 1, "token": "ALLMIGHTFIGURECH01INDEX001",
+        }
+        tex = render.replace_figure_tokens(figure["token"], [figure])
+        self.assertIn(r"\captionof{figure}{Interpretation}", tex)
+        self.assertNotIn("Figure B1", tex)
+
     def test_every_chapter_has_unique_reconstruction_gate(self):
         self.assertEqual(set(gates.GATES), set(range(1, 17)))
         endings = set()
