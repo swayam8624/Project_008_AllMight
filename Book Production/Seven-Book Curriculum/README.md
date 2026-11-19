@@ -647,6 +647,74 @@ then produce a substantive additive chapter and independent runnable
 oracles without shortening prior material.
 
 
+## Pass 17 — Book 1 sixteen-chapter coverage/depth audit and release gate
+
+**Audit committed, not a completed book.** [Pass17 source coverage and depth
+report](Book01/PASS17_COVERAGE_AND_DEPTH_AUDIT.md) inventories the sixteen
+authoritative derived reading chapters and sixteen substantial staged
+supplements (~1.44 million original chapter characters and ~507 thousand
+additional lesson characters, counted separately). The actual original
+reading map contains 39 chapters; **these are not 39 remaining Book 1
+passes**, since chapters 17–31 chiefly route to Book 2 and 32–38 to
+Book 3, while Vulkan/Metal chapters 9 and 13–16 also belong in Book 6.
+Freeze primary-book and cross-book span routing before final print production.
+
+**Verified from fetched chapter/lesson content:** Each of the sixteen
+staged supplementary lessons has one matching original heading in its
+corresponding derived reading chapter, and each lesson carries substantial
+new narrative content. This is a structural fact, not proof of the exact
+canonical-master anchor count, executable correctness or editorial depth.
+
+**Genuine coverage gap:** A lexical scan of **all 39 derived chapters
+and all 16 staged lessons** found no exact `std::format`/`std::print`,
+`std::filesystem`/`std::ifstream`/`std::ofstream`,
+`std::ranges`/`std::views`, or coroutine-operator
+`co_await`/`co_yield`/`promise_type`/`std::coroutine` examples.
+This does not establish absence from every uninspected project or
+continuous-master source, but it prevents calling Book 1 a complete
+modern C++ mastery course. Prioritize a **real C++23 asset/async
+service** integrating trusted filesystem I/O, ranges/views,
+format-safe diagnostics and coroutine-frame lifetime/cancellation
+with Kairo/Maveb typed assets, plus portable negative-case tests.
+
+**Narrative integrity gaps:** GPU-related original chapters contain
+extensive fragmented micro-lines (measured median nonempty line widths
+near 12–15 characters in several chapters) and inherited production
+tokens like `This is Part 2147` and `### + M135`. The original text must
+not be arbitrarily shortened, but coherent explanatory bridges,
+commented runnable code, clear first-use derivations and separated
+provenance metadata are needed before publication.
+
+**New fail-closed static source gate:**
+`tools/book01_coverage_audit.py` compares the exact current canonical
+Git blob to the preserved baseline
+`d3202af31e1eb644a74565eeb63e7a3352438823`, checks the 39-entry
+reading map, 16 chapter-source markers and source anchors, 16 staged
+lesson headings, CMake/CTest target registration and evidence source
+files. Its output explicitly sets compiler/native-GPU/editorial
+verification to **false**. `tools/tests/test_book01_coverage_audit.py`
+contains negative tests for changed canonical bytes, a missing CTest
+entry and warning-only prose/code proximity. The GCC CI workflow
+now runs this audit, publishes machine-readable JSON and tests the
+failure behavior. This check has been **authored and connected to CI**;
+a successful executed result has **not** been observed in this turn.
+
+**Book 1 release gates:** compiler/CTest+sanitizers on supported
+toolchains; truthful native Vulkan/Metal hardware status; complete
+foundational C++23 API exercises; cross-project runnable integration
+with real Kairo/Maveb assets; readable narrative-first transitions;
+seven-book source-span ownership; actual references reviewed; and
+source-preserving application/insertion only at the user's chosen
+consolidated checkpoint. Word count and pass count are insufficient.
+
+**Next work:** First run/fix the full sixteen-target build and static
+audit, then close the identified C++23 language coverage gaps with
+substantive engineering code and tests; independently verify the
+final editorial/technical release before declaring Book 1 complete.
+The prior “4–5 passes remaining” is a planning estimate, **not a
+guaranteed completion count**; new issues may require more passes.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
