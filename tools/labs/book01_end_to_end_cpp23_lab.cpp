@@ -16,12 +16,16 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <latch>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -335,6 +339,97 @@ struct Scene {
     }
 };
 
+// Pass20: a real synchronized publication protocol, unlike the Pass19
+// single-threaded teaching fixture above. A candidate is prepared BEFORE
+// acquiring the mutex, then compared/swapped under exactly one lock. A loser
+// never mutates the visible receipt. The lock does not protect GPU resources;
+// native completion and render-thread ownership remain separate contracts.
+class ConcurrentScene {
+public:
+    struct Snapshot {
+        std::uint64_t revision{};
+        std::optional<Receipt> visible;
+    };
+    explicit ConcurrentScene(std::uint64_t initial = 7) noexcept
+        : revision_(initial) {}
+    ConcurrentScene(const ConcurrentScene&) = delete;
+    ConcurrentScene& operator=(const ConcurrentScene&) = delete;
+
+    [[nodiscard]] bool publish(std::uint64_t expected, Receipt candidate) {
+        // In particular, the potentially allocating copy into candidate has
+        // already occurred before entering the critical section. The move to
+        // the local optional is noexcept for the standard-string Receipt.
+        std::optional<Receipt> prepared{std::move(candidate)};
+        std::scoped_lock lock(mutex_);
+        if (revision_ != expected ||
+            revision_ == std::numeric_limits<std::uint64_t>::max()) {
+            return false;
+        }
+        // std::optional<Receipt> swap is noexcept (asserted below). The
+        // previous visible value is retired AFTER leaving the lock, when
+        // prepared is destroyed, so callbacks/destructors do not run there.
+        visible_.swap(prepared);
+        ++revision_;
+        return true;
+    }
+    [[nodiscard]] Snapshot snapshot() const {
+        std::scoped_lock lock(mutex_);
+        // Returning an OWNED copy avoids publishing a dangling borrow after
+        // another thread changes the scene. Snapshot copying may allocate,
+        // but a failure leaves the scene's state unchanged.
+        return {revision_, visible_};
+    }
+private:
+    mutable std::mutex mutex_;
+    std::uint64_t revision_{};
+    std::optional<Receipt> visible_;
+};
+static_assert(std::is_nothrow_move_constructible_v<Receipt>);
+static_assert(std::is_nothrow_swappable_v<std::optional<Receipt>>);
+
+void concurrent_publication_is_single_winner() {
+    const auto source = valid_texture();
+    Receipt base;
+    base.texture_source_fingerprint = ingestion::fnv1a(source);
+    base.canonical = "same-owned-input-across-eight-contending-workers";
+    ConcurrentScene scene(7);
+    constexpr int contenders = 8;
+    std::latch starting_gate(1);
+    std::atomic<int> wins{0};
+    std::vector<std::jthread> threads;
+    threads.reserve(contenders);
+    for (int i = 0; i < contenders; ++i) {
+        threads.emplace_back([&, index = i] {
+            Receipt candidate = base; // independent owned value
+            candidate.canonical += "-worker-" + std::to_string(index);
+            starting_gate.wait();
+            if (scene.publish(7, std::move(candidate))) {
+                wins.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+    }
+    starting_gate.count_down();
+    for (auto& worker : threads) worker.join();
+    const auto current = scene.snapshot();
+    require(wins.load(std::memory_order_relaxed) == 1,
+            "exactly one of eight racing same-revision commits wins");
+    require(current.revision == 8 && current.visible &&
+            current.visible->canonical.starts_with(base.canonical) &&
+            current.visible->texture_source_fingerprint ==
+                base.texture_source_fingerprint,
+            "winner's owned snapshot must be stable and uncorrupted");
+    require(!scene.publish(7, base) && scene.snapshot().revision == 8,
+            "stale publication cannot change the committed scene");
+
+    ConcurrentScene exhausted(std::numeric_limits<std::uint64_t>::max());
+    require(!exhausted.publish(std::numeric_limits<std::uint64_t>::max(), base),
+            "revision overflow refuses publication instead of aliasing old identity");
+    const auto untouched = exhausted.snapshot();
+    require(!untouched.visible &&
+            untouched.revision == std::numeric_limits<std::uint64_t>::max(),
+            "exhausted revision leaves prior scene unchanged");
+}
+
 void end_to_end_happy_path_and_scene_revision() {
     Fixture fixture;
     const auto tx = valid_texture(), ms = valid_mesh();
@@ -422,10 +517,11 @@ int main() {
         end_to_end_happy_path_and_scene_revision();
         end_to_end_failure_is_not_success();
         source_mutations_have_predictable_effects();
+        concurrent_publication_is_single_winner();
         std::cout << "Pass19: REAL file->typed registry->host DAG->CPU reduction/"
                      "memory oracle->checked retirement->stable receipt: OK\n";
         std::cout << "Not executed: native Metal/Vulkan, real GPU synchronization,"
-                     " concurrently contested scene publication, full 18-target CTest.\n";
+                     " real renderer hot-reload, full 18-target CTest.\n";
     } catch (const std::exception& error) {
         std::cerr << "Pass19 FAILED: " << error.what() << '\n';
         return 1;
