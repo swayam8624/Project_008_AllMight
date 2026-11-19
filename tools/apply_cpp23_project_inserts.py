@@ -117,6 +117,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/GPU-16P - GPU Profiling and Apple Callback Ownership.md",
         b"\n### Distinguish host allocation callbacks from device-memory allocation\n",
     ),
+    Insert(
+        "CPP-18A",
+        "Supplementary/C++23 Project Labs/CPP-18A - Filesystem Ranges Formatting and Coroutine Asset Import.md",
+        b"\n## From a living asset registry to reliable queries and transformations\n",
+    ),
 )
 
 
