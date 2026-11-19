@@ -53,6 +53,25 @@ class PublicationTransformTests(unittest.TestCase):
         self.assertIn(code, transformed)
         self.assertIn(raw_math, transformed)
 
+    def test_private_obisidian_links_become_readable_text(self):
+        source = "See [[Supplementary/Sources and Code Anchors#M007|verification scope]]."
+        out, report = editor.apply_reader_edits(source, 2)
+        self.assertIn("verification scope", out)
+        self.assertNotIn("[[", out)
+        self.assertEqual(report["normalized_wikilinks"], 1)
+
+    def test_schematic_cpp_is_labeled_pseudocode_without_changing_body(self):
+        source = (
+            f'{BACKTICKS}cpp id="x1rcxl"\n'
+            "for each item:\n    if useful:\n"
+            "        output.push_back(item);\n"
+            f"{BACKTICKS}\n"
+        )
+        out, report = editor.apply_reader_edits(source, 9)
+        self.assertIn("Pseudocode (not compilable C++)", out)
+        self.assertIn("output.push_back(item);", out)
+        self.assertEqual(report["relabeled_pseudocode"], 1)
+
     def test_duplicate_draft_figure_caption_is_removed_once(self):
         source = ("### Figure B1 - Original caption\n\n"
                   "ALLMIGHTFIGURECH01INDEX002\n\n"
