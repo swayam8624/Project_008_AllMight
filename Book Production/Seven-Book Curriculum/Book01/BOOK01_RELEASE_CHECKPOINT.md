@@ -68,11 +68,11 @@ python3 -m venv .venv-book01
 ```
 
 Digital output:
-`build/book01-expanded-reader/Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf`
+`build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf`
 
 Paperback outputs:
-`build/book01-expanded-reader/Book01-KDP-Paperback-Volume-01.pdf`
-and `Book01-KDP-Paperback-Volume-02.pdf`.
+`build/book01-expanded-reader/Book01-From-Bits-to-Programs-KDP-Volume-01.pdf`
+and `Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf`.
 
 The four `--compile --part N` partitions remain optional diagnostics for
 isolating TeX failures; they are not four published books. If the code refuses
@@ -95,7 +95,7 @@ chapter-edition chapters or to cover the full ISO C++23 specification.
 The default `python3 tools/build_book01_expanded_reader.py --compile --open`
 now compiles **one continuous LaTeX book** in
 `build/book01-expanded-reader/book01-complete/main.tex`, creating
-`Book01-Bits-Programs-Reliable-Systems-COMPLETE.pdf` with one title page,
+`Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf` with one title page,
 one full table of contents, continuous page numbering and chapter bookmarks.
 The four `book01-expanded-p01` through `p04` directories remain only
 for `--compile --part N` diagnostics and do not represent four books.
