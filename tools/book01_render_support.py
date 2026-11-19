@@ -365,6 +365,69 @@ def render_figures(manifest: dict, output: Path):
     print("Verified rendered diagrams:", len(figures))
 
 
+
+def reflow_long_textual_displays(tex: str) -> str:
+    """Reflow long English claims and pipeline chains in generated TeX only.
+
+    Source mathematics has already been checked for exact preservation before
+    this *presentation* step. A mathematical \boxed{...} expression is never
+    rewritten; only a solitary \boxed{\text{English sentence}} longer than
+    67 characters becomes a small framed, wrappable proposition. A sequence
+    consisting entirely of textual labels joined by \rightarrow receives
+    line breaks at stage boundaries. The visible words and order are retained.
+    """
+    display = re.compile(r"\\\[\s*(.*?)\s*\\\]", re.DOTALL)
+    boxed_text = re.compile(r"\\boxed\{\s*\\text\{([^{}]+)\}\s*\}", re.DOTALL)
+    textual_stage = re.compile(r"\\text\{[^{}]+\}[.!?]?", re.DOTALL)
+
+    def reflow(match: re.Match[str]) -> str:
+        body = match.group(1).strip()
+        prose = boxed_text.fullmatch(body)
+        if prose and len(prose.group(1)) >= 68:
+            # Use a true text box, not an unbreakable equation that extends
+            # beyond the trim boundary. No word is dropped or abbreviated.
+            return (
+                "\\begin{center}\n"
+                "\\fbox{\\parbox{0.82\\linewidth}{\\centering\\small\\itshape "
+                + prose.group(1)
+                + "}}\n\\end{center}"
+            )
+        if body.count(r"\rightarrow") < 3:
+            return match.group(0)
+        stages = [stage.strip() for stage in body.split(r"\rightarrow")]
+        if not all(textual_stage.fullmatch(stage) for stage in stages):
+            return match.group(0)
+        lines: list[list[str]] = []
+        line: list[str] = []
+        length = 0
+        for stage in stages:
+            visible = re.sub(r"\\text\{|\}", "", stage)
+            cost = len(visible) + 3
+            if line and length + cost > 62:
+                lines.append(line)
+                line = []
+                length = 0
+            line.append(stage)
+            length += cost
+        if line:
+            lines.append(line)
+        if len(lines) < 2:
+            return match.group(0)
+        rows: list[str] = []
+        for number, row in enumerate(lines):
+            expression = r"\rightarrow ".join(row)
+            if number:
+                expression = r"\rightarrow " + expression
+            rows.append("& " + expression)
+        return (
+            "\\[\n\\begin{aligned}\n"
+            + (" \\\\\n").join(rows)
+            + "\n\\end{aligned}\n\\]"
+        )
+
+    return display.sub(reflow, tex)
+
+
 def pdf_preflight(pdf: Path, *, paperback: bool) -> int:
     try:
         from pypdf import PdfReader
