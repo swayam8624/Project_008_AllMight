@@ -72,6 +72,21 @@ class PublicationTransformTests(unittest.TestCase):
         self.assertIn("output.push_back(item);", out)
         self.assertEqual(report["relabeled_pseudocode"], 1)
 
+    def test_long_compiler_line_remains_copyable(self):
+        source = (
+            "Compile with " + chr(96)
+            + "clang++ -std=c++23 -Wall -Wextra -Wpedantic -Werror "
+            + "-fsanitize=address,undefined objects.cpp -o objects"
+            + chr(96) + ", then run " + chr(96) + "./objects"
+            + chr(96) + ". Repeat with -O2."
+        )
+        output, record = editor.apply_reader_edits(source, 4)
+        self.assertIn("clang++ -std=c++23 -Wall", output)
+        self.assertIn("-fsanitize=address,undefined objects.cpp", output)
+        self.assertIn(f"{BACKTICKS}sh\n", output)
+        self.assertIn("./objects\n", output)
+        self.assertEqual(record["promoted_build_commands"], 1)
+
     def test_duplicate_draft_figure_caption_is_removed_once(self):
         source = ("### Figure B1 - Original caption\n\n"
                   "ALLMIGHTFIGURECH01INDEX002\n\n"
