@@ -9,10 +9,16 @@ on:
       - 'tools/labs/test_book02_papers_geometry.py'
       - 'tools/labs/book02_papers_numeric.py'
       - 'tools/labs/test_book02_papers_numeric.py'
+      - 'tools/labs/book02_papers_sampling.py'
+      - 'tools/labs/test_book02_papers_sampling.py'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - '.github/workflows/book02-research-pass02.yml'
   workflow_dispatch:
+
+concurrency:
+  group: book02-pass2-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -36,9 +42,10 @@ jobs:
         run: |
           python -m py_compile tools/labs/book02_papers_geometry.py tools/labs/test_book02_papers_geometry.py
           python -m py_compile tools/labs/book02_papers_numeric.py tools/labs/test_book02_papers_numeric.py
+          python -m py_compile tools/labs/book02_papers_sampling.py tools/labs/test_book02_papers_sampling.py
       - name: Mathematical paper witnesses and SciPy comparisons
         working-directory: tools/labs
-        run: python -m unittest -v test_book02_papers_geometry test_book02_papers_numeric
+        run: python -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling
       - name: Verify numerical checks under optimized Python
         working-directory: tools/labs
-        run: python -O -m unittest -v test_book02_papers_geometry test_book02_papers_numeric
+        run: python -O -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling
