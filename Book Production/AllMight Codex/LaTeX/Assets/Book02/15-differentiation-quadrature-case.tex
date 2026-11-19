@@ -1,0 +1,44 @@
+% Two independent derivatives and exact polynomial quadrature comparison.
+\clearpage
+\section*{Verification case: three meanings of numerical change}
+\noindent A symbolic derivative, automatic differentiation of the
+implemented operations and a finite-difference approximation do not
+have identical error mechanisms. Consider
+\[
+F(x,y)=x^2y+\sin x.
+\]
+Its analytic gradient is
+\(\nabla F=(2xy+\cos x,\;x^2)\).
+At \((x,y)=(1,2)\), this is
+\((4+\cos1,\;1)\), and its directional derivative along
+\(d=(0.1,-0.2)\) is
+\[
+dF[d]=0.1(4+\cos1)-0.2\approx0.25403023.
+\]
+Forward-mode AD should reproduce the derivative of the implemented
+smooth computation to ordinary rounding accuracy. A central
+finite difference,
+\[
+\frac{F(1+hd_x,2+hd_y)-F(1-hd_x,2-hd_y)}{2h},
+\]
+has truncation error of order \(h^2\) for a sufficiently smooth
+function, but its \emph{floating-point} error eventually grows as
+\(h\) becomes too small. The step is a numerical design parameter,
+not a universal magic constant.
+
+Integration supplies a different error source. For \(f(x)=x^2\)
+on \([0,1]\), the exact integral is \(1/3\). A single-interval
+trapezoidal rule gives \(1/2\), a midpoint rule gives \(1/4\),
+and Simpson's rule gives the exact \(1/3\) in exact arithmetic
+because it integrates cubic-or-lower polynomials exactly.
+For nonsmooth integrands or singular endpoints, do not apply these
+polynomial error expectations without checking assumptions.
+
+\paragraph{Reconstruction.}
+Implement dual numbers for a scalar expression, two finite-difference
+schemes, and three quadrature rules. Sweep the finite-difference step
+on a log axis, record the error against the analytic directional
+derivative, then test quadrature convergence on both a polynomial
+and a non-polynomial function. Report function evaluation counts
+alongside error, and distinguish a mathematically exact polynomial
+rule from the rounded result computed in software.
