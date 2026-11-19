@@ -283,6 +283,20 @@ def book_pdf_metadata(title: str, subtitle: str) -> str:
             r"},pdfauthor={Swayam Singal},pdfsubject={" + tex_escape(subtitle) +
             r"},pdfkeywords={computing, systems programming, C++23, CPU, GPU, Vulkan, Metal}}")
 
+def paperback_cover_title(title: str) -> str:
+    """Give the two paperback titles deliberate, unhyphenated line breaks.
+
+    The metadata and imprint retain the exact complete title. Only the
+    visible cover display separates the volume label from its main title,
+    avoiding accidental 'Pro-grams' hyphenation on a narrow book page.
+    """
+    for label in ("Volume I", "Volume II"):
+        prefix = label + " — "
+        if title.startswith(prefix):
+            return tex_escape(label) + r"\\[0.25em]" + r"\mbox{" + tex_escape(title[len(prefix):]) + "}"
+    return tex_escape(title)
+
+
 def book_imprint(title: str, subtitle: str, revision: str) -> str:
     return (r"\BookImprintPage{" + tex_escape(title) + "}{" +
             tex_escape(subtitle) + "}{" + tex_escape(revision) + "}")
@@ -670,7 +684,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
             r"\usepackage{book01-reader}",
             book_pdf_metadata(title, subtitle),
             r"\SetBookStage{1}{Bits, Programs, and Reliable Systems}",
-            r"\title{" + tex_escape(title) + r"\\[0.6em]\large " + tex_escape(subtitle) + "}",
+            r"\title{" + paperback_cover_title(title) + r"\\[0.6em]\large " + tex_escape(subtitle) + "}",
             r"\author{Swayam Singal}",
             r"\begin{document}",
             r"\frontmatter", r"\maketitle",
