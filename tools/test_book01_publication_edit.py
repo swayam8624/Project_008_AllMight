@@ -3,6 +3,7 @@
 import unittest
 import book01_publication_edit as editor
 import book01_index as index
+import book01_learning_gates as gates
 import book01_render_support as render
 
 BACKTICKS = chr(96) * 3
@@ -86,6 +87,18 @@ class PublicationTransformTests(unittest.TestCase):
         self.assertIn(f"{BACKTICKS}sh\n", output)
         self.assertIn("./objects\n", output)
         self.assertEqual(record["promoted_build_commands"], 1)
+
+    def test_every_chapter_has_unique_reconstruction_gate(self):
+        self.assertEqual(set(gates.GATES), set(range(1, 17)))
+        endings = set()
+        for chapter in range(1, 17):
+            tex = gates.gate_latex(chapter)
+            self.assertIn(r"\subsection*{Reconstruct, Test, and Transfer}", tex)
+            self.assertIn(r"\begin{enumerate}", tex)
+            self.assertEqual(tex.count(r"\item"), 3)
+            self.assertIn(r"\end{enumerate}", tex)
+            endings.add(tex)
+        self.assertEqual(len(endings), 16)
 
     def test_duplicate_draft_figure_caption_is_removed_once(self):
         source = ("### Figure B1 - Original caption\n\n"
