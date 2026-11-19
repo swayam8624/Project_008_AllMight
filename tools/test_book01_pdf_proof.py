@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 import book01_pdf_proof as proof
+import build_book01_expanded_reader as builder
 
 try:
     import fitz
@@ -30,6 +31,33 @@ class ProofTests(unittest.TestCase):
         doc.save(out)
         doc.close()
         return out
+
+    def test_print_titles_have_deliberate_unhyphenated_breaks(self):
+        volume_one = builder.paperback_cover_title(
+            "Volume I — From Bits to Programs"
+        )
+        volume_two = builder.paperback_cover_title(
+            "Volume II — From Programs to GPUs"
+        )
+        self.assertEqual(
+            volume_one,
+            r"Volume I\\[0.25em]\mbox{From Bits to Programs}"
+        )
+        self.assertEqual(
+            volume_two,
+            r"Volume II\\[0.25em]\mbox{From Programs to GPUs}"
+        )
+        self.assertEqual(
+            builder.paperback_cover_title("From Bits to Parallel Systems"),
+            "From Bits to Parallel Systems"
+        )
+        self.assertIn(
+            "pdftitle={Volume I — From Bits to Programs}",
+            builder.book_pdf_metadata(
+                "Volume I — From Bits to Programs",
+                "Representation, Ownership, and Reliable C++23"
+            )
+        )
 
     def test_reader_resets_header_width_after_final_geometry(self):
         # The print profile initializes fancyhdr at a different trim size.
