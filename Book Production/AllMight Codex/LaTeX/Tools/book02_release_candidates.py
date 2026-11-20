@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Build and independently preflight Book Two print and EPUB *candidates*.
+"""Build and independently preflight Book Two *single-volume* PDF and EPUB candidates.
 
 Does not rewrite the 16 original source chapters, the canonical manuscript,
 CURRENT.json, the seven-volume physical-parts.json, or any other book.
 
-The original global physical-parts.json can refer to an older generation;
-this isolated path intentionally avoids mutating that shared plan. It uses
-the frozen current generation's P01 and P02 main.tex files directly.
+The original global physical-parts.json can refer to an older generation.
+This isolated path reads the two frozen Book Two physical-part main.tex
+files as a source inventory and constructs ONE continuous typeset book,
+with fresh front matter, one TOC, all 16 original chapters, and integrated
+reference/code appendices. It does not edit the generated originals.
 
 Requirements:
 - The author's installed LuaLaTeX/latexmk and allmight-book.sty fonts/assets.
@@ -14,8 +16,9 @@ Requirements:
 - For the *full* EPUB: existing private source-cache build_books helpers,
   all 568 frozen ASTs, Java, EPUBCheck 5.4.0. These are checked explicitly.
 
-Outputs are CANDIDATES requiring visual print trim and multi-reader
-EPUB review; no automated workflow can certify all mathematical proofs.
+Outputs are CANDIDATES requiring page-by-page visual and multi-reader EPUB
+review. A roughly 1,000-page complete digital PDF is NOT automatically
+a manufacturable single-volume print-on-demand interior.
 """
 from __future__ import annotations
 
@@ -376,10 +379,10 @@ def check_environment(generation:Path, *, cover_image:Path|None,
 
 
 def export_candidates_to_master(generation:Path, destination:Path, *, print_only:bool=False) -> Path:
-    """Copy verified candidate artifacts into Master without modifying Git files.
+    """Copy the complete PDF (and optionally verified EPUB) into Master.
 
     The source build remains in the isolated Book02 worktree. The resulting
-    PDFs, EPUB and manifest are copied into a source-fingerprinted folder in
+    digital PDF, optional EPUB and manifest are copied into a source-fingerprinted folder in
     the author's canonical Master workspace. Never merge/reset/edit tracked
     Master content as a side effect of exporting outputs.
     """
