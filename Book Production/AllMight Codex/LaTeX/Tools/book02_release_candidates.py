@@ -66,7 +66,12 @@ def source_fingerprint()->str:
     # Include the native C++23 teaching project in publication provenance.
     # A changed algorithm or optional plotting source invalidates old candidates.
     cpp23=ROOT.parents[2]/"tools"/"labs"/"book02_cpp23"
-    files.extend(sorted(p for p in cpp23.rglob("*") if p.is_file()))
+    # Fingerprint authored sources only; local __pycache__, editor files or
+    # build outputs must never make an unchanged candidate appear stale.
+    published={".cpp",".hpp",".h",".py",".md",".txt"}
+    files.extend(sorted(p for p in cpp23.rglob("*")
+                        if p.is_file() and (p.suffix in published
+                                            or p.name=="CMakeLists.txt")))
     h=hashlib.sha256()
     for path in files:
         if not path.is_file():
