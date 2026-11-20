@@ -13,6 +13,9 @@ From the repository root:
     ctest --test-dir build/book02-cpp23 --output-on-failure
     build/book02-cpp23/book02_workbench matrix
     build/book02-cpp23/book02_workbench orientation
+    build/book02-cpp23/book02_workbench orientation-exact
+    build/book02-cpp23/book02_workbench orientation-audit > build/book02-cpp23/orientation-audit.csv
+    python3 tools/labs/book02_cpp23/predicate_oracle.py build/book02-cpp23/book02_workbench
     build/book02-cpp23/book02_workbench fit
     build/book02-cpp23/book02_workbench heat > build/book02-cpp23/heat.csv
     build/book02-cpp23/book02_workbench monte-carlo > build/book02-cpp23/monte-carlo.csv
@@ -32,9 +35,12 @@ Only if matplotlib is available and a visualization is wanted:
 ## Contract and explicit limitations
 
 Matrix: 2x2 scaled/pivoted elimination; singularity is decided using
-a tolerance, not by a symbolic rank proof. Geometry: exact signs only
-on a bounded integer grid; the double filter returns UNCERTAIN on hard
-inputs, which must not be confused with collinear. Fit: centered ordinary
+a tolerance, not by a symbolic rank proof. Geometry: exact integer-grid
+signs are separately supported, and a new C++23 dyadic-rational oracle
+returns the exact sign for all six finite IEEE-754 binary64 input values.
+The older double filter can return UNCERTAIN, which must not be confused
+with collinearity; its unproved bound is diagnostic and is never a substitute
+for the new authoritative exact-sign result. Fit: centered ordinary
 least squares, not an outlier-robust regression. PDE: 1D explicit heat
 equation with fixed zero boundaries and r <= 1/2. Integration: seeded
 Monte Carlo with Welford sample variance and analytic reference 2/pi;
@@ -98,10 +104,36 @@ extreme coordinates, distribution shifts, or arbitrary thresholds.
 pair-sampling assumptions; the implemented finite-sample
 fixed-trial procedure makes no such formal guarantee.
 
+## Exact IEEE-754 binary64 geometric orientation
+
+`src/exact_predicates.hpp` uses `std::bit_cast` to recover each finite
+binary64 coordinate's exact signed integer mantissa and exponent. It
+subtracts coordinates and multiplies determinant terms using variable-
+length base-`2^32` integer limbs. The resulting sign is exact **for the
+stored binary64 numbers**, even for subnormals, coordinate-difference
+overflow, and almost collinear triples. It rejects NaNs/infinities and
+requires a true IEEE-754 binary64 `double`.
+
+Run `orientation-exact` to view six edge fixtures.
+`orientation-audit` exports those plus 500 reproducible finite
+bit-pattern triples as exact hexadecimal floating-point strings.
+`predicate_oracle.py` independently parses each input as a Python
+`Fraction` and compares all 506 exact signs. Python is the reference
+checker here, **not** the implementation of the geometric predicate.
+CTest adds two native commands and, when Python3 is available,
+the independent rational-oracle check.
+
+The standalone exact algorithm has been locally checked under GCC
+and Clang and matched a separate Python rational oracle on 500 random
+finite input triples before integration. The full build must pass CI
+and the author's AppleClang regression checks as well.
+This is a clear, correct teaching reference, not an optimized adaptive
+expansion predicate or a production benchmarking result.
+
 ## Still not implemented
 
-A general SVD, exact predicates for arbitrary binary64 coordinates,
-sparse matrices or iterative solvers, finite-element assembly in
+A general SVD, adaptive high-performance expansion predicates,
+robust incircle/orient3d predicates, sparse matrices or iterative solvers, finite-element assembly in
 this native workbench, 3D mesh/graphics clients, production-quality
 nonlinear optimization (including globalization/gauge handling),
 independent extended-precision numerical oracles, statistical
