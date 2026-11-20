@@ -17,6 +17,7 @@
 #include <string_view>
 #include <vector>
 #include "advanced.hpp"
+#include "geometry.hpp"
 
 namespace book02 {
 struct Vec2 { double x{}, y{}; };
@@ -200,6 +201,33 @@ void self_test() {
     assert(parameter_error(robust->parameters)<parameter_error(ordinary->parameters));
     assert(robust->accepted_steps>0 && ordinary->accepted_steps>0);
     assert(!advanced::fit_exponential_huber(observations,{1.5,-.4,.3},0));
+    // Native geometric consensus: validate exact geometry, support, and RMS.
+    const auto implied=geometry::ideal_trials(.5,.99);
+    assert(implied && *implied==17); // idealized pair-sampling probability
+    const auto direct=geometry::through({0,1},{2,5});
+    assert(direct);
+    near(geometry::signed_distance(*direct,{1,3}),0);
+    assert(!geometry::through({1,1},{1,1}));
+    const std::array<geometry::Point,4> square{{{1,0},{-1,0},{0,1},{0,-1}}};
+    assert(!geometry::total_least_squares(square));
+    const auto labelled=geometry::synthetic_line_data();
+    assert(labelled.size()==110);
+    std::vector<geometry::Point> points;
+    for (const auto sample:labelled) points.push_back(sample.p);
+    const auto consensus=geometry::ransac_line(points,.04,400,73013);
+    const auto all_tls=geometry::total_least_squares(points);
+    assert(consensus && all_tls);
+    std::size_t true_positive=0,false_positive=0;
+    for (auto i:consensus->inliers) {
+        if (labelled[i].true_inlier) ++true_positive;
+        else ++false_positive;
+    }
+    assert(true_positive>=78 && false_positive<=2);
+    assert(std::abs(consensus->line.a-direct->a)<.02);
+    assert(std::abs(consensus->line.c-direct->c)<.02);
+    assert(std::isfinite(consensus->inlier_rms) && consensus->inlier_rms<.01);
+    assert(!geometry::ransac_line(points,-1,400,73013));
+    assert(!geometry::ransac_line(points,.04,0,73013));
     auto mc=integrate(12345,100000);
     assert(mc);
     near(mc->exact,2/std::numbers::pi);
@@ -240,6 +268,49 @@ int main(int argc,char**argv) {
                 auto next=heat_step(u,1,.125,.004);
                 if (!next) return 2;
                 u=*next;
+            }
+        }
+    } else if (cmd=="ransac-summary" || cmd=="ransac-data") {
+        const auto labelled=geometry::synthetic_line_data();
+        std::vector<geometry::Point> points;
+        for (const auto item:labelled) points.push_back(item.p);
+        constexpr double threshold=.04;
+        const auto ransac=geometry::ransac_line(points,threshold,400,73013);
+        const auto all=geometry::total_least_squares(points);
+        if (!ransac || !all || std::abs(ransac->line.b)<1e-12 ||
+            std::abs(all->b)<1e-12) return 2;
+        std::vector<bool> selected(points.size(),false);
+        std::size_t tp=0,fp=0;
+        for (auto i:ransac->inliers) {
+            selected[i]=true;
+            if (labelled[i].true_inlier) ++tp;
+            else ++fp;
+        }
+        auto y_at=[](double x,geometry::Line l) {
+            return -(l.a*x+l.c)/l.b;
+        };
+        if (cmd=="ransac-summary") {
+            const double precision=double(tp)/double(tp+fp);
+            const double recall=double(tp)/80.;
+            std::cout<<"trials,threshold,inliers,true_positive,false_positive,"
+                        "precision,recall,inlier_rms,a,b,c,all_tls_a,all_tls_b,all_tls_c\n";
+            std::cout<<ransac->trials<<","<<threshold<<","
+                     <<ransac->inliers.size()<<","<<tp<<","<<fp<<","
+                     <<precision<<","<<recall<<","<<ransac->inlier_rms<<","
+                     <<ransac->line.a<<","<<ransac->line.b<<","
+                     <<ransac->line.c<<","<<all->a<<","<<all->b<<","
+                     <<all->c<<"\n";
+        } else {
+            std::cout<<"x,y,true_inlier,selected_inlier,true_y,ransac_y,"
+                        "all_tls_y,ransac_distance,all_tls_distance\n";
+            for (std::size_t i=0;i<points.size();++i) {
+                const auto p=points[i];
+                std::cout<<p.x<<","<<p.y<<","
+                         <<int(labelled[i].true_inlier)<<","<<int(selected[i])<<","
+                         <<2*p.x+1<<","<<y_at(p.x,ransac->line)<<","
+                         <<y_at(p.x,*all)<<","
+                         <<geometry::signed_distance(ransac->line,p)<<","
+                         <<geometry::signed_distance(*all,p)<<"\n";
             }
         }
     } else if (cmd=="qr-sensitivity") {
@@ -303,7 +374,7 @@ int main(int argc,char**argv) {
         }
     } else {
         std::cerr<<"Usage: book02_workbench "
-                    "{test|matrix|orientation|fit|heat|monte-carlo|qr-sensitivity|robust-fit|robust-data}\n";
+                    "{test|matrix|orientation|fit|heat|monte-carlo|qr-sensitivity|robust-fit|robust-data|ransac-summary|ransac-data}\n";
         return 2;
     }
 }
