@@ -87,13 +87,23 @@
   before skip=9pt,after skip=9pt,
   title={C++23 laboratory\if\relax\detokenize{#1}\relax\else\enspace --- #1\fi},
   coltitle=booktwonavy,fonttitle=\sffamily\small\bfseries}
+% All 16 immutable original chapters use lowercase 'verbatim' for their
+% C++23 / algorithm code. 112 such blocks were audited in their frozen
+% sources: styling only Pandoc's 'Shaded' would miss every one of them.
+% FancyVerb draws a pale slate background and cyan ruled frame around each
+% original listing without rewriting a single original chapter byte.
+\fvset{frame=single,framerule=0.45pt,framesep=6pt,
+  rulecolor=\color{booktwocyan},fillcolor=\color{booktwocodebg},
+  breaklines=true,breakanywhere=true}
 % All Pandoc-authored Shaded blocks in Book Two now have a coherent,
 % breakable, print-safe code presentation. No global series style is edited.
 \renewenvironment{Shaded}{%
+  \begingroup
+  \fvset{frame=none,fillcolor=\color{booktwocodebg}}%
   \begin{tcolorbox}[enhanced,breakable,sharp corners,
     boxrule=0.35pt,colframe=booktwocyan!35!white,
     colback=booktwocodebg,
     borderline west={2.5pt}{0pt}{booktwocyan},
     left=8pt,right=8pt,top=6pt,bottom=6pt,
     before skip=8pt,after skip=8pt]%
-}{\end{tcolorbox}}
+}{\end{tcolorbox}\endgroup}
