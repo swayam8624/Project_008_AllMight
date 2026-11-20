@@ -1065,10 +1065,43 @@ class Editor(Editor):
         for title,slug in extra:
             li=el('li');li.append(el('a',title,href='text/book02-'+slug.removeprefix('book02-')+'.xhtml'))
             parent.append(li)
-        # Add a semantic landmarks nav to improve Apple Books/Kindle.
-        landmark=E.SubElement(body(root),Q(X,'nav'))
+        # TOC entries MUST follow the actual OPF reading spine. The earlier
+        # hard-coded back-matter order placed the answer key ahead of the
+        # figures and glossary, triggering three EPUBCheck NAV-011 warnings.
+        # Keep nested chapter deep links unchanged, sorting top-level items.
+        spine_rank={self.items[ref.get('idref')].get('href'):position
+                    for position,ref in enumerate(self.spine)
+                    if ref.get('idref') in self.items}
+        def rank_href(href):
+            target=urllib.parse.unquote(urllib.parse.urlsplit(href or '').path)
+            if target not in spine_rank:
+                raise RuntimeError('TOC target missing from reading spine: '+str(href))
+            return spine_rank[target]
+        def top_link(li):
+            anchors=[x for x in li if x.tag==Q(X,'a')]
+            if len(anchors)!=1:
+                raise RuntimeError('Expected one direct TOC link per top-level entry')
+            return anchors[0].get('href')
+        ordered=sorted(list(parent),key=lambda li:rank_href(top_link(li)))
+        for item in list(parent):parent.remove(item)
+        for item in ordered:parent.append(item)
+        self.report['toc_spine_order_verified']=True
+
+        # EPUB 3 allows only one landmarks navigation. Pandoc already
+        # contributes one, so update that block rather than appending a
+        # second landmarks navigation. doc-landmarks is NOT an allowed
+        # ARIA navigation role (EPUBCheck RSC-005).
+        landmarks=[n for n in root.iter(Q(X,'nav'))
+                   if 'landmarks' in n.get(Q(EPUB,'type'),'').split()]
+        if not landmarks:
+            landmark=E.SubElement(body(root),Q(X,'nav'),id='landmarks')
+        else:
+            landmark=landmarks[0]
+            for duplicate in landmarks[1:]:
+                duplicate.getparent().remove(duplicate)
         landmark.set(Q(EPUB,'type'),'landmarks')
-        landmark.set('role','doc-landmarks')
+        landmark.attrib.pop('role',None)
+        for child in list(landmark):landmark.remove(child)
         landmark.append(el('h2','Landmarks'))
         ol=E.SubElement(landmark,Q(X,'ol'))
         for title,url,epub_type in [
@@ -1117,6 +1150,16 @@ class Editor(Editor):
             lab=E.SubElement(node,Q(NCX,'navLabel'))
             E.SubElement(lab,Q(NCX,'text')).text=title
             E.SubElement(node,Q(NCX,'content'),src='text/book02-'+slug.removeprefix('book02-')+'.xhtml')
+        # Align NCX fallback with the same OPF reading order as nav.xhtml.
+        def ncx_rank(point):
+            content=point.find(Q(NCX,'content'))
+            if content is None:
+                raise RuntimeError('NCX top-level navPoint lacks a content link')
+            return rank_href(content.get('src'))
+        ordered_ncx=sorted(list(nm),key=ncx_rank)
+        for point in list(nm):nm.remove(point)
+        for point in ordered_ncx:nm.append(point)
+        self.report['ncx_spine_order_verified']=True
         # Fix the depth value based on actual nested entries, not a constant.
         def dpt(element,depth=0):
             candidates=[dpt(child,depth+1) for child in element
