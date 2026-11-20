@@ -24,6 +24,7 @@ import build_books as epub_helpers  # noqa: E402
 
 from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement, BOOK02_EPUB_CSS
 from book02_single_volume import epub_frontmatter, epub_references
+from book02_svg_id_repair import repair_epub_duplicate_svg_image_ids
 
 
 def sha(data: bytes) -> str:
@@ -468,6 +469,18 @@ class Packager:
         p=subprocess.run(cmd,cwd=self.out,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if p.returncode: raise RuntimeError(f"Pandoc EPUB build failed for {label}: {p.stderr[-4000:]}")
         unknown_tags_escaped=escape_unknown_html_tags(output)
+        # Pandoc may pack more than one scientific raster <image> element
+        # with the same generated SVG id (EPUBCheck RSC-005, file40.svg).
+        # Rename only unreferenced, duplicate image ids; preserve XML pixels
+        # and every other EPUB member. Abort rather than guess on references.
+        if stage is None or stage["id"] == BOOK02_STAGE:
+            svg_id_repairs=repair_epub_duplicate_svg_image_ids(output)
+            if svg_id_repairs["id_renames"]:
+                print("BOOK02_SVG_DUPLICATE_IDS_FIXED",
+                      svg_id_repairs["id_renames"],
+                      svg_id_repairs["details"],flush=True)
+        else:
+            svg_id_repairs={"svg_files_repaired":0,"id_renames":0,"details":{}}
         epub_helpers.declare_epub_mathml_properties(output)
         expected=expected_math_in_final_ast
         if math_replacements != expected:
@@ -477,7 +490,7 @@ class Packager:
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
