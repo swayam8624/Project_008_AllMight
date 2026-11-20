@@ -412,7 +412,12 @@ def export_candidates_to_master(generation:Path, destination:Path, *, print_only
     destination=Path(destination).expanduser().resolve()
     if not destination.is_dir():
         raise RuntimeError("Export root must exist; supply a path inside the intended Master folder: "+str(destination))
-    version=destination/("Book02-From-Equations-to-Geometry-"+generation.name.lstrip(".")+"-"+current_fingerprint[:12])
+    edition_key=("Book02-From-Equations-to-Geometry-"+generation.name.lstrip(".")+
+                 "-"+current_fingerprint[:12])
+    # A PDF-only proof and a later full PDF+EPUB export have different
+    # immutable manifests. Keep them in separate folders so an approved
+    # PDF remains available while preserving no-overwrite semantics.
+    version=destination/(edition_key+("-PDF-Review" if print_only else ""))
     if version.exists() and not version.is_dir():
         raise RuntimeError("Book Two export location is not a directory: "+str(version))
     version.mkdir(parents=True,exist_ok=True)
