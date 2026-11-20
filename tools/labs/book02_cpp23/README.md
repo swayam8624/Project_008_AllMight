@@ -19,12 +19,15 @@ From the repository root:
     build/book02-cpp23/book02_workbench qr-sensitivity > build/book02-cpp23/qr-sensitivity.csv
     build/book02-cpp23/book02_workbench robust-fit > build/book02-cpp23/robust-fit.csv
     build/book02-cpp23/book02_workbench robust-data > build/book02-cpp23/robust-data.csv
+    build/book02-cpp23/book02_workbench ransac-summary > build/book02-cpp23/ransac-summary.csv
+    build/book02-cpp23/book02_workbench ransac-data > build/book02-cpp23/ransac-data.csv
 
 Only if matplotlib is available and a visualization is wanted:
 
     python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/heat.csv --output build/book02-cpp23/heat.png
     python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/robust-data.csv --output build/book02-cpp23/robust-data.png
     python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/qr-sensitivity.csv --output build/book02-cpp23/qr-sensitivity.png
+    python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/ransac-data.csv --output build/book02-cpp23/ransac-data.png
 
 ## Contract and explicit limitations
 
@@ -41,7 +44,7 @@ unexamined input ranges, physics, numerical conditioning, or performance.
 
 The progression is vector/matrix -> predicates -> least squares ->
 stable time stepping -> sampling/uncertainty -> pivoted dense QR ->
-robust nonlinear inverse problems.
+robust nonlinear inverse problems -> orthogonal geometry / RANSAC consensus.
 
 ## Current advanced native milestone
 
@@ -68,6 +71,32 @@ about robust regression or a benchmark of any production library.
 The synthetic perturbation is 0.008*sin(0.77*i), and sample 15
 (zero-based) has a +3.5 outlier. Initial parameters are
 (1.5,-0.4,0.3), with the Huber threshold 0.05.
+
+## Native geometry experiment
+
+`src/geometry.hpp` contains a normalized 2D implicit line model,
+two-point hypotheses, fixed-trial RANSAC under an orthogonal distance
+threshold, and orthogonal total-least-squares refitting of a
+selected consensus. It recomputes the reported support after refinement
+instead of pretending that support cannot change.
+
+The native synthetic fixture has 80 points close to `y=2*x+1`
+and 30 structured outliers close to `y=-7+0.4*x`. All jitter is
+deterministic, the declared distance threshold is 0.04 in coordinate
+units, the seed is 73013, and the trial budget is fixed at 400.
+`ransac-summary` exposes true/false positives, precision, recall,
+RMS, consensus coefficients and the all-point TLS baseline.
+`ransac-data` exports all 110 labeled synthetic observations and
+the computed selection flags. The figure renderer **only plots these
+C++ rows**.
+
+This native fixture deliberately differs from the earlier Python
+paper-experiment dataset. Its successful consensus does not verify
+RANSAC performance under intersecting structures, multiple models,
+extreme coordinates, distribution shifts, or arbitrary thresholds.
+`ideal_trials` derives a bound under independent, with-replacement
+pair-sampling assumptions; the implemented finite-sample
+fixed-trial procedure makes no such formal guarantee.
 
 ## Still not implemented
 
