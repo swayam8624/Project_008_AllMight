@@ -87,6 +87,68 @@ class BookTwoVisibleCover(unittest.TestCase):
             again=repair_book02_epub_cover(path)
             self.assertEqual(again["modified_members"],[])
 
+    def test_author_artwork_replaces_generated_cover_byte_for_byte(self):
+        """The real Book Two cover must replace the generated typographic one."""
+        from io import BytesIO
+        import hashlib
+        from PIL import Image
+        img = Image.new("RGB", (640, 1024), (19, 40, 70))
+        stream = BytesIO()
+        img.save(stream, format="JPEG", quality=95)
+        supplied = stream.getvalue()
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            src = root / "Book Two authored cover.jpg"
+            src.write_bytes(supplied)
+            epub = root / "Book Two.epub"
+            fixture(epub)
+            with zipfile.ZipFile(epub, "r") as original:
+                chapter = original.read("EPUB/text/ch001.xhtml")
+                names = original.namelist()
+                old_cover = original.read("EPUB/media/file65.jpg")
+            self.assertNotEqual(old_cover, supplied)
+            result = repair_book02_epub_cover(epub, cover_image=src)
+            self.assertTrue(result["user_cover_embedded"])
+            self.assertEqual(result["cover_sha256"],
+                             hashlib.sha256(supplied).hexdigest())
+            self.assertEqual(set(result["modified_members"]),
+                             {"EPUB/media/file65.jpg", "EPUB/text/cover.xhtml",
+                              "EPUB/content.opf"})
+            with zipfile.ZipFile(epub) as reader:
+                self.assertEqual(reader.namelist(), names)
+                self.assertEqual(reader.read("EPUB/media/file65.jpg"), supplied)
+                self.assertEqual(reader.read("EPUB/text/ch001.xhtml"), chapter)
+                self.assertEqual(reader.getinfo("mimetype").compress_type,
+                                 zipfile.ZIP_STORED)
+                cover = ET.fromstring(reader.read("EPUB/text/cover.xhtml"))
+                imgs = [n for n in cover.iter()
+                        if n.tag == f"{{{XHTML}}}img"]
+                self.assertEqual(len(imgs), 1)
+                self.assertEqual(imgs[0].get("src"), "../media/file65.jpg")
+                package = ET.fromstring(reader.read("EPUB/content.opf"))
+                self.assertEqual(
+                    len([n for n in package.iter()
+                         if n.get("id") == "file65_jpg"
+                         and "cover-image" in n.get("properties", "").split()]),1)
+            again = repair_book02_epub_cover(epub, cover_image=src)
+            self.assertEqual(again["modified_members"], [])
+
+    def test_missing_or_landscape_author_cover_fails_without_touching_epub(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            epub = root / "Book Two.epub"
+            fixture(epub)
+            before = epub.read_bytes()
+            with self.assertRaisesRegex(RuntimeError, "not found"):
+                repair_book02_epub_cover(epub, cover_image=root/"missing.jpg")
+            self.assertEqual(epub.read_bytes(), before)
+            landscape = root/"landscape.jpg"
+            Image.new("RGB", (700, 400), (19, 40, 70)).save(landscape,"JPEG")
+            with self.assertRaisesRegex(RuntimeError, "portrait JPEG"):
+                repair_book02_epub_cover(epub, cover_image=landscape)
+            self.assertEqual(epub.read_bytes(), before)
+
     def test_missing_cover_asset_does_not_modify_original_epub(self):
         with tempfile.TemporaryDirectory() as t:
             path=Path(t)/"bad.epub"
