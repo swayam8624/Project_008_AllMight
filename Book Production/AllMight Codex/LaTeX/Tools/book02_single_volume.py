@@ -61,6 +61,27 @@ READING_GUIDE = (
     "paper's full experimental or mathematical results.",
 )
 
+NOTATION = (
+    "A symbol represents an object in a specified mathematical domain. "
+    "Read a scalar, vector, matrix, probability, differential operator "
+    "or geometric point according to the definition given in its chapter; "
+    "similar letters in separate subjects need not denote the same object.",
+    "When coordinates enter a computation, state their frame, handedness, "
+    "units and transformation convention. Matrices may act on column "
+    "vectors in the common convention, but a local derivation that adopts "
+    "another ordering takes precedence over this guide.",
+    "A superscript T denotes a transpose in ordinary real matrix "
+    "calculations; a negative exponent denotes an inverse only where "
+    "the relevant inverse exists. Norm, gradient, Jacobian, covariance "
+    "and residual notation must be read with their domain, dimensions "
+    "and evaluation point explicitly specified.",
+    "Numerical tolerances, stochastic seeds, finite-difference steps "
+    "and termination rules are parts of the computational model, not "
+    "universal physical constants. Unless units are explicitly "
+    "declared, treat synthetic coordinates and sample values as "
+    "dimensionless teaching data.",
+)
+
 # Checked primary sources, with permanent author / institution links.
 # These are selective reading references, not invented in-text citations.
 SELECTED_REFERENCES = (
@@ -200,7 +221,11 @@ safety requirements before applying them to critical systems.\par
 \chapter*{{How to Use This Book}}
 \phantomsection\addcontentsline{{toc}}{{chapter}}{{How to Use This Book}}
 {latex_paragraphs(READING_GUIDE)}
+\chapter*{{Notation and Conventions}}
+\phantomsection\addcontentsline{{toc}}{{chapter}}{{Notation and Conventions}}
+{latex_paragraphs(NOTATION)}
 \tableofcontents
+\listoffigures
 \mainmatter
 {chapters}
 \label{{stagechaptersend:{STAGE}}}
@@ -233,6 +258,7 @@ def epub_frontmatter() -> list[dict]:
         ("Copyright",(f"Copyright © {YEAR} {AUTHOR}. All rights reserved.",)),
         ("Preface",PREFACE),
         ("How to Use This Book",READING_GUIDE),
+        ("Notation and Conventions",NOTATION),
     ):
         blocks.append({"t":"Header","c":[1,["book02-"+title.lower().replace(" ","-"),[],[]],_pstr(title)]})
         blocks.extend({"t":"Para","c":_pstr(p)} for p in paragraphs)
