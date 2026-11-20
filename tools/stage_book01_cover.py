@@ -34,8 +34,12 @@ def stage(cover: Path) -> dict:
         width, height = art.size
         if art.mode not in ("RGB", "RGBA"):
             art = art.convert("RGB")
-        if width < 1200 or height < 1800:
-            raise ValueError(f"Cover {width}x{height} is too small; use at least 1200x1800, ideally 1600x2560")
+        # Digital PDF cover art does not share the 300 dpi print-wrap limit.
+        # The author-supplied 992x1586 cover already used in the EPUB is
+        # acceptable in a 7x10 inch on-screen reading edition. Never upscale
+        # or crop the original merely to satisfy a paperback rule.
+        if width < 800 or height < 1200:
+            raise ValueError(f"Cover {width}x{height} is too small for a readable digital title page (minimum 800x1200)")
         if not (0.56 <= width / height <= 0.75):
             raise ValueError("Expected a portrait cover with approximately 1:1.6 aspect ratio")
     if not (DIGITAL / "main.tex").is_file():
