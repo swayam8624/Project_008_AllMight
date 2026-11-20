@@ -502,6 +502,38 @@ class Packager:
             book02_reader_polish=None
             book02_cover_repair=None
         epub_helpers.declare_epub_mathml_properties(output)
+        # Full Book Two reader finishing is additive and stage-scoped.
+        # Source ASTs and the other six volumes are unchanged. The original
+        # Book Two chapters retain their mathematical and code content, while
+        # the EPUB is split into 30–60 KiB XHTML documents, gains the index,
+        # a C++23 exercise workbook, numbered figures and real metadata.
+        # Publish only after the finishing script passes its cross-link audit.
+        book02_publication_finish=None
+        if stage and stage["id"] == BOOK02_STAGE:
+            reader=ROOT/"Tools"/"book02_finish_epub.py"
+            polished=self.out/(label+"-publication-finished.epub")
+            audit=self.out/(label+"-publication-finish-audit.json")
+            command=[sys.executable,str(reader),"--input",str(output),
+                     "--output",str(polished),"--report",str(audit)]
+            completed=subprocess.run(command, cwd=self.out, text=True,
+                                     stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            if completed.returncode != 0:
+                raise RuntimeError("Book Two EPUB publication finishing failed:\n"+
+                                   completed.stdout[-9000:])
+            if not polished.is_file() or not audit.is_file():
+                raise RuntimeError("Book Two EPUB finish returned success without output and audit")
+            book02_publication_finish=json.loads(audit.read_text(encoding="utf-8"))
+            if (book02_publication_finish.get("broken_internal_links") != 0 or
+                book02_publication_finish.get("final_mathml") !=
+                book02_publication_finish.get("original_mathml") or
+                book02_publication_finish.get("chapters") != 16):
+                raise RuntimeError("Book Two source-preservation contract failed")
+            polished.replace(output)
+            print("BOOK02_FULL_READER_EPUB_OK",
+                  book02_publication_finish["xhtml_files"],"XHTML documents;",
+                  book02_publication_finish["new_practice_exercises"],"exercises;",
+                  book02_publication_finish["max_xhtml_kib"],"maximum KiB;",
+                  "author cover preserved",flush=True)
         expected=expected_math_in_final_ast
         if math_replacements != expected:
             raise RuntimeError(f"Incomplete Book02/EPUB MathML conversion: {math_replacements} of {expected}")
@@ -510,7 +542,7 @@ class Packager:
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"reader_polish":book02_reader_polish,"cover_render_repair":book02_cover_repair,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"reader_polish":book02_reader_polish,"cover_render_repair":book02_cover_repair,"book02_publication_finish":book02_publication_finish,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
