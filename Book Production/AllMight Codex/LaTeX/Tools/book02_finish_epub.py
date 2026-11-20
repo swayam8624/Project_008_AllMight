@@ -1279,6 +1279,64 @@ class Editor(Editor):
                 x.text='2026-11-20T12:00:00Z'
         # Critical: the OPF manifest and spine were edited in memory.
         self.set('EPUB/content.opf',ser(self.opf))
+    def sync_mathml_manifest(self):
+        """EPUB OPF must declare MathML iff that XHTML actually has MathML.
+
+        Splitting 16 legacy chapters copies manifest properties into new
+        fragments. Some now contain no math; EPUBCheck reports OPF-015 for
+        the stale declarations (e.g. ch008-p08, ch010-p07/p10, ch016-p07).
+        Preserve every equation and update only resource-property tokens.
+        """
+        added=removed=0
+        for item in self.manifest:
+            if item.get('media-type')!='application/xhtml+xml':continue
+            path=posixpath.normpath(posixpath.join(
+                'EPUB',urllib.parse.unquote(item.get('href',''))))
+            if path not in self.data:
+                raise RuntimeError('Missing XHTML for OPF MathML audit: '+path)
+            contains_math=bool(parse(self.data[path]).xpath(
+                './/m:math',namespaces=NS))
+            props=item.get('properties','').split()
+            declared='mathml' in props
+            if contains_math and not declared:
+                props.append('mathml');added+=1
+            elif declared and not contains_math:
+                props.remove('mathml');removed+=1
+            if not props:item.attrib.pop('properties',None)
+            else:item.set('properties',' '.join(dict.fromkeys(props)))
+        self.report['mathml_opf_flags_added']=added
+        self.report['mathml_opf_flags_removed']=removed
+
+    def validate_original_paragraphs(self):
+        """Independent normalized paragraph multiset, chapter by chapter.
+
+        Additive exercises/captions are allowed, but an original paragraph
+        must not disappear when its containing section is moved/split.
+        """
+        verified=0
+        with zipfile.ZipFile(self.source) as original:
+            for chapter in range(1,17):
+                original_number=self.reading_order[chapter-1]
+                filename=f'EPUB/text/ch{original_number+5:03}.xhtml'
+                document=parse(original.read(filename))
+                old=collections.Counter(norm(''.join(el.itertext()))
+                    for el in document.iter(Q(X,'p'))
+                    if norm(''.join(el.itertext())))
+                current=collections.Counter()
+                for fragment in self.chapter_paths[chapter]:
+                    doc=parse(self.data[fragment])
+                    current.update(norm(''.join(el.itertext()))
+                        for el in doc.iter(Q(X,'p'))
+                        if norm(''.join(el.itertext())))
+                lost=old-current
+                if lost:
+                    raise RuntimeError(
+                        f'Original Book Two chapter {chapter} lost '
+                        f'{sum(lost.values())} paragraphs; first missing: '
+                        +repr(next(iter(lost)))[:130])
+                verified+=sum(old.values())
+        self.report['original_paragraphs_verified_unchanged']=verified
+
     def validate_internal(self):
         """Cross-check the whole revised package before emitting a ZIP."""
         failures=[]; xhtmls={};ids={}
@@ -1326,6 +1384,40 @@ class Editor(Editor):
             if path not in self.data:failures.append('OPF manifest missing asset '+path)
         for item in spine:
             if item.get('idref') not in mapping:failures.append('Broken OPF spine '+str(item.get('idref')))
+        for item in manifest:
+            if item.get('media-type')!='application/xhtml+xml':continue
+            path=posixpath.normpath(posixpath.join(
+                'EPUB',urllib.parse.unquote(item.get('href',''))))
+            doc=xhtmls.get(path)
+            if doc is None:continue
+            declared='mathml' in item.get('properties','').split()
+            actual=bool(doc.xpath('.//m:math',namespaces=NS))
+            if declared!=actual:
+                failures.append(f'Invalid OPF mathml property in {path}: '
+                                f'declared={declared}, has_math={actual}')
+        nav=xhtmls.get('EPUB/nav.xhtml')
+        if nav is None:failures.append('Missing EPUB3 nav.xhtml')
+        else:
+            landmark=[n for n in nav.iter(Q(X,'nav'))
+                      if 'landmarks' in n.get(Q(EPUB,'type'),'').split()]
+            if len(landmark)!=1:failures.append(
+                f'Exactly one landmarks nav required, found {len(landmark)}')
+            if landmark and landmark[0].get('role')=='doc-landmarks':
+                failures.append('Invalid ARIA doc-landmarks role')
+            spine_paths={mapping[ref.get('idref')].get('href'):i
+                         for i,ref in enumerate(spine)
+                         if ref.get('idref') in mapping}
+            tops=nav.xpath('.//x:nav[@id="toc"]/x:ol/x:li/x:a',
+                           namespaces=NS)
+            toc_positions=[]
+            for anchor in tops:
+                href=urllib.parse.unquote(
+                    urllib.parse.urlsplit(anchor.get('href','')).path)
+                if href not in spine_paths:failures.append(
+                    'TOC target absent from OPF spine: '+href)
+                else:toc_positions.append(spine_paths[href])
+            if toc_positions!=sorted(toc_positions):
+                failures.append('EPUB navigation is not in spine reading order')
         count_math=sum(len(r.xpath('.//m:math',namespaces=NS)) for r in xhtmls.values())
         count_code=sum(len(r.xpath('.//x:pre',namespaces=NS)) for r in xhtmls.values())
         count_image=sum(len(r.xpath('.//x:img',namespaces=NS)) for r in xhtmls.values())
@@ -1354,7 +1446,9 @@ class Editor(Editor):
             self.report['errors']=failures
             raise RuntimeError('\n'.join(failures[:35]))
     def save(self,output):
+        self.sync_mathml_manifest()
         self.set('EPUB/content.opf',ser(self.opf))
+        self.validate_original_paragraphs()
         self.validate_internal()
         path=pathlib.Path(output);path.parent.mkdir(parents=True,exist_ok=True)
         temp=path.with_suffix('.epub.tmp')
