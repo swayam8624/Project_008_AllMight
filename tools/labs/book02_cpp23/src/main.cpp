@@ -18,6 +18,8 @@
 #include <vector>
 #include "advanced.hpp"
 #include "geometry.hpp"
+#include "exact_predicates.hpp"
+#include <bit>
 
 namespace book02 {
 struct Vec2 { double x{}, y{}; };
@@ -228,6 +230,32 @@ void self_test() {
     assert(std::isfinite(consensus->inlier_rms) && consensus->inlier_rms<.01);
     assert(!geometry::ransac_line(points,-1,400,73013));
     assert(!geometry::ransac_line(points,.04,0,73013));
+    // Exact binary64 oracle: compare cases that a floating determinant cannot
+    // classify reliably, including overflow and the smallest subnormal.
+    using ES=exact::Sign;
+    assert(exact::orientation({0,0},{2,0},{0,2})==ES::positive);
+    assert(exact::orientation({0,0},{0,2},{2,0})==ES::negative);
+    assert(exact::orientation({0,0},{1,1},{2,2})==ES::zero);
+    const double maxfloat=std::numeric_limits<double>::max();
+    assert(exact::orientation({maxfloat,maxfloat},{-maxfloat,maxfloat},
+                              {0,-maxfloat})==ES::positive);
+    const double subnormal=std::numeric_limits<double>::denorm_min();
+    assert(exact::orientation({0,0},{subnormal,0},{0,subnormal})==ES::positive);
+    assert(exact::orientation({0,0},{subnormal,0},{2*subnormal,0})==ES::zero);
+    const double epsilon=std::numeric_limits<double>::epsilon();
+    const double perturbed=std::nextafter(2*epsilon,
+                                          std::numeric_limits<double>::infinity());
+    assert(exact::orientation({0,0},{1,epsilon},{2,perturbed})==ES::positive);
+    assert(!exact::orientation({0,0},{1,
+        std::numeric_limits<double>::infinity()},{2,1}));
+    const std::array<Grid,3> gridpoints{{{1000000000,1000000000},
+        {-1000000000,1000000000},{0,-1000000000}}};
+    const auto grid_sign=orient_exact_grid(gridpoints[0],gridpoints[1],gridpoints[2]);
+    assert(grid_sign && *grid_sign==Sign::positive);
+    assert(exact::orientation(
+        {double(gridpoints[0].x),double(gridpoints[0].y)},
+        {double(gridpoints[1].x),double(gridpoints[1].y)},
+        {double(gridpoints[2].x),double(gridpoints[2].y)})==ES::positive);
     auto mc=integrate(12345,100000);
     assert(mc);
     near(mc->exact,2/std::numbers::pi);
@@ -268,6 +296,53 @@ int main(int argc,char**argv) {
                 auto next=heat_step(u,1,.125,.004);
                 if (!next) return 2;
                 u=*next;
+            }
+        }
+    } else if (cmd=="orientation-exact" || cmd=="orientation-audit") {
+        const double huge=std::numeric_limits<double>::max();
+        const double tiny=std::numeric_limits<double>::denorm_min();
+        const double eps=std::numeric_limits<double>::epsilon();
+        using Triangle=std::array<exact::Point,3>;
+        std::vector<Triangle> cases{
+            Triangle{{{0,0},{2,0},{0,2}}},
+            Triangle{{{0,0},{0,2},{2,0}}},
+            Triangle{{{0,0},{1,1},{2,2}}},
+            Triangle{{{huge,huge},{-huge,huge},{0,-huge}}},
+            Triangle{{{0,0},{tiny,0},{0,tiny}}},
+            Triangle{{{0,0},{1,eps},{2,std::nextafter(2*eps,huge)}}}
+        };
+        if (cmd=="orientation-audit") {
+            std::mt19937_64 rng(20261120);
+            for (std::size_t i=0;i<500;++i) {
+                Triangle t{};
+                for (auto &point:t) {
+                    for (double *coordinate:{&point.x,&point.y}) {
+                        do { *coordinate=std::bit_cast<double>(rng()); }
+                        while (!std::isfinite(*coordinate));
+                    }
+                }
+                cases.push_back(t);
+            }
+            std::cout<<"ax,ay,bx,by,cx,cy,exact_sign,filter_sign\n";
+            for (const auto& t:cases) {
+                const auto sign=exact::orientation(t[0],t[1],t[2]);
+                if (!sign) return 2;
+                for (const auto p:t)
+                    std::cout<<std::hexfloat<<p.x<<","<<p.y<<",";
+                const auto filtered=orient_filtered(
+                    {t[0].x,t[0].y},{t[1].x,t[1].y},{t[2].x,t[2].y});
+                std::cout<<std::defaultfloat<<int(*sign)<<","
+                         <<int(filtered)<<"\n";
+            }
+        } else {
+            std::cout<<"case,exact_sign,filter_sign\n";
+            for (std::size_t i=0;i<cases.size();++i) {
+                const auto& t=cases[i];
+                const auto sign=exact::orientation(t[0],t[1],t[2]);
+                if (!sign) return 2;
+                const auto filtered=orient_filtered(
+                    {t[0].x,t[0].y},{t[1].x,t[1].y},{t[2].x,t[2].y});
+                std::cout<<i<<","<<int(*sign)<<","<<int(filtered)<<"\n";
             }
         }
     } else if (cmd=="ransac-summary" || cmd=="ransac-data") {
@@ -374,7 +449,7 @@ int main(int argc,char**argv) {
         }
     } else {
         std::cerr<<"Usage: book02_workbench "
-                    "{test|matrix|orientation|fit|heat|monte-carlo|qr-sensitivity|robust-fit|robust-data|ransac-summary|ransac-data}\n";
+                    "{test|matrix|orientation|orientation-exact|orientation-audit|fit|heat|monte-carlo|qr-sensitivity|robust-fit|robust-data|ransac-summary|ransac-data}\n";
         return 2;
     }
 }
