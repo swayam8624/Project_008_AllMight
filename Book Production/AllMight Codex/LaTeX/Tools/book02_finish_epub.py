@@ -1404,9 +1404,12 @@ class Editor(Editor):
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--input',default='/mnt/data/From Equations to Geometry - Author Cover.epub')
-    p.add_argument('--output',default='/mnt/data/'+OUTFILE)
-    p.add_argument('--report',default='/mnt/data/Book02-Publication-Revision-Audit.json')
+    p.add_argument('--input',type=pathlib.Path,required=True,
+                   help='Existing complete, cover-visible Book Two EPUB to finish')
+    p.add_argument('--output',type=pathlib.Path,required=True,
+                   help='Separate output EPUB path (never overwrite the source)')
+    p.add_argument('--report',type=pathlib.Path,
+                   help='Optional JSON validation/provenance report')
     a=p.parse_args()
     if pathlib.Path(a.input).resolve()==pathlib.Path(a.output).resolve():
         p.error('Input and output must be different files')
@@ -1431,7 +1434,9 @@ def main():
     editor.update_metadata()
     print('VALIDATING',flush=True)
     report=editor.save(a.output)
-    pathlib.Path(a.report).write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+    if a.report is not None:
+        a.report.parent.mkdir(parents=True,exist_ok=True)
+        a.report.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
     print('BOOK02_PUBLICATION_REVISION_OK',json.dumps({k:v for k,v in report.items()
          if k in ('output','output_size_mib','sha256','chapters','xhtml_files','max_xhtml_kib','checked_local_links','broken_internal_links','figure_captions','equations_numbered','new_practice_exercises','subject_index_terms','rich_svgs_converted_to_png')},ensure_ascii=False),flush=True)
 
