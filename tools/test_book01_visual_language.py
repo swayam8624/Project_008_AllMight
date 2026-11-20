@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOK = ROOT / "Book Production" / "Seven-Book Curriculum" / "Book01"
@@ -66,6 +67,37 @@ class VisualLanguageTests(unittest.TestCase):
         self.assertIn(r"\texttt{std::vector", out)
         self.assertNotIn(r"\begin{lstlisting}", out)
         self.assertNotIn(r"\begin{Shaded}", out)
+
+
+    @unittest.skipUnless(shutil.which("pandoc"), "Pandoc needed for EPUB proof")
+    def test_epub_renders_semantic_cards_without_flattening_code(self) -> None:
+        fence = chr(96) * 3
+        sample = (
+            "# Chapter\n\n"
+            "By the end: explain the invariant.\n\n"
+            "Recall question: who owns the object?\n\n"
+            "> Definition: a contract states a valid set of operations.\n\n"
+            "> Checkpoint: demonstrate the failure case.\n\n"
+            + fence + "cpp\nint main() { return 0; }\n" + fence + "\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.md"
+            result_file = Path(tmp) / "proof.epub"
+            source.write_text(sample, encoding="utf-8")
+            result = subprocess.run([
+                "pandoc", "-f", "markdown", "-t", "epub3",
+                "--lua-filter", str(FILTER),
+                "-o", str(result_file), str(source)
+            ], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with zipfile.ZipFile(result_file) as archive:
+                markup = "".join(
+                    archive.read(file).decode("utf-8")
+                    for file in archive.namelist() if file.endswith(".xhtml")
+                )
+        self.assertIn("book-learning-note", markup)
+        self.assertIn("book-practice", markup)
+        self.assertIn("int main()", markup)
 
 
 if __name__ == "__main__":
