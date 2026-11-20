@@ -1,7 +1,7 @@
 # Book Two — editorial, typography, learning, and scientific-figure contract
 
-Applies only to From Equations to Geometry, both physical print parts,
-the complete-stage EPUB, and the source-led C++23 numerical workbench.
+Applies only to From Equations to Geometry, the single continuous digital
+PDF master, the complete-stage EPUB, and the C++23 numerical workbench.
 Book One is read-only reference material, not an active development target.
 
 ## Reading hierarchy and typographic composition
@@ -30,6 +30,12 @@ Book One is read-only reference material, not an active development target.
 - booktwopitfall: subdued gold/rust for numerical and scientific limitations.
 - booktwolab: pale teal for native C++23 experiment checkpoints.
 - Shaded: neutral slate code panels with a quiet cyan border.
+- All 112 original lower-case `verbatim` source listings: the same pale-slate
+  fill and cyan rule through Book Two's `fancyvrb` settings, without changing
+  frozen chapters. Original three `VerbatimInput` attachments use individually
+  framed breakable source panels in the single-volume typeset copy.
+- EPUB: shaded `pre` listings cover the original chapter code; `div.Shaded`
+  retains supplemental styling without double borders.
 - Never use color as the only evidence of type: labels, headings, equations
   and code semantics must stand on their own in grayscale or screen readers.
 - Avoid boxing figures unnecessarily. Meaningful plots should carry labels,
@@ -64,8 +70,8 @@ of mathematical text. Define image alternative text and caption separately.
    and at least one dataset can be exported as structured rows.
 4. Parse all added LaTeX through Pandoc; ensure CodeBlocks, math, headings,
    lab warnings and citations survive into the EPUB semantic representation.
-5. Compile both full print interiors on the author's Mac. Inspect title and
-   reading-map pages, first and last chapter, one math-heavy spread, one
+5. Compile the one continuous digital-master PDF on the author's Mac. Inspect title and
+   copyright/preface pages, TOC, first and last chapter, one math-heavy spread, one
    code-heavy spread, all callout types, figures/captions, end matter and TOC.
 6. Render suspect pages and compare actual trim margins, gutter, hierarchy,
    no overfull boxes, no missing glyphs or low-resolution figures. Check
@@ -81,3 +87,22 @@ A print wrap needs the final selected trim, spine width, bleed and print resolut
 do not stretch the portrait JPEG to fill an 8-by-10-inch interior page.
 The current release builder intentionally accepts that cover for EPUB,
 not as a print-wrap substitute.
+
+## Single-volume reader-book acceptance (Pass 08)
+
+The main PDF is **one actual LuaLaTeX typesetting run**, not a PDF merge:
+it has one type-only cover, copyright page, preface, reading guide, TOC,
+Roman-numbered front matter, continuous chapters 1–16, all 31 preserved
+reference-note inputs, all three C++ source attachments and a separate
+verified primary-reference reading list. Its cover displays **only**:
+
+- From Equations to Geometry
+- Mathematics, Geometry, and Computational Foundations for Graphics, Simulation, and Research
+- Swayam Singal
+
+The EPUB uses shared preface/reading-guide/reference content and builds a
+matching three-field typographic JPEG cover by default. No edition number,
+ISBN, publisher or imprint is fabricated. A successful single-PDF compile is
+not a full visual proof; a roughly 1,000-page single digital book is not
+by itself within the page limit of a print-on-demand service. Export the
+unified PDF alone when EPUBCheck is still blocking EPUB acceptance.
