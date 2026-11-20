@@ -66,7 +66,7 @@ function BlockQuote(block)
   local plain = first and pandoc.utils.stringify(first) or ""
   local category = string.lower(plain):match("^%s*([%a%s]+)%s*:")
   local label = category and note_labels[(category:gsub("%s+$", ""))] or nil
-  local box = label == "Exercise" or label == "Checkpoint"
+  local box = (label == "Exercise" or label == "Checkpoint")
       and "BookPractice" or "BookQuote"
   -- Explicitly labelled concepts become learning callouts. Ordinary
   -- quotations get a less emphatic quote panel, not a misleading Note label.
