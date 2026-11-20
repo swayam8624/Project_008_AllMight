@@ -132,7 +132,7 @@ def inventory(parts: tuple[Path, Path]) -> dict[str, list[str]]:
 def selected_references_latex() -> str:
     items=[]
     for author,title,publication,url in SELECTED_REFERENCES:
-        items.append(r"\item "+author+" \\emph{"+title+"} "+publication+
+        items.append(r"\item "+author+" \emph{"+title+"} "+publication+
                      r" \url{"+url+"}")
     return r"\begin{enumerate}"+"\n"+"\n".join(items)+"\n"+r"\end{enumerate}"
 
@@ -183,8 +183,9 @@ def build_unified_tex(parts: tuple[Path, Path]) -> str:
 \medskip
 \noindent All rights reserved.\par
 \medskip
-\noindent No ISBN, imprint, edition statement or publisher is asserted
-without verified publication metadata.\par
+\noindent The mathematical derivations and software examples are
+provided for educational study; verify the assumptions and
+safety requirements before applying them to critical systems.\par
 }}
 \clearpage
 \chapter*{{Preface}}
