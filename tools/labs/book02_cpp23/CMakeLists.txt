@@ -16,4 +16,13 @@ if(BUILD_TESTING)
   add_test(NAME book02_cpp23_robust_data_export COMMAND book02_workbench robust-data)
   add_test(NAME book02_cpp23_ransac_summary COMMAND book02_workbench ransac-summary)
   add_test(NAME book02_cpp23_ransac_data_export COMMAND book02_workbench ransac-data)
+  add_test(NAME book02_cpp23_exact_orientation_export COMMAND book02_workbench orientation-exact)
+  add_test(NAME book02_cpp23_exact_orientation_audit_export COMMAND book02_workbench orientation-audit)
+  find_package(Python3 QUIET COMPONENTS Interpreter)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME book02_cpp23_binary64_independent_rational_oracle
+      COMMAND "${Python3_EXECUTABLE}"
+              "${CMAKE_CURRENT_SOURCE_DIR}/predicate_oracle.py"
+              "$<TARGET_FILE:book02_workbench>")
+  endif()
 endif()
