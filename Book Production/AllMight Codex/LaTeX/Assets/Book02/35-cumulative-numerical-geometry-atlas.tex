@@ -146,3 +146,64 @@ derivation, adversarial test, independent reference, reconstructed
 figure and a discussion of limits. The object is not to assemble
 the most colourful demonstration; it is to build numerical software
 whose mathematical meaning can be defended.
+
+
+\paragraph{C++23 implementation companion: an evolving numerical geometry engine.}
+The cumulative atlas now has a native implementation spine in
+\texttt{tools/labs/book02\_cpp23}. It is intentionally a single
+inspectable C++23 executable rather than a sequence of Python
+implementations masquerading as C++ exercises. The present milestone
+includes a scaled and pivoted two-by-two solve, an exact bounded-grid
+orientation sign, a conservative binary64 orientation filter,
+centered least-squares line fitting, explicit one-dimensional heat
+stepping, and seeded Monte Carlo integration. These are foundation
+experiments, not a claim that the complete geometric atlas, sparse
+solvers or research methods have been ported to C++23 yet.
+
+\begin{Shaded}
+\begin{verbatim}
+cmake -S tools/labs/book02_cpp23 -B build/book02-cpp23
+cmake --build build/book02-cpp23 --parallel
+ctest --test-dir build/book02-cpp23 --output-on-failure
+build/book02-cpp23/book02_workbench heat \
+  > build/book02-cpp23/heat.csv
+build/book02-cpp23/book02_workbench monte-carlo \
+  > build/book02-cpp23/monte-carlo.csv
+\end{verbatim}
+\end{Shaded}
+
+\paragraph{Project acceptance requires more than a working executable.}
+For each checkpoint, make the reader describe its data representation,
+the invariant that the algorithm promises, the independently derived
+oracle, the failure state, and the conditions under which its output
+can be compared with other implementations. The orientation lab
+distinguishes exact integer signs from uncertain floating-point
+classifications. The least-squares lab distinguishes a zero residual
+on a constructed line from robustness to outliers. The heat lab
+rejects an explicitly unstable step size rather than plotting an
+invalid answer. The Monte Carlo lab exposes a known integral and a
+statistical uncertainty estimate rather than reporting a visually
+convincing curve as mathematical proof.
+
+Python may plot \texttt{heat.csv} or examine exported data, but it
+must not silently replace these algorithms. The explicit goal of
+subsequent chapters and revision passes is a C++23 library capable
+of serving geometry, image formation, simulation, reconstruction,
+and independent research experiments, with numerically defensible
+results and stable serialized evidence. Meaningful next milestones
+are rank-revealing QR/SVD, robust predicates on arbitrary supported
+binary64 values, sparse matrix assembly and solvers, nonlinear
+optimization, uncertainty propagation, and multi-seed inference.
+These are planned extensions and must not be counted as completed
+features until their implementations and tests exist.
+
+\paragraph{One experiment, five ways of knowing it is trustworthy.}
+Take the heat field as an example. First derive the continuum
+equation and units. Second obtain the discrete stencil and stability
+condition. Third independently compute the single-pulse first step.
+Fourth verify the native time series and its conserved or dissipated
+quantities under the stated boundary conditions. Fifth visualize
+the exported rows and decide whether the curve communicates the
+correct physical and numerical story. Each step answers a different
+question; none can be skipped because the PDF contains an appealing
+figure.

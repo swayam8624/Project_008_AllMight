@@ -53,7 +53,7 @@ def source_fingerprint()->str:
     generated EPUB just because CURRENT.json still names the same 16-chapter
     frozen generation.
     """
-    files=sorted((ROOT/"Assets"/"Book02").glob("??-*.tex"))
+    files=sorted((ROOT/"Assets"/"Book02").glob("*.tex"))
     files.extend([
         ROOT/"Tools"/"book02_visuals.py",
         ROOT/"Tools"/"book02_epub_supplements.py",
@@ -63,6 +63,10 @@ def source_fingerprint()->str:
         ROOT.parent.parent.parent/"tools"/"labs"/"book02_coverage_oracle.py",
         ROOT.parent.parent.parent/"tools"/"labs"/"book02_coverage_visual.py",
     ])
+    # Include the native C++23 teaching project in publication provenance.
+    # A changed algorithm or optional plotting source invalidates old candidates.
+    cpp23=ROOT.parents[2]/"tools"/"labs"/"book02_cpp23"
+    files.extend(sorted(p for p in cpp23.rglob("*") if p.is_file()))
     h=hashlib.sha256()
     for path in files:
         if not path.is_file():

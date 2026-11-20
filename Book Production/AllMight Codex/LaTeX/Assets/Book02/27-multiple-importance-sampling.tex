@@ -98,3 +98,35 @@ sample count, and disclose whether the samples are
 independent and which expectations remain unbiased.
 Full path-tracing integration belongs in Book Four;
 this volume develops the mathematical contracts.
+
+
+\paragraph{C++23 checkpoint: a sampling distribution is part of the proof.}
+The workbench's \texttt{monte-carlo} command estimates
+\[
+ I=\int_0^1\sin(\pi x)\,\mathrm{d}x=\frac{2}{\pi}
+\]
+from a seeded C++23 pseudorandom stream. For the proposal
+\(p(x)=1\) on the unit interval, the estimator is the sample
+mean of \(\sin(\pi X_i)\). The code accumulates a running mean
+and Welford's unbiased sample variance, then reports the estimated
+standard error of the mean. It exports CSV for 100, 1000, 10000 and
+100000 draws along with the exact reference \(2/\pi\).
+
+State the distinction between bias, variance, statistical uncertainty
+and reproducibility. A smaller estimated error bar does not guarantee
+that one run lands nearer the truth; repeated independent seeds are
+needed to study coverage of the uncertainty interval. Reusing the
+same seed across different sample sizes produces nested experiments,
+not independent replicates. The standard library guarantees the
+\texttt{mt19937\_64} engine's sequence, but the mapping from engine
+bits to floating-point samples through
+\texttt{uniform\_real\_distribution} need not be bit-identical across
+all standard-library vendors. Record platform and compiler when
+comparing raw streams.
+
+This is uniform Monte Carlo, not yet multiple-importance sampling.
+To extend it, implement two normalized proposal densities, draw
+from each, and derive the balance heuristic including the sample
+counts and probability measures. Validate unbiasedness and variance
+against the analytic integral before promoting the extension to the
+full rendering projects.

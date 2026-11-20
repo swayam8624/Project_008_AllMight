@@ -56,3 +56,48 @@ adds stable solves and derivatives, grows into an uncertainty-and-fitting
 laboratory, and ends in a field solver and geometric atlas. The reader
 should keep both the code and a plain-language laboratory log recording
 what was derived, what was tested and what remains uncertain.
+
+
+\paragraph{The implementation language is C++23.}
+The book's worked implementations are not to be delegated to a Python
+numerical solver. We build one evolving C++23 numerical-geometry workbench
+whose algorithms, invariants, input contracts, and failure cases the reader
+can inspect. Python remains a useful secondary instrument for importing
+real data, producing plots, checking a separate reference calculation, and
+constructing evidence reports. It is not the implementation of a C++23
+project presented as if it were native.
+
+The starting executable is in
+\texttt{tools/labs/book02\_cpp23/src/main.cpp}. It uses the C++23 standard
+library, explicit data types, and no implementation-specific integer
+extension. The accompanying \texttt{CMakeLists.txt} requires C++23 and
+disables compiler language extensions. From the repository root, configure
+and test it as follows. These commands are reproducible instructions, not
+a claim about tests on every reader's machine.
+
+\begin{Shaded}
+\begin{verbatim}
+cmake -S tools/labs/book02_cpp23 -B build/book02-cpp23
+cmake --build build/book02-cpp23 --parallel
+ctest --test-dir build/book02-cpp23 --output-on-failure
+\end{verbatim}
+\end{Shaded}
+
+Every laboratory in this book is read in the same order: first identify
+the mathematical object and its units; then derive the equation and the
+representation; implement the C++23 routine; obtain an independent
+reference; test ordinary, boundary and adversarial inputs; export data;
+and only then visualize or profile the answer. A plausible graph is not
+a proof of correctness. A correct answer on one input is not a proof of
+numerical stability. A fast implementation is not necessarily a faithful
+model of physics.
+
+\paragraph{Build a capability, not a collection of disconnected snippets.}
+Vectors and matrices become transformations and camera coordinates;
+orientation signs become mesh operations and pixel membership;
+least-squares fits become reconstruction and calibration; differential
+equations become simulation; integration and uncertainty become
+rendering and experimental design. Every chapter makes the same native
+project more capable. Future interfaces to Kairo, Maveb, Vulkax, or other
+engines are explicit engineering milestones, not claims that those
+external integrations have already been validated.

@@ -77,3 +77,42 @@ preconditions across compilers/architectures, compare all predicate
 families (orientation, incircle and 3D), and run the paper's data and
 performance protocol. None of those additional achievements is
 implied by this small, independently authored exact-sign witness.
+
+
+\paragraph{C++23 checkpoint: distinguish exact, certified, and unknown.}
+The native experiment \texttt{book02\_workbench orientation} returns
+an integer-grid sign and a binary64 filtered sign. These are distinct
+contracts. For coordinates bounded in magnitude by \(10^9\), integer
+differences have magnitude at most \(2\times10^9\) and the signed
+two-product determinant has absolute value at most \(8\times10^{18}\);
+a signed 64-bit integer can represent this result exactly. The
+implementation checks that bound before multiplying. This is not
+a promise of exact arithmetic for arbitrary 32-bit coordinates.
+
+For floating-point coordinates, form
+\[
+ p=(a_x-c_x)(b_y-c_y),\quad
+ q=(a_y-c_y)(b_x-c_x),\quad
+ D=p-q.
+\]
+A sufficiently large signed determinant is easy to classify. A
+near-cancellation, overflow, underflow, or nonfinite intermediate
+invalidates that simple conclusion. The C++23 filter therefore
+returns an explicit \emph{uncertain} state; it must not pretend that
+uncertainty means collinearity. A complete production predicate needs
+an adaptive exact-sign fallback for the intended input domain.
+
+Check the following metamorphic relations: swapping two vertices
+reverses a nonzero sign; adding the same exactly representable grid
+translation to every vertex preserves the sign; exact collinearity
+remains zero under translation within the supported grid; a coordinate
+outside the documented range is rejected. Test the special case of
+three exactly collinear floating-point positions separately: the
+filter should remain uncertain, because its role is certification,
+not guessing a zero.
+
+\paragraph{Why the contract matters visually.}
+A mistaken orientation decision can reverse a triangle's winding,
+break a mesh adjacency rule, or leave a crack along a raster boundary.
+Reporting the error state is part of geometry correctness, not an
+optional debugging convenience.

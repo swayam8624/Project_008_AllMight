@@ -81,3 +81,26 @@ has inspected source structure; it has not executed the
 complete KairoMath module suite or proved numerical parity.
 Use the original C++23 module as a case study when its
 exact-head compiler/test gate becomes reproducible.
+
+
+\paragraph{C++23 checkpoint: what ordinary least squares can and cannot do.}
+The command \texttt{book02\_workbench fit} uses the C++23 sample type,
+a centered mean, and the two sums
+\[
+ S_{xx}=\sum_i(x_i-\bar{x})^2,\qquad
+ S_{xy}=\sum_i(x_i-\bar{x})(y_i-\bar{y})
+\]
+to recover \(a=S_{xy}/S_{xx}\) and \(b=\bar{y}-a\bar{x}\) for
+\(y=ax+b\). It returns an error state if \(S_{xx}=0\), because a
+vertical set of samples cannot identify a finite slope in this model.
+The first test fits the exactly constructed line \(y=2x+1\);
+the independent expected answer is therefore \(a=2,b=1\).
+
+Now insert an extreme outlier. Explain how one high-leverage sample
+can dominate squared residuals despite centered accumulation. Better
+summation reduces cancellation; it does not make least squares robust
+to contaminated data. The separate RANSAC and robust-loss projects
+earlier in this book are the correct comparison, with thresholds and
+sampling assumptions explicitly disclosed. A further challenge is to
+replace ordinary centered regression with Householder QR and compare
+both methods on a badly conditioned overdetermined system.

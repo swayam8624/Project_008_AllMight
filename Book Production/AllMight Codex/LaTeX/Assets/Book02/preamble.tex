@@ -28,3 +28,72 @@
     rgb255=(245,179,64)
   }
 }
+
+
+% --------------------------------------------------------------------------
+% Book TWO ONLY: visual editorial design layered over the series base style.
+% The frozen chapters, book01 typography and all other stages are unchanged.
+% --------------------------------------------------------------------------
+\definecolor{booktwosky}{HTML}{EAF6F9}
+\definecolor{booktwoparchment}{HTML}{FBF5E9}
+\definecolor{booktwomint}{HTML}{E9F5F2}
+\definecolor{booktwoviolet}{HTML}{F1ECF8}
+\definecolor{booktwocodebg}{HTML}{F0F4F6}
+\definecolor{booktwocodeink}{HTML}{213748}
+\definecolor{booktwoteal}{HTML}{167E87}
+\definecolor{booktworust}{HTML}{9B601D}
+\definecolor{booktwopurple}{HTML}{65528C}
+% Align Book Two print accents with the supplied cyan-and-subtle-gold cover,
+% rather than the generic orange that was previously inherited for stage 2.
+\colorlet{AMStageTwo}{booktwocyan}
+\colorlet{AMStageTwoWash}{booktwosky}
+\colorlet{AMBookAccent}{booktwocyan}
+\AtBeginDocument{%
+  \setstretch{1.055}%
+  \clubpenalty=10000 \widowpenalty=10000%
+  \displaywidowpenalty=7000%
+  \setlength{\emergencystretch}{2.5em}%
+}
+\usepackage{caption}
+\captionsetup{font=small,labelfont={bf,color=booktwonavy},
+              textfont={color=booktwocodeink},labelsep=period,
+              skip=7pt,justification=raggedright,singlelinecheck=false}
+% Color and a printed role label convey meaning without relying on hue alone.
+\newtcolorbox{booktwoconcept}[1][]{enhanced,breakable,sharp corners,
+  colback=booktwosky,colframe=booktwocyan,boxrule=0pt,
+  borderline west={3pt}{0pt}{booktwocyan},
+  left=10pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=9pt,after skip=9pt,
+  title={Concept\if\relax\detokenize{#1}\relax\else\enspace --- #1\fi},
+  coltitle=booktwonavy,fonttitle=\sffamily\small\bfseries}
+\newtcolorbox{booktwoproof}[1][]{enhanced,breakable,sharp corners,
+  colback=booktwoviolet,colframe=booktwopurple,boxrule=0pt,
+  borderline west={3pt}{0pt}{booktwopurple},
+  left=10pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=9pt,after skip=9pt,
+  title={Derivation\if\relax\detokenize{#1}\relax\else\enspace --- #1\fi},
+  coltitle=booktwonavy,fonttitle=\sffamily\small\bfseries}
+\newtcolorbox{booktwopitfall}[1][]{enhanced,breakable,sharp corners,
+  colback=booktwoparchment,colframe=booktworust,boxrule=0pt,
+  borderline west={3pt}{0pt}{booktworust},
+  left=10pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=9pt,after skip=9pt,
+  title={Numerical pitfall\if\relax\detokenize{#1}\relax\else\enspace --- #1\fi},
+  coltitle=booktwonavy,fonttitle=\sffamily\small\bfseries}
+\newtcolorbox{booktwolab}[1][]{enhanced,breakable,sharp corners,
+  colback=booktwomint,colframe=booktwoteal,boxrule=0pt,
+  borderline west={3pt}{0pt}{booktwoteal},
+  left=10pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=9pt,after skip=9pt,
+  title={C++23 laboratory\if\relax\detokenize{#1}\relax\else\enspace --- #1\fi},
+  coltitle=booktwonavy,fonttitle=\sffamily\small\bfseries}
+% All Pandoc-authored Shaded blocks in Book Two now have a coherent,
+% breakable, print-safe code presentation. No global series style is edited.
+\renewenvironment{Shaded}{%
+  \begin{tcolorbox}[enhanced,breakable,sharp corners,
+    boxrule=0.35pt,colframe=booktwocyan!35!white,
+    colback=booktwocodebg,
+    borderline west={2.5pt}{0pt}{booktwocyan},
+    left=8pt,right=8pt,top=6pt,bottom=6pt,
+    before skip=8pt,after skip=8pt]%
+}{\end{tcolorbox}}
