@@ -40,7 +40,6 @@ def test() -> None:
     assert tex.count(r"\chapter*{Preface}")==1
     assert tex.count(r"\chapter*{How to Use This Book}")==1
     assert tex.count(r"\VerbatimInput")==3
-    assert tex.count(r"\begin{tcolorbox}")==0  # parameterized blocks below
     assert tex.count(r"\begin{tcolorbox}[")==3
     assert tex.count(r"\end{tcolorbox}")==3
     assert tex.count(r"\input{../current/")==47  # 16 original + 31 source notes
