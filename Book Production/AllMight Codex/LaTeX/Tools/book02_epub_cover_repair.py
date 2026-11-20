@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repair the visible Book Two EPUB cover without changing its cover artwork.
+"""Repair the Book Two EPUB cover and optionally embed the author's actual JPEG.
 
 The input EPUB already has correct EPUB3 cover-image metadata and a valid
 JPEG. Pandoc emits a cover.xhtml containing an inline SVG <image>, but the
@@ -9,8 +9,13 @@ JPEG being present in the archive.
 
 A standard XHTML <img> with an explicit alt is simpler and better supported
 than a nested SVG external-image reference. The corresponding OPF manifest
-entry loses its obsolete 'svg' property. All underlying bytes of the cover
-JPEG, all mathematical content and all other EPUB members are preserved.
+entry loses its obsolete 'svg' property.
+
+When --cover-image is specified, REPLACE ONLY THE EXISTING COVER JPEG
+with the author's exact local JPEG bytes, keeping its OPF/NCX identity, page
+path and opening spine order. The original book and other EPUB members are
+untouched. Never silently use the generated typographic cover when the
+author requests their own finished cover artwork.
 """
 from __future__ import annotations
 
@@ -37,9 +42,32 @@ _COVER_DIV = re.compile(
 )
 
 
-def repair_book02_epub_cover(path: str | Path) -> dict:
+def repair_book02_epub_cover(path: str | Path, *, cover_image: str | Path | None = None) -> dict:
     path = Path(path)
     updates: dict[str, bytes] = {}
+    supplied_jpeg: bytes | None = None
+    if cover_image is not None:
+        # Validate the *actual* author-provided cover, not the filename.
+        # Preserve its exact bytes and EXIF; do not re-encode or synthesize.
+        from PIL import Image
+        supplied_path = Path(cover_image).expanduser().resolve()
+        if not supplied_path.is_file():
+            raise RuntimeError("Author-provided cover JPEG not found: " + str(supplied_path))
+        try:
+            with Image.open(supplied_path) as image:
+                if (image.format != "JPEG" or image.width < 300
+                        or image.height < 450 or image.height <= image.width
+                        or image.mode not in ("RGB", "L")):
+                    raise RuntimeError(
+                        "Book Two cover must be a portrait JPEG (at least 300x450) "
+                        "in RGB or grayscale mode: " + str(supplied_path))
+                image.verify()
+        except (OSError, ValueError) as exc:
+            raise RuntimeError("Unable to decode the actual cover JPEG: "
+                               + str(supplied_path)) from exc
+        supplied_jpeg = supplied_path.read_bytes()
+        if not supplied_jpeg.startswith(b"\xff\xd8") or not supplied_jpeg.endswith(b"\xff\xd9"):
+            raise RuntimeError("Supplied cover does not have complete JPEG markers")
     with zipfile.ZipFile(path, "r") as original:
         infos = original.infolist()
         if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
@@ -63,10 +91,16 @@ def repair_book02_epub_cover(path: str | Path) -> dict:
             raise RuntimeError("EPUB cover JPEG referenced by the OPF is missing")
         mime = image_item.get("media-type")
         signatures = {"image/jpeg": b"\xff\xd8", "image/png": b"\x89PNG"}
-        image_bytes=original.read(image_path)
+        image_bytes = original.read(image_path)
         if mime not in signatures or not image_bytes.startswith(signatures[mime]):
             raise RuntimeError("EPUB cover-image is not a usable JPEG/PNG")
-        cover_digest=sha256(image_bytes).hexdigest()
+        if supplied_jpeg is not None:
+            if mime != "image/jpeg" or not image_path.lower().endswith((".jpeg", ".jpg")):
+                raise RuntimeError("Existing EPUB cover slot is not JPEG; cannot safely replace it")
+            if image_bytes != supplied_jpeg:
+                updates[image_path] = supplied_jpeg
+            image_bytes = supplied_jpeg
+        cover_digest = sha256(image_bytes).hexdigest()
         cover_docs = [item for item in items if item.get("media-type") == "application/xhtml+xml"
                       and posixpath.basename(item.get("href", "")) == "cover.xhtml"]
         if len(cover_docs) != 1:
@@ -137,6 +171,8 @@ def repair_book02_epub_cover(path: str | Path) -> dict:
                     for info in infos:
                         if info.filename not in updates and check.read(info.filename) != original.read(info.filename):
                             raise RuntimeError("Unrelated EPUB member was modified: " + info.filename)
+                    if sha256(check.read(image_path)).hexdigest() != cover_digest:
+                        raise RuntimeError("Book Two JPEG cover does not match the requested image")
                     fixed = ET.fromstring(check.read(page_path))
                     actual_images = [e for e in fixed.iter() if e.tag == f"{{{XHTML_NS}}}img"]
                     if len(actual_images) != 1 or actual_images[0].get("src") != expected_src:
@@ -148,6 +184,7 @@ def repair_book02_epub_cover(path: str | Path) -> dict:
             "visible_cover_image": True,
             "cover_asset": image_path,
             "cover_sha256": cover_digest,
+            "user_cover_embedded": supplied_jpeg is not None,
             "cover_first_in_spine": True,
             "modified_members": sorted(updates),
         }
@@ -165,6 +202,8 @@ def main() -> int:
     import shutil
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("epub", type=Path, help="Existing full Book Two EPUB")
+    parser.add_argument("--cover-image", type=Path,
+                        help="Actual Book Two artwork JPEG to embed, byte-for-byte")
     parser.add_argument("--output", type=Path, required=True,
                         help="New corrected EPUB path, e.g. Book02-Review/")
     parser.add_argument("--force", action="store_true",
@@ -187,7 +226,7 @@ def main() -> int:
         scratch = Path(output_file.name)
     try:
         shutil.copy2(original, scratch)
-        report = repair_book02_epub_cover(scratch)
+        report = repair_book02_epub_cover(scratch, cover_image=args.cover_image)
         os.replace(scratch, target)
     finally:
         scratch.unlink(missing_ok=True)
