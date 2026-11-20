@@ -40,6 +40,7 @@ EDITION = ROOT / "Chapter Edition/01 - Computing Foundations"
 LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
 CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
 READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reader.sty"
+CODE_FILTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-code-boxes.lua"
 ACADEMIC_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_PREFACE.md"
 SECOND_VOLUME_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/VOLUME_II_PREFACE.md"
 ACADEMIC_BACKMATTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_BACKMATTER.md"
@@ -253,6 +254,7 @@ def audit_sources() -> tuple[list[dict], dict]:
         "chapter_count": NUMBER_OF_CHAPTERS,
         "addition_count": total,
         "reader_style_sha256": sha256(READER_STYLE.read_bytes()),
+        "code_filter_sha256": sha256(CODE_FILTER.read_bytes()),
         "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
         "second_volume_preface_sha256": sha256(SECOND_VOLUME_PREFACE.read_bytes()),
         "academic_backmatter_sha256": sha256(ACADEMIC_BACKMATTER.read_bytes()),
@@ -430,6 +432,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=section",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(tex_path), str(render_path)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode:
@@ -486,6 +489,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=section",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(extra_tex), str(extra_rendered)]
                 run = subprocess.run(cmd, capture_output=True, text=True)
                 if run.returncode or not extra_tex.is_file():
@@ -548,6 +552,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=chapter",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(challenge_tex), str(cap_reader)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
@@ -647,6 +652,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                "markdown+tex_math_single_backslash+tex_math_double_backslash",
                "-t", "latex", "--top-level-division=chapter",
                "--wrap=none", "--no-highlight",
+               "--lua-filter", str(CODE_FILTER),
                "-o", str(path), str(source)]
         conversion = subprocess.run(cmd, capture_output=True, text=True)
         if conversion.returncode or not path.is_file():
@@ -659,7 +665,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         path = directory / "backmatter.tex"
         cmd = [pandoc, "-f", "markdown+tex_math_single_backslash+tex_math_double_backslash",
                "-t", "latex", "--top-level-division=chapter", "--wrap=none",
-               "--no-highlight", "-o", str(path), str(ACADEMIC_BACKMATTER)]
+               "--no-highlight", "--lua-filter", str(CODE_FILTER), "-o", str(path), str(ACADEMIC_BACKMATTER)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode or not path.is_file():
             raise RuntimeError("Academic backmatter conversion failed: " + result.stderr[:2000])
