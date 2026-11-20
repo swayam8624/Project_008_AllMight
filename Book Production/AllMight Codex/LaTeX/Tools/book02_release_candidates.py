@@ -33,6 +33,7 @@ from pypdf import PdfReader
 
 from book02_source_preflight import audit
 from book02_visuals import install_book02_visuals
+from book02_single_volume import build_unified_tex, generate_minimal_jpeg_cover
 from build import ROOT, generation_path, tex_runtime, compile_tex
 
 STAGE = "02-Mathematics-for-Visual-Computing"
@@ -55,6 +56,7 @@ def source_fingerprint()->str:
     """
     files=sorted((ROOT/"Assets"/"Book02").glob("*.tex"))
     files.extend([
+        ROOT/"Tools"/"book02_single_volume.py",
         ROOT/"Tools"/"book02_visuals.py",
         ROOT/"Tools"/"book02_epub_supplements.py",
         ROOT/"Tools"/"build_epubs.py",
@@ -84,13 +86,13 @@ def source_fingerprint()->str:
 
 
 
-def record_pdf(file:Path, label:str, build_log:Path) -> dict:
+def record_pdf(file:Path, label:str, build_log:Path, *, page_limit:int=MAX_PAGES_PER_PHYSICAL_BOOK) -> dict:
     if not file.is_file():
         raise RuntimeError("PDF not produced: "+str(file))
     reader=PdfReader(str(file))
     pages=len(reader.pages)
-    if not 1<=pages<=MAX_PAGES_PER_PHYSICAL_BOOK:
-        raise RuntimeError(f"{label}: page count {pages} outside the 1–800 range")
+    if not 1<=pages<=page_limit:
+        raise RuntimeError(f"{label}: page count {pages} outside 1–{page_limit} allowed for this output")
     first=" ".join((p.extract_text() or "") for p in reader.pages[:5])
     if TITLE not in first:
         raise RuntimeError(f"{label}: new public book title absent from frontmatter")
@@ -131,6 +133,56 @@ def latex_failure_excerpt(log_path: Path) -> str:
                    range(max(0,len(lines)-45),len(lines)))
     return (("\n\n".join(matches) if matches else "(No explicit TeX error marker found)")+
             "\n\n---- Compiler log tail ----\n"+tail)[-9000:]
+
+
+def single_pdf_candidate(generation:Path, root:Path) -> dict:
+    """One continuous Book Two PDF: no part title pages or split TOCs.
+
+    This is a complete digital book master. Its page count is deliberately
+    NOT constrained by the 800-page physical-part manufacturing threshold.
+    """
+    out=root/"single-print"
+    out.mkdir(parents=True,exist_ok=True)
+    current=out/"current"
+    if current.is_symlink():
+        current.unlink()
+    elif current.exists():
+        raise RuntimeError("Cannot overwrite non-symlink single-print/current: "+str(current))
+    current.symlink_to(generation,target_is_directory=True)
+    folder=out/"complete"
+    folder.mkdir(parents=True,exist_ok=True)
+    part_mains=(generation/PARTS[0]/"main.tex",generation/PARTS[1]/"main.tex")
+    tex=build_unified_tex(part_mains)
+    master=folder/"main.tex"
+    master.write_text(tex,encoding="utf-8")
+    additions=install_book02_visuals(master,include_rich_atlas=True)
+    if len(additions)!=EXPECTED_EXTRA or len(set(additions))!=EXPECTED_EXTRA:
+        raise RuntimeError(f"Unified Book Two lost supplemental sources: {len(additions)} of {EXPECTED_EXTRA}")
+    engine,env=tex_runtime()
+    compiled=compile_tex(folder,engine,env,generation)
+    if compiled["returncode"]!=0:
+        log=Path(compiled["compile_log_path"])
+        detail=latex_failure_excerpt(log)
+        failure_file=root/"book02-single-pdf-failure.json"
+        failure_file.write_text(json.dumps({
+            "output":"single continuous Book Two PDF",
+            "compiler_returncode":compiled["returncode"],
+            "log_path":str(log),"error_excerpt":detail,
+            "next_step":"Repair the isolated LaTeX compositor or style, never the frozen original chapters."
+        },indent=2)+"\n",encoding="utf-8")
+        raise RuntimeError("Unified Book Two LuaLaTeX compilation failed.\n"
+                           f"Diagnostic: {failure_file}\n{detail}")
+    candidate=folder/"From Equations to Geometry.pdf"
+    shutil.copy2(Path(compiled["pdf"]),candidate)
+    report=record_pdf(candidate,"Complete Book Two",Path(compiled["compile_log_path"]),
+                      page_limit=2500)
+    report["mode"]="single-continuous-digital-master"
+    report["original_chapters"]=16
+    report["reference_notes"]=31
+    report["source_attachments"]=3
+    report["added_sources"]=additions
+    print("BOOK02_SINGLE_PDF_CANDIDATE_OK",report["pages"],candidate,flush=True)
+    return report
 
 
 def print_candidates(generation:Path, root:Path)->list[dict]:
@@ -254,6 +306,10 @@ def epub_candidate(generation:Path,root:Path,cover_image:Path|None=None)->dict:
     if not epubcheck.is_file():
         raise RuntimeError("Original pinned EPUBCheck 5.4.0 JAR is missing")
     out=root/"epub";out.mkdir(parents=True,exist_ok=True)
+    if cover_image is None:
+        # The default front cover contains ONLY title, subtitle and author.
+        # It is not the decorative reference image, nor any other book cover.
+        cover_image=generate_minimal_jpeg_cover(out/"book02-typographic-cover.jpg")
     # Test the entire Book Two supplemental MathML corpus BEFORE expensive
     # conversion of the frozen original mathematical manuscript.
     audit_file=out/"book02-supplement-mathml-report.json"
@@ -319,7 +375,7 @@ def check_environment(generation:Path, *, cover_image:Path|None,
 
 
 
-def export_candidates_to_master(generation:Path, destination:Path) -> Path:
+def export_candidates_to_master(generation:Path, destination:Path, *, print_only:bool=False) -> Path:
     """Copy verified candidate artifacts into Master without modifying Git files.
 
     The source build remains in the isolated Book02 worktree. The resulting
@@ -334,20 +390,22 @@ def export_candidates_to_master(generation:Path, destination:Path) -> Path:
     current_fingerprint=source_fingerprint()
     if report.get("generation")!=generation.name or report.get("source_fingerprint_sha256")!=current_fingerprint:
         raise RuntimeError("Candidate report source revision mismatch. Rebuild both formats before exporting into Master.")
-    parts=report.get("print_parts") or []
+    pdf=report.get("single_pdf")
     epub=report.get("epub")
-    if len(parts)!=2 or not epub or epub.get("epubcheck",{}).get("exit_code")!=0:
-        raise RuntimeError("Book Two release candidates are incomplete: require two verified print PDFs and EPUBCheck-passing full EPUB.")
+    if not pdf:
+        raise RuntimeError("No verified single-volume PDF in current report. Run --print-only.")
+    if not print_only and (not epub or epub.get("epubcheck",{}).get("exit_code")!=0):
+        raise RuntimeError("Full EPUB is not yet EPUBCheck-verified. Use --export-only --print-only to export the PDF alone.")
     files=[]
-    for index, part in enumerate(parts,start=1):
-        location=Path(part["candidate_path"])
-        if not location.is_file() or digest(location)!=part.get("sha256"):
-            raise RuntimeError("Candidate PDF missing or altered since verification: "+str(location))
-        files.append((location,f"From Equations to Geometry - Part {index}.pdf"))
-    epub_location=Path(epub["candidate_path"])
-    if not epub_location.is_file() or digest(epub_location)!=epub.get("sha256"):
-        raise RuntimeError("Candidate EPUB missing or altered since verification: "+str(epub_location))
-    files.append((epub_location,"From Equations to Geometry.epub"))
+    location=Path(pdf["candidate_path"])
+    if not location.is_file() or digest(location)!=pdf.get("sha256"):
+        raise RuntimeError("Single Book Two PDF missing or altered: "+str(location))
+    files.append((location,"From Equations to Geometry.pdf"))
+    if not print_only:
+        epub_location=Path(epub["candidate_path"])
+        if not epub_location.is_file() or digest(epub_location)!=epub.get("sha256"):
+            raise RuntimeError("Candidate EPUB missing or altered since verification: "+str(epub_location))
+        files.append((epub_location,"From Equations to Geometry.epub"))
     files.append((source,"book02-candidate-verification.json"))
     # The explicit destination should be INSIDE the author's Master folder;
     # require it to exist rather than guessing a hard-coded personal path.
@@ -375,14 +433,13 @@ def export_candidates_to_master(generation:Path, destination:Path) -> Path:
         "generation":generation.name,
         "source_fingerprint_sha256":current_fingerprint,
         "copied_candidates":{
-            "part_1":{"file":"From Equations to Geometry - Part 1.pdf",
-                      "sha256":parts[0]["sha256"],"pages":parts[0].get("pages")},
-            "part_2":{"file":"From Equations to Geometry - Part 2.pdf",
-                      "sha256":parts[1]["sha256"],"pages":parts[1].get("pages")},
-            "epub":{"file":"From Equations to Geometry.epub",
-                    "sha256":epub["sha256"],
-                    "epubcheck_exit_code":epub["epubcheck"]["exit_code"],
-                    "supplement_source_count":epub.get("supplement_source_count")},
+            "complete_pdf":{"file":"From Equations to Geometry.pdf",
+                            "sha256":pdf["sha256"],"pages":pdf.get("pages")},
+            **({"epub":{"file":"From Equations to Geometry.epub",
+                        "sha256":epub["sha256"],
+                        "epubcheck_exit_code":epub["epubcheck"]["exit_code"],
+                        "supplement_source_count":epub.get("supplement_source_count")}}
+               if not print_only else {}),
         },
         "original_candidate_report":"book02-candidate-verification.json",
         "note":"All artifact paths are relative to this export folder and remain valid after removal of the Desktop source worktree."
@@ -416,7 +473,7 @@ def main():
     if args.export_only:
         if not args.export_dir:
             p.error("--export-only requires --export-dir pointing inside Master")
-        export_candidates_to_master(generation,args.export_dir)
+        export_candidates_to_master(generation,args.export_dir,print_only=args.print_only)
         return 0
     cover_image=args.cover_image.expanduser().resolve() if args.cover_image else None
     if cover_image is not None and (not cover_image.is_file() or cover_image.suffix.lower() not in (".jpg",".jpeg")):
@@ -429,7 +486,7 @@ def main():
         return 0 if status["ready_for_candidate_build"] else 2
     result={"generation":generation.name,"title":TITLE,
             "source_fingerprint_sha256":source_fingerprint(),
-            "source_lock":audit(),"print_parts":[],"epub":None,
+            "source_lock":audit(),"single_pdf":None,"epub":None,
             "declaration":"Candidate export only. Full original text mathematical correctness and reader/trim visual acceptance remain editorial gates."}
     output=ROOT/"Build"/generation.name/"book02-publication-candidates"
     output.mkdir(parents=True,exist_ok=True)
@@ -442,11 +499,21 @@ def main():
         if old.get("generation")!=generation.name:
             raise RuntimeError("Existing candidate report belongs to another frozen generation")
         if old.get("source_fingerprint_sha256")!=result["source_fingerprint_sha256"]:
-            raise RuntimeError("Book Two source changed since the last candidate report; archive or rename old candidate output before rebuilding both formats")
-        result["print_parts"]=old.get("print_parts",[])
-        result["epub"]=old.get("epub")
+            # Preserve the old record and PDFs, but never blend old publication
+            # evidence with a new cover/layout/source fingerprint.
+            old_hash=(old.get("source_fingerprint_sha256") or "unknown")[:12]
+            archived=output/("book02-candidate-verification-stale-"+old_hash+".json")
+            if archived.exists():
+                if archived.read_bytes()!=file.read_bytes():
+                    raise RuntimeError("Existing stale report archive differs: "+str(archived))
+            else:
+                shutil.copy2(file,archived)
+            print("BOOK02_STALE_REPORT_ARCHIVED",archived,flush=True)
+        else:
+            result["single_pdf"]=old.get("single_pdf")
+            result["epub"]=old.get("epub")
     if not args.epub_only:
-        result["print_parts"]=print_candidates(generation,output)
+        result["single_pdf"]=single_pdf_candidate(generation,output)
     if not args.print_only:
         result["epub"]=epub_candidate(generation,output,cover_image)
     file.write_text(json.dumps(result,indent=2,ensure_ascii=False)+"\n")
