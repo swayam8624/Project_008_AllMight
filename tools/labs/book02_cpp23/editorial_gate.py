@@ -20,12 +20,20 @@ def check() -> None:
                    "residual_and_jacobian", "huber_objective",
                    "qr_diagonal_ratio"):
         assert symbol in advanced, f"Missing native advanced solver: {symbol}"
+    exact=(LAB/"src"/"exact_predicates.hpp").read_text(encoding="utf-8")
+    for symbol in ("std::bit_cast", "Dyadic", "Natural", "orientation",
+                   "multiply", "std::numeric_limits<double>::is_iec559"):
+        assert symbol in exact, f"Missing C++23 exact-sign component: {symbol}"
+    oracle=(LAB/"predicate_oracle.py").read_text(encoding="utf-8")
+    assert "Fraction.from_float" in oracle and "506" in oracle
+    assert "book02_cpp23_binary64_independent_rational_oracle" in cmake
     geometry=(LAB/"src"/"geometry.hpp").read_text(encoding="utf-8")
     for symbol in ("ransac_line", "total_least_squares", "ideal_trials",
                    "synthetic_line_data", "inlier_rms"):
         assert symbol in geometry, f"Missing native geometry: {symbol}"
     for command in ('"qr-sensitivity"', '"robust-fit"', '"robust-data"',
-                    '"ransac-summary"', '"ransac-data"'):
+                    '"ransac-summary"', '"ransac-data"',
+                    '"orientation-exact"', '"orientation-audit"'):
         assert command in cpp, f"Missing CLI exercise: {command}"
     for symbol in ("orient_exact_grid","orient_filtered","fit_line",
                    "heat_step","integrate","self_test"):
@@ -51,6 +59,7 @@ def check() -> None:
     assert "An augmented QR derivation" in (ASSETS/"24-robust-least-squares-paper-lab.tex").read_text(encoding="utf-8")
     assert "Native extension: from a line" in (ASSETS/"35-cumulative-numerical-geometry-atlas.tex").read_text(encoding="utf-8")
     assert "Native consensus and orthogonal" in (ASSETS/"25-ransac-paper-lab.tex").read_text(encoding="utf-8")
+    assert "From a floating-point number to an exact integer" in (ASSETS/"21-robust-predicates-research.tex").read_text(encoding="utf-8")
     builder=(LATEX/"Tools"/"book02_release_candidates.py").read_text(encoding="utf-8")
     assert 'rglob("*")' in builder and '"book02_cpp23"' in builder
     print("BOOK02_CPP23_EDITORIAL_GATE_OK",
