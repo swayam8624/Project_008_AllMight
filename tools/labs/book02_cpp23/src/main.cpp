@@ -16,6 +16,7 @@
 #include <span>
 #include <string_view>
 #include <vector>
+#include "advanced.hpp"
 
 namespace book02 {
 struct Vec2 { double x{}, y{}; };
@@ -150,6 +151,55 @@ void self_test() {
     auto h=heat_step(pulse,1,1,0.25);
     assert(h);near((*h)[1],0.25);near((*h)[2],0.5);near((*h)[3],0.25);
     assert(!heat_step(pulse,1,1,0.51));
+    // Householder QR: known solution, full-rank and rank-deficient examples.
+    const std::array<double,10> tall{{1,0,1,1,1,2,1,3,1,4}};
+    const std::array<double,5> targets{{1,3,5,7,9}};
+    const auto qr=advanced::qr_least_squares(tall,5,2,targets);
+    assert(qr);
+    near(qr->coefficients[0],1); near(qr->coefficients[1],2);
+    near(qr->rms,0);
+    const std::array<double,6> deficient{{1,1,2,2,3,3}};
+    const std::array<double,3> deficient_rhs{{2,4,6}};
+    assert(!advanced::qr_least_squares(deficient,3,2,deficient_rhs));
+    const std::array<double,2> impossible{{1,std::numeric_limits<double>::infinity()}};
+    const std::array<double,2> tiny_rhs{{0,1}};
+    assert(!advanced::qr_least_squares(impossible,2,1,tiny_rhs));
+    // Independently differentiate the analytic residual by central differences.
+    const advanced::Parameters p{2,-.7,.5};
+    const advanced::Observation observation{1.2,.9};
+    const auto jac=advanced::residual_and_jacobian(observation,p);
+    assert(jac);
+    const double epsilon=1e-6;
+    for (std::size_t k=0;k<3;++k) {
+        auto lo=p,hi=p;
+        if (k==0) { lo.a-=epsilon; hi.a+=epsilon; }
+        if (k==1) { lo.b-=epsilon; hi.b+=epsilon; }
+        if (k==2) { lo.c-=epsilon; hi.c+=epsilon; }
+        const auto minus=advanced::residual_and_jacobian(observation,lo);
+        const auto plus=advanced::residual_and_jacobian(observation,hi);
+        assert(minus && plus);
+        near((*jac)[k+1],((*plus)[0]-(*minus)[0])/(2*epsilon),1e-8);
+    }
+    // Gross-outlier experiment; do not compare costs of DIFFERENT objectives.
+    std::array<advanced::Observation,35> observations{};
+    for (std::size_t i=0;i<observations.size();++i) {
+        const double position=static_cast<double>(i)/10;
+        observations[i]={position,2*std::exp(-.7*position)+.5+
+                         .008*std::sin(.77*static_cast<double>(i))};
+    }
+    observations[15].y+=3.5;
+    const auto robust=advanced::fit_exponential_huber(
+        observations,{1.5,-.4,.3},.05);
+    const auto ordinary=advanced::fit_exponential_huber(
+        observations,{1.5,-.4,.3},1e6);
+    assert(robust && ordinary && robust->converged && ordinary->converged);
+    auto parameter_error=[](advanced::Parameters v) {
+        return std::hypot(std::hypot(v.a-2,v.b+.7),v.c-.5);
+    };
+    assert(parameter_error(robust->parameters)<.05);
+    assert(parameter_error(robust->parameters)<parameter_error(ordinary->parameters));
+    assert(robust->accepted_steps>0 && ordinary->accepted_steps>0);
+    assert(!advanced::fit_exponential_huber(observations,{1.5,-.4,.3},0));
     auto mc=integrate(12345,100000);
     assert(mc);
     near(mc->exact,2/std::numbers::pi);
@@ -192,6 +242,58 @@ int main(int argc,char**argv) {
                 u=*next;
             }
         }
+    } else if (cmd=="qr-sensitivity") {
+        // C++23 is the source of truth for these rows; Python may plot them.
+        std::cout<<"delta,coefficient_error,residual_rms,qr_diagonal_ratio\n";
+        for (const double delta:{1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8}) {
+            const std::array<double,8> a{{1,1,1,1+delta,1,1-delta,2,2}};
+            std::array<double,4> y{{1,1-delta,1+delta,2}};
+            y[1]+=1e-10; // specified observation perturbation
+            const auto q=advanced::qr_least_squares(a,4,2,y);
+            if (!q) return 2;
+            const double error=std::hypot(q->coefficients[0]-2,q->coefficients[1]+1);
+            std::cout<<delta<<","<<error<<","<<q->rms<<","
+                     <<q->qr_diagonal_ratio<<"\n";
+        }
+    } else if (cmd=="robust-fit" || cmd=="robust-data") {
+        std::array<advanced::Observation,35> observations{};
+        for (std::size_t i=0;i<observations.size();++i) {
+            const double position=static_cast<double>(i)/10;
+            observations[i]={position,2*std::exp(-.7*position)+.5+
+                             .008*std::sin(.77*static_cast<double>(i))};
+        }
+        observations[15].y+=3.5;
+        const auto robust=advanced::fit_exponential_huber(
+            observations,{1.5,-.4,.3},.05);
+        const auto ordinary=advanced::fit_exponential_huber(
+            observations,{1.5,-.4,.3},1e6);
+        if (!robust || !ordinary) return 2;
+        auto model=[](double x,advanced::Parameters p) {
+            return p.a*std::exp(p.b*x)+p.c;
+        };
+        if (cmd=="robust-fit") {
+            std::cout<<"method,a,b,c,objective,gradient_inf,iterations,"
+                        "accepted,converged,parameter_error\n";
+            auto report=[&](const char* method,const advanced::RobustFit& fit) {
+                const auto p=fit.parameters;
+                std::cout<<method<<","<<p.a<<","<<p.b<<","<<p.c<<","
+                         <<fit.objective<<","<<fit.gradient_infinity<<","
+                         <<fit.iterations<<","<<fit.accepted_steps<<","
+                         <<int(fit.converged)<<","
+                         <<std::hypot(std::hypot(p.a-2,p.b+.7),p.c-.5)<<"\n";
+            };
+            report("huber",*robust); report("least_squares",*ordinary);
+        } else {
+            std::cout<<"x,observed,truth,fit_huber,fit_least_squares,is_outlier\n";
+            for (std::size_t i=0;i<observations.size();++i) {
+                const auto o=observations[i];
+                std::cout<<o.x<<","<<o.y<<","
+                         <<model(o.x,{2,-.7,.5})<<","
+                         <<model(o.x,robust->parameters)<<","
+                         <<model(o.x,ordinary->parameters)<<","
+                         <<int(i==15)<<"\n";
+            }
+        }
     } else if (cmd=="monte-carlo") {
         std::cout<<"draws,estimate,stderr,reference\n";
         for (const std::size_t n:{100U,1000U,10000U,100000U}) {
@@ -201,7 +303,7 @@ int main(int argc,char**argv) {
         }
     } else {
         std::cerr<<"Usage: book02_workbench "
-                    "{test|matrix|orientation|fit|heat|monte-carlo}\n";
+                    "{test|matrix|orientation|fit|heat|monte-carlo|qr-sensitivity|robust-fit|robust-data}\n";
         return 2;
     }
 }
