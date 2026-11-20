@@ -16,10 +16,15 @@ From the repository root:
     build/book02-cpp23/book02_workbench fit
     build/book02-cpp23/book02_workbench heat > build/book02-cpp23/heat.csv
     build/book02-cpp23/book02_workbench monte-carlo > build/book02-cpp23/monte-carlo.csv
+    build/book02-cpp23/book02_workbench qr-sensitivity > build/book02-cpp23/qr-sensitivity.csv
+    build/book02-cpp23/book02_workbench robust-fit > build/book02-cpp23/robust-fit.csv
+    build/book02-cpp23/book02_workbench robust-data > build/book02-cpp23/robust-data.csv
 
 Only if matplotlib is available and a visualization is wanted:
 
     python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/heat.csv --output build/book02-cpp23/heat.png
+    python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/robust-data.csv --output build/book02-cpp23/robust-data.png
+    python3 tools/labs/book02_cpp23/plot.py build/book02-cpp23/qr-sensitivity.csv --output build/book02-cpp23/qr-sensitivity.png
 
 ## Contract and explicit limitations
 
@@ -35,7 +40,42 @@ standard-library implementations. A successful test does not certify
 unexamined input ranges, physics, numerical conditioning, or performance.
 
 The progression is vector/matrix -> predicates -> least squares ->
-stable time stepping -> sampling/uncertainty. Later engineering passes
-should add QR/SVD, exact general predicates, sparse solvers, robust
-losses, nonlinear optimization, independent high-precision references,
-multiple independent RNG seeds, and real graphics/physics clients.
+stable time stepping -> sampling/uncertainty -> pivoted dense QR ->
+robust nonlinear inverse problems.
+
+## Current advanced native milestone
+
+`src/advanced.hpp` implements educational full-column-rank
+Householder QR with greedy column pivoting, relative rank rejection,
+and the RMS residual computed from the original observations.
+The `qr_diagonal_ratio` output is **not** an SVD condition number.
+The `qr-sensitivity` export tests a nearly dependent four-by-two
+measurement model with a single explicit observation perturbation.
+
+The same native QR solver handles the augmented weighted Jacobian
+system for a nonlinear exponential `a*exp(b*x)+c` fit. Huber IRLS
+weights and adaptive damping propose steps; the actual Huber objective
+accepts or rejects them. The `robust-fit` summary includes final
+parameters, objective, final gradient, iteration count, accepted
+steps, convergence flag, and parameter error against declared
+synthetic truth. `robust-data` exports all 35 observations,
+the one known outlier, the generating curve and both estimates.
+
+For this small **one-outlier** synthetic experiment the robust fit
+recovers the generating coefficients substantially better than
+ordinary squared-error fitting. This is not a universal assertion
+about robust regression or a benchmark of any production library.
+The synthetic perturbation is 0.008*sin(0.77*i), and sample 15
+(zero-based) has a +3.5 outlier. Initial parameters are
+(1.5,-0.4,0.3), with the Huber threshold 0.05.
+
+## Still not implemented
+
+A general SVD, exact predicates for arbitrary binary64 coordinates,
+sparse matrices or iterative solvers, finite-element assembly in
+this native workbench, 3D mesh/graphics clients, production-quality
+nonlinear optimization (including globalization/gauge handling),
+independent extended-precision numerical oracles, statistical
+multiple-seed inference, or full PDF/EPUB visual acceptance.
+No results from the Python-led research atlas are relabeled
+as C++23 implementations until a native reimplementation exists.
