@@ -67,6 +67,30 @@ code span.dv, code span.fl, code span.bn { color: #815b9b; }
 code span.ot, code span.pp, code span.im { color: #275b87; }
 code span.er, code span.al { color: #9a3c43; font-weight: bold; }
 /* Concept statements and source quotations remain distinct from exercises. */
+/* Pandoc's shared source-preserving Lua filter marks real teaching notes.
+   An explicit heading is included in XHTML, so meaning survives even
+   when Kindle or dark-mode readers suppress background colours. */
+div.book-learning-note, div.book-practice {
+  padding: 0.65em 0.9em;
+  margin: 0.9em 0.15em;
+  border: 1px solid #c3cdd6;
+  border-left: 0.25em solid #3c7797;
+  border-radius: 0.2em;
+  background: #edf5fb;
+  page-break-inside: auto;
+}
+div.book-practice {
+  border-left-color: #51765b;
+  background: #f1f7ef;
+}
+div.book-learning-note > p:first-child,
+div.book-practice > p:first-child {
+  margin-top: 0;
+  color: #243e53;
+  font-weight: bold;
+}
+div.book-learning-note > p:last-child,
+div.book-practice > p:last-child { margin-bottom: 0; }
 blockquote {
   margin: 0.85em 0.25em;
   padding: 0.5em 0.9em;
