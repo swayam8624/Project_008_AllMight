@@ -18,7 +18,8 @@ REPO=ROOT.parents[2]
 sys.path.insert(0,str(TOOLS))
 from book02_single_volume import (TITLE,SUBTITLE,AUTHOR,STAGE,PREFACE,
                                    READING_GUIDE,NOTATION,build_unified_tex,inventory,
-                                   epub_frontmatter,epub_references)
+                                   epub_frontmatter,epub_references,
+                                   latex_escape_text,selected_references_latex)
 
 def test() -> None:
     generation=ROOT/"Generations"/".generation-n3azv4es"
@@ -82,6 +83,24 @@ def test() -> None:
     refs=epub_references()
     assert refs[-1]["t"]=="BulletList"
     assert len(refs[-1]["c"])==3
+
+    # The first real macOS unified PDF failed after 968 pages in the
+    # primary-reference list: an unescaped '&' in "Discrete & Computational
+    # Geometry" is an alignment token, not literal prose in TeX.
+    refs_tex=selected_references_latex()
+    assert r"Discrete \& Computational Geometry" in refs_tex
+    assert "Discrete & Computational Geometry" not in refs_tex
+    assert refs_tex.count(r"\item ")==3
+    assert r"\begin{enumerate}" in refs_tex
+    assert r"\end{enumerate}" in refs_tex
+    # Treat arbitrary citation metadata as *text*. Test every other special
+    # character at the same time to prevent another late-book compilation.
+    fixture="A&B_#%$^~{}\\"
+    escaped=latex_escape_text(fixture)
+    for token in (r"\&",r"\_",r"\#",r"\%",r"\$",r"\textasciicircum{}",
+                  r"\textasciitilde{}",r"\{",r"\}",r"\textbackslash{}"):
+        assert token in escaped, (token,escaped)
+    assert refs_tex in tex  # the complete candidate uses the safe renderer
 
     for script in ("book02_single_volume.py","book02_release_candidates.py","build_epubs.py"):
         code=(TOOLS/script).read_text(encoding="utf-8")
