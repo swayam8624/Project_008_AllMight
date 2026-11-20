@@ -20,7 +20,12 @@ def check() -> None:
                    "residual_and_jacobian", "huber_objective",
                    "qr_diagonal_ratio"):
         assert symbol in advanced, f"Missing native advanced solver: {symbol}"
-    for command in ('"qr-sensitivity"', '"robust-fit"', '"robust-data"'):
+    geometry=(LAB/"src"/"geometry.hpp").read_text(encoding="utf-8")
+    for symbol in ("ransac_line", "total_least_squares", "ideal_trials",
+                   "synthetic_line_data", "inlier_rms"):
+        assert symbol in geometry, f"Missing native geometry: {symbol}"
+    for command in ('"qr-sensitivity"', '"robust-fit"', '"robust-data"',
+                    '"ransac-summary"', '"ransac-data"'):
         assert command in cpp, f"Missing CLI exercise: {command}"
     for symbol in ("orient_exact_grid","orient_filtered","fit_line",
                    "heat_step","integrate","self_test"):
@@ -44,6 +49,7 @@ def check() -> None:
     assert "Householder QR instead of squaring" in (ASSETS/"08-conditioning-case.tex").read_text(encoding="utf-8")
     assert "An augmented QR derivation" in (ASSETS/"24-robust-least-squares-paper-lab.tex").read_text(encoding="utf-8")
     assert "Native extension: from a line" in (ASSETS/"35-cumulative-numerical-geometry-atlas.tex").read_text(encoding="utf-8")
+    assert "Native consensus and orthogonal" in (ASSETS/"25-ransac-paper-lab.tex").read_text(encoding="utf-8")
     builder=(LATEX/"Tools"/"book02_release_candidates.py").read_text(encoding="utf-8")
     assert 'rglob("*")' in builder and '"book02_cpp23"' in builder
     print("BOOK02_CPP23_EDITORIAL_GATE_OK",
