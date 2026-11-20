@@ -46,15 +46,22 @@ div.booktwoconcept > p:first-child, div.booktwoproof > p:first-child,
 div.booktwopitfall > p:first-child, div.booktwolab > p:first-child {
     margin-top: 0; font-size: .89em; letter-spacing: .01em;
 }
+/* Frozen Book Two chapters use Pandoc raw code blocks rather than
+   div.Shaded: color the actual <pre> blocks in all 16 chapters too. */
+pre { background: #f0f4f6; border-left: .18em solid #0081a3;
+      padding: .6em .75em; margin: .8em 0;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+      break-inside: auto; font-size: .88em; line-height: 1.35; }
 div.Shaded { background: #f0f4f6; border-left: .18em solid #0081a3;
              padding: .45em .6em; margin: .7em 0; }
 div.Shaded pre { margin: 0; padding: 0; background: transparent;
+                 border-left: 0; font-size: inherit;
                  white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (prefers-color-scheme: dark) {
   div.booktwoconcept, div.booktwoproof, div.booktwopitfall, div.booktwolab {
      background: transparent; color: inherit;
   }
-  div.Shaded { background: transparent; }
+  div.Shaded, pre { background: transparent; }
 }
 """
 
