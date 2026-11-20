@@ -38,12 +38,13 @@ def check() -> None:
         "06-reader-contract.tex","08-conditioning-case.tex",
         "09-heat-stability-case.tex","21-robust-predicates-research.tex",
         "24-robust-least-squares-paper-lab.tex",
+        "25-ransac-paper-lab.tex",
         "27-multiple-importance-sampling.tex",
         "35-cumulative-numerical-geometry-atlas.tex")
     for name in checkpoint_names:
         content=(ASSETS/name).read_text(encoding="utf-8")
         assert "C++23" in content and "book02" in content, name
-        for role in ("booktwoconcept","booktwopitfall","booktwolab"):
+        for role in ("booktwoconcept","booktwoproof","booktwopitfall","booktwolab"):
             assert content.count("\\begin{"+role+"}")==content.count(
                 "\\end{"+role+"}"), f"Unbalanced {role} in {name}"
     assert "Householder QR instead of squaring" in (ASSETS/"08-conditioning-case.tex").read_text(encoding="utf-8")
