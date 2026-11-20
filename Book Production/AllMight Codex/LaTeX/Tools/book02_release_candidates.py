@@ -182,8 +182,24 @@ def print_candidates(generation:Path, root:Path)->list[dict]:
 
 
 def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
-    if not path.is_file() or record.get("epubcheck",{}).get("exit_code")!=0:
-        raise RuntimeError("Full stage EPUB missing or EPUBCheck not successful")
+    if not path.is_file():
+        raise RuntimeError("Full stage EPUB was not produced: "+str(path))
+    epubcheck=record.get("epubcheck",{})
+    if epubcheck.get("exit_code")!=0:
+        # build_epubs.py deliberately retains a status record even when
+        # EPUBCheck fails. Do not hide its actionable failure behind a
+        # generic packaging error, and do not accept the EPUB candidate.
+        diagnostic=(epubcheck.get("output") or "(No EPUBCheck diagnostic captured)").strip()
+        status_path=path.parent/"build-status.json"
+        raise RuntimeError(
+            "Book Two full EPUB was generated, but EPUBCheck 5.4.0 rejected it.\\n"
+            f"EPUB: {path}\\n"
+            f"EPUBCheck exit code: {epubcheck.get('exit_code')!r}\\n"
+            f"Recorded build status: {status_path}\\n"
+            "EPUBCheck output (last 2,500 characters):\\n"+diagnostic+"\\n"
+            "Fix the specific validation messages before calling this EPUB verified; "
+            "the successfully generated PDF candidates remain intact."
+        )
     supplement=record.get("book02_supplement_sources",[])
     if len(supplement)!=EXPECTED_EXTRA:
         raise RuntimeError(f"Expected 36 EPUB additive sources, got {len(supplement)}")
