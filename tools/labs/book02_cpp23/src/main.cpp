@@ -242,10 +242,10 @@ void self_test() {
     const double subnormal=std::numeric_limits<double>::denorm_min();
     assert(exact::orientation({0,0},{subnormal,0},{0,subnormal})==ES::positive);
     assert(exact::orientation({0,0},{subnormal,0},{2*subnormal,0})==ES::zero);
-    const double epsilon=std::numeric_limits<double>::epsilon();
-    const double perturbed=std::nextafter(2*epsilon,
+    const double binary64_epsilon=std::numeric_limits<double>::epsilon();
+    const double perturbed=std::nextafter(2*binary64_epsilon,
                                           std::numeric_limits<double>::infinity());
-    assert(exact::orientation({0,0},{1,epsilon},{2,perturbed})==ES::positive);
+    assert(exact::orientation({0,0},{1,binary64_epsilon},{2,perturbed})==ES::positive);
     assert(!exact::orientation({0,0},{1,
         std::numeric_limits<double>::infinity()},{2,1}));
     const std::array<Grid,3> gridpoints{{{1000000000,1000000000},
