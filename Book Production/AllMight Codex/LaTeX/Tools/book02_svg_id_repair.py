@@ -16,6 +16,7 @@ located unambiguously, FAIL instead of risking a visual change.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from copy import copy
 from pathlib import Path
 import re
 import tempfile
@@ -142,7 +143,11 @@ def repair_epub_duplicate_svg_image_ids(epub_path: str | Path) -> dict:
         try:
             with zipfile.ZipFile(temp_path, "w") as dst:
                 for info in src.infolist():
-                    dst.writestr(info, updates.get(info.filename, src.read(info.filename)))
+                    # zipfile.writestr updates ZipInfo.header_offset in-place.
+                    # The same ZipInfo belongs to the still-open source ZIP;
+                    # passing it directly corrupts subsequent src.read calls.
+                    dst.writestr(copy(info),
+                                 updates.get(info.filename, src.read(info.filename)))
             with zipfile.ZipFile(temp_path, "r") as verify:
                 if verify.namelist() != names:
                     raise RuntimeError("EPUB member order changed while repairing SVG")
