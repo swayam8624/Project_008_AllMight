@@ -22,6 +22,11 @@ EDITOR_SENTENCES = (
     re.compile(r"(?im)^This is an authored reconstruction of M\d+\b.{5,460}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^The exact curriculum ownership is:.{5,650}?(?=\n\n|\Z)", re.S),
     re.compile(r"(?im)^This addition belongs before the chapter.{5,500}?(?=\n\n|\Z)", re.S),
+    # Production-stage receipt, not reader-facing instructional content.
+    # Match only that specific first-line signature and archive its text
+    # through the existing removed_editorial_notes receipt.
+    re.compile(r"(?im)^>?[ \\t]*Volume[ \\t]+0?[1-9][0-9]*[ \\t]*[·—-][ \\t]*accepted sources[^\\n]*(?=\\n|\\Z)"),
+
 )
 PUBLICATION_REPHRASES = (
     (r"(?i)\bthe source attachment's central project-shaped finding\b",
@@ -33,6 +38,10 @@ PUBLICATION_REPHRASES = (
     (r"(?i)\bthe supplied source\b", "the cited project source"),
     (r"(?i)\bThis pass \*\*closes Phase \d+\*\*\.", 
      "This section completes the argument established so far."),
+    (r"(?i)\bWhat this pass establishes\b",
+     "What this section establishes"),
+    (r"(?i)\bIn this pass\b",
+     "In this investigation"),
 )
 MERGE_HEADING = re.compile(
     r"(?im)^#{1,6}[ \t]*(?:Next\s*[—-]\s*Pass\s+\d+|"
