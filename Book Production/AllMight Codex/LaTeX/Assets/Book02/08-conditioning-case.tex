@@ -101,3 +101,54 @@ compare its prediction with the C++23 output. Perturb \(b\) and
 Document the tolerance, the floating-point type, the exact matrix,
 and the parameter range. Before claiming a general solver, implement
 rank-revealing QR and independent higher-precision checks.
+
+
+% Book Two next native C++23 pass: a rank-aware alternative to normal equations.
+\begin{booktwoproof}[Householder QR instead of squaring the condition number]
+For an overdetermined matrix \(A\in\mathbb{R}^{m\times n}\), \(m\ge n\),
+the least-squares task is \(\min_x\|Ax-b\|_2\).
+An orthogonal change of coordinates preserves Euclidean length:
+if a product of Householder reflections yields
+\(AP=Q\begin{bmatrix}R\\0\end{bmatrix}\), where \(P\) permutes
+columns and \(Q^TQ=I\), then
+\[
+ \|Ax-b\|_2^2=
+ \left\|R(P^Tx)-(Q^Tb)_{1:n}\right\|_2^2+
+ \left\|(Q^Tb)_{n+1:m}\right\|_2^2 .
+\]
+The second term is independent of \(x\). Solving the upper
+triangular system determines the first term without forming
+\(A^TA\), whose condition number is ordinarily the square of
+\(\kappa_2(A)\) for full-column-rank \(A\). Each reflection
+\(H=I-2vv^T/(v^Tv)\) annihilates entries below a selected
+diagonal. Column pivoting moves the largest remaining column
+to the front, helping reveal loss of numerical rank.
+
+The native \texttt{advanced::qr\_least\_squares} checks
+input finiteness and uses a scale-relative diagonal threshold.
+It reports a ratio of extreme \emph{QR diagonal magnitudes};
+that ratio is a diagnostic, not a certified singular-value
+condition estimate. At a detected deficient rank it rejects
+the fit instead of inventing a unique coefficient vector.
+\end{booktwoproof}
+
+\begin{booktwolab}[QR sensitivity sweep in C++23]
+The native command \texttt{book02\_workbench qr-sensitivity}
+constructs a four-observation, two-parameter model with
+rows \((1,1)\), \((1,1+\delta)\), \((1,1-\delta)\), and \((2,2)\).
+Its generating parameter is \(x_\star=(2,-1)^T\).
+Only the second observation is perturbed upward by \(10^{-10}\).
+For \(\delta=10^{-1},\ldots,10^{-8}\), it exports
+coefficient error against \(x_\star\), residual RMS, and the
+QR diagonal diagnostic. All quantities come from C++23;
+the optional Python utility only plots the recorded CSV.
+
+Derive the exact unperturbed right-hand side
+\((1,1-\delta,1+\delta,2)^T\). Predict why coefficient
+error can grow as the columns approach dependence, even if
+the residual remains tiny. Inspect the \emph{actual}
+floating-point results rather than requiring an invented
+smooth curve or monotonic progression. The supplied
+implementation is a pedagogical dense pivoted QR,
+not a complete LAPACK-style scaled rank-revealing algorithm.
+\end{booktwolab}
