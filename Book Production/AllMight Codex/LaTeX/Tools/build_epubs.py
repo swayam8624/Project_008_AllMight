@@ -25,6 +25,7 @@ import build_books as epub_helpers  # noqa: E402
 from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement, BOOK02_EPUB_CSS
 from book02_single_volume import epub_frontmatter, epub_references
 from book02_svg_id_repair import repair_epub_duplicate_svg_image_ids
+from book02_epub_reader_polish import polish_book02_epub
 
 
 def sha(data: bytes) -> str:
@@ -481,6 +482,16 @@ class Packager:
                       svg_id_repairs["details"],flush=True)
         else:
             svg_id_repairs={"svg_files_repaired":0,"id_renames":0,"details":{}}
+        # Make the final Book Two EPUB usable on real readers, not only
+        # structurally valid: replace all 51 source-placeholder PNG alts
+        # with hash-verified descriptions and prune the oversized deep TOC.
+        # This operates on a temporary EPUB copy and preserves all chapter
+        # text, equations, code, figures, and non-navigation members.
+        if stage and stage["id"] == BOOK02_STAGE:
+            book02_reader_polish=polish_book02_epub(output)
+            print("BOOK02_READER_POLISH_OK",book02_reader_polish,flush=True)
+        else:
+            book02_reader_polish=None
         epub_helpers.declare_epub_mathml_properties(output)
         expected=expected_math_in_final_ast
         if math_replacements != expected:
@@ -490,7 +501,7 @@ class Packager:
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"reader_polish":book02_reader_polish,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
