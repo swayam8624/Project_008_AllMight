@@ -23,6 +23,7 @@ sys.path.insert(0, "/Users/swayamsingal/.codex/source-cache/allmight-book-produc
 import build_books as epub_helpers  # noqa: E402
 
 from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement, BOOK02_EPUB_CSS
+from book02_single_volume import epub_frontmatter, epub_references
 
 
 def sha(data: bytes) -> str:
@@ -399,6 +400,11 @@ class Packager:
         for st in selected:
             if mode=="collection":
                 blocks.append({"t":"Header","c":[1,[st["id"],[],[]],[{"t":"Str","c":st["title"]}] ]})
+            if st["id"]==BOOK02_STAGE:
+                if mode=="stage":
+                    blocks[:0]=epub_frontmatter()
+                else:
+                    blocks.extend(epub_frontmatter())
             for row in ordered_rows(self.manifest,st):
                 if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
                     if self.book02_supplement is None:
@@ -418,6 +424,8 @@ class Packager:
                 # (after this original chapter, never replacing its AST).
                 if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
                     blocks.extend(self.book02_supplement.chapter_blocks(row["id"],mode))
+            if st["id"]==BOOK02_STAGE:
+                blocks.extend(epub_references())
         if mode=="stage" and cross:
             blocks.extend([{"t":"Header","c":[1,["cross-stage-reference-index",[],[]],[{"t":"Str","c":"Cross Stage References"}]]},{"t":"Para","c":[{"t":"Str","c":"Each entry links to the corresponding topic in its stage EPUB. The chapter and heading provide a reading locator."}]}])
             for (peer,dest),ref in sorted(cross.items()):
