@@ -34,7 +34,7 @@ jobs:
       - name: Prove reader helper behavior before touching the full manuscript
         run: |
           python3 -m pip install --upgrade pypdf "pymupdf<2.2"
-          python3 -m py_compile tools/book01_render_support.py tools/book01_publication_edit.py tools/book01_index.py tools/book01_pdf_proof.py tools/build_book01_expanded_reader.py
+          python3 -m py_compile tools/book01_render_support.py tools/book01_publication_edit.py tools/book01_index.py tools/book01_pdf_proof.py tools/build_book01_expanded_reader.py tools/test_book01_visual_language.py tools/build_book01_kdp_epub.py
           python3 tools/test_book01_render_support.py
           python3 tools/test_book01_publication_edit.py
           python3 tools/test_book01_pdf_proof.py
@@ -49,6 +49,7 @@ jobs:
           pandoc --version | head -n 1
       - name: Generate four complete TeX source parts without invoking latexmk/lualatex
         run: |
+          python3 tools/test_book01_visual_language.py
           python3 tools/build_book01_expanded_reader.py --prepare
           python3 tools/build_book01_expanded_reader.py --verify-prepared
           find build/book01-expanded-reader -type f -name '*.tex' | sort
