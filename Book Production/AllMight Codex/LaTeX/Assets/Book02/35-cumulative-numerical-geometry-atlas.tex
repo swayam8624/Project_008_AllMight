@@ -210,3 +210,38 @@ the exported rows and decide whether the curve communicates the
 correct physical and numerical story. Each step answers a different
 question; none can be skipped because the PDF contains an appealing
 figure.
+
+
+\begin{booktwoconcept}[Native extension: from a line to a fitted nonlinear scene]
+The next C++23 capstone milestone adds \emph{column-pivoted
+Householder QR} for dense overdetermined least squares
+and a \emph{Huber IRLS/damped Gauss--Newton} fit to
+\(y=a e^{bx}+c\). The optimizer solves augmented least-squares
+steps with that QR routine, and accepts them against the true
+Huber objective. This provides the first direct native
+bridge from linear measurements to robust nonlinear
+inverse problems in the atlas.
+
+Use \texttt{qr-sensitivity} to export a sweep that contrasts
+forward coefficient error and residual size.
+Use \texttt{robust-fit} for solver diagnostics and
+\texttt{robust-data} for every observation and both predicted
+curves. The optional Python renderer reads these C++23 CSV
+records; no optimization is implemented in Python.
+The resulting figures are supporting evidence,
+not automatically certified print proofs. The original
+16 chapters and all earlier demonstrations are preserved.
+\end{booktwoconcept}
+
+\begin{booktwopitfall}[Failure and scale limits]
+Column pivoting and QR improve the numerical solution route;
+they cannot recover parameters that observations do not
+identify. The rank tolerance is a finite-precision policy,
+not symbolic rank or an SVD-based condition estimate.
+The nonlinear solver is dense, starts at a declared
+initialization, has no trust-region convergence guarantee,
+and may fail under an incorrect model, poor initialization
+or adversarial outlier leverage. Compare final gradients,
+termination flags, coefficient errors and residuals,
+not merely the visual appeal of the fitted curves.
+\end{booktwopitfall}
