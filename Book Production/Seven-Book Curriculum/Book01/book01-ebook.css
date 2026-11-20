@@ -1,0 +1,86 @@
+/* Book One: reflowable EPUB 3 technical textbook.
+   Used as an external source file so print and EPUB code/notes share roles.
+   Backgrounds are pale; borders and typography convey meaning in grayscale
+   and on readers that omit colour or background fills. Never fix font sizes in
+   pixels or force a viewport width. */
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.48;
+  hyphens: auto;
+  orphans: 2;
+  widows: 2;
+}
+h1 {
+  break-before: page;
+  page-break-before: always;
+  margin-top: 0.4em;
+  margin-bottom: 0.8em;
+  font-weight: 700;
+  line-height: 1.23;
+  color: #223d52;
+}
+h2, h3, h4 {
+  line-height: 1.27;
+  break-after: avoid;
+  page-break-after: avoid;
+  color: #243e53;
+}
+h2 { margin-top: 1.25em; }
+h3 { margin-top: 1.0em; }
+p { margin-top: 0.35em; margin-bottom: 0.55em; }
+a { color: #315e84; }
+code, pre, kbd, samp {
+  font-family: "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  hyphens: none;
+}
+code {
+  font-size: 0.89em;
+  overflow-wrap: anywhere;
+}
+pre, pre.sourceCode, div.sourceCode pre {
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0.8em 0;
+  padding: 0.78em 0.9em;
+  border: 1px solid #c3cdd6;
+  border-left: 0.23em solid #35688e;
+  border-radius: 0.2em;
+  background-color: #f0f5fa;
+  color: #222e37;
+  font-size: 0.84em;
+  line-height: 1.39;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: none;
+  page-break-inside: auto;
+}
+pre code { font-size: 1em; background: none; padding: 0; border: 0; }
+div.sourceCode { max-width: 100%; overflow-x: auto; }
+/* Pandoc-generated syntax tokens already exist in EPUB XHTML.
+   Assign colours; otherwise they are visually indistinguishable. */
+code span.kw, code span.cf, code span.dt, code span.bu { color: #285a84; font-weight: bold; }
+code span.co, code span.do, code span.cv { color: #4e765f; font-style: italic; }
+code span.st, code span.vs, code span.sc, code span.ch { color: #8e4f2a; }
+code span.dv, code span.fl, code span.bn { color: #815b9b; }
+code span.ot, code span.pp, code span.im { color: #275b87; }
+code span.er, code span.al { color: #9a3c43; font-weight: bold; }
+/* Concept statements and source quotations remain distinct from exercises. */
+blockquote {
+  margin: 0.85em 0.25em;
+  padding: 0.5em 0.9em;
+  border: 1px solid #c3cdd6;
+  border-left: 0.22em solid #687782;
+  background-color: #f6f8fa;
+  page-break-inside: auto;
+}
+blockquote > p:first-child { margin-top: 0; }
+blockquote > p:last-child { margin-bottom: 0; }
+figure { max-width: 100%; break-inside: avoid; page-break-inside: avoid; }
+img { max-width: 100%; height: auto; }
+figcaption { font-size: 0.88em; color: #4c5f6d; margin: 0.35em 0 0.8em; }
+table { border-collapse: collapse; max-width: 100%; width: 100%; font-size: 0.89em; }
+th, td { padding: 0.32em 0.38em; border-bottom: 1px solid #b9c3cc; }
+th { background: #edf2f6; color: #213b50; font-weight: bold; }
+.math { overflow-wrap: anywhere; }
