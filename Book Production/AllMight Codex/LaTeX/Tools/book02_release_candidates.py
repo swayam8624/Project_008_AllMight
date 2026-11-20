@@ -255,6 +255,7 @@ def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
             f"EPUB: {path}\n"
             f"EPUBCheck exit code: {epubcheck.get('exit_code')!r}\n"
             f"Recorded build status: {status_path}\n"
+            f"Complete EPUBCheck log: {epubcheck.get('full_log','(not recorded)')}\n"
             "EPUBCheck output (last 2,500 characters):\n"+diagnostic+"\n"
             "Fix the specific validation messages before calling this EPUB verified; "
             "the successfully generated PDF candidates remain intact."
