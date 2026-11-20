@@ -270,12 +270,28 @@ def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
         # The release contract requires the first spine XHTML to contain
         # a real, image-backed XHTML img with accessible description.
         import xml.etree.ElementTree as ET
-        cover_html=z.read("EPUB/text/cover.xhtml")
+        import posixpath
+        import urllib.parse
+        opf=ET.fromstring(z.read("EPUB/content.opf"))
+        opf_items=[e for e in opf.iter() if e.tag.endswith("}item")]
+        image_assets=[e for e in opf_items
+                      if "cover-image" in e.get("properties","").split()]
+        pages=[e for e in opf_items if e.get("href","").endswith("cover.xhtml")]
+        if len(image_assets)!=1 or len(pages)!=1:
+            raise RuntimeError("Book Two EPUB does not declare one cover image and cover page")
+        cover_location=posixpath.normpath(
+            posixpath.join("EPUB",urllib.parse.unquote(pages[0].get("href"))))
+        image_location=posixpath.normpath(
+            posixpath.join("EPUB",urllib.parse.unquote(image_assets[0].get("href"))))
+        relative_image=posixpath.relpath(
+            image_location,posixpath.dirname(cover_location))
+        cover_html=z.read(cover_location)
         cover_xml=ET.fromstring(cover_html)
         displayed=[e for e in cover_xml.iter()
                    if e.tag=="{http://www.w3.org/1999/xhtml}img"]
-        if len(displayed)!=1 or displayed[0].get("src")!="../media/file65.jpg" or not displayed[0].get("alt"):
-            raise RuntimeError("The EPUB front-cover image is embedded but not visibly rendered in cover.xhtml")
+        if (len(displayed)!=1 or displayed[0].get("src")!=relative_image
+                or not displayed[0].get("alt")):
+            raise RuntimeError("The EPUB front-cover JPEG is embedded but not visibly rendered in cover.xhtml")
         if b"&lt;image" in cover_html:
             raise RuntimeError("Book Two front cover still contains the escaped, invisible SVG image tag")
         names=z.namelist()
