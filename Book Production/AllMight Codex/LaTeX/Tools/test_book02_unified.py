@@ -42,6 +42,19 @@ def test() -> None:
     assert tex.count(r"\VerbatimInput")==3
     assert tex.count(r"\begin{tcolorbox}[")==3
     assert tex.count(r"\end{tcolorbox}")==3
+    assert tex.count("frame=none")==3  # no redundant nested code frames
+    original_code_count=0
+    for original_input in rows["chapters"]:
+        fragment=re.search(r"\\input\{\.\./current/([^}]+)\}",original_input)
+        assert fragment is not None
+        chapter=(generation/fragment.group(1)).read_text(encoding="utf-8")
+        original_code_count += chapter.count(r"\begin{verbatim}")
+    assert original_code_count==112, original_code_count
+    visual_preamble=(ROOT/"Assets"/"Book02"/"preamble.tex").read_text(encoding="utf-8")
+    assert r"\fvset{frame=single" in visual_preamble
+    assert "fillcolor=\\color{booktwocodebg}" in visual_preamble
+    epub_css=(TOOLS/"book02_epub_supplements.py").read_text(encoding="utf-8")
+    assert "pre { background: #f0f4f6; border-left:" in epub_css
     assert tex.count(r"\input{../current/")==47  # 16 original + 31 source notes
     assert all(tex.count(row)==1 for group in ("chapters","references")
                for row in rows[group])
@@ -81,7 +94,8 @@ def test() -> None:
     assert "blocks[:0]=epub_frontmatter()" in epub
     assert "blocks.extend(epub_references())" in epub
     print("BOOK02_UNIFIED_DIGITAL_BOOK_SOURCE_OK",
-          "16 chapters","31 reference notes","3 boxed C++ attachments",
+          "16 chapters","112 original code frames","31 reference notes",
+          "3 boxed C++ attachments",
           "single title page","single TOC","preface","copyright",
           "book reading guide","selected primary references")
 
