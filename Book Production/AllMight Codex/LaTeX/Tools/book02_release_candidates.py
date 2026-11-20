@@ -64,6 +64,7 @@ def source_fingerprint()->str:
         ROOT/"Tools"/"book02_epub_supplements.py",
         ROOT/"Tools"/"book02_svg_id_repair.py",
         ROOT/"Tools"/"book02_epub_reader_polish.py",
+        ROOT/"Tools"/"book02_epub_cover_repair.py",
         ROOT/"Tools"/"build_epubs.py",
         Path(__file__).resolve(),
         ROOT.parent.parent.parent/"tools"/"labs"/"book02_visual_atlas.py",
@@ -263,6 +264,20 @@ def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
     if cover_image is not None and record.get("book02_cover_sha256")!=digest(cover_image):
         raise RuntimeError("EPUB cover provenance differs from the supplied cover image")
     with zipfile.ZipFile(path) as z:
+        # A JPEG in the OPF does not guarantee a visible cover page.
+        # Book Two previously escaped the SVG <image> element into text
+        # (&lt;image), leaving ebook readers with a blank opening screen.
+        # The release contract requires the first spine XHTML to contain
+        # a real, image-backed XHTML img with accessible description.
+        import xml.etree.ElementTree as ET
+        cover_html=z.read("EPUB/text/cover.xhtml")
+        cover_xml=ET.fromstring(cover_html)
+        displayed=[e for e in cover_xml.iter()
+                   if e.tag=="{http://www.w3.org/1999/xhtml}img"]
+        if len(displayed)!=1 or displayed[0].get("src")!="../media/file65.jpg" or not displayed[0].get("alt"):
+            raise RuntimeError("The EPUB front-cover image is embedded but not visibly rendered in cover.xhtml")
+        if b"&lt;image" in cover_html:
+            raise RuntimeError("Book Two front cover still contains the escaped, invisible SVG image tag")
         names=z.namelist()
         if cover_image is not None and not any(
             hashlib.sha256(z.read(name)).hexdigest()==digest(cover_image)
