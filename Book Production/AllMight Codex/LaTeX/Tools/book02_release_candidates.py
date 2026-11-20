@@ -62,6 +62,7 @@ def source_fingerprint()->str:
         ROOT/"Tools"/"book02_single_volume.py",
         ROOT/"Tools"/"book02_visuals.py",
         ROOT/"Tools"/"book02_epub_supplements.py",
+        ROOT/"Tools"/"book02_svg_id_repair.py",
         ROOT/"Tools"/"build_epubs.py",
         Path(__file__).resolve(),
         ROOT.parent.parent.parent/"tools"/"labs"/"book02_visual_atlas.py",
