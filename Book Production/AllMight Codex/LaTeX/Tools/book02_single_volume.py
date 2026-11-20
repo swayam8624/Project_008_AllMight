@@ -132,7 +132,7 @@ def inventory(parts: tuple[Path, Path]) -> dict[str, list[str]]:
 def selected_references_latex() -> str:
     items=[]
     for author,title,publication,url in SELECTED_REFERENCES:
-        items.append(r"\item "+author+" \emph{"+title+"} "+publication+
+        items.append(r"\item "+author+r" \emph{"+title+"} "+publication+
                      r" \url{"+url+"}")
     return r"\begin{enumerate}"+"\n"+"\n".join(items)+"\n"+r"\end{enumerate}"
 
