@@ -17,7 +17,7 @@ ROOT=TOOLS.parent
 REPO=ROOT.parents[2]
 sys.path.insert(0,str(TOOLS))
 from book02_single_volume import (TITLE,SUBTITLE,AUTHOR,STAGE,PREFACE,
-                                   READING_GUIDE,build_unified_tex,inventory,
+                                   READING_GUIDE,NOTATION,build_unified_tex,inventory,
                                    epub_frontmatter,epub_references)
 
 def test() -> None:
@@ -33,12 +33,14 @@ def test() -> None:
     assert tex.count(r"\begin{document}")==1
     assert tex.count(r"\end{document}")==1
     assert tex.count(r"\tableofcontents")==1
+    assert tex.count(r"\listoffigures")==1
     assert tex.count(r"\frontmatter")==1
     assert tex.count(r"\mainmatter")==1
     assert tex.count(r"\appendix")==1
     assert tex.count(r"\begin{titlepage}")==1
     assert tex.count(r"\chapter*{Preface}")==1
     assert tex.count(r"\chapter*{How to Use This Book}")==1
+    assert tex.count(r"\chapter*{Notation and Conventions}")==1
     assert tex.count(r"\VerbatimInput")==3
     assert tex.count(r"\begin{tcolorbox}[")==3
     assert tex.count(r"\end{tcolorbox}")==3
@@ -68,15 +70,15 @@ def test() -> None:
     for field in (TITLE,SUBTITLE,AUTHOR):
         assert field in tex
     assert "STAGE 2" not in tex.split(r"\end{titlepage}")[0]
-    for para in PREFACE+READING_GUIDE:
+    for para in PREFACE+READING_GUIDE+NOTATION:
         assert para[:30] in tex
     front=epub_frontmatter()
     headings=[b for b in front if b["t"]=="Header"]
-    assert len(headings)==3
+    assert len(headings)==4
     assert ["".join(x.get("c"," ") if x.get("t")=="Str" else " "
                     for x in h["c"][2]).strip() for h in headings] == [
-        "Copyright","Preface","How to Use This Book"]
-    assert len([b for b in front if b["t"]=="Para"])==1+len(PREFACE)+len(READING_GUIDE)
+        "Copyright","Preface","How to Use This Book","Notation and Conventions"]
+    assert len([b for b in front if b["t"]=="Para"])==1+len(PREFACE)+len(READING_GUIDE)+len(NOTATION)
     refs=epub_references()
     assert refs[-1]["t"]=="BulletList"
     assert len(refs[-1]["c"])==3
@@ -95,7 +97,7 @@ def test() -> None:
     assert "blocks.extend(epub_references())" in epub
     print("BOOK02_UNIFIED_DIGITAL_BOOK_SOURCE_OK",
           "16 chapters","112 original code frames","31 reference notes",
-          "3 boxed C++ attachments",
+          "3 boxed C++ attachments","notation guide","figure list",
           "single title page","single TOC","preface","copyright",
           "book reading guide","selected primary references")
 
