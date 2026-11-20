@@ -110,3 +110,68 @@ replace ordinary centered regression with Householder QR and compare
 both methods on a badly conditioned overdetermined system.
 
 \end{booktwopitfall}
+
+
+\begin{booktwoproof}[An augmented QR derivation of the robust step]
+For a current nonlinear parameter estimate, define the Jacobian
+\(J\), residual \(r\), and positive IRLS weights \(w_i\).
+Writing \(W^{1/2}=\operatorname{diag}(\sqrt{w_i})\),
+the damped step minimizes
+\[
+ \left\|\begin{bmatrix}W^{1/2}J\\ \sqrt{\lambda}I\end{bmatrix}
+ \Delta-
+ \begin{bmatrix}-W^{1/2}r\\0\end{bmatrix}\right\|_2^2.
+\]
+Expanding this quadratic recovers the damped
+normal system \( (J^TWJ+\lambda I)\Delta=-J^TWr\).
+But the native solver computes the step by Householder QR
+of the \emph{augmented} matrix: it does not build and
+factor the potentially more ill-conditioned \(J^TWJ\).
+The formula is an approximation at the current \(\theta\),
+not an exact nonlinear solution.
+
+The Huber influence \(\psi_\delta(r)=
+\max(-\delta,\min(r,\delta))\) produces
+\(w_i=\psi_\delta(r_i)/r_i\) for nonzero residuals,
+with \(w_i=1\) at zero. The trial is accepted only when
+\(\sum_i\rho_\delta(r_i(\theta+\Delta))\) really decreases.
+A rejected trial increases damping; an accepted trial
+reduces it. Neither IRLS nor damped Gauss--Newton guarantees
+the global minimum of a nonlinear problem.
+\end{booktwoproof}
+
+\begin{booktwolab}[Two executable estimators, one declared outlier]
+Run \texttt{book02\_workbench robust-fit} for a
+C++23-produced summary and \texttt{robust-data} for
+all 35 computed observations and both fitted curves.
+The generating parameters are \((2,-0.7,0.5)\).
+Observation \(i\), indexed from zero, uses
+\(x_i=i/10\), deterministic perturbation
+\(0.008\sin(0.77i)\), and an additional \(+3.5\)
+at \(i=15\). Both fits start from \((1.5,-0.4,0.3)\).
+The robust experiment uses \(\delta=0.05\);
+a large threshold effectively gives ordinary least squares.
+
+The program checks the analytic Jacobian against
+central finite differences, includes a known-solution
+QR fixture, detects a rank-deficient system, and asserts
+that the robust estimate recovers the synthetic parameters
+more accurately on this \emph{declared} contamination case.
+The CSV reports the stopping status and gradient
+\(\ell_\infty\)-norm at the returned parameters. Costs
+across different Huber thresholds are \emph{not}
+values of the same objective and must not be compared as if
+they were. Try changing the outlier's location, amplitude,
+and the initialization; document cases where robustness fails.
+\end{booktwolab}
+
+\begin{Shaded}
+\begin{verbatim}
+build/book02-cpp23/book02_workbench robust-fit
+build/book02-cpp23/book02_workbench robust-data \
+  > build/book02-cpp23/robust-data.csv
+python3 tools/labs/book02_cpp23/plot.py \
+  build/book02-cpp23/robust-data.csv \
+  --output build/book02-cpp23/robust-data.png
+\end{verbatim}
+\end{Shaded}
