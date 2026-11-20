@@ -15,6 +15,8 @@ on:
       - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_supplements.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_epub_proof_export.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_svg_id_repair.py'
+      - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_svg_id_repair.py'
       - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
       - 'tools/labs/book02_analytical_epub_figures.py'
@@ -55,9 +57,9 @@ jobs:
       - name: Run full semantic-source and image tests
         working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
         run: |
-          python -m py_compile book02_epub_supplements.py test_book02_epub_supplements.py build_epubs.py book02_release_candidates.py book02_mathml_preflight.py test_book02_font_assets.py
+          python -m py_compile book02_epub_supplements.py test_book02_epub_supplements.py build_epubs.py book02_release_candidates.py book02_mathml_preflight.py test_book02_font_assets.py book02_svg_id_repair.py test_book02_svg_id_repair.py
           pandoc --version | head -n 1
-          python -m unittest -v test_book02_epub_supplements test_book02_font_assets
+          python -m unittest -v test_book02_epub_supplements test_book02_font_assets test_book02_svg_id_repair
       - name: Check every supplemental math expression converts to native MathML
         working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
         run: |
