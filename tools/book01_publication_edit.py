@@ -25,7 +25,7 @@ EDITOR_SENTENCES = (
     # Production-stage receipt, not reader-facing instructional content.
     # Match only that specific first-line signature and archive its text
     # through the existing removed_editorial_notes receipt.
-    re.compile(r"(?im)^>?[ \\t]*Volume[ \\t]+0?[1-9][0-9]*[ \\t]*[·—-][ \\t]*accepted sources[^\\n]*(?=\\n|\\Z)"),
+    re.compile(r"(?im)^>?[ \t]*Volume[ \t]+0?[1-9][0-9]*[ \t]*[·—-][ \t]*accepted sources[^\n]*(?=\n|\Z)"),
 
 )
 PUBLICATION_REPHRASES = (
