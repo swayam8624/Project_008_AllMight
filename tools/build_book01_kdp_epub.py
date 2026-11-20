@@ -396,7 +396,7 @@ def main() -> int:
     parser.add_argument("--cover", type=Path, required=True,
                         help="Exact cover art (JPEG/PNG). No generated substitute.")
     parser.add_argument("--output", type=Path,
-                        default=OUTPUT / "Book01-From-Bits-to-Parallel-Systems-EBOOK.epub")
+                        default=ROOT / "build" / "Book01-From-Bits-to-Parallel-Systems-EBOOK.epub")
     parser.add_argument("--skip-source-verify", action="store_true",
                         help="Only for debugging; never for a KDP release")
     args = parser.parse_args()
