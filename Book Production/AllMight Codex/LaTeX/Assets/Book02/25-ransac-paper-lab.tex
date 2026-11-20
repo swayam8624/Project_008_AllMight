@@ -70,3 +70,82 @@ attractive line overlay.
 This lab reproduces the core sampling, consensus and refitting
 on a simple line, not the original paper's camera localization
 experiments, implementation or reported measurements.
+
+
+\begin{booktwoproof}[Total least squares after finding consensus]
+Let the selected coordinates be \(p_i=(x_i,y_i)\) and their
+centroid be \(\bar p\). The covariance scatter matrix is
+\[
+ S=\sum_i(p_i-\bar p)(p_i-\bar p)^T
+ =\begin{bmatrix}S_{xx}&S_{xy}\\S_{xy}&S_{yy}\end{bmatrix}.
+\]
+For a unit line normal \(n\), minimizing the sum of squared
+\emph{orthogonal} distances is equivalent to minimizing
+\(n^TSn\) subject to \(n^Tn=1\).
+The Rayleigh-quotient principle selects the eigenvector
+for the smallest eigenvalue of \(S\); the intercept is
+\(c=-n^T\bar p\). When the scatter is isotropic,
+the data determine no unique line orientation.
+The C++23 total-least-squares routine rejects that
+degenerate case instead of inventing a direction.
+\end{booktwoproof}
+
+\begin{booktwolab}[Native consensus and orthogonal refit]
+The native C++23 \texttt{ransac-summary} and
+\texttt{ransac-data} commands construct an explicitly
+different synthetic dataset from the earlier Python
+paper-reconstruction plate. Eighty near-line points
+follow \(y=2x+1+0.015\sin(0.27i+0.4)\) at equally
+spaced \(x\in[-4,4]\); thirty structured outliers follow
+\(y=-7+0.4x+0.06\cos(0.51i)\) on \(x\in[-3.8,3.8]\).
+Each family has its own zero-based index \(i\). The
+source code fixes the threshold to \(0.04\) coordinate
+units, performs \(400\) two-point trials using
+seed \(73013\), and refits the selected consensus
+with orthogonal TLS.
+
+The summary exports selected count, true positives,
+false positives, precision, recall, a finite inlier
+RMS and coefficients for the consensus and all-point
+TLS baseline. The per-point CSV gives both fit
+predictions, signed orthogonal residuals, the known
+synthetic truth label and the \emph{computed} consensus
+label. It does not hide rejected observations.
+Change the threshold, seed, noise model, group sizes
+and structures in the native source to discover failures.
+The generator's labels make precision and recall
+auditable in this synthetic setting; real unlabeled
+observations require a different evaluation protocol.
+
+The formula for idealized random-sample confidence
+still supplies a useful planning estimate; the fixed
+\(400\)-trial experiment is \emph{not} a claim that
+independent-with-replacement sampling assumptions
+hold for its finite, structured point cloud. Seeded
+standard-library random integer sequences can differ
+across C++ implementations even when the mathematical
+test criteria remain the same.
+\end{booktwolab}
+
+\begin{Shaded}
+\begin{verbatim}
+build/book02-cpp23/book02_workbench ransac-summary
+build/book02-cpp23/book02_workbench ransac-data \
+  > build/book02-cpp23/ransac-data.csv
+python3 tools/labs/book02_cpp23/plot.py \
+  build/book02-cpp23/ransac-data.csv \
+  --output build/book02-cpp23/ransac-data.png
+\end{verbatim}
+\end{Shaded}
+
+\begin{booktwopitfall}[A selected consensus is not ground truth]
+The new native demonstration and the earlier Python-led
+research plate have related mathematical goals but
+distinct generators, seeds and implementations.
+Do not relabel their plots as identical reproductions
+or claim the published paper's measured results.
+A perfectly separated synthetic fixture can yield
+high precision and recall while hiding how RANSAC
+fails under crossing structures, leverage points,
+incorrect thresholds or high contamination.
+\end{booktwopitfall}
