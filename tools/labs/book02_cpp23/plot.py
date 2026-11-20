@@ -80,6 +80,34 @@ def main():
         ax.set_title("C++23 pivoted QR: residual is not forward accuracy")
         ax.text(.02, .02, "Fixed +1e-10 observation perturbation",
                 transform=ax.transAxes, fontsize=8, color=navy)
+    elif fields == {"x", "y", "true_inlier", "selected_inlier", "true_y",
+                    "ransac_y", "all_tls_y", "ransac_distance",
+                    "all_tls_distance"}:
+        accepted = [r for r in rows if int(r["selected_inlier"]) == 1]
+        rejected = [r for r in rows if int(r["selected_inlier"]) == 0]
+        if len(accepted) < 2:
+            raise ValueError("Native consensus returned fewer than two points")
+        ax.scatter([float(r["x"]) for r in accepted],
+                   [float(r["y"]) for r in accepted],
+                   s=22, color=cyan, alpha=.85, label="Selected consensus")
+        ax.scatter([float(r["x"]) for r in rejected],
+                   [float(r["y"]) for r in rejected],
+                   s=30, facecolors="none", edgecolors=gold,
+                   marker="s", label="Rejected observations")
+        ordered = sorted(rows, key=lambda r: float(r["x"]))
+        x = [float(r["x"]) for r in ordered]
+        ax.plot(x, [float(r["true_y"]) for r in ordered],
+                color=navy, linestyle=":", linewidth=1.8,
+                label="Known synthetic generating line")
+        ax.plot(x, [float(r["ransac_y"]) for r in ordered],
+                color=cyan, linewidth=2, label="C++23 RANSAC + TLS")
+        ax.plot(x, [float(r["all_tls_y"]) for r in ordered],
+                color=gold, linewidth=1.5, label="All-data TLS")
+        ax.set_xlabel("x (domain units)")
+        ax.set_ylabel("y (domain units)")
+        ax.set_title("C++23 2D consensus under structured outliers")
+        ax.text(.02, .02, "Orthogonal threshold 0.04; 400 seeded trials",
+                transform=ax.transAxes, fontsize=8, color=navy)
     else:
         raise ValueError(f"Unsupported C++23 CSV schema: {sorted(fields)}")
 
