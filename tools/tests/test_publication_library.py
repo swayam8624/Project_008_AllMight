@@ -69,6 +69,18 @@ class PublicationLibrarySafety(unittest.TestCase):
     def args(self,**kwargs):
         return SimpleNamespace(master=self.master,library=self.library,**kwargs)
 
+    def test_initialization_creates_only_neat_output_structure_and_is_idempotent(self):
+        call_silent(pl.init_library,self.library)
+        self.assertTrue((self.library/"EPUB").is_dir())
+        self.assertTrue((self.library/"PDF").is_dir())
+        self.assertTrue((self.library/"Archive").is_dir())
+        self.assertTrue((self.library/"Manifests"/"publication-manifest.json").is_file())
+        self.assertIn("FROM BITS TO RESEARCH",
+                      (self.library/"README.md").read_text())
+        original=pl.sha256(self.library/"README.md")
+        call_silent(pl.init_library,self.library)
+        self.assertEqual(original,pl.sha256(self.library/"README.md"))
+
     def test_scan_is_read_only_and_identifies_legacy_stage_exports(self):
         source=self.master/"Book Production/AllMight Codex/LaTeX/Books/Ebooks"
         source.mkdir(parents=True)
