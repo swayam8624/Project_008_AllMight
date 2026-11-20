@@ -111,11 +111,25 @@ CHAPTER_ID_RE = re.compile(
 )
 
 
+def latex_escape_text(value: str) -> str:
+    """Escape LaTeX syntax in *data*, not in intentional TeX commands.
+
+    Author-written metadata and reference fields must be escaped before
+    inclusion in a .tex template. In particular, '&' in a journal title
+    would otherwise stop LuaLaTeX with 'Misplaced alignment tab character'.
+    Escaping one character at a time prevents double-escaping backslashes.
+    URLs are deliberately passed to \\url separately, not through this.
+    """
+    escape = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%",
+              "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{",
+              "}": r"\}", "~": r"\textasciitilde{}",
+              "^": r"\textasciicircum{}"}
+    return "".join(escape.get(ch, ch) for ch in value)
+
+
 def latex_paragraphs(paragraphs: tuple[str, ...]) -> str:
     """Escape narrative prose, keeping print and EPUB word content aligned."""
-    escape = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%",
-              "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}"}
-    return "\n\n".join(r"\noindent "+ "".join(escape.get(ch, ch) for ch in p)+r"\par"
+    return "\n\n".join(r"\noindent "+latex_escape_text(p)+r"\par"
                        for p in paragraphs)
 
 
@@ -151,9 +165,17 @@ def inventory(parts: tuple[Path, Path]) -> dict[str, list[str]]:
 
 
 def selected_references_latex() -> str:
+    """Keep original bibliography wording, but treat fields as data.
+
+    Only the fixed item/emphasis/URL commands are LaTeX syntax. Names,
+    paper titles and publications are escaped independently, so an ampersand,
+    percent sign, underscore or other TeX metacharacter cannot break the
+    1,000-page unified book near its final references.
+    """
     items=[]
     for author,title,publication,url in SELECTED_REFERENCES:
-        items.append(r"\item "+author+r" \emph{"+title+"} "+publication+
+        items.append(r"\item "+latex_escape_text(author)+r" \emph{"+
+                     latex_escape_text(title)+"} "+latex_escape_text(publication)+
                      r" \url{"+url+"}")
     return r"\begin{enumerate}"+"\n"+"\n".join(items)+"\n"+r"\end{enumerate}"
 
