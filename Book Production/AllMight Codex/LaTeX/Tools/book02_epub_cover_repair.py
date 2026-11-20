@@ -63,8 +63,10 @@ def repair_book02_epub_cover(path: str | Path) -> dict:
             raise RuntimeError("EPUB cover JPEG referenced by the OPF is missing")
         mime = image_item.get("media-type")
         signatures = {"image/jpeg": b"\xff\xd8", "image/png": b"\x89PNG"}
-        if mime not in signatures or not original.read(image_path).startswith(signatures[mime]):
+        image_bytes=original.read(image_path)
+        if mime not in signatures or not image_bytes.startswith(signatures[mime]):
             raise RuntimeError("EPUB cover-image is not a usable JPEG/PNG")
+        cover_digest=sha256(image_bytes).hexdigest()
         cover_docs = [item for item in items if item.get("media-type") == "application/xhtml+xml"
                       and posixpath.basename(item.get("href", "")) == "cover.xhtml"]
         if len(cover_docs) != 1:
@@ -145,8 +147,54 @@ def repair_book02_epub_cover(path: str | Path) -> dict:
         return {
             "visible_cover_image": True,
             "cover_asset": image_path,
-            "cover_sha256": sha256(original.read(image_path)).hexdigest()
-                            if not updates else None,
+            "cover_sha256": cover_digest,
             "cover_first_in_spine": True,
             "modified_members": sorted(updates),
         }
+
+
+
+def main() -> int:
+    """Fix the EPUB *already in Master*, without rebuilding its chapters.
+
+    An explicit --output path creates a new reviewed edition; the source EPUB
+    is never modified. An existing output is protected unless --force is used.
+    """
+    import argparse
+    import json
+    import shutil
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("epub", type=Path, help="Existing full Book Two EPUB")
+    parser.add_argument("--output", type=Path, required=True,
+                        help="New corrected EPUB path, e.g. Book02-Review/")
+    parser.add_argument("--force", action="store_true",
+                        help="Explicitly replace an existing output file")
+    args = parser.parse_args()
+    original = args.epub.expanduser().resolve()
+    target = args.output.expanduser().resolve()
+    if not original.is_file() or not zipfile.is_zipfile(original):
+        parser.error("Existing Book Two EPUB file not found: " + str(original))
+    if original == target:
+        parser.error("The output must be a separate file; original EPUB is read-only")
+    if target.exists() and not args.force:
+        parser.error("Output exists; use --force to intentionally replace it: " + str(target))
+    if not target.parent.is_dir():
+        parser.error("Output directory does not exist: " + str(target.parent))
+    with tempfile.NamedTemporaryFile(
+        prefix=target.name + ".review-", suffix=".epub",
+        dir=target.parent, delete=False
+    ) as output_file:
+        scratch = Path(output_file.name)
+    try:
+        shutil.copy2(original, scratch)
+        report = repair_book02_epub_cover(scratch)
+        os.replace(scratch, target)
+    finally:
+        scratch.unlink(missing_ok=True)
+    print("BOOK02_COVER_VISIBLE_OK", json.dumps(report, sort_keys=True))
+    print("BOOK02_REVIEWED_EPUB", target)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
