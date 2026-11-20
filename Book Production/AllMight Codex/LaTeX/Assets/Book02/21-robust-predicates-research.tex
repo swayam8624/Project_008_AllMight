@@ -79,6 +79,7 @@ performance protocol. None of those additional achievements is
 implied by this small, independently authored exact-sign witness.
 
 
+\begin{booktwolab}[Predicate certification]
 \paragraph{C++23 checkpoint: distinguish exact, certified, and unknown.}
 The native experiment \texttt{book02\_workbench orientation} returns
 an integer-grid sign and a binary64 filtered sign. These are distinct
@@ -110,6 +111,8 @@ outside the documented range is rejected. Test the special case of
 three exactly collinear floating-point positions separately: the
 filter should remain uncertain, because its role is certification,
 not guessing a zero.
+
+\end{booktwolab}
 
 \paragraph{Why the contract matters visually.}
 A mistaken orientation decision can reverse a triangle's winding,

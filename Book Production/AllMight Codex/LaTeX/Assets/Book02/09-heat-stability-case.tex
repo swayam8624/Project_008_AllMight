@@ -55,6 +55,7 @@ never use a plausible-looking low-frequency image as a stability test:
 an unobserved high-frequency mode can still grow.
 
 
+\begin{booktwolab}[Stable heat equation]
 \paragraph{C++23 checkpoint: do not let a heat plot hide instability.}
 The native command \texttt{book02\_workbench heat} exports one row for
 each position and time step. The optional
@@ -82,7 +83,12 @@ values independently of the plotting code. Then request
 \(r=0.51\): rejection, rather than a pretty but physically misleading
 plot, is the expected result.
 
+\end{booktwolab}
+
+\begin{booktwopitfall}[Scope of the discretization]
 This is a one-dimensional explicit stencil, not a finite-element
 heat-method geodesic solver and not an implicit unconditionally stable
 method. The later geometric operators in this book require their own
 mass matrices, boundary treatment, linear solves, and convergence study.
+
+\end{booktwopitfall}

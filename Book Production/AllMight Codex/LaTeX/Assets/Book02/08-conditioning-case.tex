@@ -62,6 +62,7 @@ on separate labeled axes. Discuss the scale at which floating-point
 results cease to be trustworthy.
 
 
+\begin{booktwolab}[Matrix conditioning]
 \paragraph{C++23 checkpoint: a matrix problem with a numerical contract.}
 Return to the chapter's conditioning discussion with the native
 \texttt{book02\_workbench matrix} experiment. The exact example is
@@ -90,6 +91,8 @@ system as well as on roundoff and residual size. Compare the normalized
 residual \(\lVert Ax-b\rVert/(\lVert A\rVert\lVert x\rVert+\lVert b\rVert)\)
 with the forward error \(\lVert x-x_\star\rVert/\lVert x_\star\rVert\).
 Neither quantity should be substituted for the other.
+
+\end{booktwolab}
 
 \paragraph{Independent check.}
 Calculate the inverse of the benign \(2\times2\) matrix by hand, then
