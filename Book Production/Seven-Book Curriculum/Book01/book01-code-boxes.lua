@@ -61,11 +61,20 @@ local note_labels = {
   ["checkpoint"] = "Checkpoint",
 }
 function BlockQuote(block)
-  if FORMAT ~= "latex" then return nil end
+  if FORMAT ~= "latex" and not FORMAT:match("^epub") then return nil end
   local first = block.content[1]
   local plain = first and pandoc.utils.stringify(first) or ""
   local category = string.lower(plain):match("^%s*([%a%s]+)%s*:")
   local label = category and note_labels[(category:gsub("%s+$", ""))] or nil
+  if FORMAT:match("^epub") then
+    if not label then return nil end
+    local role = (label == "Exercise" or label == "Checkpoint")
+      and "book-practice" or "book-learning-note"
+    local heading = pandoc.Para({pandoc.Strong({pandoc.Str(label)})})
+    local contents = {heading}
+    for _, item in ipairs(block.content) do contents[#contents + 1] = item end
+    return pandoc.Div(contents, pandoc.Attr("", {role}))
+  end
   local box = (label == "Exercise" or label == "Checkpoint")
       and "BookPractice" or "BookQuote"
   -- Explicitly labelled concepts become learning callouts. Ordinary
@@ -82,7 +91,7 @@ function BlockQuote(block)
 end
 
 function Para(block)
-  if FORMAT ~= "latex" then return nil end
+  if FORMAT ~= "latex" and not FORMAT:match("^epub") then return nil end
   local plain = pandoc.utils.stringify(block)
   local label = nil
   if plain:match("^%s*By the end:") then
@@ -91,6 +100,12 @@ function Para(block)
     label = "Check your understanding"
   end
   if not label then return nil end
+  if FORMAT:match("^epub") then
+    return pandoc.Div({
+      pandoc.Para({pandoc.Strong({pandoc.Str(label)})}),
+      block,
+    }, pandoc.Attr("", {"book-learning-note"}))
+  end
   return {
     pandoc.RawBlock("latex", "\\begin{BookLearningNote}[" .. label .. "]"),
     block,
