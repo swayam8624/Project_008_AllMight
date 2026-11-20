@@ -178,7 +178,7 @@ def install_book02_visuals(tex_path: str | Path, *, include_rich_atlas: bool = F
     )
     source = source.replace(
         r"\title{Mathematics for Visual Computing}",
-        r"\title{From Equations to Geometry\\{\large Mathematics, Numerical Methods, Optimization, and Visual Computing}}", 1
+        r"\title{From Equations to Geometry\\{\large Mathematics, Geometry, and Computational Foundations for Graphics, Simulation, and Research}}", 1
     )
     source = source.replace(
         r"\AllMightStageMark{2}{Mathematics for Visual Computing}",

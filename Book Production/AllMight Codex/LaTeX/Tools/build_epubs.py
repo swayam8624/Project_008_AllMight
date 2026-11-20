@@ -454,7 +454,7 @@ class Packager:
         split_level="2" if mode=="collection" else "1"
         cmd=[shutil.which("pandoc") or "pandoc",str(content),"--from=json","--to=epub3","--output",str(output),"--css",str(css),f"--split-level={split_level}","--metadata",f"title={title}","--metadata","author=Swayam Singal","--metadata","lang=en"]
         if stage and stage["id"]==BOOK02_STAGE:
-            cmd.extend(["--metadata", "subtitle=Mathematics, Numerical Methods, Optimization, and Visual Computing"])
+            cmd.extend(["--metadata", "subtitle=Mathematics, Geometry, and Computational Foundations for Graphics, Simulation, and Research"])
             if self.book02_cover_image is not None:
                 cmd.extend(["--epub-cover-image", str(self.book02_cover_image)])
         p=subprocess.run(cmd,cwd=self.out,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
