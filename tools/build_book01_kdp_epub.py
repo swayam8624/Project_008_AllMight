@@ -463,7 +463,8 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     run(["pandoc", "-f", "markdown-raw_html+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
          "-t", "epub3", "--standalone", "--toc", "--toc-depth=2",
-         "--split-level=1", "--mathml", "--css", str(css),
+         "--split-level=1", "--mathml", "--lua-filter", str(builder.CODE_FILTER),
+         "--css", str(css),
          "--epub-cover-image", str(cover_for_epub),
          "--metadata", "title=" + BOOK_TITLE,
          "--metadata", "subtitle=" + BOOK_SUBTITLE,
