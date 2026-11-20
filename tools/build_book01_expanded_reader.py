@@ -859,15 +859,19 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
     # for cross-references/TOC rather than forcing installation of full MacTeX.
     # Default is one continuous TeX book, not four compiled volumes
     # merged into a PDF with repeated covers and incomplete contents.
+    # Intermediate TeX/PDF proof files remain under build/book01-expanded-reader.
+    # Finished reader-facing PDFs are published directly in Master/build.
+    release_dir = ROOT / "build"
+    release_dir.mkdir(parents=True, exist_ok=True)
     if paperback:
         selected = [
             (OUTPUT / f"book01-print-v{n:02d}",
-             OUTPUT / ("Book01-From-Bits-to-Programs-KDP-Volume-01.pdf" if n == 1 else "Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf"))
+             release_dir / ("Book01-From-Bits-to-Programs-KDP-Volume-01.pdf" if n == 1 else "Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf"))
             for n in range(1, len(PRINT_VOLUMES) + 1)
         ]
     elif part is None:
         selected = [(OUTPUT / "book01-complete",
-                     OUTPUT / "Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf")]
+                     release_dir / "Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf")]
     else:
         selected = [(OUTPUT / f"book01-expanded-p{part:02d}",
                      OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{part:02d}.pdf")]
