@@ -72,11 +72,19 @@
 \definecolor{BOneSlate}{HTML}{405A6E}
 \definecolor{BOneMuted}{HTML}{616970}
 \definecolor{BOneRule}{HTML}{C3CAD0}
-\definecolor{BOnePaper}{HTML}{E5E7E9}
-\definecolor{BOneNote}{HTML}{E7EAED}
-\definecolor{BOnePractice}{HTML}{E9E7E4}
-\definecolor{BOneString}{HTML}{77523E}
-\definecolor{BOneComment}{HTML}{57695E}
+% Muted, print-safe colour roles with clear differences on screen.
+% All panels retain visible rules, labels or a left keyline in grayscale.
+\definecolor{BOnePaper}{HTML}{F0F5FA}
+\definecolor{BOneNote}{HTML}{EDF5FB}
+\definecolor{BOnePractice}{HTML}{F1F7EF}
+\definecolor{BOneQuoteWash}{HTML}{F6F8FA}
+\definecolor{BOneCodeAccent}{HTML}{35688E}
+\definecolor{BOneNoteAccent}{HTML}{3C7797}
+\definecolor{BOnePracticeAccent}{HTML}{51765B}
+\definecolor{BOneKeyword}{HTML}{275B87}
+\definecolor{BOneString}{HTML}{8E4F2A}
+\definecolor{BOneComment}{HTML}{4E765F}
+\definecolor{BOneNumber}{HTML}{82599B}
 \colorlet{AMAccent}{BOneSlate}
 \colorlet{AMInk}{BOneInk}
 \colorlet{AMMuted}{BOneMuted}
@@ -205,43 +213,78 @@
   }\clearpage
 }
 
-% Source code: subtle rule and near-white background. No bright classroom colors.
-% Line breaking is enabled without changing the original code bytes.
-\newtcblisting{BookCode}{
+% Source-preserving, language-aware code panels. Listing text stays verbatim.
+% The Pandoc Lua filter supplies a whitelisted language, not executable TeX
+% from arbitrary Markdown attributes. Unknown languages remain plain listings.
+% Keep numeric glyph sizes >=9pt, and make panels breakable across pages.
+\lstdefinelanguage{BOneShell}{
+  morekeywords={cd,git,cmake,ninja,python,python3,pip,export,echo,make,
+    mkdir,rm,cp,mv,ls,cat,find,grep,clang++,g++,c++,ctest,brew,env},
+  sensitive=true,morecomment=[l]{\#},morestring=[b]",
+  morestring=[b]'
+}
+\lstdefinelanguage{BOneCMake}{
+  morekeywords={cmake_minimum_required,project,add_executable,add_library,
+    target_link_libraries,target_include_directories,set,option,if,endif,
+    foreach,endforeach,find_package,enable_testing,add_test},
+  sensitive=false,morecomment=[l]{\#},morestring=[b]"
+}
+\lstdefinelanguage{BOneJSON}{
+  morestring=[b]",morecomment=[l]{//},
+  morekeywords={true,false,null},sensitive=true
+}
+\lstdefinelanguage{BOneShader}{
+  morekeywords={kernel,vertex,fragment,device,constant,thread,threadgroup,
+    float,float2,float3,float4,int,uint,uint2,uint3,uint4,half,half2,
+    half3,half4,struct,return,if,else,for,while,texture2d,sampler,
+    buffer,position,namespace,using,void,layout,uniform,shared,group},
+  sensitive=true,morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},morestring=[b]"
+}
+\newtcblisting{BookCode}[1][]{
   enhanced,breakable,listing only,listing engine=listings,
   colback=BOnePaper,colframe=BOneRule,
-  boxrule=0.75pt,arc=0pt,
-  left=6pt,right=5pt,top=5pt,bottom=5pt,
-  before skip=0.55\baselineskip,after skip=0.60\baselineskip,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2.2pt}{0pt}{BOneCodeAccent},
+  left=8pt,right=7pt,top=7pt,bottom=7pt,
+  before skip=0.70\baselineskip,after skip=0.75\baselineskip,
   listing options={
-    language={},basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont,
+    language={},basicstyle=\ttfamily\fontsize{9}{11}\selectfont,
     columns=fullflexible,keepspaces=true,showstringspaces=false,
     breaklines=true,breakatwhitespace=false,tabsize=4,
     numbers=none,
-    keywordstyle=\color{BOneSlate}\bfseries,
-    commentstyle=\color{BOneComment},
-    stringstyle=\color{BOneString}
+    keywordstyle=\bfseries\color{BOneKeyword},
+    commentstyle=\itshape\color{BOneComment},
+    stringstyle=\color{BOneString},
+    #1
   }
 }
-% Callouts should only be used for actually meaningful explanations, not every
-% quotation or every paragraph. They are readable when printed without color.
+% A quotation is not automatically a technical warning or definition.
+% Distinct visual panels preserve that difference instead of mislabelling it.
+\newtcolorbox{BookQuote}{
+  enhanced,breakable,colback=BOneQuoteWash,colframe=BOneRule,
+  boxrule=0.4pt,arc=1.5pt,
+  borderline west={1.4pt}{0pt}{BOneMuted},
+  left=9pt,right=9pt,top=5pt,bottom=5pt,
+  before skip=0.65\baselineskip,after skip=0.65\baselineskip
+}
 \newtcolorbox{BookLearningNote}[1][]{
   enhanced,breakable,colback=BOneNote,colframe=BOneRule,
-  boxrule=0.4pt,arc=0pt,
-  borderline west={1.3pt}{0pt}{BOneSlate},
-  left=7pt,right=7pt,top=5pt,bottom=5pt,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2pt}{0pt}{BOneNoteAccent},
+  left=9pt,right=8pt,top=7pt,bottom=7pt,
   fonttitle=\small\bfseries,title={#1},
   colbacktitle=BOneNote,coltitle=BOneInk,
-  before skip=0.65\baselineskip,after skip=0.65\baselineskip
+  before skip=0.75\baselineskip,after skip=0.75\baselineskip
 }
 \newtcolorbox{BookPractice}[1][]{
   enhanced,breakable,colback=BOnePractice,colframe=BOneRule,
-  boxrule=0.4pt,arc=0pt,
-  borderline west={1.3pt}{0pt}{BOneMuted},
-  left=7pt,right=7pt,top=5pt,bottom=5pt,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2pt}{0pt}{BOnePracticeAccent},
+  left=9pt,right=8pt,top=7pt,bottom=7pt,
   fonttitle=\small\bfseries,title={#1},
   colbacktitle=BOnePractice,coltitle=BOneInk,
-  before skip=0.65\baselineskip,after skip=0.65\baselineskip
+  before skip=0.75\baselineskip,after skip=0.75\baselineskip
 }
 % Optional author-owned study material: called at most once per volume.
 \newcommand{\BookStudyMethod}{%
