@@ -29,6 +29,35 @@ from pathlib import Path
 from book02_visuals import FIGURES, RICH_FIGURES, PRELUDE_CHAPTER, PRELUDE_FILE, FIGURE_SOURCE
 
 STAGE = "02-Mathematics-for-Visual-Computing"
+
+# Reader-resizable units and explicit semantic labels remain the source of truth.
+# Color is a secondary cue and disappears gracefully in black-and-white mode.
+BOOK02_EPUB_CSS = """
+div.booktwoconcept, div.booktwoproof, div.booktwopitfall, div.booktwolab {
+    display: block; margin: .9em 0; padding: .6em .8em;
+    page-break-inside: avoid; break-inside: avoid;
+    border-left: .22em solid #0881a3;
+    background: #eaf6f9; color: inherit;
+}
+div.booktwoproof { border-left-color: #65528c; background: #f1ecf8; }
+div.booktwopitfall { border-left-color: #9b601d; background: #fbf5e9; }
+div.booktwolab { border-left-color: #167e87; background: #e9f5f2; }
+div.booktwoconcept > p:first-child, div.booktwoproof > p:first-child,
+div.booktwopitfall > p:first-child, div.booktwolab > p:first-child {
+    margin-top: 0; font-size: .89em; letter-spacing: .01em;
+}
+div.Shaded { background: #f0f4f6; border-left: .18em solid #0081a3;
+             padding: .45em .6em; margin: .7em 0; }
+div.Shaded pre { margin: 0; padding: 0; background: transparent;
+                 white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) {
+  div.booktwoconcept, div.booktwoproof, div.booktwopitfall, div.booktwolab {
+     background: transparent; color: inherit;
+  }
+  div.Shaded { background: transparent; }
+}
+"""
+
 REPO = Path(__file__).resolve().parents[4]
 LABS = REPO / "tools" / "labs"
 ANALYTIC = {
@@ -194,6 +223,24 @@ class Book02EpubSupplement:
         blocks=pandoc_tex(raw)
         if not blocks:
             raise RuntimeError("Empty Pandoc conversion for "+name)
+        # Pandoc retains unknown TeX environments as semantic Divs, but the
+        # optional LaTeX title argument is not screen-reader text. Provide a
+        # visible role label in the AST, not an inaccessible CSS pseudo-label.
+        reader_roles = {
+            "booktwoconcept": "Concept",
+            "booktwoproof": "Derivation",
+            "booktwopitfall": "Numerical pitfall",
+            "booktwolab": "C++23 laboratory",
+        }
+        for node in walk(blocks):
+            if node.get("t") != "Div":
+                continue
+            attrs, children = node["c"]
+            name = next((c for c in attrs[1] if c in reader_roles), None)
+            if name:
+                children.insert(0, {"t": "Para", "c": [
+                    {"t": "Strong", "c": as_str(reader_roles[name])}
+                ]})
         headings=[n for n in walk(blocks) if n.get("t")=="Header"]
         if not headings:
             raise RuntimeError("Source has no reader-visible heading: "+name)

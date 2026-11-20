@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, "/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15")
 import build_books as epub_helpers  # noqa: E402
 
-from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement
+from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement, BOOK02_EPUB_CSS
 
 
 def sha(data: bytes) -> str:
@@ -443,6 +443,10 @@ class Packager:
         content=self.out/(label+".json");content.write_text(json.dumps(ast,ensure_ascii=False),encoding="utf-8")
         css=self.out/"epub.css"
         css_text=epub_helpers.FINAL_CSS+"\nspan.diagram-panels { display: block; }\nspan.diagram-panels img { display: block; margin: .8em auto; }\npre > code { display: block; min-width: 0; max-width: 100%; white-space: pre-wrap !important; overflow-wrap: anywhere; }\npre > code.sourceCode { white-space: pre-wrap !important; }\npre > code.sourceCode > span { display: block !important; line-height: 1.25; white-space: inherit; overflow-wrap: anywhere; }\n"
+        # The Book Two layout is additive and stage-scoped: do not restyle
+        # the six other volumes or modify the Book One reference EPUB.
+        if stage is None or stage["id"] == BOOK02_STAGE:
+            css_text += BOOK02_EPUB_CSS
         css.write_text(css_text,encoding="utf-8")
         output=self.out/(label+".epub")
         title=("From Equations to Geometry" if stage and stage["id"]==BOOK02_STAGE
