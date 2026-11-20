@@ -281,7 +281,7 @@ def main() -> int:
         return 0
     except (OSError, RuntimeError, ValueError, ImportError) as exc:
         print("\nBOOK ONE RELEASE STOPPED: " + str(exc), file=sys.stderr)
-        print("Previous releases, the manuscript, and Book Two are unchanged.", file=sys.stderr)
+        print("The manuscript and Book Two were not deliberately modified. Check the log for which Book One outputs succeeded.", file=sys.stderr)
         if LOG.exists():
             print("Full log:", LOG, file=sys.stderr)
         return 1
