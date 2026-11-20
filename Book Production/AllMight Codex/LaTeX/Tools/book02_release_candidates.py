@@ -65,6 +65,7 @@ def source_fingerprint()->str:
         ROOT/"Tools"/"book02_svg_id_repair.py",
         ROOT/"Tools"/"book02_epub_reader_polish.py",
         ROOT/"Tools"/"book02_epub_cover_repair.py",
+        ROOT/"Tools"/"book02_finish_epub.py",
         ROOT/"Tools"/"build_epubs.py",
         Path(__file__).resolve(),
         ROOT.parent.parent.parent/"tools"/"labs"/"book02_visual_atlas.py",
@@ -300,9 +301,15 @@ def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
             for name in names if name.lower().endswith((".jpg",".jpeg"))
         ):
             raise RuntimeError("The actual EPUB package does not contain the supplied cover JPEG")
+        # The reader edition deliberately rasterizes four path-heavy
+        # Matplotlib SVG plots to 1600px PNG, preserving the other SVGs.
+        # Count the optimized scientific images as well as retained vectors.
         svgs=[p for p in names if p.endswith(".svg")]
-        if len(svgs)<EXPECTED_IMAGE_ASSETS:
-            raise RuntimeError(f"Expected at least 13 scientific SVGs, got {len(svgs)}")
+        scientific_png=[p for p in names if p.endswith("-reader.png")]
+        if len(svgs)+len(scientific_png)<EXPECTED_IMAGE_ASSETS:
+            raise RuntimeError(
+                f"Expected at least 13 scientific figure assets, got "
+                f"{len(svgs)} SVGs and {len(scientific_png)} optimized PNGs")
         xhtml=[p for p in names if p.endswith(".xhtml")]
         content=b" ".join(z.read(p) for p in xhtml)
         for snippet in (b"Numerical Geometry Atlas",b"Reconstruction",b"Geodesics"):
@@ -393,6 +400,9 @@ def check_environment(generation:Path, *, cover_image:Path|None,
         checks["java"]=bool(shutil.which("java"))
         cache=Path("/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15")
         checks["source_cache_builder"]=(cache/"build_books.py").is_file()
+        import importlib.util
+        for module in ("lxml","PIL","cairosvg"):
+            checks["epub_finish_"+module]=importlib.util.find_spec(module) is not None
         checks["epubcheck_5_4_0"]=(cache/"epubcheck"/"epubcheck-5.4.0"/"epubcheck.jar").is_file()
         checks["frozen_conversion_manifest"]=(generation/"conversion-manifest.json").is_file()
     if cover_image is not None and require_epub:
