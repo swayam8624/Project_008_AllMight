@@ -267,3 +267,29 @@ code. Native RANSAC is still an educational two-dimensional
 line experiment, not a 3D geometric-vision estimator
 or a production camera-localization implementation.
 \end{booktwoconcept}
+
+
+\begin{booktwoconcept}[Native exactness milestone: finite binary64 orientation]
+The capstone's orientation contract now has a C++23
+\emph{arbitrary finite binary64} exact-sign implementation,
+not just the earlier bounded-integer sign and floating
+filter that returned uncertainty. The standalone
+\texttt{exact\_predicates.hpp} reconstructs each input
+as a signed dyadic rational from its IEEE-754 bits
+and evaluates the determinant with base-\(2^{32}\)
+variable-length integer arithmetic. It handles
+subnormals and overflow-prone coordinate differences
+without rounding intermediate geometry.
+
+The \texttt{orientation-audit} export includes six
+adversarial cases plus 500 finite random bit-pattern
+triples in exact hexadecimal notation. A separate
+Python \texttt{Fraction} program checks all 506 signs
+independently; it is an \emph{oracle}, never the
+mathematical implementation supplied for the reader's
+C++23 project. Invalid nonfinite inputs are rejected.
+This resolves the native finite-input orientation-sign
+milestone only; exact incircle, 3D orientation and
+production-grade adaptive predicate performance remain
+future implementation checkpoints.
+\end{booktwoconcept}
