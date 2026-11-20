@@ -190,6 +190,28 @@ def layout(root: Path, create: bool) -> None:
             target.mkdir(parents=True, exist_ok=True)
 
 
+def init_library(root: Path) -> None:
+    """Create the tidy author-local library without touching any source."""
+    layout(root, create=True)
+    manuscript = root / "README.md"
+    if not manuscript.exists():
+        manuscript.write_text(
+            "# FROM BITS TO RESEARCH — Reader Publications\n\n"
+            "Canonical digital exports for the seven-book technical curriculum.\n\n"
+            "- `EPUB/`: one complete reflowable EPUB per approved book.\n"
+            "- `PDF/`: one complete reading PDF per approved book. No physical parts.\n"
+            "- `Manifests/`: SHA-256 checksums, provenance and release status.\n"
+            "- `Archive/`: superseded or exact-duplicate reader editions retained safely.\n\n"
+            "A candidate's presence here is not by itself EPUBCheck, mathematical, "
+            "or reader-display acceptance. Read `../CHATGPT.md` for the "
+            "seven-book release gates. Run `python tools/publication_library.py "
+            "verify` to check manifest identity.\n",
+            encoding="utf-8")
+    if not (root / MANIFEST).exists():
+        manifest_write(root, manifest_read(root))
+    print("PUBLICATION_LIBRARY_INITIALIZED", root)
+
+
 def manifest_read(root: Path) -> dict:
     file = root / MANIFEST
     if not file.exists():
@@ -524,6 +546,7 @@ def main() -> int:
     p.add_argument("--library", type=Path,
                    help="Publication output root (default: Master / From Bits to Research - Publications)")
     sub = p.add_subparsers(dest="action", required=True)
+    sub.add_parser("init", help="Create an empty organized seven-book publication library safely")
     s = sub.add_parser("scan", help="Read-only inventory: never auto-promote legacy exports")
     s.add_argument("--include-build", action="store_true",
                    help="Also search generated Build candidates, without modifying them")
@@ -555,7 +578,9 @@ def main() -> int:
     if args.library == args.master:
         p.error("Library cannot overwrite repository root")
     try:
-        if args.action == "scan":
+        if args.action == "init":
+            init_library(args.library)
+        elif args.action == "scan":
             scan(args)
         elif args.action == "promote":
             promote(args)
