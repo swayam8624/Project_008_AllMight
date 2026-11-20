@@ -192,11 +192,11 @@ def inspect_epub(path:Path,record:dict,cover_image:Path|None=None)->dict:
         diagnostic=(epubcheck.get("output") or "(No EPUBCheck diagnostic captured)").strip()
         status_path=path.parent/"build-status.json"
         raise RuntimeError(
-            "Book Two full EPUB was generated, but EPUBCheck 5.4.0 rejected it.\\n"
-            f"EPUB: {path}\\n"
-            f"EPUBCheck exit code: {epubcheck.get('exit_code')!r}\\n"
-            f"Recorded build status: {status_path}\\n"
-            "EPUBCheck output (last 2,500 characters):\\n"+diagnostic+"\\n"
+            "Book Two full EPUB was generated, but EPUBCheck 5.4.0 rejected it.\n"
+            f"EPUB: {path}\n"
+            f"EPUBCheck exit code: {epubcheck.get('exit_code')!r}\n"
+            f"Recorded build status: {status_path}\n"
+            "EPUBCheck output (last 2,500 characters):\n"+diagnostic+"\n"
             "Fix the specific validation messages before calling this EPUB verified; "
             "the successfully generated PDF candidates remain intact."
         )
