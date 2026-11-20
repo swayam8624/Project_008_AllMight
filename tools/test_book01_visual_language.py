@@ -97,7 +97,13 @@ class VisualLanguageTests(unittest.TestCase):
                 )
         self.assertIn("book-learning-note", markup)
         self.assertIn("book-practice", markup)
-        self.assertIn("int main()", markup)
+        # Pandoc syntax-highlights the source into nested XHTML spans;
+        # compare the reader-visible text, not the raw tag-interleaved XML.
+        import html
+        import re
+        visible_code = html.unescape(re.sub(r"<[^>]+>", "", markup))
+        self.assertIn("int main()", visible_code)
+        self.assertIn('class="sourceCode cpp"', markup)
 
 
 if __name__ == "__main__":
