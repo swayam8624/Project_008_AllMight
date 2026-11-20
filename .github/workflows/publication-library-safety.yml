@@ -1,0 +1,40 @@
+name: Seven-book publication library safety
+
+on:
+  push:
+    branches:
+      - curriculum/book02-mathematics-refinement-pass01
+    paths:
+      - 'CHATGPT.md'
+      - 'AGENTS.md'
+      - '.gitignore'
+      - 'tools/publication_library.py'
+      - 'tools/tests/test_publication_library.py'
+      - '.github/workflows/publication-library-safety.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-library-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source safely
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile the publication library manager
+        run: |
+          python -m py_compile tools/publication_library.py tools/tests/test_publication_library.py
+      - name: Prove promotion, SHA identity, quarantine and no source deletion
+        run: |
+          python -m unittest -v tools.tests.test_publication_library
+      - name: Verify help and supported subcommands
+        run: |
+          python tools/publication_library.py --help
+          python tools/publication_library.py promote --help
+          python tools/publication_library.py scan --help
