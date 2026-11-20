@@ -13,6 +13,8 @@
 #include <vector>
 
 namespace book02::exact {
+static_assert(sizeof(double)==8 && std::numeric_limits<double>::is_iec559,
+              "Exact orientation requires IEEE-754 binary64 doubles");
 namespace detail {
 struct Natural {
     std::vector<std::uint32_t> limbs; // least significant first
