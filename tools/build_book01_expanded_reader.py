@@ -990,11 +990,14 @@ def main() -> int:
     parser.add_argument("--part", type=int, choices=(1, 2, 3, 4),
                         help="For --compile, build only this part")
     parser.add_argument("--open", action="store_true", help="Open each successfully compiled PDF in the default viewer")
+    parser.add_argument("--cover", type=Path, help="Author-provided PNG/JPEG cover for the single continuous digital PDF; stage before --compile")
     args = parser.parse_args()
     if args.open and not (args.compile or args.compile_paperback):
         parser.error("--open requires --compile or --compile-paperback")
     if args.part and not args.compile:
         parser.error("--part is only meaningful with --compile")
+    if args.cover and not args.compile:
+        parser.error("--cover is for --compile (the single continuous digital edition) only")
     try:
         rows, metadata = audit_sources()
         print("SOURCE CHECK PASSED:", len(rows), "original chapters,",
@@ -1004,6 +1007,11 @@ def main() -> int:
         elif args.verify_prepared:
             verify_prepared(rows, metadata)
         elif args.compile or args.compile_paperback:
+            if args.cover:
+                # Do not invent a substitute cover; insert the exact supplied art.
+                # The original input image and all source chapters stay untouched.
+                from stage_book01_cover import stage
+                stage(args.cover.expanduser().resolve())
             compile_parts(rows, metadata, args.part, args.open, args.compile_paperback)
     except (OSError, ValueError, RuntimeError, AssertionError, UnicodeError) as exc:
         print("Book01 release refused:", exc, file=sys.stderr)
