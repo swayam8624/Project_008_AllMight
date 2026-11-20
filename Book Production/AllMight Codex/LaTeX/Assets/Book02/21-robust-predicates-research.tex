@@ -119,3 +119,111 @@ A mistaken orientation decision can reverse a triangle's winding,
 break a mesh adjacency rule, or leave a crack along a raster boundary.
 Reporting the error state is part of geometry correctness, not an
 optional debugging convenience.
+
+
+% Book Two Pass 07 — independently checked all-finite-binary64 native fallback.
+\begin{booktwoproof}[From a floating-point number to an exact integer]
+Every finite IEEE-754 binary64 number is a \emph{dyadic rational}:
+\[
+ x=(-1)^s\,m\,2^e,\qquad m\in\mathbb{Z}_{\ge0}.
+\]
+The unsigned fraction field is \(f\) and the biased exponent is \(E\).
+For normal values, \(m=2^{52}+f\) and
+\(e=E-1023-52\). For subnormal nonzero values,
+\(m=f\) and \(e=-1074\). Either signed zero has \(m=0\).
+This is an \emph{exact statement about stored bits}, not an
+approximation to a decimal measurement.
+
+For two dyadics \(u=m_u2^{e_u}\) and
+\(v=m_v2^{e_v}\), let \(e_0=\min(e_u,e_v)\).
+Then their difference is the integer
+\[
+ u-v=\left(m_u2^{e_u-e_0}-m_v2^{e_v-e_0}\right)2^{e_0},
+\]
+with signed integer mantissas as needed. A product multiplies
+the integer mantissas and adds their powers of two. Thus
+the orientation determinant can be evaluated with
+\emph{integer addition, subtraction, shifts and multiplication}
+without ever rounding the intermediate geometry.
+
+The C++23 \texttt{src/exact\_predicates.hpp} implements
+this derivation using educational variable-length unsigned
+base-\(2^{32}\) limbs and a signed dyadic wrapper.
+The result is the \emph{exact sign of the determinant of
+the six supplied finite binary64 coordinates}. There is
+no fixed \(\pm10^9\) grid restriction: subnormals and the
+largest finite binary64 inputs are within its stated domain.
+The program rejects infinities and NaNs rather than
+inventing a winding.
+\end{booktwoproof}
+
+\begin{booktwolab}[Exact C++23 orientation versus an approximate filter]
+Run \texttt{book02\_workbench orientation-exact} for
+six declared geometric cases, then
+\texttt{book02\_workbench orientation-audit} for
+those cases and 500 additional bit-pattern-generated,
+finite binary64 triples. Coordinates are exported in
+lossless hexadecimal floating-point notation. The
+\emph{computed} exact sign is independent of the
+approximate filter result.
+
+The separate verifier \texttt{predicate\_oracle.py}
+reconstructs each hexadecimal value as Python's exact
+rational \texttt{Fraction} and independently evaluates
+the determinant. Python is the \emph{reference checker
+only}: the geometry algorithm and its CSV generation
+are C++23. Verify every sign, not merely the plotted
+winding of one large triangle.
+
+Three important cases are
+\[
+\begin{aligned}
+a&=(0,0),&b&=(1,\epsilon),&
+c&=(2,\operatorname{nextafter}(2\epsilon,+\infty));\\
+a&=(0,0),&b&=(\eta,0),&
+c&=(0,\eta);\\
+a&=(M,M),&b&=(-M,M),&
+c&=(0,-M).
+\end{aligned}
+\]
+Here \(\epsilon=2^{-52}\), \(\eta=2^{-1074}\)
+is the smallest positive subnormal, and
+\(M\) is the largest finite binary64 value.
+The exact signs of these stored triangles are positive.
+The first has nearly cancelling terms; the second has
+an area smaller than a representable nonzero binary64;
+the last has differences/products that can overflow
+an ordinary floating-point determinant.
+Their mathematical signs remain well-defined.
+\end{booktwolab}
+
+\begin{Shaded}
+\begin{verbatim}
+build/book02-cpp23/book02_workbench orientation-exact
+build/book02-cpp23/book02_workbench orientation-audit \
+  > build/book02-cpp23/orientation-audit.csv
+python3 tools/labs/book02_cpp23/predicate_oracle.py \
+  build/book02-cpp23/book02_workbench
+\end{verbatim}
+\end{Shaded}
+
+\begin{booktwopitfall}[Exact input bits are not exact measurements]
+Even a perfectly exact arithmetic oracle cannot restore digits
+lost when a decimal input, camera measurement or geometric
+construction was rounded to binary64 before the call.
+The sign is exact \emph{for those six stored numbers}.
+Furthermore, a small empirical filter threshold is not,
+by itself, a formally certified error bound for all
+IEEE-754 inputs. In this educational comparison the
+standalone exact oracle is authoritative; the older
+approximate filter is displayed for diagnostics, not
+trusted as the final sign on every input.
+
+This simple variable-length integer implementation is
+not an adaptive, SIMD or production-speed replacement
+for Shewchuk's expansion arithmetic, and its memory/time
+behavior has not been benchmarked. Next design exercises:
+compare with a formally bounded adaptive filter,
+implement robust incircle tests, and use exact orientation
+to protect triangle winding and mesh adjacency decisions.
+\end{booktwopitfall}
