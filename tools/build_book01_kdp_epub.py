@@ -452,19 +452,14 @@ def main() -> int:
     work.mkdir(parents=True, exist_ok=True)
     md = work / "book01.epub-source.md"
     md.write_text(content, encoding="utf-8")
+    # The same semantic colour roles used by the complete PDF are applied to
+    # reflowable code/quote blocks. Reuse the authored, versioned CSS rather
+    # than silently generating an unstyled epub on every invocation.
     css = work / "kindle.css"
-    css.write_text(
-        "body{font-family:serif;line-height:1.4;}"
-        "h1{page-break-before:always;break-before:page;}"
-        "h1,h2,h3{line-height:1.23;page-break-after:avoid;}"
-        "pre,code{font-family:monospace;overflow-wrap:anywhere;white-space:pre-wrap;}"
-        "pre{font-size:.86em;line-height:1.27;padding:.5em;}"
-        "img{max-width:100%;height:auto;}"
-        "table{border-collapse:collapse;width:100%;font-size:.9em;}"
-        "th,td{border-bottom:1px solid #aaa;padding:.22em;}"
-        "figure{page-break-inside:avoid;} .math{overflow-wrap:anywhere;}",
-        encoding="utf-8"
-    )
+    style_source = BOOK1 / "book01-ebook.css"
+    if not style_source.is_file():
+        raise RuntimeError("Missing tracked Book One EPUB stylesheet: "+str(style_source))
+    css.write_bytes(style_source.read_bytes())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     run(["pandoc", "-f", "markdown-raw_html+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
          "-t", "epub3", "--standalone", "--toc", "--toc-depth=2",
