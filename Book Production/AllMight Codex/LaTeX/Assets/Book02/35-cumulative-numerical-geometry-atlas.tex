@@ -245,3 +245,25 @@ or adversarial outlier leverage. Compare final gradients,
 termination flags, coefficient errors and residuals,
 not merely the visual appeal of the fitted curves.
 \end{booktwopitfall}
+
+
+\begin{booktwoconcept}[Native geometry capstone: RANSAC line consensus]
+The project now also includes a C++23 RANSAC line
+estimator, a canonical normalized implicit line,
+orthogonal total-least-squares refinement, a
+declared idealized two-point trial bound, and
+explicit consensus re-evaluation after refinement.
+Unlike a vertical-error fit, the orthogonal residual
+uses Euclidean point-to-line distance. The output
+includes the actual selected points and a separate
+all-data TLS comparison. Two native commands,
+\texttt{ransac-summary} and \texttt{ransac-data},
+export diagnostics and all 110 synthetic observations
+to independently inspectable CSV.
+
+Its optional color-coded figure is produced from
+those exact source rows, not from new Python fitting
+code. Native RANSAC is still an educational two-dimensional
+line experiment, not a 3D geometric-vision estimator
+or a production camera-localization implementation.
+\end{booktwoconcept}
