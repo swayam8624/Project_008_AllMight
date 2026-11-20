@@ -262,16 +262,29 @@ def generate_minimal_jpeg_cover(destination: Path) -> Path:
     destination.parent.mkdir(parents=True,exist_ok=True)
     if destination.is_file():
         destination.unlink()  # generated build output only
-    find = subprocess.run(["kpsewhich","texgyrepagella-regular.otf"],
-                          text=True,capture_output=True)
-    regular=find.stdout.strip()
-    find_bold = subprocess.run(["kpsewhich","texgyrepagella-bold.otf"],
-                               text=True,capture_output=True)
-    bold=find_bold.stdout.strip()
-    if not regular or not Path(regular).is_file() or not bold or not Path(bold).is_file():
-        raise RuntimeError("TeX Gyre Pagella OTF fonts not found with kpsewhich. "
-                           "Install the TeX fonts (already required by PDF), "
-                           "or supply a cover JPEG explicitly.")
+    def font_path(filename: str, fallbacks: tuple[str,...]) -> Path:
+        import shutil
+        kpse=shutil.which("kpsewhich")
+        if kpse:
+            found=subprocess.run([kpse,filename],text=True,capture_output=True)
+            candidate=Path(found.stdout.strip()) if found.stdout.strip() else None
+            if candidate and candidate.is_file():
+                return candidate
+        for fallback in fallbacks:
+            candidate=Path(fallback)
+            if candidate.is_file():
+                return candidate
+        raise RuntimeError(
+            "No installed serif font available for the minimalist Book Two "
+            "EPUB cover. Install TeX Gyre Pagella or supply --cover-image.")
+    regular=font_path("texgyrepagella-regular.otf",(
+        "/System/Library/Fonts/Supplemental/Georgia.ttf",
+        "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+    ))
+    bold=font_path("texgyrepagella-bold.otf",(
+        "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf",
+    ))
     image=Image.new("RGB",(1600,2560),(17,35,59))
     draw=ImageDraw.Draw(image)
     ink=(244,240,224)
