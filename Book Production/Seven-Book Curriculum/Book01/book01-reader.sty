@@ -58,7 +58,16 @@
 % against a 388.1pt text measure and clipped both outside running heads.
 % Reset it AFTER geometry and BEFORE installing this volume's headers.
 \setlength{\headwidth}{\textwidth}
-\AtBeginDocument{\fontsize{10}{12.8}\selectfont}
+% No artificial page ceiling for the complete digital reader: improve the
+% actual text size and line spacing. Preserve the compact paperback profile,
+% whose trim, binding, and page-count constraints are independent.
+\AtBeginDocument{%
+  \ifdefstring{\AllMightProfile}{ebook}{%
+    \fontsize{10.6}{13.9}\selectfont
+  }{%
+    \fontsize{10}{12.8}\selectfont
+  }%
+}
 \AtBeginDocument{\setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
   \setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
   \setlength{\abovedisplayshortskip}{3pt plus 1pt}
