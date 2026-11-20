@@ -236,10 +236,10 @@ class Book02EpubSupplement:
             if node.get("t") != "Div":
                 continue
             attrs, children = node["c"]
-            name = next((c for c in attrs[1] if c in reader_roles), None)
-            if name:
+            role_class = next((c for c in attrs[1] if c in reader_roles), None)
+            if role_class:
                 children.insert(0, {"t": "Para", "c": [
-                    {"t": "Strong", "c": as_str(reader_roles[name])}
+                    {"t": "Strong", "c": as_str(reader_roles[role_class])}
                 ]})
         headings=[n for n in walk(blocks) if n.get("t")=="Header"]
         if not headings:
