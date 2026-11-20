@@ -11,6 +11,7 @@
 #include <random>
 #include <span>
 #include <vector>
+#include <utility>
 
 namespace book02::geometry {
 struct Point { double x{},y{}; };
