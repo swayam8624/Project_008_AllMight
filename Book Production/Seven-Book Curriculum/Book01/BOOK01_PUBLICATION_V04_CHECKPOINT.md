@@ -2,6 +2,11 @@
 
 **Status:** committed source improvements; not a declaration that new PDFs have passed visual or technical proof. This document takes precedence over earlier four-part diagnostic build instructions.
 
+## Final delivery location
+
+**Finished Book One PDFs and the EPUB go directly into `Master/build/`.**
+Generated source, figure caches, TeX intermediates, and inspection manifests remain under `Master/build/book01-expanded-reader/`. Publication outputs must not be placed in Desktop or under `Book Production/.../Build`.
+
 ## 20 November 2026 — complete PDF and EPUB presentation correction
 
 The author supplied the actual 1,042-page Book One complete PDF and its
@@ -36,7 +41,7 @@ their companion program source. It adds:
 - A Pandoc PDF/EPUB visual-language smoke test and source-preservation CI.
 
 The canonical digital file is still:
-build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf
+build/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf
 
 On the author's Mac, after pulling the relevant Book One branch and
 checking for unrelated local edits, the corrected build sequence is:
@@ -122,12 +127,12 @@ If a build fails, inspect the first error; do not skip subsequent checks or reus
 
 The digital book is prepared under:
 
-`build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf`
+`build/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf`
 
 The two 7 × 10-inch black-ink-on-white-paper candidates are:
 
-`build/book01-expanded-reader/Book01-From-Bits-to-Programs-KDP-Volume-01.pdf`
-`build/book01-expanded-reader/Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf`
+`build/Book01-From-Bits-to-Programs-KDP-Volume-01.pdf`
+`build/Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf`
 
 The preparer writes `build/book01-expanded-reader/manifest.json`. Each actual LaTeX build writes `build/publication-proof.json` inside its own edition directory's build subfolder, for example:
 
