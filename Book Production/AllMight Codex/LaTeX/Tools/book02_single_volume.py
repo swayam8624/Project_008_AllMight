@@ -151,6 +151,12 @@ def build_unified_tex(parts: tuple[Path, Path]) -> str:
             r"boxrule=.4pt,borderline west={2.5pt}{0pt}{booktwocyan},"
             r"left=6pt,right=6pt,top=5pt,bottom=5pt]"
             "\n"+r"\VerbatimInput"),1)+"\n"+r"\end{tcolorbox}"
+        # The global raw-verbatim frame protects all original chapter code.
+        # Attachment content is already in a breakable tcolorbox and must not
+        # receive a second nested FancyVerb frame.
+        source=re.sub(r"(\\VerbatimInput\[)([^\]]*)(\])",
+                      lambda m:m.group(1)+m.group(2)+",frame=none"+m.group(3),
+                      source,count=1)
         code_blocks.append(source)
     attachments="\n\n".join(code_blocks)
     return rf"""\documentclass[11pt,twoside,openany]{{book}}
