@@ -74,8 +74,7 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
             master.mkdir(parents=True)
             source_files=[]
             for name,payload in (
-                ("P01.pdf",b"test-only-pdf-part-one"),
-                ("P02.pdf",b"test-only-pdf-part-two"),
+                ("Book02.pdf",b"test-only-complete-book-pdf"),
                 ("Book02.epub",b"test-only-epub"),
             ):
                 path = status_dir / name
@@ -85,10 +84,8 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
             record = {
                 "generation":generation.name,
                 "source_fingerprint_sha256":"f"*64,
-                "print_parts":[
-                    {"candidate_path":str(source_files[i]), "sha256":digest(source_files[i])}
-                    for i in range(2)
-                ],
+                "single_pdf":{"candidate_path":str(source_files[0]),
+                              "sha256":digest(source_files[0]),"pages":1017},
                 "epub":{
                     "candidate_path":str(source_files[-1]),
                     "sha256":digest(source_files[-1]),
@@ -102,8 +99,7 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
             ):
                 exported = candidates.export_candidates_to_master(generation, master)
                 self.assertTrue(exported.name.startswith("Book02-From-Equations-to-Geometry-generation-test-"))
-                self.assertTrue((exported / "From Equations to Geometry - Part 1.pdf").is_file())
-                self.assertTrue((exported / "From Equations to Geometry - Part 2.pdf").is_file())
+                self.assertTrue((exported / "From Equations to Geometry.pdf").is_file())
                 self.assertTrue((exported / "From Equations to Geometry.epub").is_file())
                 self.assertTrue((exported / "book02-candidate-verification.json").is_file())
                 portable = exported / "book02-master-export-manifest.json"
@@ -117,6 +113,12 @@ class BookTwoAssetAndMasterContracts(unittest.TestCase):
                     self.assertEqual(candidates.digest(copied_file),entry["sha256"])
                 # Idempotent, with no overwrite or Git operations.
                 self.assertEqual(exported,candidates.export_candidates_to_master(generation,master))
+                self.assertEqual(portable_data["copied_candidates"]["complete_pdf"]["pages"],1017)
+                # An EPUBCheck failure must not prevent exporting the verified
+                # complete PDF with the explicit print-only option.
+                with patch.object(candidates,"source_fingerprint",return_value="f"*64):
+                    pdf_only=candidates.export_candidates_to_master(generation,master,print_only=True)
+                self.assertTrue((pdf_only/"From Equations to Geometry.pdf").is_file())
                 tampered = exported / "From Equations to Geometry.epub"
                 tampered.write_bytes(b"modified-book")
                 with self.assertRaisesRegex(RuntimeError, "Refusing to overwrite"):
