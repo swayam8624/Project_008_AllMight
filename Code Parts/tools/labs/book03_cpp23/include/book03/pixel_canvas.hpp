@@ -33,7 +33,7 @@ struct Rgb8 {
     std::uint8_t green{};
     std::uint8_t blue{};
 
-    [[nodiscard]] friend constexpr bool operator==(Rgb8, Rgb8) = default;
+    [[nodiscard]] friend constexpr bool operator==(const Rgb8&, const Rgb8&) = default;
 };
 
 struct Pixel {
