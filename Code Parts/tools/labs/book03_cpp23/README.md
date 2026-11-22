@@ -39,3 +39,36 @@ Binary PPM gives the reader a chance to follow a named color channel all the way
 ## Preservation
 
 Source lives under Code Parts/tools/labs/book03_cpp23/ in the **new repository layout**. The book manuscript lives under Notes/Book Production/Seven-Book Curriculum/Book03/. No generated PDF or EPUB is written into From Bits to Research/ by this laboratory.
+
+
+---
+
+## Chapter 02 — P02 Coordinate Frame Playground
+
+The next chapter introduces a different source of error: a location has no meaning until its coordinate frame, units and transformation direction are declared. Its C++23 mathematics is intentionally kept outside the picture serializer, so the new code can be checked against exact scalar examples.
+
+**New files**
+
+- include/book03/frame_math.hpp — separate WorldPoint2 and WorldVector2 types (point-plus-point not supported); Frame2 local-to-world/inverse/vector mapping; parent/child composition; ImageMap2 with positive pixels-per-metre scale and image-down v convention. Both finite-input and singular-basis guards are explicit.
+- src/frame_playground.cpp — independent numerical inspection, native terminal REPL and SVG diagram generated directly from the frame model. No graphics library, JS geometry duplicate, GPU or network access.
+- tests/frame_math_tests.cpp — 90-degree turn; sheared nonorthogonal inverse; singular and nearly singular axes; composition order; translation invariance of vectors; image bounds; continuous pixel round-trip; malformed and nonfinite inputs.
+
+**CMake targets:** book03_frames and book03_frame_tests. The existing book03_canvas and book03_canvas_tests remain intact. Both test executables are registered with CTest in the same lab.
+
+**P02 commands for a later standalone validation**
+
+~~~bash
+cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release
+cmake --build build/book03-p01 --parallel 4
+ctest --test-dir build/book03-p01 --output-on-failure
+build/book03-p01/book03_frames inspect
+build/book03-p01/book03_frames svg build/book03-p01/frame.svg
+build/book03-p01/book03_frames svg build/book03-p01/rotated.svg 2 1 90
+build/book03-p01/book03_frames repl
+~~~
+
+Within the REPL, try entering \`origin 2 1\`, \`angle 90\`, \`point 3 1\`, \`save diagram.svg\` and \`quit\`. The expected reported world point is approximately (1,4) metres. SVG exports visualize the current local triangle over an image-oriented coordinate grid. The actual geometric correctness evidence remains the mathematical tests, not the mere appearance of the vector diagram.
+
+**Known boundaries:** This is a 2D affine teaching model. A 3D scene graph requires third axes, homogeneous conventions and pose contracts; a pinhole camera requires intrinsics, perspective and clipping. The inverse rejects bases whose determinant is below a deliberately conservative relative/absolute threshold. It is not an adaptive exact arithmetic proof and is not intended as a universal geometric singularity oracle.
+
+The series publication folder must remain unchanged. No new PDF/EPUB should appear during these lab runs.
