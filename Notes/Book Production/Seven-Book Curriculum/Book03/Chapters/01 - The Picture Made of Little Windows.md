@@ -53,6 +53,10 @@ Our image origin is at its **top-left corner**. Columns increase to the right. R
 
 For a picture 7 pixels wide and 5 pixels high, the columns are 0 through 6 and the rows are 0 through 4. There is no column 7. There is no row 5. If you ask for either, you have stepped off the paper.
 
+![A seven-by-five image with a highlighted pixel at index (3,2), whose center is (3.5,2.5).](../Assets/01-pixel-addresses.svg)
+
+*Figure 1.1 — An image is an addressable grid, but the location of its sample is a continuous coordinate. The highlighted sample has row-major index 17 and its first RGB8 byte begins at offset 51. Original vector diagram; explicit top-left origin and units in pixels.*
+
 This is a convention, not a physical law. Some graphics APIs use bottom-left origins for certain coordinates or images; some textures are stored or displayed with different orientation conventions. Our program will be honest about the one it uses, and later chapters will show how to convert between conventions rather than silently guessing.
 
 Think of a theater with numbered seats. “Seat number 17” is one kind of address; “row 2, seat 3” is another. The seat is the same, provided the numbering convention is clear.
@@ -201,6 +205,10 @@ It is worth tracing the example by hand. Starting from \((0,0)\), one tie conven
 \[
 (0,0),(1,1),(2,1),(3,2),(4,3),(5,3),(6,4).
 \]
+
+![A continuous line compared against seven discrete pixel samples chosen by the deterministic Bresenham line rule.](../Assets/02-lines-and-discrete-pixels.svg)
+
+*Figure 1.2 — One mathematically straight line and the jagged selection of stored pixels that represents it under a particular integer decision rule. The orange line is a continuous reference between pixel centers; the teal cells are the actual selected addresses. This schematic is not a claim of area coverage or antialiasing.*
 
 A child can draw these seven little marks on squared paper. A university student can inspect the integer decision variable and prove that each step reduces the remaining primary-axis distance. Both are studying the same algorithm at different depths.
 
