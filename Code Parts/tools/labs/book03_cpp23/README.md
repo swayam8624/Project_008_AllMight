@@ -49,7 +49,7 @@ The next chapter introduces a different source of error: a location has no meani
 
 **New files**
 
-- include/book03/frame_math.hpp — separate WorldPoint2 and WorldVector2 types (point-plus-point not supported); Frame2 local-to-world/inverse/vector mapping; parent/child composition; ImageMap2 with positive pixels-per-metre scale and image-down v convention. Both finite-input and singular-basis guards are explicit.
+- include/book03/frame_math.hpp — separate Point2 and Vector2 types (point-plus-point not supported, but local/world frame tags are not yet compile-time types); Frame2 local-to-world/inverse/vector mapping; parent/child composition; ImageMap2 with positive pixels-per-metre scale and image-down v convention. Both finite-input and singular-basis guards are explicit.
 - src/frame_playground.cpp — independent numerical inspection, native terminal REPL and SVG diagram generated directly from the frame model. No graphics library, JS geometry duplicate, GPU or network access.
 - tests/frame_math_tests.cpp — 90-degree turn; sheared nonorthogonal inverse; singular and nearly singular axes; composition order; translation invariance of vectors; image bounds; continuous pixel round-trip; malformed and nonfinite inputs.
 
