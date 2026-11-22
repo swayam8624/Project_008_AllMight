@@ -107,6 +107,10 @@ void exact_containment() {
     require(book03::exact_triangle_location(
             {0,0},{2,2},{4,4},{1,1}) ==
             ExactLocation::Degenerate, "no interior for collapsed triangle");
+    must_throw<std::out_of_range>(
+        [] { (void)book03::exact_triangle_location(
+            {0,0},{2,2},{4,4},{1'000'001,0}); },
+        "even a degenerate triangle rejects out-of-domain query point");
 }
 
 void exact_property_sweep() {
