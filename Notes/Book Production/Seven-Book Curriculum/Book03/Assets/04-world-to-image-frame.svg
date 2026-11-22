@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="550" viewBox="0 0 920 550" role="img" aria-labelledby="title desc">
+<title id="title">World up becomes decreasing pixel row in an image</title>
+<desc id="desc">Two diagrams compare world XY axes in metres with continuous image u-v axes in pixels. The world Y arrow goes up; the image v arrow goes down. World point (1,2) metres maps by u=320.5+60X and v=240.5-60Y to image location (380.5,120.5), the center of pixel index (380,120).</desc>
+<defs>
+<marker id="arrowgrey" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#4f6e7d"/></marker>
+<marker id="arrowred" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#be7650"/></marker>
+</defs>
+<rect width="920" height="550" fill="#fcfbf7" rx="18"/>
+<text x="35" y="37" font-size="22" fill="#223949" font-family="sans-serif" font-weight="600">Why does moving up make the pixel row smaller?</text>
+<text x="35" y="59" font-size="13" fill="#6a7780" font-family="sans-serif">A 2D orthographic mapping; not a full perspective camera</text>
+<rect x="35" y="84" width="404" height="360" rx="12" fill="#f1f5f1" stroke="#d3dfdc"/>
+<rect x="481" y="84" width="404" height="360" rx="12" fill="#eef3f5" stroke="#d3dfe5"/>
+<text x="56" y="112" font-size="16" fill="#3b5361" font-family="sans-serif" font-weight="600">WORLD · metres</text>
+<text x="500" y="112" font-size="16" fill="#3b5361" font-family="sans-serif" font-weight="600">IMAGE · continuous pixels</text>
+<g stroke="#dae6e0" stroke-width="1">
+<path d="M120 136 V422 M205 136 V422 M290 136 V422 M375 136 V422"/>
+<path d="M70 135 H405 M70 220 H405 M70 305 H405 M70 390 H405"/>
+</g>
+<path d="M72 390 H412" stroke="#4f6e7d" stroke-width="2.7" marker-end="url(#arrowgrey)"/>
+<path d="M205 425 V143" stroke="#4f6e7d" stroke-width="2.7" marker-end="url(#arrowgrey)"/>
+<circle cx="205" cy="390" r="6" fill="#4f6e7d"/>
+<path d="M205 390 L290 220" stroke="#be7650" stroke-width="3" stroke-dasharray="8 5" fill="none"/>
+<circle cx="290" cy="220" r="8" fill="#bc6b46" stroke="white" stroke-width="2"/>
+<text x="303" y="216" font-size="15" font-family="sans-serif" fill="#a85c39">(1,2) m</text>
+<text x="350" y="411" font-size="13" font-family="sans-serif" fill="#4f6e7d">+X</text>
+<text x="214" y="155" font-size="13" font-family="sans-serif" fill="#4f6e7d">+Y</text>
+<text x="214" y="408" font-size="12" font-family="sans-serif" fill="#4f6e7d">(0,0)</text>
+<g stroke="#dbe5eb" stroke-width="1">
+<path d="M520 160 H852 M520 220 H852 M520 280 H852 M520 340 H852 M520 400 H852"/>
+<path d="M550 132 V424 M610 132 V424 M670 132 V424 M730 132 V424 M790 132 V424"/>
+</g>
+<path d="M515 340 H850" stroke="#4f6e7d" stroke-width="2.7" marker-end="url(#arrowgrey)"/>
+<path d="M610 140 V422" stroke="#4f6e7d" stroke-width="2.7" marker-end="url(#arrowgrey)"/>
+<circle cx="610" cy="340" r="6" fill="#4f6e7d"/>
+<path d="M610 340 L670 220" stroke="#be7650" stroke-width="3" stroke-dasharray="8 5" fill="none"/>
+<circle cx="670" cy="220" r="8" fill="#bc6b46" stroke="white" stroke-width="2"/>
+<text x="683" y="214" font-size="13" font-family="sans-serif" fill="#a65d3d">(380.5,120.5)</text>
+<text x="683" y="232" font-size="12" font-family="sans-serif" fill="#a65d3d">pixel (380,120)</text>
+<text x="817" y="361" font-size="13" font-family="sans-serif" fill="#4f6e7d">+u</text>
+<text x="618" y="415" font-size="13" font-family="sans-serif" fill="#4f6e7d">+v (down)</text>
+<text x="614" y="358" font-size="11" font-family="sans-serif" fill="#4f6e7d">origin</text>
+<path d="M446 255 H471" stroke="#bd7253" stroke-width="3.5" marker-end="url(#arrowred)"/>
+<rect x="35" y="462" width="850" height="67" rx="10" fill="#ebf2f1"/>
+<text x="53" y="488" font-family="monospace" font-size="15" fill="#2d545a">u = 320.5 + 60 × 1 = 380.5</text>
+<text x="53" y="511" font-family="monospace" font-size="15" fill="#2d545a">v = 240.5 - 60 × 2 = 120.5</text>
+<text x="480" y="488" font-family="sans-serif" font-size="12" fill="#56707a">The minus sign reverses the vertical axis.</text>
+<text x="480" y="509" font-family="sans-serif" font-size="12" fill="#56707a">Scale = 60 pixels per metre.</text>
+</svg>
