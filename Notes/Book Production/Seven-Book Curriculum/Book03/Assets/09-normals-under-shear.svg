@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="890" height="450" viewBox="0 0 890 450" role="img" aria-labelledby="title desc">
+<title id="title">A tangent and normal require different transforms under shear</title>
+<desc id="desc">In a 2D Cartesian y-up plane, original tangent t=(0,1) and normal n=(1,0) are perpendicular. Under horizontal shear x'=x+y, the tangent becomes (1,1). Transforming the normal naively by the same matrix gives (1,0), which is not perpendicular; applying inverse transpose gives the correct normal (1,-1), whose dot product with the new tangent is zero.</desc>
+<rect width="890" height="450" rx="16" fill="#fbfaf6"/>
+<text x="31" y="35" font-family="sans-serif" font-size="23" fill="#264452" font-weight="600">A normal is not an ordinary displacement</text>
+<text x="31" y="55" font-family="sans-serif" font-size="13" fill="#647983">Shear A = [[1,1],[0,1]]; the inverse transpose protects perpendicularity</text>
+<g fill="#eff4f0" stroke="#d6e2da">
+<rect x="29" y="83" width="262" height="310" rx="10"/>
+<rect x="313" y="83" width="263" height="310" rx="10"/>
+<rect x="598" y="83" width="263" height="310" rx="10"/>
+</g>
+<g font-family="sans-serif" fill="#345867" font-size="16" font-weight="600">
+<text x="48" y="110">Before shear</text>
+<text x="332" y="110">Naive normal: wrong</text>
+<text x="617" y="110">Inverse transpose: right</text>
+</g>
+<!-- Each panel's vector origin is near its bottom left, one unit=75 px -->
+<g stroke="#bac8cc" stroke-width="1.6">
+<path d="M64 300 H265 M113 363 V145"/>
+<path d="M351 300 H555 M399 363 V145"/>
+<path d="M634 300 H839 M684 363 V145"/>
+</g>
+<g fill="none" stroke-width="5" stroke-linecap="round">
+<!-- original tangent (0,1), normal (1,0) -->
+<path d="M113 300 V225" stroke="#347b9a"/>
+<path d="M113 300 H188" stroke="#bd6b47"/>
+<!-- after shear tangent (1,1) -->
+<path d="M399 300 L474 225" stroke="#347b9a"/>
+<path d="M399 300 H474" stroke="#bd6b47"/>
+<!-- after shear tangent (1,1) and correct normal (1,-1) -->
+<path d="M684 300 L759 225" stroke="#347b9a"/>
+<path d="M684 300 L759 375" stroke="#16806a"/>
+</g>
+<g font-family="monospace" font-size="13" fill="#4a6a75">
+<text x="52" y="337">t = (0,1)</text><text x="52" y="353">n = (1,0)</text>
+<text x="334" y="337">t' = (1,1)</text><text x="334" y="353">A n = (1,0)</text>
+<text x="618" y="337">t' = (1,1)</text><text x="618" y="353">A^(-T)n = (1,-1)</text>
+</g>
+<g font-family="sans-serif" font-size="13">
+<text x="47" y="380" fill="#377e73">dot(t,n) = 0</text>
+<text x="332" y="380" fill="#b25e44">dot(t',A n) = 1</text>
+<text x="617" y="380" fill="#16806a">dot(t',n') = 0</text>
+</g>
+<text x="29" y="423" font-size="13" font-family="sans-serif" fill="#687d82">Color key: blue = tangent; orange = incorrect/ordinary normal; green = inverse-transpose normal.</text>
+</svg>
