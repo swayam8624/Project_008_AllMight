@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="630" viewBox="0 0 900 630" role="img" aria-labelledby="title desc">
+<title id="title">A point has both a local and world coordinate address</title>
+<desc id="desc">A labelled world grid with rightward X and upward Y, measured in metres. A local frame has origin (2,1) in world metres and is rotated ninety degrees counterclockwise. Its local x arrow points world-up and local y arrow world-left. A local point (3,1) is reached by walking three local x units upward and one local y unit left, arriving at world (1,4).</desc>
+<defs>
+<marker id="arrgray" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="#607681"/></marker>
+<marker id="arrorange" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="#bc6b46"/></marker>
+<marker id="arrblue" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="#247c9b"/></marker>
+</defs>
+<rect width="900" height="630" rx="18" fill="#fcfbf7"/>
+<text x="40" y="36" font-size="23" fill="#233847" font-family="sans-serif" font-weight="600">Two addresses for the same place</text>
+<text x="40" y="60" font-size="14" fill="#5c707c" font-family="sans-serif">World coordinates: X right, Y up; units are metres</text>
+<g stroke="#dde7e5" stroke-width="1">
+<path d="M100 30 V520 M180 30 V520 M260 30 V520 M340 30 V520 M420 30 V520 M500 30 V520 M580 30 V520 M660 30 V520"/>
+<path d="M100 110 H660 M100 190 H660 M100 270 H660 M100 350 H660 M100 430 H660 M100 510 H660"/>
+</g>
+<path d="M100 430 H690" stroke="#607681" stroke-width="2.5" marker-end="url(#arrgray)"/>
+<path d="M260 525 V75" stroke="#607681" stroke-width="2.5" marker-end="url(#arrgray)"/>
+<g font-size="12" fill="#5c6d77" font-family="sans-serif">
+<text x="685" y="447">world +X</text>
+<text x="268" y="90">world +Y</text>
+<text x="242" y="447">0</text>
+<text x="332" y="448">1</text>
+<text x="412" y="448">2</text>
+<text x="492" y="448">3</text>
+<text x="242" y="354">1</text>
+<text x="242" y="274">2</text>
+<text x="242" y="194">3</text>
+<text x="242" y="114">4</text>
+</g>
+<path d="M420 350 V110 H340" stroke="#ac8f68" stroke-width="3" fill="none" stroke-dasharray="9 7"/>
+<path d="M420 350 V266" stroke="#bc6b46" stroke-width="4" marker-end="url(#arrorange)"/>
+<path d="M420 350 H336" stroke="#247c9b" stroke-width="4" marker-end="url(#arrblue)"/>
+<circle cx="420" cy="350" r="7" fill="#bc6b46" stroke="#fff" stroke-width="2"/>
+<circle cx="340" cy="110" r="8" fill="#176b60" stroke="#fff" stroke-width="2"/>
+<g fill="#263e4a" font-family="sans-serif">
+<text x="431" y="366" font-size="14">local origin at world (2,1)</text>
+<text x="433" y="263" font-size="14" fill="#a65c39">+ local x</text>
+<text x="316" y="373" font-size="14" fill="#247c9b">+ local y</text>
+<text x="354" y="109" font-size="15" font-weight="600">world (1,4)</text>
+<text x="354" y="128" font-size="14">local (3,1)</text>
+<text x="437" y="215" font-size="13" fill="#8d7b65">3 local x units</text>
+<text x="331" y="88" font-size="13" fill="#8d7b65">1 local y unit</text>
+</g>
+<rect x="45" y="540" width="805" height="67" rx="10" fill="#eaf2f1"/>
+<text x="63" y="565" font-family="monospace" font-size="16" fill="#294e54">(2,1) + 3 × (0,1) + 1 × (-1,0) = (1,4)</text>
+<text x="63" y="587" font-family="sans-serif" font-size="13" fill="#537279">The place does not move when we change coordinate descriptions.</text>
+</svg>
