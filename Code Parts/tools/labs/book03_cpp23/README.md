@@ -72,3 +72,52 @@ Within the REPL, try entering \`origin 2 1\`, \`angle 90\`, \`point 3 1\`, \`sav
 **Known boundaries:** This is a 2D affine teaching model. A 3D scene graph requires third axes, homogeneous conventions and pose contracts; a pinhole camera requires intrinsics, perspective and clipping. The inverse rejects bases whose determinant is below a deliberately conservative relative/absolute threshold. It is not an adaptive exact arithmetic proof and is not intended as a universal geometric singularity oracle.
 
 The series publication folder must remain unchanged. No new PDF/EPUB should appear during these lab runs.
+
+
+---
+
+## Chapter 03 — P03 Triangle and Barycentric Studio
+
+The triangle project extends **the same** C++23 course, not a renamed publication or independent toy application. Its mathematical point values come from P02, and its generated PPM image uses P01's actual bounded RGB8 Canvas.
+
+**Read and inspect these sources in order:**
+
+1. \`include/book03/triangle_geometry.hpp\` — exact bounded \`IntegerPoint2\` orientation/containment; floating \`Triangle2\` barycentric sampling, signed twice-area, interpolation and deliberately noncertified near-boundary uncertainty. Read the source's numeric-domain proof.
+2. \`tests/triangle_geometry_tests.cpp\` — an independent shoelace reference, 4,000 deterministic integer-oracle checks, winding/translation/reflection properties, affine invariance of weights, interpolation values, bad-input and degeneracy tests.
+3. \`src/triangle_studio.cpp\` — CLI numeric inspection, C++-generated barycentric PPM image, SVG diagram and an interactive REPL. No camera API or GPU is hidden in the implementation.
+4. \`CMakeLists.txt\` — target \`book03_triangles\` and independent CTest target \`book03_triangle_tests\` added alongside existing chapter projects.
+
+**Student-visible P03 interface**
+
+~~~text
+book03_triangles inspect
+book03_triangles inspect 5 3
+book03_triangles ppm triangle-gradient.ppm
+book03_triangles svg triangle-static.svg
+book03_triangles repl
+~~~
+
+The \`inspect\` mode's default triangle uses Cartesian +Y-up coordinates: A=(0,0), B=(6,0), C=(0,4), query P=(1.5,1). It prints signed twice-area=24, weights=(0.5,0.25,0.25), an interior classification and the 17.5 scalar interpolation result for corner values 10/20/30.
+
+The \`ppm\` and \`svg\` standalone commands are controlled **image-coordinate demonstrations** on a fixed 640×420 triangle with +v downward. Do not mistake the negative numeric winding of that example for an error in the +Y-up reference triangle. The colored triangle is a teaching interpolation of encoded channel values, not a physically linear-light result.
+
+The \`repl\` is interactive and can now write a separate SVG using the **current user-edited triangle**, not the fixed sample plate:
+
+~~~text
+triangle 0 0 6 0 0 4
+point 1.5 1
+save your-triangle.svg
+point 5 3
+area
+quit
+~~~
+
+The \`save\` command draws the current Cartesian triangle and last query using a documented 25 px/metre world-to-image projection; for visual legibility, all points must be within [-10,10] m in x and y. The numeric inspector itself is not artificially restricted to that SVG preview domain.
+
+**Correctness boundaries**
+
+The exact orientation and containment results require integer coordinates within [-1e6,+1e6]. This limit is proven to fit \`int64_t\` determinant operations. This is a **true bounded exact oracle**, not a claim of a full arbitrary-precision kernel.
+
+The floating barycentric query is **not certified numerically** for all representable binary64 coordinates. It returns \`BoundaryUncertain\` or \`DegenerateOrUncertified\` when its documented guard is too small for a safe classroom classification. That guard is an explanatory filter, not a rigorous adaptive error bound. Chapter 05 will cover such methods in much greater depth with the pre-existing manuscript preserved.
+
+**Validation protocol:** Build the lab's CMake targets, execute all CTests, inspect P03's numeric output, check PPM header/payload and SVG XML, inspect the gradient visually, and record toolchain + source identity. The GitHub CI file defines the same checks but must not be called passing until an actual successful run is observed. The author still owns the final Mac Book 03 PDF/EPUB build.
