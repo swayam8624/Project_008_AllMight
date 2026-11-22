@@ -183,6 +183,49 @@ A mirrored triangle is not “inside out” merely because its stored vertices a
 
 *Figure 4.1 — Four transformations acting on the same source outline. Translation changes its location, shear changes its angles, and reflection changes its orientation. The illustration is schematic but uses consistent local coordinates and named axes; source notes give the exact matrices.*
 
+## Wait. Did the house move, or did our ruler move?
+
+A difficult but important question has been quietly following us around: what exactly changes when we “transform coordinates”?
+
+Imagine a little toy car sitting still on the desk. Now rotate the ruler and paper grid underneath it, but do not touch the car. Its actual location in the room has not changed. Its *coordinate numbers relative to the ruler* have changed. That is a **passive** change of coordinates.
+
+Now hold the ruler still and rotate the toy car around a fixed point. This time its actual position in the room changes. That is an **active** transformation.
+
+It is surprisingly easy to write the same-looking matrix formulas for these two ideas and then accidentally reverse one. Let us make the distinction numerical.
+
+Suppose a physical vector has ordinary world coordinates
+
+\[
+\mathbf v_W=(4,2).
+\]
+
+Choose a new basis whose world-space arrows are the columns of
+
+\[
+C=\begin{bmatrix}1&-1\\1&1\end{bmatrix}.
+\tag{4.23}
+\]
+
+If the vector did not move at all, what coefficients should we write on the new ruler? We need \(\mathbf v_W=C\,\mathbf v_C\), so
+
+\[
+\mathbf v_C=C^{-1}\mathbf v_W
+=\frac12\begin{bmatrix}1&1\\-1&1\end{bmatrix}
+\begin{bmatrix}4\\2\end{bmatrix}
+=\boxed{\begin{bmatrix}3\\-1\end{bmatrix}}.
+\tag{4.24}
+\]
+
+The ruler reports \((3,-1)\) even though the vector remains physically at \((4,2)\) in the world basis. We can reconstruct it: \(3(1,1)-1(-1,1)=(4,2)\).
+
+Now ask a *different* question: what happens if we actively apply the linear map \(C\) to the world vector \((4,2)\) while keeping the world ruler fixed? Then we get \(C(4,2)=(2,6)\). The physical vector has changed. We have performed an action rather than a coordinate conversion.
+
+These are different operations with different inputs, and both are useful. Our \`Affine2::transform_point\` API computes the forward application of a declared map. When used as a local-to-world conversion, that map also changes the **description** of an unchanged local point; the interpretation comes from the named source and destination frames, not the six bytes of a matrix name.
+
+For Book 03 we will always say whether an example is a *motion of an object inside a fixed reference frame* or a *change of coordinates describing an unchanged object*. Later, the camera's view transform is a classic inverse coordinate conversion: we want to describe a world point relative to a moving camera frame. This distinction is why a camera's location cannot generally be copied straight into the world-to-view translation column.
+
+The long original Computing Foundations chapter **“Coordinate Frames and Linear Systems”** already develops the active/passive distinction in greater mathematical depth. We preserve that source and will connect its complete proof to the final reader composition.
+
 ## One extra coordinate lets translation join the party
 
 Until now we have written an affine map as a matrix plus a separate displacement:
