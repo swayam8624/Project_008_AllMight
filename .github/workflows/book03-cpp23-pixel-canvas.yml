@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Pixel Canvas and PPM Contracts
+name: Book 03 - C++23 Pixel, Coordinate Frame and SVG Contracts
 
 on:
   push:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 canvas tests (Ubuntu)
+    name: C++23 image and frame tests (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,12 +26,33 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute independent pixel and PPM contracts
+      - name: Execute independent pixel, frame and image-space contracts
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
           build/book03-p01/book03_canvas house build/book03-p01/house.ppm
           build/book03-p01/book03_canvas lines build/book03-p01/lines.ppm
+      - name: Generate and inspect native C++23 coordinate-frame drawings
+        run: |
+          build/book03-p01/book03_frames inspect
+          build/book03-p01/book03_frames svg build/book03-p01/world-frame.svg
+          build/book03-p01/book03_frames svg build/book03-p01/rotated-frame.svg 2 1 90
+          printf 'origin 2 1\nangle 90\npoint 3 1\nquit\n' | build/book03-p01/book03_frames repl > build/book03-p01/repl-evidence.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          ns = "{http://www.w3.org/2000/svg}"
+          for name in ("world-frame.svg", "rotated-frame.svg"):
+              path = Path("build/book03-p01") / name
+              root = ET.parse(path).getroot()
+              assert root.tag == ns + "svg"
+              assert root.find(ns + "title") is not None
+              assert root.find(ns + "desc") is not None
+              assert len(root.findall(ns + "polygon")) == 1
+              print(f"{name}: valid SVG geometry document")
+          repl = Path("build/book03-p01/repl-evidence.txt").read_text()
+          assert "Local (3,1) m -> world (1,4) m" in repl, repl
+          PY
       - name: Confirm P6 header and exact payload sizes
         run: |
           python3 - <<'PY'
