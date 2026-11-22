@@ -154,6 +154,40 @@ The important building blocks are:
 
 There is something quietly powerful about having a picture we can explain entirely. You can point to the red roof and say, “This byte was written because that coordinate passed this test.” Modern rendering pipelines are enormously sophisticated, but their correctness begins with the same kind of traceability.
 
+### A complete little program you can read in one sitting
+
+The following miniature client uses the companion header exactly as it is written. It creates a seven-by-five picture, chooses one colored pixel, draws a diagonal, and writes a PPM file. No renderer is hiding behind the curtain.
+
+~~~cpp
+#include "book03/pixel_canvas.hpp"
+#include <fstream>
+#include <ios>
+
+int main() {
+    // We own 35 pixels. Every one starts with a known dark background.
+    book03::Canvas picture{7, 5, {20, 25, 35}};
+
+    // Set one explicit address: column 3, row 2, not x=3.5, y=2.5.
+    picture.set({3, 2}, {255, 120, 45});
+
+    // Draw a discrete diagonal. Both endpoints belong to the picture.
+    picture.draw_line({0, 0}, {6, 4}, {230, 225, 190});
+
+    // Opening in binary mode prevents text-mode translation of image bytes.
+    std::ofstream file{"first-picture.ppm", std::ios::binary};
+    if (!file) return 1;
+
+    // The library serializes explicit RGB bytes and checks stream failures.
+    picture.write_ppm(file);
+    file.flush();
+    return file ? 0 : 1;
+}
+~~~
+
+Read it like a story. The first statement requests a finite box of addresses. The second changes exactly one address. The line algorithm then visits a sequence of other addresses; because it runs later, it can overwrite a previous value if the line crosses the same pixel. The output operation converts those final values into file bytes. **Drawing order matters** even before we learn 3D depth and visibility.
+
+If you compile the client against the provided include directory, the source's behavior is determined without a graphical window. The larger companion executable contains the full house example and its own CLI. The tests exercise malformed requests, which this short client deliberately does not manufacture.
+
 ### Why keep the pixel channels separate in code?
 
 A beginner might reach for one big integer and squeeze color channels into it. There are good reasons to use packed formats in production, and later we will study them. For our first drawing machine, three named one-byte fields make the layout and serialization rules visible. The code writes the red, green and blue bytes explicitly. It does not assume that a structure has no padding or that memory order matches a file format.
