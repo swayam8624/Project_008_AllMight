@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace {
 
@@ -199,6 +200,100 @@ void write_svg(const std::filesystem::path& target) {
     std::cout << "Wrote triangle SVG " << target.string() << '\n';
 }
 
+// Interactive export: unlike the fixed reference plate, this uses the
+// CURRENT triangle and most recently inspected point from the REPL.
+// A single 2D world-to-image map owns the y-up -> v-down conversion.
+void save_current_svg(const std::filesystem::path& target,
+                      const Triangle2& triangle, Point2 queried) {
+    const auto within_display = [](Point2 p) {
+        return book03::finite(p) &&
+               std::abs(p.x) <= 10.0 && std::abs(p.y) <= 10.0;
+    };
+    if (!within_display(triangle.a) ||
+        !within_display(triangle.b) ||
+        !within_display(triangle.c) ||
+        !within_display(queried)) {
+        throw std::invalid_argument(
+            "interactive SVG preview requires coordinates within [-10,10] m");
+    }
+
+    // Continuous pixel positions, not integer storage indices.
+    const book03::ImageMap2 map{{380.5, 270.5}, 25.0, 25.0, 760, 540};
+    const auto a = map.world_to_image(triangle.a);
+    const auto b = map.world_to_image(triangle.b);
+    const auto c = map.world_to_image(triangle.c);
+    const auto p = map.world_to_image(queried);
+    const auto sample = triangle.sample(queried);
+
+    std::ofstream out{target, std::ios::binary | std::ios::trunc};
+    if (!out) throw std::runtime_error("cannot create interactive SVG");
+    out << std::fixed << std::setprecision(5);
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"760\" "
+           "height=\"540\" viewBox=\"0 0 760 540\" role=\"img\" "
+           "aria-labelledby=\"title desc\">\n"
+           "<title id=\"title\">Interactive triangle at current coordinates</title>\n"
+           "<desc id=\"desc\">World coordinates use X right and Y up "
+           "measured in metres. The current triangle is mapped to a screen "
+           "with vertical image coordinates pointing down. A query point "
+           "is shown with its approximate classification. The triangle "
+           "positions were computed by the same C++23 numeric model as "
+           "the console.</desc>\n"
+           "<rect width=\"760\" height=\"540\" fill=\"#fbfaf6\"/>\n"
+           "<text x=\"30\" y=\"34\" font-size=\"20\" "
+           "font-family=\"sans-serif\" fill=\"#264453\">"
+           "Your triangle, your coordinates</text>\n";
+
+    const auto ox = map.world_to_image({0.0,0.0});
+    out << "<line x1=\"50\" y1=\"" << ox.v
+        << "\" x2=\"710\" y2=\"" << ox.v
+        << "\" stroke=\"#a2b7bc\" stroke-width=\"2\"/>\n";
+    out << "<line x1=\"" << ox.u
+        << "\" y1=\"60\" x2=\"" << ox.u
+        << "\" y2=\"460\" stroke=\"#a2b7bc\" stroke-width=\"2\"/>\n";
+
+    out << "<polygon points=\""
+        << a.u << "," << a.v << " "
+        << b.u << "," << b.v << " "
+        << c.u << "," << c.v
+        << "\" fill=\"#d0e8dd\" fill-opacity=\"0.9\" "
+           "stroke=\"#287d72\" stroke-width=\"3\"/>\n";
+
+    for (const auto& pair : std::array<std::pair<const char*,
+                                                book03::ImagePosition2>,3>{{
+             {"A",a},{"B",b},{"C",c}}}) {
+        out << "<circle cx=\"" << pair.second.u << "\" cy=\""
+            << pair.second.v
+            << "\" r=\"6\" fill=\"#277e75\" stroke=\"white\" "
+               "stroke-width=\"2\"/>\n";
+        out << "<text x=\"" << pair.second.u + 10.0
+            << "\" y=\"" << pair.second.v - 9.0
+            << "\" font-family=\"sans-serif\" font-size=\"14\" "
+               "fill=\"#234953\">" << pair.first << "</text>\n";
+    }
+
+    out << "<circle cx=\"" << p.u << "\" cy=\"" << p.v
+        << "\" r=\"7\" fill=\"#bd7651\" stroke=\"white\" "
+           "stroke-width=\"2\"/>\n";
+    out << "<text x=\"" << p.u + 12.0 << "\" y=\"" << p.v - 9.0
+        << "\" font-family=\"sans-serif\" font-size=\"14\" "
+           "fill=\"#a96642\">P</text>\n";
+    out << "<rect x=\"30\" y=\"474\" width=\"700\" height=\"43\" rx=\"9\" "
+           "fill=\"#eaf2f0\"/>\n";
+    out << "<text x=\"44\" y=\"492\" font-family=\"sans-serif\" "
+           "font-size=\"13\" fill=\"#365b61\">"
+        << "P = (" << queried.x << ", " << queried.y << ") m; "
+        << "location = " << to_string(sample.location) << "</text>\n";
+    out << "<text x=\"44\" y=\"509\" font-family=\"monospace\" "
+           "font-size=\"12\" fill=\"#365b61\">"
+        << "Signed twice-area = " << sample.twice_signed_area << "</text>\n";
+    out << "</svg>\n";
+    out.flush();
+    if (!out) throw std::runtime_error("cannot finish interactive SVG");
+    std::cout << "Wrote interactive current-triangle SVG "
+              << target.string() << '\n';
+}
+
 [[nodiscard]] double finite_number(std::string_view text) {
     const std::string copy{text};
     std::size_t count = 0;
@@ -211,9 +306,10 @@ void write_svg(const std::filesystem::path& target) {
 
 void repl() {
     Triangle2 triangle = reference_world_triangle();
+    Point2 last_query{1.5, 1.0};
     std::cout << "Book 03 P03 — Triangle inspector\n"
                  "Commands: point X Y | area | triangle AX AY BX BY CX CY | "
-                 "svg FILE | ppm FILE | reset | help | quit\n";
+                 "svg FILE | ppm FILE | save FILE | reset | help | quit\n";
     std::string line;
     while (std::cout << "triangle> " && std::getline(std::cin, line)) {
         std::istringstream in{line};
@@ -223,7 +319,7 @@ void repl() {
         try {
             if (command=="help") {
                 std::cout << "point X Y | area | triangle AX AY BX BY CX CY | "
-                             "svg FILE | ppm FILE | reset | quit\n";
+                             "svg FILE | ppm FILE | save FILE | reset | quit\n";
             } else if (command=="reset") {
                 triangle=reference_world_triangle();
                 std::cout << "Reset to right triangle A(0,0), B(6,0), C(0,4)\n";
@@ -235,8 +331,8 @@ void repl() {
                 if (!(in >> a >> b) || (in >> extra)) {
                     throw std::invalid_argument("point requires two numbers");
                 }
-                numerical_inspection(triangle,
-                                     {finite_number(a),finite_number(b)});
+                last_query={finite_number(a),finite_number(b)};
+                numerical_inspection(triangle,last_query);
             } else if (command=="triangle") {
                 std::array<std::string,6> args;
                 for(auto& word:args) {
@@ -256,7 +352,7 @@ void repl() {
                 (void)next.twice_signed_area();
                 triangle=next;
                 std::cout << "Updated reference triangle; use 'point' or 'area'\n";
-            } else if (command=="svg" || command=="ppm") {
+            } else if (command=="svg" || command=="ppm" || command=="save") {
                 std::string name,extra;
                 if(!(in >> name) || (in >> extra)) {
                     throw std::invalid_argument("provide one output path");
@@ -264,7 +360,8 @@ void repl() {
                 // Illustration modes deliberately use the fixed image-space
                 // reference triangle, which is separately documented.
                 if(command=="svg") write_svg(name);
-                else write_ppm(name);
+                else if(command=="ppm") write_ppm(name);
+                else save_current_svg(name,triangle,last_query);
             } else if(!command.empty()) {
                 std::cout << "Unknown command; enter 'help'.\n";
             }
