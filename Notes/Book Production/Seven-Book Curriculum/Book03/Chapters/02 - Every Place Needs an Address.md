@@ -421,8 +421,8 @@ In the existing Book 03 companion directory, **Code Parts/tools/labs/book03_cpp2
 
 The design is intentionally small:
 
-* \`WorldPoint2\` describes a place measured in world metres.
-* \`WorldVector2\` describes a displacement or basis direction, with units stated by the operation.
+* \`Point2\` describes a place measured in world metres.
+* \`Vector2\` describes a displacement or basis direction, with units stated by the operation.
 * \`Frame2\` owns an origin and two basis vectors. It can map local points to world points, transform vectors without translation and invert a nondegenerate mapping.
 * \`ImageMap2\` converts world metres into continuous image pixel positions, then explicitly tests whether a position belongs to a stored sample cell.
 * A CLI visualization draws the world axes, local axes, the house-like triangle, and the transformed vertices into an SVG diagram that can be inspected alongside exact numeric output.
@@ -439,11 +439,11 @@ The full implementation belongs in the companion source rather than being duplic
 // The toy house has a frame whose origin is two metres right and one
 // metre up in the garden. Its axes are rotated a quarter-turn CCW.
 const auto house = book03::Frame2::rotation(
-    book03::WorldPoint2{2.0, 1.0},
+    book03::Point2{2.0, 1.0},
     book03::degrees_to_radians(90.0));
 
 // This point is measured in house-local metres, not image pixels.
-const book03::WorldPoint2 local_corner{3.0, 1.0};
+const book03::Point2 local_corner{3.0, 1.0};
 
 // Convert it to a place in the garden. The expected answer is (1,4).
 const auto world_corner = house.local_to_world(local_corner);
