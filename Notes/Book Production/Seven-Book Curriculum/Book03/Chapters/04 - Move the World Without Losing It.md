@@ -508,6 +508,10 @@ This is surprisingly important. For pure rotation, \(A^{-\mathsf T}=A\), so appl
 
 The full 3D normal matrix and its relation to physically based shading will return in Books 3 and 4. Today a flat 2D normal provides an exact little test: transform a tangent and a perpendicular normal under shear, then check their dot product. The correctly transformed normal remains perpendicular.
 
+![Tangent and normal vectors before shear; an incorrectly transformed normal is not perpendicular, while the inverse-transpose normal is.](../Assets/09-normals-under-shear.svg)
+
+*Figure 4.3 — A normal is a geometric constraint, not just another arrow. Under horizontal shear \(x'=x+y\), the original tangent \((0,1)\) becomes \((1,1)\). The naive normal \((1,0)\) is no longer perpendicular, while inverse-transpose mapping gives \((1,-1)\), with dot product zero.*
+
 For an orientation-reversing reflection, remember that the geometric **outward-facing convention** of a face may also require a winding-aware sign policy. The inverse-transpose law enforces perpendicularity; it does not automatically choose an application's intended outward side.
 
 ## Our new C++23 transformation studio
