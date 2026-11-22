@@ -23,8 +23,8 @@ namespace {
 using book03::Frame2;
 using book03::ImageMap2;
 using book03::ImagePosition2;
-using book03::WorldPoint2;
-using book03::WorldVector2;
+using book03::Point2;
+using book03::Vector2;
 
 constexpr int canvas_width = 760;
 constexpr int canvas_height = 540;
@@ -61,7 +61,7 @@ void svg_line(std::ostream& out, ImagePosition2 a, ImagePosition2 b,
 }
 
 // Draw a point in the WORLD frame after mapping to image pixels.
-void svg_world_dot(std::ostream& out, WorldPoint2 world,
+void svg_world_dot(std::ostream& out, Point2 world,
                    std::string_view fill, double radius = 5.0) {
     const auto image = diagram_map.world_to_image(world);
     out << "<circle cx=\"" << image.u << "\" cy=\"" << image.v
@@ -113,10 +113,10 @@ void write_diagram(std::ostream& out, const Frame2& frame) {
     // Three local points define one triangle. The world points below all
     // come from Frame2::local_to_world. No duplicate rotation formulas
     // are embedded in the drawing.
-    const std::array<WorldPoint2, 3> local{{
+    const std::array<Point2, 3> local{{
         {0.0, 0.0}, {2.0, 0.0}, {0.7, 1.5}
     }};
-    std::array<WorldPoint2, 3> world{};
+    std::array<Point2, 3> world{};
     for (std::size_t i = 0; i < local.size(); ++i) {
         world[i] = frame.local_to_world(local[i]);
     }
@@ -130,8 +130,8 @@ void write_diagram(std::ostream& out, const Frame2& frame) {
            "stroke=\"#247b70\" stroke-width=\"3\"/>\n";
 
     const auto origin = diagram_map.world_to_image(frame.origin);
-    const WorldVector2 along_x = frame.transform_vector({1.0, 0.0});
-    const WorldVector2 along_y = frame.transform_vector({0.0, 1.0});
+    const Vector2 along_x = frame.transform_vector({1.0, 0.0});
+    const Vector2 along_y = frame.transform_vector({0.0, 1.0});
     const auto tip_x = diagram_map.world_to_image(frame.origin + along_x);
     const auto tip_y = diagram_map.world_to_image(frame.origin + along_y);
     svg_line(out, origin, tip_x, "#bd6746", 4.0);
@@ -177,9 +177,9 @@ void write_svg_file(const std::filesystem::path& path, const Frame2& frame) {
 
 void inspect_demo() {
     const Frame2 house = frame_for(2.0, 1.0, 90.0);
-    const WorldPoint2 local{3.0, 1.0};
-    const WorldPoint2 world = house.local_to_world(local);
-    const WorldPoint2 returned = house.world_to_local(world);
+    const Point2 local{3.0, 1.0};
+    const Point2 world = house.local_to_world(local);
+    const Point2 returned = house.world_to_local(world);
     const ImageMap2 map{{320.5, 240.5}, 60.0, 60.0, 640, 480};
     const auto image = map.world_to_image({1.0, 2.0});
 
