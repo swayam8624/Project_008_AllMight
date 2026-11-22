@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Source-only checks for Book 03 / Pass 01.
+
+This validates names, manuscript location, original figures and references.
+It deliberately does not compile LaTeX, rewrite the manuscript, build an EPUB
+or claim to have assessed the mathematical truth of every narrative sentence.
+The C++23 compiler and CTest remain responsible for executable behavior.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path(__file__).resolve().parents[4]
+BOOK = ROOT / "Notes/Book Production/Seven-Book Curriculum/Book03"
+LAB = ROOT / "Code Parts/tools/labs/book03_cpp23"
+CHAPTER = BOOK / "Chapters/01 - The Picture Made of Little Windows.md"
+SVG = "{http://www.w3.org/2000/svg}"
+
+
+def check(condition: bool, explanation: str) -> None:
+    if not condition:
+        raise AssertionError(explanation)
+
+
+def main() -> int:
+    for path in [
+        ROOT / "CHATGPT.md",
+        ROOT / "AGENTS.md",
+        ROOT / "Notes/Continuous Notes",
+        ROOT / "Notes/Book Production/AllMight Codex/LaTeX/CURRENT.json",
+        BOOK / "README.md",
+        BOOK / "EDITORIAL_CONTRACT.md",
+        BOOK / "SOURCE_LEDGER.md",
+        BOOK / "CHAPTER_PLAN.md",
+        CHAPTER,
+        LAB / "CMakeLists.txt",
+        LAB / "include/book03/pixel_canvas.hpp",
+        LAB / "src/main.cpp",
+        LAB / "tests/pixel_canvas_tests.cpp",
+    ]:
+        check(path.exists(), f"missing required source: {path}")
+
+    charter = (ROOT / "CHATGPT.md").read_text(encoding="utf-8")
+    check("From Bits to Research/" in charter, "new publication layout missing")
+    check("Notes/Continuous Notes/" in charter, "master notes contract missing")
+    check("Code Parts/" in charter, "new code layout missing")
+
+    chapter = CHAPTER.read_text(encoding="utf-8")
+    check(len(chapter) > 15_000, "opening chapter was unexpectedly truncated")
+    required_prose = [
+        "The Picture Made of Little Windows",
+        "scene", "continuous", "stored", "RGB8", "row-major", "Bresenham",
+        "Reconstruct", "Falsify", "Transfer", "Explain",
+        "write_ppm", "Chapter 02", "Pixel index",
+    ]
+    for phrase in required_prose:
+        check(phrase in chapter, f"opening chapter lost essential concept: {phrase}")
+
+    for filename in ["01-pixel-addresses.svg",
+                     "02-lines-and-discrete-pixels.svg"]:
+        figure = BOOK / "Assets" / filename
+        check(figure.is_file(), f"missing figure: {filename}")
+        check(f"../Assets/{filename}" in chapter,
+              f"figure not included at point of teaching: {filename}")
+
+        root = ET.parse(figure).getroot()
+        check(root.tag == SVG + "svg", f"not an SVG document: {filename}")
+        title = root.find(SVG + "title")
+        description = root.find(SVG + "desc")
+        check(title is not None and bool((title.text or "").strip()),
+              f"figure lacks accessible title: {filename}")
+        check(description is not None and len((description.text or "").strip()) > 70,
+              f"figure lacks meaningful explanation: {filename}")
+        check(bool(root.attrib.get("viewBox")), "figure missing viewBox")
+
+    design = (BOOK / "CHAPTER_PLAN.md").read_text(encoding="utf-8")
+    for i in range(1, 33):
+        check(f"{i:02d}." in design,
+              f"chapter {i:02d} not listed in editorial plan")
+    ledger = (BOOK / "SOURCE_LEDGER.md").read_text(encoding="utf-8")
+    check("02-foundations-ii-ch032" in ledger,
+          "legacy camera source mapping is missing")
+
+    # We never write to these destinations from this script, but we also
+    # assert the source-only gate has not been repurposed to release files.
+    check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
+          "RGB8 PPM serialization contract missing")
+
+    print("Book03/P01: narrative, source location and two SVG figure contracts checked.")
+    print("No LaTeX/PDF/EPUB builds were requested or performed.")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (AssertionError, ET.ParseError) as exc:
+        print(f"Book03/P01 editorial gate FAILED: {exc}", file=sys.stderr)
+        sys.exit(1)
