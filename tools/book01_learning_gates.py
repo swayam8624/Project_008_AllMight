@@ -68,9 +68,11 @@ def gate_latex(chapter: int) -> str:
     names = ("Reconstruct", "Falsify", "Transfer")
     parts = [
         r"\subsection*{Reconstruct, Test, and Transfer}",
+        r"\begin{BookPractice}[Reconstruct, falsify, transfer]",
         r"\begin{enumerate}",
     ]
     for title, sentence in zip(names, GATES[chapter]):
         parts.append(r"\item \textbf{" + title + ".} " + escape(sentence))
     parts.append(r"\end{enumerate}")
+    parts.append(r"\end{BookPractice}")
     return "\n".join(parts) + "\n"

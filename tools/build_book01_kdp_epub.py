@@ -20,6 +20,10 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
+from collections import Counter
+import posixpath
+from urllib.parse import unquote, urlsplit
 from pathlib import Path
 import re
 import subprocess
@@ -29,6 +33,7 @@ from xml.etree import ElementTree as ET
 
 import book01_render_support as render
 import book01_learning_gates as gates
+import book01_ebook_editorial as editorial
 from book01_editorial import (
     SERIES_TITLE, SERIES_SUBTITLE, SERIES_POSITION,
     BOOK_TITLE, BOOK_SUBTITLE, CHAPTER_TITLES,
@@ -40,6 +45,7 @@ OUTPUT = builder.OUTPUT
 BOOK1 = ROOT / "Book Production/Seven-Book Curriculum/Book01"
 LATEX_INLINE_INDEX = re.compile(r"(?m)^[ \t]*\\index\{[^\n]*\}[ \t]*\n?")
 MARKER = re.compile(r"ALLMIGHT(?:MATH|FIGURE|INDEX)CH\d+[A-Z]*INDEX\d+")
+EDITORIAL_SUMMARY: Counter[str] = Counter()
 
 
 def run(command: list[str], **kwargs) -> None:
@@ -67,7 +73,11 @@ def restore_math(reader: str, raw: str, chapter: int) -> str:
         token = item["token"]
         if reader.count(token) != 1:
             raise ValueError(f"Math source missing or duplicated in chapter {chapter}: {token}")
-        expression = item["body"].strip()
+        # The source may contain literal percent signs in prose-like math
+        # and underscores inside text macros. Normalize only those TeX
+        # text-mode hazards before the EPUB MathML conversion, exactly as
+        # the independent PDF rendering pipeline does.
+        expression = render.sanitize_source_math_for_tex(item["body"].strip())
         # EPUB3 uses MathML from Pandoc's TeX-math parser; do not flatten
         # formulas into text or rasterized screenshots.
         reader = reader.replace(token, "\n\n$$\n" + expression + "\n$$\n\n")
@@ -101,6 +111,42 @@ def prepare_fragment(
 ) -> str:
     raw = raw_file.read_text(encoding="utf-8")
     reader = reader_file.read_text(encoding="utf-8")
+    reader, cleanup = editorial.clean_reader_markdown(reader, chapter)
+    EDITORIAL_SUMMARY.update(cleanup)
+    # A relative reference from the repository cannot resolve inside an
+    # EPUB archive. Redirect companion C++ sources to verified GitHub files.
+    # Apply only to prose to preserve the original code examples byte-for-byte.
+    def source_links(fragment: str) -> str:
+        return fragment.replace(
+            "../../tools/labs/",
+            "https://github.com/swayam8624/Project_008_AllMight/"
+            "blob/curriculum/cpp23-nes-project-pass01/tools/labs/",
+        )
+    reader = protect_markdown_fences(reader, source_links)
+    if chapter == 12:
+        # Remove a chapter-composition instruction that leaked into the
+        # ebook. Replace it with a reader-facing bridge, not an omission
+        # of the underlying technical explanation.
+        compose_note = re.compile(
+            r"(?m)^The original Chapter 12 already contains substantial "
+            r"material on command processors, asynchronous compute, upload "
+            r"arenas, synchronization overhead, profiling zones, occupancy, "
+            r"arithmetic intensity and the performance tradeoffs of batching "
+            r"versus fusion\..*?Neither existing prose nor mathematical "
+            r"derivations are replaced\.[ \t]*$", re.DOTALL,
+        )
+        reader, changed = compose_note.subn(
+            "The following analysis first establishes what command submission "
+            "actually guarantees and what remains unproven. That correctness "
+            "and uncertainty model provides the basis for later measurements "
+            "of synchronization overhead, GPU occupancy, arithmetic intensity, "
+            "and the tradeoffs of batching versus fusion.",
+            reader, count=1,
+        )
+        # Historical source variants can differ slightly. Any surviving
+        # author instruction is a failed release rather than reader prose.
+        if "This addition belongs before the chapter" in reader:
+            raise ValueError("Unremoved editorial production note in chapter 12")
     reader = restore_math(reader, raw, chapter)
     reader = restore_diagrams(reader, diagrams, chapter)
     reader = LATEX_INLINE_INDEX.sub("", reader)
@@ -126,7 +172,15 @@ def combine_book(manifest: dict) -> str:
         'lang: en-US\n'
         'rights: "Copyright © 2026 Swayam Singal. All rights reserved."\n'
         "---\n\n",
-        "# Preface\n\n",
+        "# Title and Copyright\n\n"
+        "**From Bits to Research — Book One of Seven**\n\n"
+        "**From Bits to Parallel Systems**\n\n"
+        "*C++23, CPU Execution, GPU Memory, and Reliable Software*\n\n"
+        "Swayam Singal\n\n"
+        "Copyright © 2026 Swayam Singal. All rights reserved. "
+        "Third-party works retain their own copyrights and licences.\n\n"
+        "References, companion code and corrections: "
+        "[Project AllMight](https://github.com/swayam8624/Project_008_AllMight).\n\n",
         builder.ACADEMIC_PREFACE.read_text(encoding="utf-8") + "\n\n",
     ]
     chapters = {int(item["number"]): item for item in manifest["chapters"]}
@@ -179,6 +233,70 @@ def combine_book(manifest: dict) -> str:
     return combined
 
 
+
+# A reflowable technical book must not force the whole reader viewport wider
+# than the screen merely because an equation or table is very long.
+# MathML stays semantic and copyable; the protective span allows horizontal
+# access to wide formulae instead of clipping their last terms.
+MATH_SCROLL_STYLE = """
+.math-scroll-container {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.math-scroll-container > math {
+  display: block;
+  max-width: none;
+  white-space: nowrap;
+}
+div.sourceCode, pre { max-width: 100%; }
+div.sourceCode { overflow-x: auto; }
+table { display: block; max-width: 100%; overflow-x: auto; }
+body { overflow-wrap: anywhere; }
+"""
+BLOCK_MATH = re.compile(
+    r'(<math\b[^>]*\bdisplay="block"[^>]*>[\s\S]*?</math>)'
+)
+
+
+def contain_wide_epub_content(epub_path: Path) -> int:
+    """Limit equation/table/code overflow without changing teaching content.
+
+    Repack only EPUB XHTML containing block MathML and the EPUB CSS.
+    All text/math tokens, image bytes, links, spine and metadata remain
+    unchanged. Every transformed document is XML-parsed before replacement.
+    Kindle Previewer is still required: CSS support differs by device.
+    """
+    staged = epub_path.with_suffix(".reflow-staging")
+    changed = 0
+    try:
+        with zipfile.ZipFile(epub_path, "r") as original, \
+             zipfile.ZipFile(staged, "w") as revised:
+            for info in original.infolist():
+                body = original.read(info.filename)
+                if info.filename.endswith(".xhtml"):
+                    source = body.decode("utf-8")
+                    wrapped, n = BLOCK_MATH.subn(
+                        lambda match:
+                            '<span class="math-scroll-container">'
+                            + match.group(0) + '</span>',
+                        source,
+                    )
+                    if n:
+                        ET.fromstring(wrapped.encode("utf-8"))
+                        body = wrapped.encode("utf-8")
+                        changed += n
+                elif info.filename == "EPUB/styles/stylesheet1.css":
+                    if b".math-scroll-container" not in body:
+                        body += ("\n" + MATH_SCROLL_STYLE).encode("utf-8")
+                revised.writestr(info, body)
+        os.replace(staged, epub_path)
+    finally:
+        staged.unlink(missing_ok=True)
+    return changed
+
+
 def validate_epub(path: Path) -> dict:
     """Structural EPUB3 checks; Kindle device rendering remains independent."""
     ns = {"c": "urn:oasis:names:tc:opendocument:xmlns:container",
@@ -213,18 +331,64 @@ def validate_epub(path: Path) -> dict:
             raise ValueError("Missing Kindle navigable table of contents")
         if not any("cover-image" in item.attrib.get("properties", "").split() for item in items):
             raise ValueError("Missing embedded EPUB cover image")
+        # OPF validity alone misses malformed XHTML generated when Pandoc
+        # interprets a C++ expression like std::span<T> as raw HTML.
+        # Parse *every* XHTML document and validate all local resources
+        # and fragment anchors before calling an EPUB structurally valid.
+        xhtml_docs = {}
+        xhtml_ids = {}
+        for member in sorted(p for p in members if p.endswith(".xhtml")):
+            try:
+                document = ET.fromstring(z.read(member))
+            except ET.ParseError as exc:
+                raise ValueError(f"Invalid XHTML {member}: {exc}") from exc
+            xhtml_docs[member] = document
+            xhtml_ids[member] = {
+                node.get("id") for node in document.iter() if node.get("id")
+            }
+        local_links_checked = 0
+        for member, document in xhtml_docs.items():
+            for node in document.iter():
+                for key, href in node.attrib.items():
+                    if key.rsplit("}", 1)[-1] not in ("href", "src"):
+                        continue
+                    url = urlsplit(href)
+                    if url.scheme or url.netloc:
+                        continue  # External DOI, publisher, and GitHub links
+                    resource = (
+                        posixpath.normpath(posixpath.join(
+                            posixpath.dirname(member), unquote(url.path)))
+                        if url.path else member
+                    )
+                    if resource not in members:
+                        raise ValueError(
+                            f"Broken EPUB resource in {member}: {href}"
+                        )
+                    if url.fragment and resource in xhtml_ids:
+                        if unquote(url.fragment) not in xhtml_ids[resource]:
+                            raise ValueError(
+                                f"Broken EPUB anchor in {member}: {href}"
+                            )
+                    local_links_checked += 1
         chapter_pages = [p for p in members if p.endswith(".xhtml") and "/text/" in p]
         if not chapter_pages:
             chapter_pages = [p for p in members if p.endswith(".xhtml")]
         full_text = "\n".join(z.read(p).decode("utf-8") for p in chapter_pages)
         if re.search(r"ALLMIGHT(?:MATH|FIGURE|INDEX)", full_text):
             raise ValueError("Unresolved production marker in EPUB content")
+        if re.search(r"ALLMIGHT-CPP23-[A-Z0-9-]+-ADDITIVE-(?:START|END)"
+                     r"|the user has reserved|The user requested no intermediate"
+                     r"|The next engineering pass should compile",
+                     full_text, re.I):
+            raise ValueError("Visible internal authoring note escaped EPUB cleanup")
         return {"files": len(members), "xhtml_pages": len(chapter_pages),
                 "bytes": path.stat().st_size,
                 "mathml_elements": full_text.count("<math"),
                 "embedded_images": sum(item.attrib.get("media-type","").startswith("image/")
                                        for item in items),
-                "has_nav": True, "has_cover_image": True}
+                "has_nav": True, "has_cover_image": True,
+                "xhtml_parsed": len(xhtml_docs),
+                "local_links_checked": local_links_checked}
 
 
 def main() -> int:
@@ -232,17 +396,49 @@ def main() -> int:
     parser.add_argument("--cover", type=Path, required=True,
                         help="Exact cover art (JPEG/PNG). No generated substitute.")
     parser.add_argument("--output", type=Path,
-                        default=OUTPUT / "Book01-From-Bits-to-Parallel-Systems-KDP.epub")
+                        default=ROOT / "build" / "Book01-From-Bits-to-Parallel-Systems-EBOOK.epub")
     parser.add_argument("--skip-source-verify", action="store_true",
                         help="Only for debugging; never for a KDP release")
     args = parser.parse_args()
     if not args.cover.is_file():
         parser.error("Provide the actual cover image file: " + str(args.cover))
-    from PIL import Image
-    with Image.open(args.cover) as image:
-        w, h = image.size
-        if w < 1200 or h < 1800 or not 0.56 <= w/h <= 0.75:
-            parser.error(f"Cover is {w}x{h}; supply suitable portrait artwork, ideally 1600x2560")
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        parser.error(
+            "Pillow is missing from the book virtual environment. Run: "
+            ".venv-book01/bin/python -m pip install Pillow"
+        )
+    # Keep the author's original cover untouched. The supplied 992x1586
+    # portrait art may be transparently padded/upscaled to a Kindle-size JPG.
+    cover_for_epub = args.cover
+    with Image.open(args.cover) as source:
+        source.load()
+        w, h = source.size
+        if not 0.56 <= w / h <= 0.75:
+            parser.error(f"Cover dimensions {w}x{h} are not the expected portrait aspect ratio")
+        if source.mode != "RGB" or w < 1600 or h < 2560:
+            staging = OUTPUT / "epub-preflight"
+            staging.mkdir(parents=True, exist_ok=True)
+            cover_for_epub = staging / "book01-cover-for-epub.jpg"
+            # Composite any transparent pixels on dark navy, consistent
+            # with the actual author's uploaded art. Never crop any text.
+            rgba = source.convert("RGBA")
+            background = Image.new("RGBA", rgba.size, (0, 7, 19, 255))
+            background.alpha_composite(rgba)
+            rgb = background.convert("RGB")
+            if w < 1600 or h < 2560:
+                rgb = ImageOps.pad(
+                    rgb, (1600, 2560),
+                    method=Image.Resampling.LANCZOS,
+                    color=(0, 7, 19),
+                    centering=(0.5, 0.5),
+                )
+            rgb.save(cover_for_epub, "JPEG", quality=94, subsampling=0)
+            print(
+                f"Prepared cover for EPUB: {cover_for_epub} "
+                f"({w}x{h} original, {rgb.width}x{rgb.height} output)"
+            )
     rows, metadata = builder.audit_sources()
     if not args.skip_source_verify:
         builder.verify_prepared(rows, metadata)
@@ -256,34 +452,33 @@ def main() -> int:
     work.mkdir(parents=True, exist_ok=True)
     md = work / "book01.epub-source.md"
     md.write_text(content, encoding="utf-8")
+    # The same semantic colour roles used by the complete PDF are applied to
+    # reflowable code/quote blocks. Reuse the authored, versioned CSS rather
+    # than silently generating an unstyled epub on every invocation.
     css = work / "kindle.css"
-    css.write_text(
-        "body{font-family:serif;line-height:1.4;}"
-        "h1{page-break-before:always;break-before:page;}"
-        "h1,h2,h3{line-height:1.23;page-break-after:avoid;}"
-        "pre,code{font-family:monospace;overflow-wrap:anywhere;white-space:pre-wrap;}"
-        "pre{font-size:.86em;line-height:1.27;padding:.5em;}"
-        "img{max-width:100%;height:auto;}"
-        "table{border-collapse:collapse;width:100%;font-size:.9em;}"
-        "th,td{border-bottom:1px solid #aaa;padding:.22em;}"
-        "figure{page-break-inside:avoid;} .math{overflow-wrap:anywhere;}",
-        encoding="utf-8"
-    )
+    style_source = BOOK1 / "book01-ebook.css"
+    if not style_source.is_file():
+        raise RuntimeError("Missing tracked Book One EPUB stylesheet: "+str(style_source))
+    css.write_bytes(style_source.read_bytes())
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    run(["pandoc", "-f", "markdown+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
+    run(["pandoc", "-f", "markdown-raw_html+tex_math_dollars+raw_tex+pipe_tables+fenced_code_blocks",
          "-t", "epub3", "--standalone", "--toc", "--toc-depth=2",
-         "--split-level=1", "--mathml", "--css", str(css),
-         "--epub-cover-image", str(args.cover),
+         "--split-level=1", "--mathml", "--lua-filter", str(builder.CODE_FILTER),
+         "--css", str(css),
+         "--epub-cover-image", str(cover_for_epub),
          "--metadata", "title=" + BOOK_TITLE,
          "--metadata", "subtitle=" + BOOK_SUBTITLE,
          "--metadata", "author=Swayam Singal",
          "--metadata", "lang=en-US",
          "-o", str(args.output), str(md)])
+    wrapped_equations = contain_wide_epub_content(args.output)
     result = validate_epub(args.output)
+    result["scroll_contained_display_math"] = wrapped_equations
+    result["editorial_cleanup"] = dict(EDITORIAL_SUMMARY)
     report = work / "epub-preflight.json"
     report.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print("EPUB STRUCTURAL PROOF PASSED:", args.output, json.dumps(result))
-    print("MANDATORY NEXT STEP: open EPUB in Kindle Previewer (tablet, phone, e-ink).")
+    print("Before release: validate with EPUBCheck, then inspect math, code, tables, and diagrams in Kindle Previewer or another target e-reader.")
     return 0
 
 

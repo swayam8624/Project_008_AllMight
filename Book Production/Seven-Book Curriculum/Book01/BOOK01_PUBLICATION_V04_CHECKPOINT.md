@@ -2,6 +2,77 @@
 
 **Status:** committed source improvements; not a declaration that new PDFs have passed visual or technical proof. This document takes precedence over earlier four-part diagnostic build instructions.
 
+## Final delivery location
+
+**Finished Book One PDFs and the EPUB go directly into `Master/build/`.**
+Generated source, figure caches, TeX intermediates, and inspection manifests remain under `Master/build/book01-expanded-reader/`. Publication outputs must not be placed in Desktop or under `Book Production/.../Build`.
+
+## 20 November 2026 — complete PDF and EPUB presentation correction
+
+The author supplied the actual 1,042-page Book One complete PDF and its
+reflowable EPUB, not merely proof fragments. The PDF is ALREADY one complete
+digital book, and the default --compile path correctly produces a single
+continuous TeX document. Combining four older diagnostic parts would insert
+duplicate covers and break the continuous table of contents.
+
+The PDF's many source-code panels are shaded but not syntax-highlighted:
+the old Pandoc route passed --no-highlight and deliberately used language={}
+in its listings. The EPUB's source contains span.kw, span.co, span.st and
+similar tokens, but its old stylesheet had no matching colour rules. The
+reader also encounters internal authoring-pass language and very few semantic
+teaching callouts. The old complete PDF used its fallback typographic title
+page instead of the separately authored illustrated cover.
+
+The corrective source revision DOES NOT modify the original continuous
+manuscript, any original chapter body, the 18 exact teaching additions or
+their companion program source. It adds:
+- A language-aware, source-preserving Pandoc LaTeX filter for C++23, shell,
+  CMake, JSON, Python and shader listings; unknown languages remain boxed.
+- Breakable muted-blue code panels, distinct quote/note panels, and green
+  Reconstruct/Falsify/Transfer exercise panels. Chapter objectives and
+  recall questions receive explicit learning panels.
+- A matching, actual token-coloured reflowable EPUB stylesheet, with CSS
+  rules for learning/practice panels, readable tables, and figures.
+- A more readable digital PDF body size and leading, independent of the
+  separate KDP paperback profile and its physical page limit.
+- --cover on the continuous --compile command, which stages the exact
+  supplied PNG/JPEG as the opening PDF page. Without that option the PDF
+  still uses its textual fallback; never invent a cover or substitute one.
+- A Pandoc PDF/EPUB visual-language smoke test and source-preservation CI.
+
+The canonical digital file is still:
+build/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf
+
+On the author's Mac, after pulling the relevant Book One branch and
+checking for unrelated local edits, the corrected build sequence is:
+
+~~~bash
+cd "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master"
+export PATH="$(brew --prefix node)/bin:/Library/TeX/texbin:$PATH"
+PY="$PWD/.venv-book01/bin/python"
+
+"$PY" tools/test_book01_visual_language.py
+"$PY" tools/build_book01_expanded_reader.py --check
+"$PY" tools/build_book01_expanded_reader.py --prepare
+"$PY" tools/build_book01_expanded_reader.py --verify-prepared
+
+# Use the author's actual local cover PNG/JPEG.
+COVER="/path/to/From Bits to Parallel Systems cover.png"
+"$PY" tools/build_book01_expanded_reader.py --compile --cover "$COVER" --open
+
+# The EPUB is built independently from semantic source, not PDF screenshots.
+"$PY" tools/build_book01_kdp_epub.py --cover "$COVER"
+~~~
+
+The connected CI proves generated source, language boxes, EPUB semantic card
+markup, preserved author content, diagrams and companion C++ projects.
+It is NOT a full LuaLaTeX build and does not establish the final number of
+pages, reader-device compatibility, every figure's visual quality, or mathematical
+correctness. The author must visually inspect code, chapter introductions,
+callouts, diagrams, tables, and ebook navigation before release.
+
+---
+
 ## What the academic edition includes
 
 The continuous digital edition draws on sixteen original Computing Foundations chapter bodies, eighteen exactly reversible additive C++23 project lessons, an integrative mastery chapter, the distinct academic front matter and back matter, and sixteen chapter-specific supplemental investigations placed alongside their relevant chapters. The investigations include the bit-to-CPU bridge; modern C++23 contracts; CPU instruction execution; GPU coalescing and scan; borrowing and resource lifetimes; asynchronous execution; Vulkan resources and hazards; Metal execution; and evidence-based performance analysis.
@@ -56,12 +127,12 @@ If a build fails, inspect the first error; do not skip subsequent checks or reus
 
 The digital book is prepared under:
 
-`build/book01-expanded-reader/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf`
+`build/Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf`
 
 The two 7 × 10-inch black-ink-on-white-paper candidates are:
 
-`build/book01-expanded-reader/Book01-From-Bits-to-Programs-KDP-Volume-01.pdf`
-`build/book01-expanded-reader/Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf`
+`build/Book01-From-Bits-to-Programs-KDP-Volume-01.pdf`
+`build/Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf`
 
 The preparer writes `build/book01-expanded-reader/manifest.json`. Each actual LaTeX build writes `build/publication-proof.json` inside its own edition directory's build subfolder, for example:
 

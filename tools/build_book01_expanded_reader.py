@@ -40,6 +40,7 @@ EDITION = ROOT / "Chapter Edition/01 - Computing Foundations"
 LATEX = ROOT / "Book Production/AllMight Codex/LaTeX"
 CAPSTONE = ROOT / "Book Production/Seven-Book Curriculum/Book01/FINAL_CAPSTONE_AND_MASTERY_GATE.md"
 READER_STYLE = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-reader.sty"
+CODE_FILTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/book01-code-boxes.lua"
 ACADEMIC_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_PREFACE.md"
 SECOND_VOLUME_PREFACE = ROOT / "Book Production/Seven-Book Curriculum/Book01/VOLUME_II_PREFACE.md"
 ACADEMIC_BACKMATTER = ROOT / "Book Production/Seven-Book Curriculum/Book01/ACADEMIC_BACKMATTER.md"
@@ -253,6 +254,7 @@ def audit_sources() -> tuple[list[dict], dict]:
         "chapter_count": NUMBER_OF_CHAPTERS,
         "addition_count": total,
         "reader_style_sha256": sha256(READER_STYLE.read_bytes()),
+        "code_filter_sha256": sha256(CODE_FILTER.read_bytes()),
         "academic_preface_sha256": sha256(ACADEMIC_PREFACE.read_bytes()),
         "second_volume_preface_sha256": sha256(SECOND_VOLUME_PREFACE.read_bytes()),
         "academic_backmatter_sha256": sha256(ACADEMIC_BACKMATTER.read_bytes()),
@@ -430,6 +432,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=section",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(tex_path), str(render_path)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode:
@@ -486,6 +489,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=section",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(extra_tex), str(extra_rendered)]
                 run = subprocess.run(cmd, capture_output=True, text=True)
                 if run.returncode or not extra_tex.is_file():
@@ -548,6 +552,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                        "markdown+wikilinks_title_after_pipe+tex_math_single_backslash+tex_math_double_backslash",
                        "-t", "latex", "--top-level-division=chapter",
                        "--wrap=none", "--no-highlight",
+                       "--lua-filter", str(CODE_FILTER),
                        "-o", str(challenge_tex), str(cap_reader)]
             run = subprocess.run(command, capture_output=True, text=True)
             if run.returncode or not challenge_tex.is_file() or not challenge_tex.stat().st_size:
@@ -647,6 +652,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
                "markdown+tex_math_single_backslash+tex_math_double_backslash",
                "-t", "latex", "--top-level-division=chapter",
                "--wrap=none", "--no-highlight",
+               "--lua-filter", str(CODE_FILTER),
                "-o", str(path), str(source)]
         conversion = subprocess.run(cmd, capture_output=True, text=True)
         if conversion.returncode or not path.is_file():
@@ -659,7 +665,7 @@ def prepare(rows: list[dict], metadata: dict) -> None:
         path = directory / "backmatter.tex"
         cmd = [pandoc, "-f", "markdown+tex_math_single_backslash+tex_math_double_backslash",
                "-t", "latex", "--top-level-division=chapter", "--wrap=none",
-               "--no-highlight", "-o", str(path), str(ACADEMIC_BACKMATTER)]
+               "--no-highlight", "--lua-filter", str(CODE_FILTER), "-o", str(path), str(ACADEMIC_BACKMATTER)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode or not path.is_file():
             raise RuntimeError("Academic backmatter conversion failed: " + result.stderr[:2000])
@@ -853,15 +859,19 @@ def compile_parts(rows: list[dict], metadata: dict, part: int | None, open_pdf: 
     # for cross-references/TOC rather than forcing installation of full MacTeX.
     # Default is one continuous TeX book, not four compiled volumes
     # merged into a PDF with repeated covers and incomplete contents.
+    # Intermediate TeX/PDF proof files remain under build/book01-expanded-reader.
+    # Finished reader-facing PDFs are published directly in Master/build.
+    release_dir = ROOT / "build"
+    release_dir.mkdir(parents=True, exist_ok=True)
     if paperback:
         selected = [
             (OUTPUT / f"book01-print-v{n:02d}",
-             OUTPUT / ("Book01-From-Bits-to-Programs-KDP-Volume-01.pdf" if n == 1 else "Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf"))
+             release_dir / ("Book01-From-Bits-to-Programs-KDP-Volume-01.pdf" if n == 1 else "Book01-From-Programs-to-GPUs-KDP-Volume-02.pdf"))
             for n in range(1, len(PRINT_VOLUMES) + 1)
         ]
     elif part is None:
         selected = [(OUTPUT / "book01-complete",
-                     OUTPUT / "Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf")]
+                     release_dir / "Book01-From-Bits-to-Parallel-Systems-COMPLETE.pdf")]
     else:
         selected = [(OUTPUT / f"book01-expanded-p{part:02d}",
                      OUTPUT / f"Book01-Bits-Programs-Reliable-Systems-P{part:02d}.pdf")]
@@ -984,11 +994,14 @@ def main() -> int:
     parser.add_argument("--part", type=int, choices=(1, 2, 3, 4),
                         help="For --compile, build only this part")
     parser.add_argument("--open", action="store_true", help="Open each successfully compiled PDF in the default viewer")
+    parser.add_argument("--cover", type=Path, help="Author-provided PNG/JPEG cover for the single continuous digital PDF; stage before --compile")
     args = parser.parse_args()
     if args.open and not (args.compile or args.compile_paperback):
         parser.error("--open requires --compile or --compile-paperback")
     if args.part and not args.compile:
         parser.error("--part is only meaningful with --compile")
+    if args.cover and not args.compile:
+        parser.error("--cover is for --compile (the single continuous digital edition) only")
     try:
         rows, metadata = audit_sources()
         print("SOURCE CHECK PASSED:", len(rows), "original chapters,",
@@ -998,6 +1011,11 @@ def main() -> int:
         elif args.verify_prepared:
             verify_prepared(rows, metadata)
         elif args.compile or args.compile_paperback:
+            if args.cover:
+                # Do not invent a substitute cover; insert the exact supplied art.
+                # The original input image and all source chapters stay untouched.
+                from stage_book01_cover import stage
+                stage(args.cover.expanduser().resolve())
             compile_parts(rows, metadata, args.part, args.open, args.compile_paperback)
     except (OSError, ValueError, RuntimeError, AssertionError, UnicodeError) as exc:
         print("Book01 release refused:", exc, file=sys.stderr)
