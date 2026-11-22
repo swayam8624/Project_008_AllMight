@@ -53,3 +53,16 @@ The Chapter 01 narrative is a new **additive** reader-facing introduction. It in
 ## Next source audit
 
 Read every full legacy Book 03 source chapter in source order; record source byte hashes, figures/code environment counts, proofs, unique examples, and cross-book boundaries. Then write a source-preserving composition map that links new chapters to existing paragraphs and assets without double-counting content. Do this **before** replacing any stage source or generating reader artifacts.
+
+
+## Pass 02 — targeted primary-source inspection
+
+The [Pass 02 legacy-source audit](PASS02_LEGACY_AUDIT.md) now records exact inspected Git blob SHAs, canonical source spans, original matrix/camera conventions and Book 03 chapter destinations for seven Computing Foundations chapters (32–38) plus two Graphics/Vision chapters (clip space and mesh topology). This is a **verified entrypoint inventory**, not an exhaustive full-body or mathematical audit. It leaves the originals untouched.
+
+**New chapter:** Chapters/02 - Every Place Needs an Address.md — an additive first-principles explanation of point/vector distinction, the origin and basis in an affine frame, inverse transforms, nested composition, units and 2D world-up/image-down mapping, plus worked arithmetic and tests.
+
+**New independent source:** Code Parts/tools/labs/book03_cpp23/include/book03/frame_math.hpp, src/frame_playground.cpp and tests/frame_math_tests.cpp. The numeric frame code does not pretend to replace the old camera extrinsic, clip-space or rasterization chapters. Its 2D assumptions are explicit.
+
+**New original diagrams:** Assets/03-two-frames-one-place.svg and Assets/04-world-to-image-frame.svg. Both have accessible descriptions and numeric contracts. No legacy diagram or generated asset was moved.
+
+Remaining: full source-unit mapping for each long chapter, math verification, additive reader composition, and author-run final PDF/EPUB review. This pass does not edit source masters or the frozen Stage 03 generation.
