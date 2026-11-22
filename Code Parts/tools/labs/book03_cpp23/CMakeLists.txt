@@ -43,10 +43,26 @@ target_link_libraries(book03_triangles PRIVATE
 add_executable(book03_triangle_tests tests/triangle_geometry_tests.cpp)
 target_link_libraries(book03_triangle_tests PRIVATE book03_triangle_geometry)
 
+# Chapter 04: the C++23 homogeneous-affine layer reuses the earlier
+# Point2 / Vector2 / Frame2 / Triangle2 / Canvas contracts.
+add_library(book03_affine2 INTERFACE)
+target_include_directories(book03_affine2 INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_affine2 INTERFACE cxx_std_23)
+
+add_executable(book03_transforms src/transform_studio.cpp)
+target_link_libraries(book03_transforms PRIVATE
+    book03_affine2 book03_pixel_canvas book03_triangle_geometry)
+
+add_executable(book03_affine_tests tests/affine2_tests.cpp)
+target_link_libraries(book03_affine_tests PRIVATE
+    book03_affine2 book03_triangle_geometry)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
-                   book03_triangles book03_triangle_tests)
+                   book03_triangles book03_triangle_tests
+                   book03_transforms book03_affine_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -56,4 +72,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_pixel_canvas_contracts COMMAND book03_canvas_tests)
     add_test(NAME book03_affine_frame_contracts COMMAND book03_frame_tests)
     add_test(NAME book03_triangle_geometry_contracts COMMAND book03_triangle_tests)
+    add_test(NAME book03_affine_transform_contracts COMMAND book03_affine_tests)
 endif()
