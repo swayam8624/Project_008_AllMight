@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" role="img" aria-labelledby="title desc">
+<title id="title">Pixel index and continuous sample center in a seven by five image</title>
+<desc id="desc">A 7 column by 5 row image grid, with the top-left as origin and x increasing rightward, y downward. Pixel index (3,2) is shaded teal and its center is shown as a dot at continuous location (3.5,2.5). Its linear index in row-major storage is 17.</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#366f83"/></marker>
+</defs>
+<rect width="720" height="520" rx="18" fill="#fbfaf6"/>
+<text x="46" y="32" font-size="20" font-family="sans-serif" fill="#23384b" font-weight="600">A picture is a grid of addresses</text>
+<text x="47" y="51" font-size="12" font-family="sans-serif" fill="#647482">7 columns × 5 rows · top-left origin · each cell stores one RGB8 sample</text>
+<g transform="translate(92 91)">
+  <rect x="0" y="0" width="448" height="320" fill="#f1f5f3" stroke="#81939a" stroke-width="1.4"/>
+  <rect x="192" y="128" width="64" height="64" fill="#cce9e4" stroke="#257d72" stroke-width="2.5"/>
+  <g stroke="#a8b7bc" stroke-width="1">
+    <path d="M64 0 V320 M128 0 V320 M192 0 V320 M256 0 V320 M320 0 V320 M384 0 V320"/>
+    <path d="M0 64 H448 M0 128 H448 M0 192 H448 M0 256 H448"/>
+  </g>
+  <g fill="#465967" font-family="sans-serif" font-size="14" text-anchor="middle">
+    <text x="32" y="-10">0</text><text x="96" y="-10">1</text><text x="160" y="-10">2</text>
+    <text x="224" y="-10">3</text><text x="288" y="-10">4</text><text x="352" y="-10">5</text><text x="416" y="-10">6</text>
+    <text x="-16" y="37">0</text><text x="-16" y="101">1</text><text x="-16" y="165">2</text>
+    <text x="-16" y="229">3</text><text x="-16" y="293">4</text>
+  </g>
+  <circle cx="224" cy="160" r="7" fill="#0d756b" stroke="#fff" stroke-width="2"/>
+  <text x="237" y="150" font-size="12" fill="#145e59" font-family="sans-serif" font-weight="600">center</text>
+  <circle cx="0" cy="0" r="4.5" fill="#dc9560"/>
+  <path d="M0 -36 H86" stroke="#366f83" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M-36 0 V72" stroke="#366f83" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="92" y="-38" font-family="sans-serif" fill="#366f83" font-size="13">x</text>
+  <text x="-42" y="83" font-family="sans-serif" fill="#366f83" font-size="13">y</text>
+</g>
+<rect x="563" y="194" width="131" height="111" rx="9" fill="#edf4f5" stroke="#bdcfd0"/>
+<text x="577" y="217" font-size="12" font-family="sans-serif" fill="#5d6977">Pixel index</text>
+<text x="577" y="238" font-size="18" font-family="monospace" fill="#173d46">(3, 2)</text>
+<text x="577" y="263" font-size="12" font-family="sans-serif" fill="#5d6977">Sample center</text>
+<text x="577" y="284" font-size="15" font-family="monospace" fill="#173d46">(3.5, 2.5)</text>
+<path d="M316 251 L550 251" stroke="#5b918a" stroke-width="1.8" stroke-dasharray="5 5"/>
+<text x="92" y="454" font-size="15" font-family="sans-serif" fill="#293f4c">Row-major index: <tspan font-family="monospace" fill="#1c6d65">k = 2 × 7 + 3 = 17</tspan></text>
+<text x="92" y="479" font-size="13" font-family="sans-serif" fill="#5d6a74">At 3 stored bytes per RGB8 pixel, its first channel begins at byte offset 51.</text>
+</svg>
