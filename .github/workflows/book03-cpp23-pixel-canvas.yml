@@ -58,7 +58,7 @@ jobs:
           build/book03-p01/book03_triangles inspect > build/book03-p01/triangle-inspect.txt
           build/book03-p01/book03_triangles ppm build/book03-p01/triangle-gradient.ppm
           build/book03-p01/book03_triangles svg build/book03-p01/triangle.svg
-          printf 'area\npoint 1.5 1\npoint 5 3\nquit\n' | build/book03-p01/book03_triangles repl > build/book03-p01/triangle-repl.txt
+          printf 'area\npoint 1.5 1\nsave build/book03-p01/current-triangle.svg\npoint 5 3\nquit\n' | build/book03-p01/book03_triangles repl > build/book03-p01/triangle-repl.txt
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
@@ -73,6 +73,11 @@ jobs:
           assert root.find(ns + "title") is not None
           assert root.find(ns + "desc") is not None
           assert len(root.findall(ns + "polygon")) == 1
+          current = ET.parse(p / "current-triangle.svg").getroot()
+          assert current.tag == ns + "svg"
+          assert current.find(ns + "title") is not None
+          assert current.find(ns + "desc") is not None
+          assert len(current.findall(ns + "polygon")) == 1
           evidence = (p / "triangle-inspect.txt").read_text()
           assert "Signed twice-area = 24.000000000000" in evidence
           assert "0.500000000000,0.250000000000,0.250000000000" in evidence
