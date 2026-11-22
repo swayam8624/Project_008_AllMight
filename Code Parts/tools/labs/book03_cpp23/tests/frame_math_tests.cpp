@@ -20,17 +20,17 @@ using book03::Frame2;
 using book03::ImageMap2;
 using book03::ImagePixel2;
 using book03::ImagePosition2;
-using book03::WorldPoint2;
-using book03::WorldVector2;
+using book03::Point2;
+using book03::Vector2;
 
 template <class A, class B>
 concept CanAdd = requires(A a, B b) {
     a + b;
 };
 
-static_assert(!CanAdd<WorldPoint2, WorldPoint2>,
+static_assert(!CanAdd<Point2, Point2>,
     "two points cannot be added as though they were displacements");
-static_assert(CanAdd<WorldPoint2, WorldVector2>,
+static_assert(CanAdd<Point2, Vector2>,
     "point plus a displacement must be supported");
 
 void require(bool condition, std::string_view message) {
@@ -46,7 +46,7 @@ void near(double actual, double expected, double tol,
     }
 }
 
-void near_point(WorldPoint2 actual, WorldPoint2 expected, double tol,
+void near_point(Point2 actual, Point2 expected, double tol,
                 std::string_view message) {
     near(actual.x, expected.x, tol, message);
     near(actual.y, expected.y, tol, message);
@@ -63,26 +63,26 @@ void requires_throw(Operation operation, std::string_view message) {
 }
 
 void point_vs_displacement() {
-    const WorldPoint2 a{1.0, 1.0};
-    const WorldPoint2 b{5.0, 3.0};
-    const WorldVector2 displacement = b - a;
-    require(displacement == WorldVector2{4.0, 2.0},
+    const Point2 a{1.0, 1.0};
+    const Point2 b{5.0, 3.0};
+    const Vector2 displacement = b - a;
+    require(displacement == Vector2{4.0, 2.0},
             "subtracting two points gives displacement");
     require(a + displacement == b, "point plus displacement gives point");
-    require(book03::midpoint(a, b) == WorldPoint2{3.0, 2.0},
+    require(book03::midpoint(a, b) == Point2{3.0, 2.0},
             "explicit affine midpoint is well defined");
 }
 
 void quarter_turn_and_vectors() {
     const Frame2 rotated = Frame2::rotation(
         {2.0, 1.0}, book03::degrees_to_radians(90.0));
-    const WorldPoint2 world = rotated.local_to_world({3.0, 1.0});
+    const Point2 world = rotated.local_to_world({3.0, 1.0});
     near_point(world, {1.0, 4.0}, 1e-12,
                "quarter-turn local point must map to world (1,4)");
     near_point(rotated.world_to_local(world), {3.0, 1.0}, 1e-12,
                "inverse rotation must recover local address");
 
-    const WorldVector2 movement = rotated.transform_vector({2.0, 0.0});
+    const Vector2 movement = rotated.transform_vector({2.0, 0.0});
     near(movement.x, 0.0, 1e-12, "direction must turn around x");
     near(movement.y, 2.0, 1e-12, "direction must turn around y");
 
@@ -137,8 +137,8 @@ void frame_composition() {
     const Frame2 child = Frame2::rotation(
         {2.0, 0.0}, book03::degrees_to_radians(90));
     const Frame2 combined = Frame2::compose(parent, child);
-    const WorldPoint2 local{1.0, 1.0};
-    const WorldPoint2 nested =
+    const Point2 local{1.0, 1.0};
+    const Point2 nested =
         parent.local_to_world(child.local_to_world(local));
     near_point(nested, {9.0, 1.0}, 1e-12,
                "independent sequential composition");
@@ -170,7 +170,7 @@ void world_up_is_image_down() {
     near(center.u, 380.5, 0.0, "center u");
     near(center.v, 120.5, 0.0, "center v");
 
-    const WorldPoint2 recovered = map.image_to_world(image);
+    const Point2 recovered = map.image_to_world(image);
     near_point(recovered, {1.0, 2.0}, 1e-12,
                "world-image continuous round trip");
 
