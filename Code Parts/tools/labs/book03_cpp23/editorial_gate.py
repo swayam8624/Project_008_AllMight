@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-only checks for Book 03 / Passes 01 and 02.
+"""Source-only checks for Book 03 / Passes 01, 02 and 03.
 
 This validates names, manuscript location, original figures and references.
 It deliberately does not compile LaTeX, rewrite the manuscript, build an EPUB
@@ -19,6 +19,7 @@ BOOK = ROOT / "Notes/Book Production/Seven-Book Curriculum/Book03"
 LAB = ROOT / "Code Parts/tools/labs/book03_cpp23"
 CHAPTER = BOOK / "Chapters/01 - The Picture Made of Little Windows.md"
 CHAPTER_02 = BOOK / "Chapters/02 - Every Place Needs an Address.md"
+CHAPTER_03 = BOOK / "Chapters/03 - Shapes That Know Their Borders.md"
 SVG = "{http://www.w3.org/2000/svg}"
 
 
@@ -39,6 +40,7 @@ def main() -> int:
         BOOK / "CHAPTER_PLAN.md",
         CHAPTER,
         CHAPTER_02,
+        CHAPTER_03,
         LAB / "CMakeLists.txt",
         LAB / "include/book03/pixel_canvas.hpp",
         LAB / "src/main.cpp",
@@ -46,6 +48,9 @@ def main() -> int:
         LAB / "include/book03/frame_math.hpp",
         LAB / "src/frame_playground.cpp",
         LAB / "tests/frame_math_tests.cpp",
+        LAB / "include/book03/triangle_geometry.hpp",
+        LAB / "src/triangle_studio.cpp",
+        LAB / "tests/triangle_geometry_tests.cpp",
     ]:
         check(path.exists(), f"missing required source: {path}")
 
@@ -74,11 +79,23 @@ def main() -> int:
     ]:
         check(phrase in chapter2, f"second chapter missing: {phrase}")
 
+    chapter3 = CHAPTER_03.read_text(encoding="utf-8")
+    check(len(chapter3) > 18_000, "third chapter unexpectedly truncated")
+    for phrase in [
+        "Shapes That Know Their Borders", "signed", "winding",
+        "barycentric", "Degenerate", "Reconstruct", "Falsify",
+        "Transfer", "Explain", "Chapter 04", "exact",
+    ]:
+        check(phrase.lower() in chapter3.lower(),
+              f"third chapter missing essential concept: {phrase}")
+
     figure_owners = {
         "01-pixel-addresses.svg": chapter,
         "02-lines-and-discrete-pixels.svg": chapter,
         "03-two-frames-one-place.svg": chapter2,
         "04-world-to-image-frame.svg": chapter2,
+        "05-the-directed-edge.svg": chapter3,
+        "06-barycentric-roof.svg": chapter3,
     }
     for filename, owning_chapter in figure_owners.items():
         figure = BOOK / "Assets" / filename
@@ -109,7 +126,7 @@ def main() -> int:
     check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
           "RGB8 PPM serialization contract missing")
 
-    print("Book03/P01–P02: two narrative chapters, source location and four original SVG figure contracts checked.")
+    print("Book03/P01–P03: three narrative chapters, source location and six original SVG figure contracts checked.")
     print("No LaTeX/PDF/EPUB builds were requested or performed.")
     return 0
 
@@ -118,5 +135,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (AssertionError, ET.ParseError) as exc:
-        print(f"Book03/P01–P02 editorial gate FAILED: {exc}", file=sys.stderr)
+        print(f"Book03/P01–P03 editorial gate FAILED: {exc}", file=sys.stderr)
         sys.exit(1)
