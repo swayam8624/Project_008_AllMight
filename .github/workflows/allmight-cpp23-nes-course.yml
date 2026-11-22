@@ -6,15 +6,15 @@ on:
       - curriculum/cpp23-nes-project-pass01
     paths:
       - ".github/workflows/allmight-cpp23-nes-course.yml"
-      - "tools/labs/**"
-      - "tools/tests/test_cpp23_project_inserts.py"
-      - "tools/tests/test_nes_course_evidence.py"
-      - "tools/tests/test_book01_coverage_audit.py"
-      - "tools/book01_coverage_audit.py"
-      - "tools/nes_course_evidence.py"
-      - "tools/apply_cpp23_project_inserts.py"
-      - "Supplementary/**"
-      - "Book Production/Seven-Book Curriculum/**"
+      - "Code Parts/tools/labs/**"
+      - "Code Parts/tools/tests/test_cpp23_project_inserts.py"
+      - "Code Parts/tools/tests/test_nes_course_evidence.py"
+      - "Code Parts/tools/tests/test_book01_coverage_audit.py"
+      - "Code Parts/tools/book01_coverage_audit.py"
+      - "Code Parts/tools/nes_course_evidence.py"
+      - "Code Parts/tools/apply_cpp23_project_inserts.py"
+      - "Notes/Supplementary/**"
+      - "Notes/Book Production/Seven-Book Curriculum/**"
   workflow_dispatch:
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
           git rev-parse HEAD
       - name: Configure with isolated build tree
         run: |
-          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-gcc \
+          cmake -S "Notes/Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-gcc \
             -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Compile all cumulative C++23 labs
@@ -51,25 +51,25 @@ jobs:
             --output-junit "$PWD/build/nes-ci-gcc/ctest-junit.xml"
       - name: Run source preservation and evidence negative tests
         run: |
-          python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py' -v
-          python3 -m unittest discover -s tools/tests -p 'test_nes_course_evidence.py' -v
-          python3 -m unittest discover -s tools/tests -p 'test_book01_coverage_audit.py' -v
+          python3 -m unittest discover -s "Code Parts/tools/tests" -p 'test_cpp23_project_inserts.py' -v
+          python3 -m unittest discover -s "Code Parts/tools/tests" -p 'test_nes_course_evidence.py' -v
+          python3 -m unittest discover -s "Code Parts/tools/tests" -p 'test_book01_coverage_audit.py' -v
       - name: Audit all 16 chapter-to-lesson anchors, source sizes and coverage notes
-        run: python3 tools/book01_coverage_audit.py --json > build/nes-ci-gcc/book01-coverage-audit.json
+        run: python3 "Code Parts/tools/book01_coverage_audit.py" --json > build/nes-ci-gcc/book01-coverage-audit.json
       - name: Dry-run exact additive manuscript insertions (never apply)
-        run: python3 tools/apply_cpp23_project_inserts.py --check
+        run: python3 "Code Parts/tools/apply_cpp23_project_inserts.py" --check
       - name: Audit inventory and collect verifiable source-pinned receipt
         run: |
-          python3 tools/nes_course_evidence.py audit > build/nes-ci-gcc/source-inventory.json
-          python3 tools/nes_course_evidence.py collect \
+          python3 "Code Parts/tools/nes_course_evidence.py" audit > build/nes-ci-gcc/source-inventory.json
+          python3 "Code Parts/tools/nes_course_evidence.py" collect \
             --build build/nes-ci-gcc \
             --junit build/nes-ci-gcc/ctest-junit.xml \
             --output build/nes-ci-gcc/nes-course-evidence.json
-          python3 tools/nes_course_evidence.py verify \
+          python3 "Code Parts/tools/nes_course_evidence.py" verify \
             --record build/nes-ci-gcc/nes-course-evidence.json
       - name: Confirm unchanged source and clean working diff
         run: |
-          git diff --exit-code -- "Continuous Notes/"
+          git diff --exit-code -- "Notes/Continuous Notes/"
           git diff --check
       - uses: actions/upload-artifact@v4
         with:
@@ -99,7 +99,7 @@ jobs:
             clang++-19 -std=c++23 -x c++ -fsyntax-only -
       - name: Configure Clang Debug build
         run: |
-          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-clang \
+          cmake -S "Notes/Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-clang \
             -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug
       - name: Build C++23 teaching labs
         run: cmake --build build/nes-ci-clang --parallel 2
@@ -109,11 +109,11 @@ jobs:
             --output-junit "$PWD/build/nes-ci-clang/ctest-junit.xml"
       - name: Enforce receipt matches compiler and exact committed sources
         run: |
-          python3 tools/nes_course_evidence.py collect \
+          python3 "Code Parts/tools/nes_course_evidence.py" collect \
             --build build/nes-ci-clang \
             --junit build/nes-ci-clang/ctest-junit.xml \
             --output build/nes-ci-clang/nes-course-evidence.json
-          python3 tools/nes_course_evidence.py verify \
+          python3 "Code Parts/tools/nes_course_evidence.py" verify \
             --record build/nes-ci-clang/nes-course-evidence.json
       - uses: actions/upload-artifact@v4
         with:
@@ -143,7 +143,7 @@ jobs:
             clang++ -std=c++23 -x c++ -fsyntax-only -
       - name: Configure native macOS build without graphics or LaTeX
         run: |
-          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-macos \
+          cmake -S "Notes/Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-macos \
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
       - name: Build C++23 course
         run: cmake --build build/nes-ci-macos --parallel 2
@@ -153,11 +153,11 @@ jobs:
             --output-junit "$PWD/build/nes-ci-macos/ctest-junit.xml"
       - name: Collect and independently verify Mac evidence
         run: |
-          python3 tools/nes_course_evidence.py collect \
+          python3 "Code Parts/tools/nes_course_evidence.py" collect \
             --build build/nes-ci-macos \
             --junit build/nes-ci-macos/ctest-junit.xml \
             --output build/nes-ci-macos/nes-course-evidence.json
-          python3 tools/nes_course_evidence.py verify \
+          python3 "Code Parts/tools/nes_course_evidence.py" verify \
             --record build/nes-ci-macos/nes-course-evidence.json
       - uses: actions/upload-artifact@v4
         with:
@@ -184,7 +184,7 @@ jobs:
             clang++-19 -std=c++23 -x c++ -fsyntax-only -
       - name: Configure sanitizer-enabled C++23 build
         run: |
-          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-sanitizers \
+          cmake -S "Notes/Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-sanitizers \
             -DCMAKE_CXX_COMPILER=clang++-19 -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
@@ -196,11 +196,11 @@ jobs:
             --output-junit "$PWD/build/nes-ci-sanitizers/ctest-junit.xml"
       - name: Collect sanitizer build provenance and test outcomes
         run: |
-          python3 tools/nes_course_evidence.py collect \
+          python3 "Code Parts/tools/nes_course_evidence.py" collect \
             --build build/nes-ci-sanitizers \
             --junit build/nes-ci-sanitizers/ctest-junit.xml \
             --output build/nes-ci-sanitizers/nes-course-evidence.json
-          python3 tools/nes_course_evidence.py verify \
+          python3 "Code Parts/tools/nes_course_evidence.py" verify \
             --record build/nes-ci-sanitizers/nes-course-evidence.json
       - uses: actions/upload-artifact@v4
         with:

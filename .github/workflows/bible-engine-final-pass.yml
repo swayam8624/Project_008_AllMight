@@ -5,21 +5,21 @@ on:
   push:
     branches: [main, allmight/closure-and-narrative-20261112]
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-engine-final-pass.yml'
   pull_request:
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-engine-final-pass.yml'
   workflow_dispatch:
 
@@ -33,13 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify complete code and comments inside the books
-        run: python3 tools/check_continuous_code_sync.py
+        run: python3 "Code Parts/tools/check_continuous_code_sync.py"
       - name: Check authoring patches without modifying the checkout
-        run: python3 tools/check_patch_idempotence.py
+        run: python3 "Code Parts/tools/check_patch_idempotence.py"
       - name: Compile and run engine witnesses
         run: |
           set -euxo pipefail
           for lab in rollback_netcode_lab audio_voice_mixer_lab ai_decision_models_lab scene_persistence_lab; do
-            c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror "tools/labs/$lab.cpp" -o "$RUNNER_TEMP/$lab"
+            c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror ""Code Parts/tools/labs/"$lab.cpp" -o "$RUNNER_TEMP/$lab"
             "$RUNNER_TEMP/$lab"
           done

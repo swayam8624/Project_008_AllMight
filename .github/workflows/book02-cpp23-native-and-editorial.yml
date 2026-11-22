@@ -3,9 +3,9 @@ on:
   push:
     branches: ["curriculum/book02-mathematics-refinement-pass01"]
     paths:
-      - "tools/labs/book02_cpp23/**"
-      - "Book Production/AllMight Codex/LaTeX/Assets/Book02/**"
-      - "Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py"
+      - "Code Parts/tools/labs/book02_cpp23/**"
+      - "Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/**"
+      - "Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py"
       - ".github/workflows/book02-cpp23-native-and-editorial.yml"
   workflow_dispatch:
 jobs:
@@ -14,10 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure C++23 project
-        run: cmake -S tools/labs/book02_cpp23 -B build/book02-cpp23 -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S "Code Parts/tools/labs/book02_cpp23" -B build/book02-cpp23 -DCMAKE_BUILD_TYPE=Release
       - name: Compile native C++23 source
         run: cmake --build build/book02-cpp23 --parallel 2
       - name: Run mathematical and export checks
         run: ctest --test-dir build/book02-cpp23 --output-on-failure
       - name: Check Book Two source and typography invariants
-        run: python3 tools/labs/book02_cpp23/editorial_gate.py
+        run: python3 "Code Parts/tools/labs/book02_cpp23/editorial_gate.py"

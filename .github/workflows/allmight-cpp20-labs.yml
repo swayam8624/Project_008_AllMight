@@ -4,15 +4,15 @@ on:
   push:
     branches: [main]
     paths:
-      - "tools/labs/**"
-      - "tools/modules/**"
-      - "tools/m018/**"
+      - "Code Parts/tools/labs/**"
+      - "Code Parts/tools/modules/**"
+      - "Code Parts/tools/m018/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   pull_request:
     paths:
-      - "tools/labs/**"
-      - "tools/modules/**"
-      - "tools/m018/**"
+      - "Code Parts/tools/labs/**"
+      - "Code Parts/tools/modules/**"
+      - "Code Parts/tools/m018/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   workflow_dispatch:
 
@@ -48,7 +48,7 @@ jobs:
           EXTRA_FLAGS: ${{ matrix.flags }}
         run: |
           set -Eeuo pipefail
-          mapfile -t labs < <(find tools/labs -maxdepth 1 -type f -name '*_lab.cpp' | sort)
+          mapfile -t labs < <(find "Code Parts/tools/labs" -maxdepth 1 -type f -name '*_lab.cpp' | sort)
           if (( ${#labs[@]} == 0 )); then
             echo "No C++20 labs found" >&2
             exit 1
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build C++20 module graph and execute C/C++ consumers
         shell: bash
-        run: bash tools/modules/build_module_lab.sh
+        run: bash "Code Parts/tools/modules/build_module_lab.sh"
 
   m018-compilation-boundaries:
     name: M018 PIMPL, typed handles, scalar and expression labs
@@ -80,4 +80,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build distinct translation units; validate checks in release and sanitizer modes
-        run: bash tools/m018/build_m018_lab.sh
+        run: bash "Code Parts/tools/m018/build_m018_lab.sh"

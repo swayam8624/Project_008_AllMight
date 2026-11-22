@@ -6,10 +6,10 @@ on:
       - curriculum/cpp23-nes-project-pass01
     paths:
       - ".github/workflows/allmight-pass20-capstone-smoke.yml"
-      - "tools/labs/book01_end_to_end_cpp23_lab.cpp"
-      - "tools/labs/foundations_course/**"
-      - "tools/labs/nes_course/**"
-      - "Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt"
+      - "Code Parts/tools/labs/book01_end_to_end_cpp23_lab.cpp"
+      - "Code Parts/tools/labs/foundations_course/**"
+      - "Code Parts/tools/labs/nes_course/**"
+      - "Notes/Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt"
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
           go version
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.8 .github/workflows/allmight-cpp23-nes-course.yml
       - name: Configure native C++23 standalone course target
-        run: cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/pass20 -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S "Notes/Book Production/Seven-Book Curriculum/Book01" -B build/pass20 -DCMAKE_BUILD_TYPE=Debug
       - name: Compile exact end-to-end capstone from repository headers
         run: cmake --build build/pass20 --target book01_end_to_end_cpp23_lab --parallel 2
       - name: Execute actual capstone and emit JUnit

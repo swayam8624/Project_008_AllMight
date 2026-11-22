@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, allmight-depth-repair-20261112]
     paths:
-      - 'tools/ml/**'
+      - 'Code Parts/tools/ml/**'
       - '.github/workflows/onnx-contract.yml'
   pull_request:
     paths:
-      - 'tools/ml/**'
+      - 'Code Parts/tools/ml/**'
       - '.github/workflows/onnx-contract.yml'
   workflow_dispatch:
 
@@ -32,4 +32,4 @@ jobs:
           PY
 
       - name: Execute serialized ONNX contract
-        run: python3 tools/ml/onnx_contract.py
+        run: python3 "Code Parts/tools/ml/onnx_contract.py"

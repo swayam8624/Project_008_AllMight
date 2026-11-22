@@ -5,21 +5,21 @@ on:
   push:
     branches: [main, allmight/closure-and-narrative-20261112]
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-foundations-final-pass.yml'
   pull_request:
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-foundations-final-pass.yml'
   workflow_dispatch:
 
@@ -33,14 +33,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify complete code and comments inside the books
-        run: python3 tools/check_continuous_code_sync.py
+        run: python3 "Code Parts/tools/check_continuous_code_sync.py"
       - name: Check authoring patches without modifying the checkout
-        run: python3 tools/check_patch_idempotence.py
+        run: python3 "Code Parts/tools/check_patch_idempotence.py"
       - name: Compile and run foundations witnesses
         run: |
           set -euxo pipefail
           for lab in temporary_lifetime_lab se3_exp_log_lab; do
-            c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror "tools/labs/$lab.cpp" -o "$RUNNER_TEMP/$lab"
+            c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror ""Code Parts/tools/labs/"$lab.cpp" -o "$RUNNER_TEMP/$lab"
             "$RUNNER_TEMP/$lab"
           done
-          python3 tools/labs/research_inference_lab.py
+          python3 "Code Parts/tools/labs/research_inference_lab.py"

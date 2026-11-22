@@ -4,10 +4,10 @@ on:
   push:
     branches: [curriculum/book02-mathematics-refinement-pass01]
     paths:
-      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_single_volume.py'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_unified.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_single_volume.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/test_book02_unified.py'
       - '.github/workflows/book02-unified-digital-book.yml'
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
       - name: Validate one-volume Book Two LaTeX source and EPUB frontmatter
         run: |
           python3 -m py_compile \
-            "Book Production/AllMight Codex/LaTeX/Tools/book02_single_volume.py" \
-            "Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py" \
-            "Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py"
-          python3 "Book Production/AllMight Codex/LaTeX/Tools/test_book02_unified.py"
+            "Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_single_volume.py" \
+            "Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py" \
+            "Notes/Book Production/AllMight Codex/LaTeX/Tools/build_epubs.py"
+          python3 "Notes/Book Production/AllMight Codex/LaTeX/Tools/test_book02_unified.py"

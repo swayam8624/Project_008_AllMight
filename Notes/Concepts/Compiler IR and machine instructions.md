@@ -1,0 +1,36 @@
+---
+tags:
+  - concept
+  - future
+---
+
+# Compiler IR and machine instructions
+
+**Curriculum depth:** Forward · **First seen:** C001 · **Latest development:** C002
+
+## Definition and mechanism
+
+Source-level operators are compiled through intermediate representation into target-specific instructions and physical state changes.
+
+IR is the compiler's intermediate representation of program operations. Instruction selection translates it into target instructions under the source-language contract. A hardware add may retain low bits, while an optimizer can assume a signed C++ addition never overflows.
+
+## Prerequisites
+
+- [[Interpretation contract]] — For `0xAD`, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+- [[Machine word]] — A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+
+## Used by
+
+- [[Translation units and linking]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+
+Connect later chunks here when they use this concept.
+
+## Recall and next depth
+
+Explain compiler ir and machine instructions without the label, work the example above, then state the assumption whose removal would change the result.
+
+**Pending:** lowering, instruction selection, optimization, and microarchitecture.
+
+## Source and navigation
+
+[[Notes/Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 teaching chapter]] · [[Notes/Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 development]] · [[Notes/Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

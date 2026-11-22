@@ -5,21 +5,21 @@ on:
   push:
     branches: [main, allmight/closure-and-narrative-20261112]
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-graphics-final-pass.yml'
   pull_request:
     paths:
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/patches/**'
-      - 'tools/note_integrity.py'
-      - 'tools/check_continuous_code_sync.py'
-      - 'tools/check_patch_idempotence.py'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/patches/**'
+      - 'Code Parts/tools/note_integrity.py'
+      - 'Code Parts/tools/check_continuous_code_sync.py'
+      - 'Code Parts/tools/check_patch_idempotence.py'
       - '.github/workflows/bible-graphics-final-pass.yml'
   workflow_dispatch:
 
@@ -33,13 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify complete code and comments inside the books
-        run: python3 tools/check_continuous_code_sync.py
+        run: python3 "Code Parts/tools/check_continuous_code_sync.py"
       - name: Check authoring patches without modifying the checkout
-        run: python3 tools/check_patch_idempotence.py
+        run: python3 "Code Parts/tools/check_patch_idempotence.py"
       - name: Install numerical test dependency
         run: python3 -m pip install --disable-pip-version-check numpy
       - name: Execute XR and neural-rendering witnesses
         run: |
-          python3 tools/labs/xr_planar_vio_ekf_lab.py
-          python3 tools/labs/xr_3d_imu_preintegration_lab.py
-          python3 tools/labs/nerf_volume_rendering_lab.py
+          python3 "Code Parts/tools/labs/xr_planar_vio_ekf_lab.py"
+          python3 "Code Parts/tools/labs/xr_3d_imu_preintegration_lab.py"
+          python3 "Code Parts/tools/labs/nerf_volume_rendering_lab.py"

@@ -45,7 +45,7 @@ Current release priority: **EPUB**. Each book ultimately has exactly two canonic
 
 ```text
 Master/
-└── From Bits to Research - Publications/
+└── From Bits to Research/
     ├── EPUB/
     │   ├── 01 - From Bits to Parallel Systems.epub
     │   ├── 02 - From Equations to Geometry.epub
@@ -58,7 +58,7 @@ Master/
     └── Manifests/
 ```
 
-This is the **distribution/output library**, not the source tree; it is intentionally local and Git-ignored. `tools/publication_library.py` inventories and promotes explicit, verified candidates into it, preserves historical editions in Archive, and emits manifest/provenance files. **Never auto-promote all seven historic EPUB exports**: a file existing on disk is not evidence of a publication-ready reader edition. **Never publish physical parts** such as P01/P02 as the sole "PDF" of a book. Print-on-demand could require multiple physical interiors; the digital reading PDF must still be one complete file per book.
+This is the **distribution/output library**, not the source tree; it is intentionally local and Git-ignored. `Code Parts/tools/publication_library.py` inventories and promotes explicit, verified candidates into it, preserves historical editions in Archive, and emits manifest/provenance files. **Never auto-promote all seven historic EPUB exports**: a file existing on disk is not evidence of a publication-ready reader edition. **Never publish physical parts** such as P01/P02 as the sole "PDF" of a book. Print-on-demand could require multiple physical interiors; the digital reading PDF must still be one complete file per book.
 
 **Release gates for every EPUB**
 - Correct final author-supplied cover **visibly rendered** in the opening spine document, with EPUB 3 cover-image metadata and a tested thumbnail; title, subtitle, author, publisher/ISBN only if legitimately assigned, copyright/rights, language, description and series metadata.
@@ -73,21 +73,21 @@ This is the **distribution/output library**, not the source tree; it is intentio
 
 ## Current source of truth, migration cautions and boundaries
 
-- Current generated seven-stage inventory: `Book Production/AllMight Codex/LaTeX/CURRENT.json`. Generation identifiers such as `.generation-n3azv4es` and legacy source stage names are build internals, **not** canonical book titles.
-- Canonical long notes live in `Continuous Notes/` and teach across several books; `Book Production/Seven-Book Curriculum/` contains series policies, academic references, Book One sources and lab planning. `Book Production/AllMight Codex/LaTeX/` contains the publisher's production tools, genuine intermediate sources, AST/asset manifests, code generation and layout evidence.
-- Read `Book Production/Seven-Book Curriculum/SERIES_EDITORIAL_AND_CITATION_POLICY.md` before updating bibliography, research figures, academic claims, copyright or publication identity.
+- Current generated seven-stage inventory: `Notes/Book Production/AllMight Codex/LaTeX/CURRENT.json`. Generation identifiers such as `.generation-n3azv4es` and legacy source stage names are build internals, **not** canonical book titles.
+- Canonical long notes live in `Notes/Continuous Notes/` and teach across several books; `Notes/Book Production/Seven-Book Curriculum/` contains series policies, academic references, Book One sources and lab planning. `Notes/Book Production/AllMight Codex/LaTeX/` contains the publisher's production tools, genuine intermediate sources, AST/asset manifests, code generation and layout evidence.
+- Read `Notes/Book Production/Seven-Book Curriculum/SERIES_EDITORIAL_AND_CITATION_POLICY.md` before updating bibliography, research figures, academic claims, copyright or publication identity.
 - **Book One is read-only context when working on Book Two** unless the author explicitly asks to change Book One. Likewise, when editing any book, do not silently touch another volume, its manuscript or cover.
-- Historical `Book Production/AllMight Codex/LaTeX/Books/Ebooks/` includes all seven **older** generated stage EPUBs and even a duplicate Book Six export; do not mistake these for approved releases or delete tracked evidence without verifying consumers.
-- For Book Two (as of **2026-11-20**), a refined full EPUB reader candidate was produced and structurally audited; the independently checked actual cover, 16 chapters, 10,432 MathML nodes, 128 exercises, index and source companion are present. Independent on-device reader QA and the one-volume PDF remain release gates. Local Book Two build entrypoint: `Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py --epub-only --cover-image "<author JPEG>"`. This entrypoint depends on the author's original Mac source cache. Do not claim CI's smaller additive proof EPUB equals the entire 16-chapter book.
+- Historical `Notes/Book Production/AllMight Codex/LaTeX/Books/Ebooks/` includes all seven **older** generated stage EPUBs and even a duplicate Book Six export; do not mistake these for approved releases or delete tracked evidence without verifying consumers.
+- For Book Two (as of **2026-11-20**), a refined full EPUB reader candidate was produced and structurally audited; the independently checked actual cover, 16 chapters, 10,432 MathML nodes, 128 exercises, index and source companion are present. Independent on-device reader QA and the one-volume PDF remain release gates. Local Book Two build entrypoint: `Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_release_candidates.py --epub-only --cover-image "<author JPEG>"`. This entrypoint depends on the author's original Mac source cache. Do not claim CI's smaller additive proof EPUB equals the entire 16-chapter book.
 - For Book One, prior ebook/PDF artifacts and proof records exist, but confirm the chosen **specific complete artifact** independently before promoting it. Books 03–07 have historic exports, not automatically final reader editions.
 
 ## Safety rules for repository cleanup
 
-**Never mass-delete or move**: `Continuous Notes/`, `CURRENT.json`, `physical-parts.json`, `Generations/`, `.generation-*/`, `Assets/`, `AST/`, conversion manifests, `Book Production/Seven-Book Curriculum/`, Book01 source/lab directories, chapter source, original images/fonts, project/lab tests, C++23 sources, scientific evidence or an active build's working output. Some apparently old folders are necessary reproducibility/provenance inputs.
+**Never mass-delete or move**: `Notes/Continuous Notes/`, `CURRENT.json`, `physical-parts.json`, `Generations/`, `.generation-*/`, `Assets/`, `AST/`, conversion manifests, `Notes/Book Production/Seven-Book Curriculum/`, Book01 source/lab directories, chapter source, original images/fonts, project/lab tests, C++23 sources, scientific evidence or an active build's working output. Some apparently old folders are necessary reproducibility/provenance inputs.
 
 The local Master working tree may contain unrelated or uncommitted changes (previously, `.DS_Store` and a Book One continuous note). **Do not reset, clean, stash, overwrite, or discard user changes** to make a pull or checkout work. Read `git status` first. A file being named "old" or "duplicate" does not establish that it is safe to delete.
 
-1. Inventory first with `tools/publication_library.py scan`.
+1. Inventory first with `Code Parts/tools/publication_library.py scan`.
 2. Promote only a **complete named EPUB/PDF chosen explicitly** (never guess among candidates) using `promote --book N --epub PATH` and/or `--pdf PATH`.
 3. Run `verify`, inspect SHA-256 and release manifest, and check the book in its reader.
 4. Use `tidy` only to **quarantine exact-byte duplicate, untracked, non-build review exports** after a dry run. Never sweep the source tree or delete files based on names alone.

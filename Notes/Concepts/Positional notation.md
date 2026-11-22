@@ -1,0 +1,45 @@
+---
+tags:
+  - concept
+  - foundation
+---
+
+# Positional notation
+
+**Curriculum depth:** Introduced · **First seen:** C001 · **Latest development:** C001
+
+## Definition and mechanism
+
+Digits receive powers-of-base weights; binary uses base two and $V=\sum b_i2^i$.
+
+A base is the number of available digits. Position i contributes digit × baseⁱ; the rightmost position is i=0. For `1011₂`, the weights 8,4,2,1 give 8+2+1=11. The number of states is 2ᴺ, while the maximum unsigned value is 2ᴺ−1.
+
+## Prerequisites
+
+- [[Bit]] — A bit has two possible logical states.
+
+## Used by
+
+- [[Terminating fractions and dyadic rationals]] — Finite fractional digits correspond to an integer over a power of the base.
+
+- [[Significand and hidden bit]] — uses positional notation to establish this mechanism's representation or policy.
+
+- [[Binary conversion]] — uses positional notation as part of its representation or reasoning.
+- [[Hexadecimal]] — uses positional notation as part of its representation or reasoning.
+- [[Octal]] — uses positional notation as part of its representation or reasoning.
+- [[Bit significance]] — uses positional notation as part of its representation or reasoning.
+- [[Unsigned modular arithmetic]] — uses positional notation as part of its representation or reasoning.
+- [[Signed magnitude]] — uses positional notation as part of its representation or reasoning.
+- [[Carry and borrow]] — uses positional notation as part of its representation or reasoning.
+
+- [[Big endian]] — depends on this concept; see its prerequisite explanation.
+
+## Recall and next depth
+
+Explain positional notation without the label, work the example above, then state the assumption whose removal would change the result.
+
+**Pending:** signed and fractional encodings.
+
+## Source and navigation
+
+[[Notes/Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 teaching chapter]] · [[Notes/Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

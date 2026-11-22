@@ -5,20 +5,20 @@ on:
     branches:
       - curriculum/book02-mathematics-refinement-pass01
     paths:
-      - 'tools/labs/book02_visual_atlas.py'
-      - 'tools/labs/test_book02_visual_atlas.py'
-      - 'tools/labs/book02_build_viewer.py'
-      - 'tools/labs/book02_atlas_viewer_template.html'
-      - 'tools/labs/book02_papers_*.py'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/28-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/29-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/30-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/31-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/32-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/33-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/34-*.tex'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/build.py'
+      - 'Code Parts/tools/labs/book02_visual_atlas.py'
+      - 'Code Parts/tools/labs/test_book02_visual_atlas.py'
+      - 'Code Parts/tools/labs/book02_build_viewer.py'
+      - 'Code Parts/tools/labs/book02_atlas_viewer_template.html'
+      - 'Code Parts/tools/labs/book02_papers_*.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/28-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/29-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/30-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/31-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/32-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/33-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/34-*.tex'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/build.py'
       - '.github/workflows/book02-visual-atlas-pass03.yml'
   workflow_dispatch:
 
@@ -45,13 +45,13 @@ jobs:
           python -m pip install numpy==2.2.6 scipy==1.15.3 matplotlib==3.10.5
       - name: Validate source and figure generator syntax
         run: |
-          python -m py_compile tools/labs/book02_visual_atlas.py tools/labs/test_book02_visual_atlas.py tools/labs/book02_build_viewer.py
-          python -m py_compile 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+          python -m py_compile "Code Parts/tools/labs/book02_visual_atlas.py" "Code Parts/tools/labs/test_book02_visual_atlas.py" "Code Parts/tools/labs/book02_build_viewer.py"
+          python -m py_compile 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - name: Run original data and rich publication figure tests
-        working-directory: tools/labs
+        working-directory: "Code Parts/tools/labs"
         run: python -m unittest -v test_book02_visual_atlas
       - name: Re-render all seven research plates from pinned source
-        run: python tools/labs/book02_visual_atlas.py --output "${{ runner.temp }}/book02-visual-atlas"
+        run: python "Code Parts/tools/labs/book02_visual_atlas.py" --output "${{ runner.temp }}/book02-visual-atlas"
       - name: Verify exported PDF and SVG assets, data and manifest
         run: |
           python - <<'PY'

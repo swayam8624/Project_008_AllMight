@@ -5,15 +5,15 @@ on:
     branches:
       - curriculum/book02-mathematics-refinement-pass01
     paths:
-      - 'tools/labs/book02_papers_geometry.py'
-      - 'tools/labs/test_book02_papers_geometry.py'
-      - 'tools/labs/book02_papers_numeric.py'
-      - 'tools/labs/test_book02_papers_numeric.py'
-      - 'tools/labs/book02_papers_sampling.py'
-      - 'tools/labs/test_book02_papers_sampling.py'
-      - 'tools/labs/book02_papers_cpp23.cpp'
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+      - 'Code Parts/tools/labs/book02_papers_geometry.py'
+      - 'Code Parts/tools/labs/test_book02_papers_geometry.py'
+      - 'Code Parts/tools/labs/book02_papers_numeric.py'
+      - 'Code Parts/tools/labs/test_book02_papers_numeric.py'
+      - 'Code Parts/tools/labs/book02_papers_sampling.py'
+      - 'Code Parts/tools/labs/test_book02_papers_sampling.py'
+      - 'Code Parts/tools/labs/book02_papers_cpp23.cpp'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
       - '.github/workflows/book02-research-pass02.yml'
   workflow_dispatch:
 
@@ -41,16 +41,16 @@ jobs:
           python -m pip install numpy==2.2.6 scipy==1.15.3
       - name: Compile scripts
         run: |
-          python -m py_compile tools/labs/book02_papers_geometry.py tools/labs/test_book02_papers_geometry.py
-          python -m py_compile tools/labs/book02_papers_numeric.py tools/labs/test_book02_papers_numeric.py
-          python -m py_compile tools/labs/book02_papers_sampling.py tools/labs/test_book02_papers_sampling.py
+          python -m py_compile "Code Parts/tools/labs/book02_papers_geometry.py" "Code Parts/tools/labs/test_book02_papers_geometry.py"
+          python -m py_compile "Code Parts/tools/labs/book02_papers_numeric.py" "Code Parts/tools/labs/test_book02_papers_numeric.py"
+          python -m py_compile "Code Parts/tools/labs/book02_papers_sampling.py" "Code Parts/tools/labs/test_book02_papers_sampling.py"
       - name: Mathematical paper witnesses and SciPy comparisons
-        working-directory: tools/labs
+        working-directory: "Code Parts/tools/labs"
         run: python -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling
       - name: Compile and run standalone C++23 mathematics witness
         run: |
-          g++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic tools/labs/book02_papers_cpp23.cpp -o /tmp/book02_papers_cpp23
+          g++ -std=c++23 -O2 -Wall -Wextra -Werror -pedantic "Code Parts/tools/labs/book02_papers_cpp23.cpp" -o /tmp/book02_papers_cpp23
           /tmp/book02_papers_cpp23
       - name: Verify numerical checks under optimized Python
-        working-directory: tools/labs
+        working-directory: "Code Parts/tools/labs"
         run: python -O -m unittest -v test_book02_papers_geometry test_book02_papers_numeric test_book02_papers_sampling

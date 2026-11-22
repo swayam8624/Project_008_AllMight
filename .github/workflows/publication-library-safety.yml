@@ -8,8 +8,8 @@ on:
       - 'CHATGPT.md'
       - 'AGENTS.md'
       - '.gitignore'
-      - 'tools/publication_library.py'
-      - 'tools/tests/test_publication_library.py'
+      - 'Code Parts/tools/publication_library.py'
+      - 'Code Parts/tools/tests/test_publication_library.py'
       - '.github/workflows/publication-library-safety.yml'
   workflow_dispatch:
 
@@ -29,12 +29,12 @@ jobs:
           python-version: '3.12'
       - name: Compile the publication library manager
         run: |
-          python -m py_compile tools/publication_library.py tools/tests/test_publication_library.py
+          python -m py_compile "Code Parts/tools/publication_library.py" "Code Parts/tools/tests/test_publication_library.py"
       - name: Prove promotion, SHA identity, quarantine and no source deletion
         run: |
-          python -m unittest -v tools.tests.test_publication_library
+          PYTHONPATH="Code Parts" python -m unittest -v tools.tests.test_publication_library
       - name: Verify help and supported subcommands
         run: |
-          python tools/publication_library.py --help
-          python tools/publication_library.py promote --help
-          python tools/publication_library.py scan --help
+          python "Code Parts/tools/publication_library.py" --help
+          python "Code Parts/tools/publication_library.py" promote --help
+          python "Code Parts/tools/publication_library.py" scan --help

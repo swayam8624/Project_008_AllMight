@@ -4,19 +4,19 @@ on:
   push:
     branches: [main, allmight-depth-repair-20261112]
     paths:
-      - 'Concepts/**'
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/native/**'
-      - 'tools/check_depth_repair_contract.py'
+      - 'Notes/Concepts/**'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/native/**'
+      - 'Code Parts/tools/check_depth_repair_contract.py'
       - '.github/workflows/depth-repair-contract.yml'
   pull_request:
     paths:
-      - 'Concepts/**'
-      - 'Continuous Notes/**'
-      - 'tools/labs/**'
-      - 'tools/native/**'
-      - 'tools/check_depth_repair_contract.py'
+      - 'Notes/Concepts/**'
+      - 'Notes/Continuous Notes/**'
+      - 'Code Parts/tools/labs/**'
+      - 'Code Parts/tools/native/**'
+      - 'Code Parts/tools/check_depth_repair_contract.py'
       - '.github/workflows/depth-repair-contract.yml'
   workflow_dispatch:
 
@@ -30,4 +30,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify depth-repair artifacts and concept floor
-        run: python3 tools/check_depth_repair_contract.py
+        run: python3 "Code Parts/tools/check_depth_repair_contract.py"

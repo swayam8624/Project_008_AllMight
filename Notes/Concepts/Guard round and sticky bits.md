@@ -1,0 +1,34 @@
+---
+tags:
+  - concept
+  - foundation
+---
+
+# Guard round and sticky bits
+
+**Curriculum depth:** Introduced · **First seen:** C004 · **Latest development:** C004
+
+## Definition and mechanism
+
+Guard is first discarded bit, round the next, sticky ORs all remaining bits. With retained low bit L, nearest-even increments when G AND (R OR sticky OR L). Sticky summarizes any nonzero tail.
+
+## Prerequisites
+
+- [[Boolean algebra]] — The rounding increment condition combines one-bit guard, round, sticky and parity inputs.
+- [[Rounding to nearest ties to even]] — Midpoint parity determines discarded-tail decisions and the normal relative-error bound.
+
+## Used by
+
+- [[Floating-point addition and absorption]] — Aligned-away information must survive sufficiently to choose the correct rounded neighbor.
+
+Connect later dependent concepts here as their lessons arrive.
+
+## Recall and next depth
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+**Pending:** Directed rounding additionally depends on sign; renormalization may follow an increment.
+
+## Source and navigation
+
+[[Notes/Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Notes/Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

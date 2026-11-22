@@ -2,27 +2,27 @@ name: Rigid contact numerical witness
 on:
   push:
     paths:
-      - 'tools/labs/rigid_contact_lab.cpp'
-      - 'tools/labs/persistent_contact_lab.cpp'
-      - 'tools/labs/contact_cache_lab.cpp'
-      - 'tools/labs/disk_ccd_lab.cpp'
-      - 'tools/labs/disk_event_pipeline_lab.cpp'
-      - 'tools/labs/disk_event_property_lab.cpp'
-      - 'tools/labs/disk_event_broadphase_differential_lab.cpp'
-      - 'tools/labs/swept_broadphase_lab.cpp'
-      - 'tools/labs/disk_event_broadphase_equivalence_lab.cpp'
+      - 'Code Parts/tools/labs/rigid_contact_lab.cpp'
+      - 'Code Parts/tools/labs/persistent_contact_lab.cpp'
+      - 'Code Parts/tools/labs/contact_cache_lab.cpp'
+      - 'Code Parts/tools/labs/disk_ccd_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_pipeline_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_property_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_broadphase_differential_lab.cpp'
+      - 'Code Parts/tools/labs/swept_broadphase_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_broadphase_equivalence_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   pull_request:
     paths:
-      - 'tools/labs/rigid_contact_lab.cpp'
-      - 'tools/labs/persistent_contact_lab.cpp'
-      - 'tools/labs/contact_cache_lab.cpp'
-      - 'tools/labs/disk_ccd_lab.cpp'
-      - 'tools/labs/disk_event_pipeline_lab.cpp'
-      - 'tools/labs/disk_event_property_lab.cpp'
-      - 'tools/labs/disk_event_broadphase_differential_lab.cpp'
-      - 'tools/labs/swept_broadphase_lab.cpp'
-      - 'tools/labs/disk_event_broadphase_equivalence_lab.cpp'
+      - 'Code Parts/tools/labs/rigid_contact_lab.cpp'
+      - 'Code Parts/tools/labs/persistent_contact_lab.cpp'
+      - 'Code Parts/tools/labs/contact_cache_lab.cpp'
+      - 'Code Parts/tools/labs/disk_ccd_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_pipeline_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_property_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_broadphase_differential_lab.cpp'
+      - 'Code Parts/tools/labs/swept_broadphase_lab.cpp'
+      - 'Code Parts/tools/labs/disk_event_broadphase_equivalence_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   workflow_dispatch:
 
@@ -34,41 +34,41 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compile and execute strict C++20 witness
         run: |
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/rigid_contact_lab.cpp" -o /tmp/rigid_contact_strict
           /tmp/rigid_contact_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/persistent_contact_lab.cpp -o /tmp/persistent_contact_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/persistent_contact_lab.cpp" -o /tmp/persistent_contact_strict
           /tmp/persistent_contact_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/contact_cache_lab.cpp -o /tmp/contact_cache_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/contact_cache_lab.cpp" -o /tmp/contact_cache_strict
           /tmp/contact_cache_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_ccd_lab.cpp -o /tmp/disk_ccd_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/disk_ccd_lab.cpp" -o /tmp/disk_ccd_strict
           /tmp/disk_ccd_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_pipeline_lab.cpp -o /tmp/disk_events_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/disk_event_pipeline_lab.cpp" -o /tmp/disk_events_strict
           /tmp/disk_events_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_property_lab.cpp -o /tmp/disk_property_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/disk_event_property_lab.cpp" -o /tmp/disk_property_strict
           /tmp/disk_property_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_differential_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/disk_event_broadphase_differential_lab.cpp" -o /tmp/disk_differential_strict
           /tmp/disk_differential_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/swept_broadphase_lab.cpp -o /tmp/swept_broadphase_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/swept_broadphase_lab.cpp" -o /tmp/swept_broadphase_strict
           /tmp/swept_broadphase_strict
-          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_equivalence_lab.cpp -o /tmp/disk_event_differential_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "Code Parts/tools/labs/disk_event_broadphase_equivalence_lab.cpp" -o /tmp/disk_event_differential_strict
           /tmp/disk_event_differential_strict
       - name: Compile and execute undefined-behavior sanitizer witness
         run: |
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/rigid_contact_lab.cpp" -o /tmp/rigid_contact_ubsan
           /tmp/rigid_contact_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/persistent_contact_lab.cpp -o /tmp/persistent_contact_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/persistent_contact_lab.cpp" -o /tmp/persistent_contact_ubsan
           /tmp/persistent_contact_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/contact_cache_lab.cpp -o /tmp/contact_cache_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/contact_cache_lab.cpp" -o /tmp/contact_cache_ubsan
           /tmp/contact_cache_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_ccd_lab.cpp -o /tmp/disk_ccd_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/disk_ccd_lab.cpp" -o /tmp/disk_ccd_ubsan
           /tmp/disk_ccd_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_event_pipeline_lab.cpp -o /tmp/disk_events_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/disk_event_pipeline_lab.cpp" -o /tmp/disk_events_ubsan
           /tmp/disk_events_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_event_property_lab.cpp -o /tmp/disk_property_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/disk_event_property_lab.cpp" -o /tmp/disk_property_ubsan
           /tmp/disk_property_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_differential_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/disk_event_broadphase_differential_lab.cpp" -o /tmp/disk_differential_ubsan
           /tmp/disk_differential_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/swept_broadphase_lab.cpp -o /tmp/swept_broadphase_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/swept_broadphase_lab.cpp" -o /tmp/swept_broadphase_ubsan
           /tmp/swept_broadphase_ubsan
-          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_event_broadphase_equivalence_lab.cpp -o /tmp/disk_event_differential_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all "Code Parts/tools/labs/disk_event_broadphase_equivalence_lab.cpp" -o /tmp/disk_event_differential_ubsan
           /tmp/disk_event_differential_ubsan

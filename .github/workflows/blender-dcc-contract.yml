@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, allmight-depth-repair-20261112]
     paths:
-      - 'tools/dcc/**'
+      - 'Code Parts/tools/dcc/**'
       - '.github/workflows/blender-dcc-contract.yml'
   pull_request:
     paths:
-      - 'tools/dcc/**'
+      - 'Code Parts/tools/dcc/**'
       - '.github/workflows/blender-dcc-contract.yml'
   workflow_dispatch:
 
@@ -35,7 +35,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/allmight-blender"
           blender --background --factory-startup \
             --python-exit-code 1 \
-            --python tools/dcc/blender_contract.py -- \
+            --python "Code Parts/tools/dcc/blender_contract.py" -- \
             "$RUNNER_TEMP/allmight-blender"
           test -s "$RUNNER_TEMP/allmight-blender/allmight_source.blend"
           test -s "$RUNNER_TEMP/allmight-blender/allmight_cube.glb"

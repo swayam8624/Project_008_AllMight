@@ -5,10 +5,10 @@ on:
     branches:
       - curriculum/book02-mathematics-refinement-pass01
     paths:
-      - 'Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
-      - 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_visuals.py'
-      - 'tools/labs/book02_numerical_contracts.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Assets/Book02/**'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+      - 'Notes/Book Production/AllMight Codex/LaTeX/Tools/test_book02_visuals.py'
+      - 'Code Parts/tools/labs/book02_numerical_contracts.py'
       - '.github/workflows/book02-mathematical-pass01.yml'
   workflow_dispatch:
 
@@ -28,16 +28,16 @@ jobs:
           python-version: '3.13'
       - name: Compile check for Book Two Python scripts
         run: |
-          python -m py_compile tools/labs/book02_numerical_contracts.py
-          python -m py_compile 'Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
-          python -m py_compile 'Book Production/AllMight Codex/LaTeX/Tools/test_book02_visuals.py'
+          python -m py_compile "Code Parts/tools/labs/book02_numerical_contracts.py"
+          python -m py_compile 'Notes/Book Production/AllMight Codex/LaTeX/Tools/book02_visuals.py'
+          python -m py_compile 'Notes/Book Production/AllMight Codex/LaTeX/Tools/test_book02_visuals.py'
       - name: Numerical examples - regular Python
-        run: python tools/labs/book02_numerical_contracts.py
+        run: python "Code Parts/tools/labs/book02_numerical_contracts.py"
       - name: Numerical examples - optimized Python (asserts disabled)
-        run: python -O tools/labs/book02_numerical_contracts.py
+        run: python -O "Code Parts/tools/labs/book02_numerical_contracts.py"
       - name: Verify all 16 original chapter inputs survive and figures map once
-        working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
+        working-directory: 'Notes/Book Production/AllMight Codex/LaTeX/Tools'
         run: python -m unittest -v test_book02_visuals
       - name: Verify additive behavior with optimized Python
-        working-directory: 'Book Production/AllMight Codex/LaTeX/Tools'
+        working-directory: 'Notes/Book Production/AllMight Codex/LaTeX/Tools'
         run: python -O -m unittest -v test_book02_visuals

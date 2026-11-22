@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, allmight-depth-repair-20261112]
     paths:
-      - 'tools/native/**'
+      - 'Code Parts/tools/native/**'
       - '.github/workflows/native-graphics-contract.yml'
   pull_request:
     paths:
-      - 'tools/native/**'
+      - 'Code Parts/tools/native/**'
       - '.github/workflows/native-graphics-contract.yml'
   workflow_dispatch:
 
@@ -28,11 +28,11 @@ jobs:
       - name: Build Vulkan synchronization witnesses
         run: |
           g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
-            tools/native/vulkan_sync_smoke.cpp -lvulkan -o /tmp/vulkan_sync_smoke
+            "Code Parts/tools/native/vulkan_sync_smoke.cpp" -lvulkan -o /tmp/vulkan_sync_smoke
           g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
-            tools/native/vulkan_buffer_timeline_smoke.cpp -lvulkan -o /tmp/vulkan_buffer_timeline_smoke
+            "Code Parts/tools/native/vulkan_buffer_timeline_smoke.cpp" -lvulkan -o /tmp/vulkan_buffer_timeline_smoke
           g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
-            tools/native/vulkan_image_layout_smoke.cpp -lvulkan -o /tmp/vulkan_image_layout_smoke
+            "Code Parts/tools/native/vulkan_image_layout_smoke.cpp" -lvulkan -o /tmp/vulkan_image_layout_smoke
 
       - name: Execute with Mesa software Vulkan when available
         shell: bash
@@ -53,7 +53,7 @@ jobs:
       - name: Compile Metal source to AIR and metallib
         run: |
           xcrun -sdk macosx metal -Wall -Werror -c \
-            tools/native/metal_compile_smoke.metal -o /tmp/allmight.air
+            "Code Parts/tools/native/metal_compile_smoke.metal" -o /tmp/allmight.air
           xcrun -sdk macosx metallib /tmp/allmight.air -o /tmp/allmight.metallib
           test -s /tmp/allmight.metallib
 
@@ -63,7 +63,7 @@ jobs:
           set +e
           xcrun -sdk macosx clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror \
             -fobjc-arc -framework Foundation -framework Metal \
-            tools/native/metal_runtime_smoke.mm -o /tmp/metal_runtime_smoke
+            "Code Parts/tools/native/metal_runtime_smoke.mm" -o /tmp/metal_runtime_smoke
           build_status=$?
           if [[ $build_status -ne 0 ]]; then
             exit $build_status
