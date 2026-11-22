@@ -2,6 +2,9 @@
 
 // Book 03 / Chapter 02 — A point is a place, not a displacement.
 //
+// Point2 and Vector2 distinguish places from displacements, not one named
+// coordinate frame from another; local/world meaning is defined by each
+// API boundary. Frame-tagged types are a later extension.
 // This small 2D affine model is a CPU *reference* for coordinate reasoning.
 // It is intentionally independent of graphics APIs or C++ matrix libraries.
 // Axes are the world displacement per one unit of local coordinate; our
@@ -27,57 +30,60 @@
 
 namespace book03 {
 
-struct WorldVector2 {
+// A displacement or axis coefficient in the declared coordinate frame.
+struct Vector2 {
     double x{};
     double y{};
 
     [[nodiscard]] friend constexpr bool operator==(
-        const WorldVector2&, const WorldVector2&) = default;
+        const Vector2&, const Vector2&) = default;
 };
 
-struct WorldPoint2 {
+// A position in the frame specified by the calling API. This type does not
+// itself encode whether that frame is local, parent, or world.
+struct Point2 {
     double x{};
     double y{};
 
     [[nodiscard]] friend constexpr bool operator==(
-        const WorldPoint2&, const WorldPoint2&) = default;
+        const Point2&, const Point2&) = default;
 };
 
 // Deliberately NO point + point operator. Points represent places. Their
 // difference is a displacement, and a displacement can move a place.
-[[nodiscard]] constexpr WorldVector2 operator-(WorldPoint2 a, WorldPoint2 b) {
+[[nodiscard]] constexpr Vector2 operator-(Point2 a, Point2 b) {
     return {a.x - b.x, a.y - b.y};
 }
 
-[[nodiscard]] constexpr WorldPoint2 operator+(WorldPoint2 p, WorldVector2 d) {
+[[nodiscard]] constexpr Point2 operator+(Point2 p, Vector2 d) {
     return {p.x + d.x, p.y + d.y};
 }
 
-[[nodiscard]] constexpr WorldPoint2 operator-(WorldPoint2 p, WorldVector2 d) {
+[[nodiscard]] constexpr Point2 operator-(Point2 p, Vector2 d) {
     return {p.x - d.x, p.y - d.y};
 }
 
-[[nodiscard]] constexpr WorldVector2 operator+(WorldVector2 a, WorldVector2 b) {
+[[nodiscard]] constexpr Vector2 operator+(Vector2 a, Vector2 b) {
     return {a.x + b.x, a.y + b.y};
 }
 
-[[nodiscard]] constexpr WorldVector2 operator-(WorldVector2 a, WorldVector2 b) {
+[[nodiscard]] constexpr Vector2 operator-(Vector2 a, Vector2 b) {
     return {a.x - b.x, a.y - b.y};
 }
 
-[[nodiscard]] constexpr WorldVector2 operator*(double s, WorldVector2 v) {
+[[nodiscard]] constexpr Vector2 operator*(double s, Vector2 v) {
     return {s * v.x, s * v.y};
 }
 
-[[nodiscard]] constexpr WorldPoint2 midpoint(WorldPoint2 a, WorldPoint2 b) {
+[[nodiscard]] constexpr Point2 midpoint(Point2 a, Point2 b) {
     // An affine combination: point + half of the displacement.
     return a + 0.5 * (b - a);
 }
 
-[[nodiscard]] inline bool finite(WorldPoint2 p) noexcept {
+[[nodiscard]] inline bool finite(Point2 p) noexcept {
     return std::isfinite(p.x) && std::isfinite(p.y);
 }
-[[nodiscard]] inline bool finite(WorldVector2 v) noexcept {
+[[nodiscard]] inline bool finite(Vector2 v) noexcept {
     return std::isfinite(v.x) && std::isfinite(v.y);
 }
 
@@ -93,11 +99,11 @@ struct Frame2 {
     // Frame origin is a WORLD point. Basis columns map LOCAL coordinate
     // displacements to WORLD displacements. An axis coefficient is the world
     // displacement per +1 unit of the corresponding local coordinate.
-    WorldPoint2 origin{};
-    WorldVector2 axis_x{1.0, 0.0};
-    WorldVector2 axis_y{0.0, 1.0};
+    Point2 origin{};
+    Vector2 axis_x{1.0, 0.0};
+    Vector2 axis_y{0.0, 1.0};
 
-    [[nodiscard]] static Frame2 rotation(WorldPoint2 where, double radians) {
+    [[nodiscard]] static Frame2 rotation(Point2 where, double radians) {
         if (!finite(where) || !std::isfinite(radians)) {
             throw std::invalid_argument("rotation requires finite parameters");
         }
@@ -132,12 +138,12 @@ struct Frame2 {
         }
     }
 
-    [[nodiscard]] WorldVector2 transform_vector(WorldVector2 local) const {
+    [[nodiscard]] Vector2 transform_vector(Vector2 local) const {
         validate();
         if (!finite(local)) {
             throw std::invalid_argument("nonfinite local vector");
         }
-        WorldVector2 world{
+        Vector2 world{
             axis_x.x * local.x + axis_y.x * local.y,
             axis_x.y * local.x + axis_y.y * local.y};
         if (!finite(world)) {
@@ -146,27 +152,27 @@ struct Frame2 {
         return world; // Crucially NO translation.
     }
 
-    [[nodiscard]] WorldPoint2 local_to_world(WorldPoint2 local) const {
+    [[nodiscard]] Point2 local_to_world(Point2 local) const {
         if (!finite(local)) {
             throw std::invalid_argument("nonfinite local point");
         }
-        const WorldVector2 movement =
+        const Vector2 movement =
             transform_vector({local.x, local.y});
-        const WorldPoint2 world = origin + movement;
+        const Point2 world = origin + movement;
         if (!finite(world)) {
             throw std::overflow_error("transformed point is nonfinite");
         }
         return world;
     }
 
-    [[nodiscard]] WorldPoint2 world_to_local(WorldPoint2 world) const {
+    [[nodiscard]] Point2 world_to_local(Point2 world) const {
         validate();
         if (!finite(world)) {
             throw std::invalid_argument("nonfinite world point");
         }
-        const WorldVector2 q = world - origin;
+        const Vector2 q = world - origin;
         const double det = determinant();
-        const WorldPoint2 local{
+        const Point2 local{
             ( axis_y.y * q.x - axis_y.x * q.y) / det,
             (-axis_x.y * q.x + axis_x.x * q.y) / det};
         if (!finite(local)) {
@@ -226,7 +232,7 @@ struct ImageMap2 {
         }
     }
 
-    [[nodiscard]] ImagePosition2 world_to_image(WorldPoint2 world) const {
+    [[nodiscard]] ImagePosition2 world_to_image(Point2 world) const {
         validate();
         if (!finite(world)) {
             throw std::invalid_argument("nonfinite world input");
@@ -240,12 +246,12 @@ struct ImageMap2 {
         return image;
     }
 
-    [[nodiscard]] WorldPoint2 image_to_world(ImagePosition2 image) const {
+    [[nodiscard]] Point2 image_to_world(ImagePosition2 image) const {
         validate();
         if (!std::isfinite(image.u) || !std::isfinite(image.v)) {
             throw std::invalid_argument("nonfinite image position");
         }
-        const WorldPoint2 world{
+        const Point2 world{
             (image.u - world_origin.u) / pixels_per_metre_x,
             (world_origin.v - image.v) / pixels_per_metre_y};
         if (!finite(world)) {
