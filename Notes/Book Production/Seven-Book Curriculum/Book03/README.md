@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring pass 01; NO Book 03 publication files have been generated or promoted.
+**State:** Authoring passes 01–02; the first two substantial chapters and two C++23 laboratories are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -14,13 +14,18 @@
 2. [Thirty-two-chapter reading and project plan](CHAPTER_PLAN.md) — our roadmap, not a false claim of completion.
 3. [Original-source routing ledger](SOURCE_LEDGER.md) — where the substantial pre-existing graphics/camera material lives and how we will preserve it.
 4. [Chapter 01 — The Picture Made of Little Windows](Chapters/01%20-%20The%20Picture%20Made%20of%20Little%20Windows.md) — opening full-length, reader-facing chapter draft.
-5. [P01: Pixel Canvas, C++23](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — first executable experiment and independently checkable tests.
+5. [Chapter 02 — Every Place Needs an Address](Chapters/02%20-%20Every%20Place%20Needs%20an%20Address.md) — full narrative on points, displacements, frames, inverse transforms and world-to-image mapping.
+6. [P01–P02: C++23 Pixel Canvas and Coordinate Frame Playground](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
+7. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
+8. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
 
 ## What is already authored?
 
 Pass 01 begins the new book with an original narrative on the distinction between a physical scene, a mathematical image and a stored pixel; discrete addressing; continuous sample locations; integer drawing; overflow-aware image buffers; PPM export; and a deliberately imperfect line rasterizer. The first C++23 project and accompanying tests are intended as a runnable contract, not a replacement for the full reader book.
 
-Pass 01 does **not** assert that all 32 chapters have been drafted, that the legacy source has been integrated, that all C++ tests have passed, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
+Pass 02 adds a second full chapter on coordinate frames, point versus vector types, basis matrices and inverse maps, units, nested transform composition, a world-up/image-down coordinate bridge, exact examples and deliberate failures. Its P02 C++23 code extends the same companion with a typed affine frame model, independent numerical tests and a terminal-controlled SVG frame visualizer. Four original accessible figures now support Chapters 01–02.
+
+The first two passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
 
 ## Teaching voice
 
@@ -51,8 +56,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 
 | Pass | Deliverable | State |
 |---|---|---|
-| 01 | Original first chapter, 32-chapter route, source-preservation ledger, portable C++23 Pixel Canvas | Authored on this branch; compilation/verification reported separately |
-| 02 | Coordinate spaces, transforms and interactive geometry viewer | Not started |
+| 01 | Original first chapter, 32-chapter route, source-preservation ledger, portable C++23 Pixel Canvas | Authored; compilation/verification reported separately |
+| 02 | Coordinate frames, inverse transforms, typed point/vector math, image mapping, terminal coordinate playground, two SVG diagrams | Authored; compilation/verification reported separately |
 | 03 | Meshes, topology and robust predicates | Not started |
 | 04 | 3D cameras and projection | Not started |
 | 05 | CPU clipping, triangle rasterization and visibility | Not started |
