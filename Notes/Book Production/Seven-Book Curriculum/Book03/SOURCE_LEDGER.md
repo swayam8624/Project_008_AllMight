@@ -66,3 +66,14 @@ The [Pass 02 legacy-source audit](PASS02_LEGACY_AUDIT.md) now records exact insp
 **New original diagrams:** Assets/03-two-frames-one-place.svg and Assets/04-world-to-image-frame.svg. Both have accessible descriptions and numeric contracts. No legacy diagram or generated asset was moved.
 
 Remaining: full source-unit mapping for each long chapter, math verification, additive reader composition, and author-run final PDF/EPUB review. This pass does not edit source masters or the frozen Stage 03 generation.
+
+
+## Pass 03 — triangle geometry and original robust predicates
+
+The [Pass 03 legacy-source audit](PASS03_LEGACY_AUDIT.md) records the actually inspected source **openings**, original source-span IDs, precise Git blob SHAs and reader placement for robust orientation, rasterization, ray–triangle intersection, mesh queries, topology and per-corner mesh attributes. Those originals are not yet exhaustively source-unit audited and remain unchanged.
+
+The new additive reader chapter is \`Chapters/03 - Shapes That Know Their Borders.md\`; it begins from the paper house's roof and builds left/right orientation, winding, signed area, barycentric mixing, interpolation, degeneracy, numerical uncertainty, affine invariance and the careful boundary between a predicate and a construction.
+
+The new C++23 companion is \`Code Parts/tools/labs/book03_cpp23/include/book03/triangle_geometry.hpp\`, its numerically grounded testing target \`tests/triangle_geometry_tests.cpp\` and its \`src/triangle_studio.cpp\` output/interactive inspector. New source figures \`Assets/05-the-directed-edge.svg\` and \`Assets/06-barycentric-roof.svg\` stay under the existing Book03 notes directory.
+
+Source integration of the old advanced robust-predicate sections in reader Chapter 05 and mesh topology sections in Chapter 07 remains outstanding. No old source may be deleted simply because the new Chapter 03 introduces the subject.
