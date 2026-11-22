@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check narrative, directory and figure source contracts
+        run: python3 "Code Parts/tools/labs/book03_cpp23/editorial_gate.py"
       - name: Configure pure C++23 laboratory
         run: |
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
