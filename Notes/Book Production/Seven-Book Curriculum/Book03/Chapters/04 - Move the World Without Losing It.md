@@ -203,7 +203,7 @@ Choose a new basis whose world-space arrows are the columns of
 
 \[
 C=\begin{bmatrix}1&-1\\1&1\end{bmatrix}.
-\tag{4.23}
+\tag{4.A}
 \]
 
 If the vector did not move at all, what coefficients should we write on the new ruler? We need \(\mathbf v_W=C\,\mathbf v_C\), so
@@ -213,7 +213,7 @@ If the vector did not move at all, what coefficients should we write on the new 
 =\frac12\begin{bmatrix}1&1\\-1&1\end{bmatrix}
 \begin{bmatrix}4\\2\end{bmatrix}
 =\boxed{\begin{bmatrix}3\\-1\end{bmatrix}}.
-\tag{4.24}
+\tag{4.B}
 \]
 
 The ruler reports \((3,-1)\) even though the vector remains physically at \((4,2)\) in the world basis. We can reconstruct it: \(3(1,1)-1(-1,1)=(4,2)\).
