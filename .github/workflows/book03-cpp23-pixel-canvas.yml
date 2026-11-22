@@ -1,0 +1,44 @@
+name: Book 03 - C++23 Pixel Canvas and PPM Contracts
+
+on:
+  push:
+    branches:
+      - curriculum/book03-geometry-images-pass01
+    paths:
+      - "Code Parts/tools/labs/book03_cpp23/**"
+      - ".github/workflows/book03-cpp23-pixel-canvas.yml"
+  pull_request:
+    paths:
+      - "Code Parts/tools/labs/book03_cpp23/**"
+      - ".github/workflows/book03-cpp23-pixel-canvas.yml"
+  workflow_dispatch:
+
+jobs:
+  native-cpp23:
+    name: C++23 canvas tests (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure pure C++23 laboratory
+        run: |
+          cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
+      - name: Compile with strict warnings
+        run: cmake --build build/book03-p01 --parallel 2
+      - name: Execute independent pixel and PPM contracts
+        run: ctest --test-dir build/book03-p01 --output-on-failure
+      - name: Generate both image demonstrations
+        run: |
+          build/book03-p01/book03_canvas house build/book03-p01/house.ppm
+          build/book03-p01/book03_canvas lines build/book03-p01/lines.ppm
+      - name: Confirm P6 header and exact payload sizes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          header = b"P6\n320 200\n255\n"
+          expected = len(header) + 320 * 200 * 3
+          for name in ("house", "lines"):
+              data = Path(f"build/book03-p01/{name}.ppm").read_bytes()
+              assert data.startswith(header), f"{name}: invalid P6 header"
+              assert len(data) == expected, f"{name}: unexpected length"
+              print(f"{name}: {len(data)} bytes, valid P6 shape")
+          PY
