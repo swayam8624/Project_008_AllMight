@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Pixel, Coordinate Frame and SVG Contracts
+name: Book 03 - C++23 Pixel, Frame, Triangle, and SVG Contracts
 
 on:
   push:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 image and frame tests (Ubuntu)
+    name: C++23 image, frame and triangle tests (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute independent pixel, frame and image-space contracts
+      - name: Execute independent pixel, frame, exact-triangle and image-space contracts
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -52,6 +52,34 @@ jobs:
               print(f"{name}: valid SVG geometry document")
           repl = Path("build/book03-p01/repl-evidence.txt").read_text()
           assert "Local (3,1) m -> world (1,4) m" in repl, repl
+          PY
+      - name: Generate a barycentric PPM and inspect triangle SVG
+        run: |
+          build/book03-p01/book03_triangles inspect > build/book03-p01/triangle-inspect.txt
+          build/book03-p01/book03_triangles ppm build/book03-p01/triangle-gradient.ppm
+          build/book03-p01/book03_triangles svg build/book03-p01/triangle.svg
+          printf 'area\npoint 1.5 1\npoint 5 3\nquit\n' | build/book03-p01/book03_triangles repl > build/book03-p01/triangle-repl.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          p = Path("build/book03-p01")
+          header = b"P6\n640 420\n255\n"
+          raw = (p / "triangle-gradient.ppm").read_bytes()
+          assert raw.startswith(header)
+          assert len(raw) == len(header) + 640 * 420 * 3
+          root = ET.parse(p / "triangle.svg").getroot()
+          ns = "{http://www.w3.org/2000/svg}"
+          assert root.tag == ns + "svg"
+          assert root.find(ns + "title") is not None
+          assert root.find(ns + "desc") is not None
+          assert len(root.findall(ns + "polygon")) == 1
+          evidence = (p / "triangle-inspect.txt").read_text()
+          assert "Signed twice-area = 24.000000000000" in evidence
+          assert "0.500000000000,0.250000000000,0.250000000000" in evidence
+          assert "interior" in evidence
+          transcript = (p / "triangle-repl.txt").read_text()
+          assert "exterior" in transcript and "interior" in transcript
+          print("Triangle PPM dimensions, SVG structure, numeric and REPL contracts: passed")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
