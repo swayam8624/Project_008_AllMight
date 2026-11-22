@@ -27,6 +27,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cstddef>
 #include <limits>
 #include <stdexcept>
 
@@ -70,13 +71,16 @@ enum class ApproxLocation {
 [[nodiscard]] inline ExactLocation exact_triangle_location(
     IntegerPoint2 a, IntegerPoint2 b, IntegerPoint2 c, IntegerPoint2 p) {
     const std::int64_t d = exact_twice_area(a, b, c);
+    // Even a degenerate triangle must validate the query point's declared
+    // exactness domain. Do not skip the p check on early-return branches.
+    const std::int64_t abp = exact_twice_area(a, b, p);
     if (d == 0) {
         return ExactLocation::Degenerate;
     }
     const std::array<std::int64_t, 3> numerators{
         exact_twice_area(b, c, p),
         exact_twice_area(c, a, p),
-        exact_twice_area(a, b, p)};
+        abp};
     bool edge = false;
     for (const std::int64_t n : numerators) {
         if ((d > 0 && n < 0) || (d < 0 && n > 0)) {
