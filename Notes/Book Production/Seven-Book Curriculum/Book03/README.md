@@ -14,7 +14,7 @@
 2. [Thirty-two-chapter reading and project plan](CHAPTER_PLAN.md) — our roadmap, not a false claim of completion.
 3. [Original-source routing ledger](SOURCE_LEDGER.md) — where the substantial pre-existing graphics/camera material lives and how we will preserve it.
 4. [Chapter 01 — The Picture Made of Little Windows](Chapters/01%20-%20The%20Picture%20Made%20of%20Little%20Windows.md) — opening full-length, reader-facing chapter draft.
-5. [P01: Pixel Canvas, C++23](../../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — first executable experiment and independently checkable tests.
+5. [P01: Pixel Canvas, C++23](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — first executable experiment and independently checkable tests.
 
 ## What is already authored?
 
