@@ -121,3 +121,52 @@ The exact orientation and containment results require integer coordinates within
 The floating barycentric query is **not certified numerically** for all representable binary64 coordinates. It returns \`BoundaryUncertain\` or \`DegenerateOrUncertified\` when its documented guard is too small for a safe classroom classification. That guard is an explanatory filter, not a rigorous adaptive error bound. Chapter 05 will cover such methods in much greater depth with the pre-existing manuscript preserved.
 
 **Validation protocol:** Build the lab's CMake targets, execute all CTests, inspect P03's numeric output, check PPM header/payload and SVG XML, inspect the gradient visually, and record toolchain + source identity. The GitHub CI file defines the same checks but must not be called passing until an actual successful run is observed. The author still owns the final Mac Book 03 PDF/EPUB build.
+
+
+---
+
+## Chapter 04 — P04 Affine Transformation Studio
+
+**Why this project exists.** A picture of a transformed paper house can be convincing even when the matrix is mathematically wrong. P04 therefore puts a compact 3×3 homogeneous affine reference between the existing point/vector concepts, P03 triangle queries and P01 image output. It explains what moves, what stays local, and what an inverse can safely undo.
+
+### Read in this order
+
+1. \`include/book03/affine2.hpp\` — the six coefficients of a column-vector 2D affine map, an explicit 3×3 row-major **storage** export, translation/rotation/scale/shear/reflection constructors, matrix-composition operator, pivot transformation, conservative inverse, and inverse-transpose normal transform. Inspect all comments about frames and numerical limitations.
+2. \`tests/affine2_tests.cpp\` — independent hand-calculated examples, comparison against the P02 \`Frame2\` contract, P03 triangle determinant/weight invariance, normal perpendicularity, invalid/singular transforms, and 2,000 deterministic seeded round trips.
+3. \`src/transform_studio.cpp\` — inspectable world-space matrices, immutable local house vertices, C++-generated SVG and PPM, a numerical transform-order illustration, and a terminal REPL that can save its current transformed house.
+4. \`CMakeLists.txt\` — \`book03_transforms\` executable, \`book03_affine_tests\` test binary, and \`book03_affine_transform_contracts\` CTest next to the previous three chapters' targets.
+
+### Student interface
+
+~~~text
+book03_transforms inspect
+book03_transforms svg transformed-house.svg
+book03_transforms ppm transformed-house.ppm
+book03_transforms order two-orders.svg
+book03_transforms repl
+~~~
+
+In the REPL:
+
+~~~text
+reset
+rotate 90
+translate 2 0
+point 1 0
+inspect
+svg my-transformed-house.svg
+ppm my-transformed-house.ppm
+quit
+~~~
+
+Each new command is **pre-multiplied in world space**. The line above rotates the local point first and translates second; the \`point\` command should report approximately world (2,1) metres. The diagram and image use the same exact C++23 \`Affine2\` calculation, with the shared P02 \`ImageMap2\` converting world +Y up to image +v down. The two-order SVG displays why \`T*R\` and \`R*T\` are not interchangeable.
+
+The demonstration exports are limited to an 840×580 image canvas and require the transformed house's vertices to remain inside it. When a user moves a vertex beyond the visible bounds, the export refuses the operation rather than pretending that clipped geometry was implemented. Clipping belongs to Chapter 17 and is not hidden in this early lab.
+
+### Evidence and known limits
+
+P04 uses explicit row-major array **serialization** for printed homogeneous matrices while still applying them to column vectors. The matrix's top-left 2×2 linear part maps vectors. Translation affects points. Normals use the inverse transpose. Inverse evaluation rejects a zero determinant and matrices that fail a conservative relative-determinant threshold. It is neither a universal conditioning estimate nor a substitute for an exact predicate library.
+
+P04 RGB8 output intentionally paints simplified flat-color triangles. It is **not** physically based rendering, a production camera, a depth-buffered rasterizer, or a GPU experiment. The exact triangle test developed earlier retains its separate bounded integer domain. This project is about trustworthy transforms, not prematurely claiming capabilities that later books will develop.
+
+The CI workflow checks target compilation, CTest execution, numeric REPL order, PPM byte size and SVG structure once it is actually run. **Do not report “passed” merely because the checks are written.** The final combined PDF/EPUB build remains the author's later Mac-side review; running this lab must not write to the established local \`From Bits to Research/\` publication library.
