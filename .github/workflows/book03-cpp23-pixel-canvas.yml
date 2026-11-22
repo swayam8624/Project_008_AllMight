@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Pixel, Frame, Triangle, and SVG Contracts
+name: Book 03 - C++23 Pixel, Frame, Triangle, Affine and SVG Contracts
 
 on:
   push:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 image, frame and triangle tests (Ubuntu)
+    name: C++23 image, frame, triangle and affine tests (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute independent pixel, frame, exact-triangle and image-space contracts
+      - name: Execute pixel, frame, triangle and affine C++23 contracts
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -85,6 +85,40 @@ jobs:
           transcript = (p / "triangle-repl.txt").read_text()
           assert "exterior" in transcript and "interior" in transcript
           print("Triangle PPM dimensions, SVG structure, numeric and REPL contracts: passed")
+          PY
+      - name: Verify affine transform geometry and generated teaching plates
+        run: |
+          build/book03-p01/book03_transforms inspect > build/book03-p01/affine-inspect.txt
+          build/book03-p01/book03_transforms svg build/book03-p01/transformed-house.svg
+          build/book03-p01/book03_transforms ppm build/book03-p01/transformed-house.ppm
+          build/book03-p01/book03_transforms order build/book03-p01/transform-order.svg > build/book03-p01/transform-order.txt
+          printf 'rotate 90\ntranslate 2 0\npoint 1 0\nsvg build/book03-p01/repl-affine.svg\nquit\n' | build/book03-p01/book03_transforms repl > build/book03-p01/affine-repl.txt
+          python3 - <<'PY'
+          import math
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base = Path("build/book03-p01")
+          nsv = "{http://www.w3.org/2000/svg}"
+          for name in ("transformed-house.svg", "transform-order.svg", "repl-affine.svg"):
+              root = ET.parse(base / name).getroot()
+              assert root.tag == nsv + "svg"
+              assert root.find(nsv + "title") is not None
+              assert root.find(nsv + "desc") is not None
+              assert len(root.findall(nsv + "polygon")) >= (2 if name != "transform-order.svg" else 0)
+          payload = (base / "transformed-house.ppm").read_bytes()
+          header = b"P6\n840 580\n255\n"
+          assert payload.startswith(header)
+          assert len(payload) == len(header) + 840 * 580 * 3
+          assert len(set(payload[len(header):])) >= 3
+          inspect = (base / "affine-inspect.txt").read_text()
+          assert "determinant=" in inspect and "inverse round-trip" in inspect
+          text = (base / "affine-repl.txt").read_text()
+          m = re.search(r"Local \(1\.00000000,0\.00000000\) -> world \(([-+\d.]+),([-+\d.]+)\)", text)
+          assert m, text
+          assert math.isclose(float(m.group(1)),2.0,abs_tol=1e-7)
+          assert math.isclose(float(m.group(2)),1.0,abs_tol=1e-7)
+          print("Affine P04 REPL, PPM, SVG and numeric contracts inspected")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
