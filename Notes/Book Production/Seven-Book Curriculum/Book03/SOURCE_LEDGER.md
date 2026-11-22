@@ -77,3 +77,14 @@ The new additive reader chapter is \`Chapters/03 - Shapes That Know Their Border
 The new C++23 companion is \`Code Parts/tools/labs/book03_cpp23/include/book03/triangle_geometry.hpp\`, its numerically grounded testing target \`tests/triangle_geometry_tests.cpp\` and its \`src/triangle_studio.cpp\` output/interactive inspector. New source figures \`Assets/05-the-directed-edge.svg\` and \`Assets/06-barycentric-roof.svg\` stay under the existing Book03 notes directory.
 
 Source integration of the old advanced robust-predicate sections in reader Chapter 05 and mesh topology sections in Chapter 07 remains outstanding. No old source may be deleted simply because the new Chapter 03 introduces the subject.
+
+
+## Pass 04 — active/passive maps, affine composition and normal transformation
+
+The [Pass 04 legacy-source audit](PASS04_LEGACY_AUDIT.md) records actual inspected opening spans and Git blob identities for original coordinate-basis, frame, camera, light-vector and clip-space chapters. In particular, the original Computing Foundations **Coordinate Frames and Linear Systems** chapter explicitly distinguishes active transformation from passive change of basis, with \([v]_C=C^{-1}B[v]_B\) and an original worked \((4,2)\rightarrow(3,-1)\) coordinate example. New reader Chapter 04 introduces the distinction with a paper-house analogy and concrete arithmetic while preserving the original chapter.
+
+The new \`Chapters/04 - Move the World Without Losing It.md\` develops identity, translation, rotation, nonuniform scale, shear, reflection, affine versus projective homogeneous coordinates, matrix multiplication order, nested frames, pivot transforms, determinant/area/winding changes, inverse and conditioning, and inverse-transpose normals. The discussion uses a declared column-vector algebra and never infers transform direction from matrix memory storage.
+
+The new C++23 companion \`Code Parts/tools/labs/book03_cpp23/include/book03/affine2.hpp\` provides that affine contract; \`src/transform_studio.cpp\` uses the earlier chapters' canvas, frame and triangle structures to generate inspectable SVG/PPM outputs and a native command-line playground; \`tests/affine2_tests.cpp\` adds deterministic scalar/property checks. Original source figures \`Assets/07-transform-family.svg\`, \`08-transform-order.svg\` and \`09-normals-under-shear.svg\` illustrate the concepts and remain inside the unchanged Book03 notes folder.
+
+**Source-integrity boundary:** none of the inspected original full masters, reading copies or LaTeX-generated Stage 03 chapter fragments was rewritten, shortened or moved. The entrypoint audit is not a completed full-body source-unit reconciliation. That deeper step must precede any claim of whole-book completion or release.
