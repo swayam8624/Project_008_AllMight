@@ -1,0 +1,151 @@
+% Book Two Pass 2: consensus estimation and stopping probability.
+\clearpage
+\section*{Research reconstruction: a model built from consensus}
+\noindent\textbf{Primary work:} Martin Fischler and Robert Bolles,
+\emph{Random Sample Consensus: A Paradigm for Model Fitting with
+Applications to Image Analysis and Automated Cartography},
+\emph{Communications of the ACM}, 1981,
+\href{https://doi.org/10.1145/358669.358692}{DOI and publication record}.
+
+\paragraph{Why ordinary fitting can fail.}
+Least squares minimizes the sum of squared residuals, so a few
+large residuals can dominate the result. RANSAC reverses the
+procedure: generate a model from a minimal sample, count
+observations agreeing within a declared threshold, retain the
+best consensus, and refine using that consensus.
+This does not magically determine the threshold or make a
+wrong measurement model correct.
+
+For a 2D line, a minimal sample is a pair of distinct points.
+The line may be written as \(ax+by+c=0\) with
+\(a^2+b^2=1\), so the orthogonal residual of a point
+\((x_i,y_i)\) is simply
+\[
+d_i=|ax_i+by_i+c|.
+\]
+A point is an inlier if \(d_i\le\tau\), where \(\tau\) has
+the same physical units as the point coordinates. After
+selection, refit the line using an orthogonal
+total-least-squares model of the consensus. Ordinary
+vertical-error regression would assume an entirely different
+noise direction and should not be substituted silently.
+
+\paragraph{How many random hypotheses?}
+If each sample of size \(m\) contains only inliers with
+probability \(w^m\), and successive hypotheses are
+independent, the chance that all \(k\) hypotheses fail is
+\((1-w^m)^k\). To demand success probability at least \(p\),
+choose
+\[
+k\ge\frac{\log(1-p)}{\log(1-w^m)}.
+\]
+For \(m=2,w=0.5,p=0.99\), this gives
+\(k=\lceil\log(0.01)/\log(0.75)\rceil=17\).
+This is an \emph{idealized} probability model. Finite
+sampling without replacement, correlated hypotheses,
+structured outliers, approximate support estimates, and
+degenerate point configurations complicate its interpretation.
+
+\paragraph{A deliberately synthetic replication.}
+The companion \texttt{book02\_papers\_}\allowbreak\texttt{geometry.py} makes 80
+bounded-noise points around \(y=2x+1\) and 30 structured
+outliers, shuffles with a declared seed, and fits a line.
+It compares consensus and orthogonal-refit accuracy with
+an all-observation total-least-squares baseline.
+The recorded seed demonstrates replay, not statistical
+generalization or a paper benchmark result.
+
+\paragraph{What could falsify the lesson?}
+If a seed selects degenerate point pairs too often, no useful
+model is produced. If the inlier threshold is too wide,
+two distinct geometric structures can merge into one
+false consensus; if too narrow, valid observations are
+discarded. If most data agree with a \emph{wrong} model,
+RANSAC can confidently choose it. Compare all-data
+residual distributions and consensus-set stability across
+independent seeds and varying thresholds, not just one
+attractive line overlay.
+
+\paragraph{Original-paper boundary.}
+This lab reproduces the core sampling, consensus and refitting
+on a simple line, not the original paper's camera localization
+experiments, implementation or reported measurements.
+
+
+\begin{booktwoproof}[Total least squares after finding consensus]
+Let the selected coordinates be \(p_i=(x_i,y_i)\) and their
+centroid be \(\bar p\). The covariance scatter matrix is
+\[
+ S=\sum_i(p_i-\bar p)(p_i-\bar p)^T
+ =\begin{bmatrix}S_{xx}&S_{xy}\\S_{xy}&S_{yy}\end{bmatrix}.
+\]
+For a unit line normal \(n\), minimizing the sum of squared
+\emph{orthogonal} distances is equivalent to minimizing
+\(n^TSn\) subject to \(n^Tn=1\).
+The Rayleigh-quotient principle selects the eigenvector
+for the smallest eigenvalue of \(S\); the intercept is
+\(c=-n^T\bar p\). When the scatter is isotropic,
+the data determine no unique line orientation.
+The C++23 total-least-squares routine rejects that
+degenerate case instead of inventing a direction.
+\end{booktwoproof}
+
+\begin{booktwolab}[Native consensus and orthogonal refit]
+The native C++23 \texttt{ransac-summary} and
+\texttt{ransac-data} commands construct an explicitly
+different synthetic dataset from the earlier Python
+paper-reconstruction plate. Eighty near-line points
+follow \(y=2x+1+0.015\sin(0.27i+0.4)\) at equally
+spaced \(x\in[-4,4]\); thirty structured outliers follow
+\(y=-7+0.4x+0.06\cos(0.51i)\) on \(x\in[-3.8,3.8]\).
+Each family has its own zero-based index \(i\). The
+source code fixes the threshold to \(0.04\) coordinate
+units, performs \(400\) two-point trials using
+seed \(73013\), and refits the selected consensus
+with orthogonal TLS.
+
+The summary exports selected count, true positives,
+false positives, precision, recall, a finite inlier
+RMS and coefficients for the consensus and all-point
+TLS baseline. The per-point CSV gives both fit
+predictions, signed orthogonal residuals, the known
+synthetic truth label and the \emph{computed} consensus
+label. It does not hide rejected observations.
+Change the threshold, seed, noise model, group sizes
+and structures in the native source to discover failures.
+The generator's labels make precision and recall
+auditable in this synthetic setting; real unlabeled
+observations require a different evaluation protocol.
+
+The formula for idealized random-sample confidence
+still supplies a useful planning estimate; the fixed
+\(400\)-trial experiment is \emph{not} a claim that
+independent-with-replacement sampling assumptions
+hold for its finite, structured point cloud. Seeded
+standard-library random integer sequences can differ
+across C++ implementations even when the mathematical
+test criteria remain the same.
+\end{booktwolab}
+
+\begin{Shaded}
+\begin{verbatim}
+build/book02-cpp23/book02_workbench ransac-summary
+build/book02-cpp23/book02_workbench ransac-data \
+  > build/book02-cpp23/ransac-data.csv
+python3 tools/labs/book02_cpp23/plot.py \
+  build/book02-cpp23/ransac-data.csv \
+  --output build/book02-cpp23/ransac-data.png
+\end{verbatim}
+\end{Shaded}
+
+\begin{booktwopitfall}[A selected consensus is not ground truth]
+The new native demonstration and the earlier Python-led
+research plate have related mathematical goals but
+distinct generators, seeds and implementations.
+Do not relabel their plots as identical reproductions
+or claim the published paper's measured results.
+A perfectly separated synthetic fixture can yield
+high precision and recall while hiding how RANSAC
+fails under crossing structures, leverage points,
+incorrect thresholds or high contamination.
+\end{booktwopitfall}

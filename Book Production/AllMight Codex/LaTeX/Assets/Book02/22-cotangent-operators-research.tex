@@ -1,0 +1,78 @@
+% Book Two Pass 2: planar element derivation and sign/measure audit.
+\clearpage
+\section*{Research reconstruction: from triangle gradients to a Laplacian}
+\noindent\textbf{Primary lineage:} the finite-element/cotangent discrete
+Laplacian described in geometric processing literature, the
+\href{https://libigl.github.io/tutorial/}{libigl tutorial}, and
+Nicholas Sharp and Keenan Crane,
+\href{https://www.cs.cmu.edu/~kmcrane/Projects/NonmanifoldLaplace/index.html}
+{\emph{A Laplacian for Nonmanifold Triangle Meshes} (2020)}.
+
+\paragraph{Where the matrix comes from.}
+Consider a triangle of area \(A>0\) with piecewise-linear hat
+basis functions \(\phi_0,\phi_1,\phi_2\). Each \(\phi_i\) equals one
+at vertex \(i\) and zero at the other two vertices. Its gradient is
+constant on the triangle, because each basis function is linear.
+For vertex values \(u_i\), the interpolated field and gradient are
+\[
+u(x)=\sum_i u_i\phi_i(x), \qquad
+\nabla u=\sum_i u_i\nabla\phi_i.
+\]
+The integrated squared-gradient energy is
+\[
+E(u)=\frac12\int_T\lVert\nabla u\rVert^2\,dA
+=\frac12u^TK_Tu,\qquad
+(K_T)_{ij}=A\,\nabla\phi_i\cdot\nabla\phi_j.
+\]
+Assembly over all triangles yields a symmetric
+positive-semidefinite stiffness \(K\), with \(K\mathbf 1=0\)
+on a mesh without fixed-value boundary constraints: a constant
+field has zero gradient and therefore zero energy. A lumped
+vertex mass for this simple P1 experiment is
+\(M_{ii}=\sum_{T\ni i}A_T/3\).
+This is an \emph{area-weighted measure}, not the same object as
+the stiffness matrix.
+
+\paragraph{An exact numerical triangle.}
+Take \(v_0=(0,0)\), \(v_1=(2,0)\), \(v_2=(0.5,0.5)\).
+The area is \(A=0.5\), and the elemental matrix is
+\[
+K_T=
+\begin{pmatrix}
+1.25&0.25&-1.5\\
+0.25&0.25&-0.5\\
+-1.5&-0.5&2
+\end{pmatrix}.
+\]
+It is symmetric, has zero row sums, and satisfies
+\(u^TK_Tu\ge0\) for every \(u\).
+Yet \(K_{01}=+0.25\) is a positive off-diagonal entry. An
+energy-stable discrete operator is not therefore guaranteed to
+be a nonnegative-weight averaging operator or to satisfy a
+maximum principle. Mesh quality, angle and weighting conventions
+are material to the result.
+
+\paragraph{Why nonmanifold geometry is a separate paper.}
+The standard cotangent stencil assumes a suitable triangulated
+domain and imposes no automatic guarantee that every input
+mesh has the desirable spectral, positivity or boundary properties.
+The Sharp--Crane paper develops a \emph{tufted cover} to extend
+Laplacian construction to more general triangle meshes. A basic
+P1 matrix on an ordinary planar grid does \emph{not} reproduce that
+construction, its intrinsic triangulation strategy or its results.
+
+\paragraph{Reconstruction.}
+Use \texttt{tools/labs/cotan\_energy\_lab.py} for the single-element
+witness and \texttt{tools/labs/book02\_papers\_numeric.py} for an
+assembled triangular-grid stiffness/mass system. Check zero
+row sum, area conservation, energy positivity, exact linear-field
+Dirichlet energy, and degenerate triangle rejection.
+After this baseline is correct, study boundaries and nonmanifold
+cases as a separate method rather than assuming the original
+cotangent operator can simply be reused unchanged.
+
+\paragraph{Sign warning.}
+Some software exposes a Laplacian \(L\) with negative diagonal
+entries, while this laboratory uses the positive-semidefinite
+stiffness \(K=-L\). Always write the evolution equation and
+solver's sign convention before comparing matrix entries.

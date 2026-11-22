@@ -1,0 +1,39 @@
+% Additive standalone worked exercise for original ch017.
+\clearpage
+\section*{Verification case: an array is a measurement with a contract}
+\noindent A mathematical vector has a dimension; a software array additionally has
+a shape, storage type, stride, coordinate convention and validity policy.
+For a point cloud \(P\in\mathbb R^{N\times 3}\), broadcasting a translation
+\(t\in\mathbb R^3\) across its rows implements \(P'=P+\mathbf1_Nt^T\).
+This is correct only if each row is a point in the \emph{same}
+frame and unit system as \(t\), not simply because the array shapes permit it.
+
+For an inspectable experiment, choose the three points (in metres)
+\[
+P=\begin{pmatrix}1&0&0\\0&2&0\\0&0&3\end{pmatrix},
+\qquad t=\begin{pmatrix}0.5\\-1\\2\end{pmatrix}.
+\]
+The translated rows are respectively
+\((1.5,-1,2)\), \((0.5,1,2)\), and \((0.5,-1,5)\).
+An equivalent C++23 implementation may loop over rows, while NumPy
+may broadcast \(t\); the expected geometry does not depend on the
+language or execution hardware.
+
+\paragraph{Limits of the test.}
+The three expected points verify the chosen examples, not arbitrary
+input. A correct implementation also rejects the wrong number of
+components, incompatible layout assumptions and nonfinite values
+when the application's contract requires finite geometry.
+Integer arrays can silently truncate a fractional translation after an
+unsafe cast. Float32 and Float64 may differ because of rounding.
+Whether a view avoids a copy is a question about memory and ownership,
+not a theorem about broadcasting.
+
+\paragraph{Reconstruction.}
+Implement the update in NumPy and in a documented C++23 loop;
+compare after converting both to a declared precision. Include
+three negative tests (shape, dtype and nonfinite input), a
+translation-inverse round trip, and a test confirming that point
+differences do not change under a uniform translation. Record any
+failure to preserve the latter within a stated floating-point
+tolerance rather than silently treating a visual overlap as proof.

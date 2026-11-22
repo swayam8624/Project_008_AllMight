@@ -1,0 +1,218 @@
+% Book Two content-reviewed bridge, introduced after source chapter ch031.
+% Exact independent reference: tools/labs/book02_coverage_oracle.py
+% This lesson extends, without changing, the original 16 chapter sources.
+\clearpage
+\section*{From probability to pixels: when a triangle covers a sample}
+\noindent Imagine a triangle whose vertices have already been transformed
+through object, world, camera, and projection coordinates. The renderer
+still has a question to answer: which pixels can this triangle affect?
+That sounds visual, but it is built from the mathematics of this volume.
+Coordinate transformations determine the vertices, an orientation
+predicate decides which side of an edge a point belongs to, polygon
+intersection determines exact continuous coverage, and probability
+predicts the error when the coverage is estimated from samples.
+
+The word \emph{coverage} has several different meanings. For an ideal
+unit-area pixel \(P=[0,1]\times[0,1]\) and projected triangle \(T\),
+the \emph{continuous area fraction} is
+\[
+c=\frac{\operatorname{area}(T\cap P)}
+        {\operatorname{area}(P)}.
+\]
+This number belongs to \([0,1]\). It is an area ratio, not the
+integer number of sample points or the result of depth testing.
+A single point sample gives either zero or one. An array of
+subpixel samples yields a discrete estimate. The physical image
+produced by a camera and the finite pixel-filter response are
+different again: a real pixel integrates radiance through an
+optical/sensor response, not merely triangle area.
+Before writing a rasterizer we must say which of these quantities
+the implementation promises.
+
+\paragraph{First: an edge test is a signed area.}
+For \(A=(a_x,a_y)\), \(B=(b_x,b_y)\) and a candidate point \(Q\),
+define
+\[
+E_{AB}(Q)
+=(b_x-a_x)(q_y-a_y)-(b_y-a_y)(q_x-a_x).
+\]
+This determinant is twice the oriented area of triangle \(ABQ\).
+With counterclockwise triangle \(ABC\), a point lies inside or on
+the boundary precisely when
+\[
+E_{AB}(Q)\ge0,\quad
+E_{BC}(Q)\ge0,\quad
+E_{CA}(Q)\ge0.
+\]
+Reverse the triangle orientation and the inequalities reverse.
+This explains why the robust orientation lesson earlier in this
+book was not an isolated computational-geometry trick: an
+unreliable sign can change pixel membership, triangle adjacency
+or apparent gaps. A production triangle rasterizer also needs
+an \emph{edge-ownership} convention so two adjacent triangles do
+not both claim the exact same shared-boundary sample. The
+inclusive test shown here is sufficient for continuous area of
+a single triangle because a line segment has zero area.
+It is not, by itself, a complete top-left fill-rule implementation.
+
+\paragraph{Second: clip the polygon before computing its area.}
+Choose a small, exactly representable triangle in pixel units:
+\[
+A=(-\tfrac14,\tfrac14),\quad
+B=(\tfrac54,\tfrac14),\quad
+C=(\tfrac12,\tfrac54).
+\]
+The triangle crosses the left, right and top sides of the pixel,
+so returning the triangle's original area is incorrect.
+Intersect the triangle against the four halfplanes
+\(x\ge0\), \(x\le1\), \(y\ge0\), \(y\le1\).
+The resulting polygon vertices, in boundary order, are
+\[
+\begin{aligned}
+&(\tfrac5{16},1),\quad (0,\tfrac7{12}),\quad
+(0,\tfrac14),\\
+&(1,\tfrac14),\quad (1,\tfrac7{12}),\quad
+(\tfrac{11}{16},1).
+\end{aligned}
+\]
+A reader can verify each intersection by parameterizing the
+corresponding triangle edge. Clipping against an axis-aligned
+halfplane does not require an approximate floating-point
+intersection: for these rational input coordinates every
+intersection remains rational.
+
+Now compute the area \emph{twice}, using independent reasoning.
+From \(y=\tfrac14\) to \(y=\tfrac7{12}\), the covered horizontal
+width is exactly one. That rectangular contribution is
+\(\tfrac7{12}-\tfrac14=\tfrac13\).
+Above \(y=\tfrac7{12}\), the left and right boundaries are
+\[
+x_L(y)=\tfrac34y-\tfrac7{16},\qquad
+x_R(y)=\tfrac{23}{16}-\tfrac34y.
+\]
+Their separation is
+\[
+w(y)=x_R-x_L=\tfrac{15}{8}-\tfrac32y.
+\]
+It drops linearly from width one at \(y=\tfrac7{12}\) to
+width \(\tfrac38\) at \(y=1\). The upper piece is a trapezoid
+with height \(\tfrac5{12}\) and area
+\[
+A_{\mathrm{upper}}
+=\tfrac12(1+\tfrac38)\tfrac5{12}
+=\tfrac{55}{192}.
+\]
+The exact pixel coverage is therefore
+\[
+\boxed{c=\tfrac13+\tfrac{55}{192}
+=\tfrac{119}{192}\approx0.6197916667.}
+\]
+The shoelace formula applied to the six clipped vertices
+produces the same rational number. This independent calculation
+is an \emph{oracle}: a test compares two algorithms/derivations,
+not one implementation with an answer copied out of itself.
+The program \nolinkurl{tools/labs/book02_coverage_oracle.py}
+implements rational Sutherland--Hodgman clipping and the
+shoelace calculation. Its tests pin all six polygon vertices
+and the fraction \(119/192\), check triangle-winding
+invariance, and deliberately submit invalid triangles.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/coverage/triangle-pixel-coverage.pdf}
+\caption{From exact rational triangle-pixel intersection to sampled coverage.
+Left: a projected triangle, its exact clipped polygon and 256 subpixel
+Bernoulli samples. Right: signed sampling errors over 60 independently seeded
+replications with theoretical one-standard-deviation reference lines.
+The continuous covered area is \(119/192\); the finite-sample values are
+estimates rather than production GPU raster results.}
+\label{fig:book02-coverage-bridge}
+\end{figure}
+
+\paragraph{Third: sampling estimates area under explicit assumptions.}
+Draw \(N\) independent samples \(Q_i\) uniformly over the square
+and define \(H_i=1\) if \(Q_i\in T\) and \(H_i=0\) otherwise.
+The estimator is
+\[
+\widehat c_N=\frac1N\sum_{i=1}^NH_i.
+\]
+Since \(Q_i\) is uniform, \(\mathbb E[H_i]=c\), so
+\(\mathbb E[\widehat c_N]=c\).
+For independent samples,
+\[
+\operatorname{Var}(\widehat c_N)
+=\frac{c(1-c)}{N}.
+\]
+In our exact geometry,
+\(c(1-c)=8687/36864\).
+At \(N=256\), the variance is approximately
+\(0.00092051\) and the standard deviation is about
+\(0.03034\) in coverage-fraction units. This is a prediction
+for \emph{independent uniform random subpixel samples}.
+It is not automatically the variance of an MSAA sample pattern,
+a stratified or low-discrepancy sequence, reused samples
+across neighboring pixels, or a temporally accumulated image.
+
+The deterministic pseudorandom seed in the companion program
+makes one experiment reproducible. It does not make a single
+sequence statistically representative. We therefore run
+distinct seeded replications, record the sample count and
+independent replication unit, then compare the measured
+sample variance against the declared theoretical model.
+If empirical variance differs from prediction, inspect the
+sample generator, independence assumptions, estimator
+implementation and available replication count before
+declaring either the software or theorem wrong.
+
+\paragraph{Fourth: what a renderer must still decide.}
+The exact area fraction says nothing about triangle depth,
+perspective-correct interpolation of vertex attributes,
+shading of the covered surface, alpha blending, or whether
+two surfaces occlude one another. In perspective rendering,
+clip-space coordinates must first satisfy the camera's
+homogeneous clipping rules. Dividing by \(w\) before the
+appropriate clipping step can create unbounded or sign-flipped
+screen coordinates. A conventional hardware rasterizer usually
+evaluates edge functions at fixed sample locations and applies
+a specified fill convention; it is not required to compute
+the rational polygon-overlap area used as our analytic reference.
+The exact rational algorithm also becomes computationally
+expensive for arbitrary high-precision data and is not proposed
+as a GPU inner-loop implementation.
+
+If the triangle appears jagged, one must distinguish genuine
+geometric discontinuity, finite sampling, a deficient sample
+filter, precision loss, and incorrect edge ownership. All five
+can look similar in a screenshot but require different repairs.
+Likewise, a filter that smooths the final picture may hide,
+rather than correct, missing or multiply-owned coverage.
+
+\paragraph{Reader reconstruction and negative tests.}
+First derive the six clipped polygon vertices by hand and
+reconstruct \(119/192\) using both horizontal integration
+and shoelace area. Reverse triangle winding and prove that
+the unsigned clipped area remains unchanged. Then compare
+the 256-sample estimates over at least 40 independent seeds;
+report the empirical mean, variance, and theoretical
+Bernoulli variance. Draw the triangle and exact clipped
+polygon, and plot the distribution of signed estimator error.
+
+Next test an entirely outside triangle, a triangle containing
+the entire pixel, an exact half-pixel triangle, a degenerate
+collinear triangle, and a polygon touching only an edge.
+Repeat with two triangles sharing an edge and demonstrate the
+need for a consistent ownership convention at discrete
+sample positions. Explicitly reject the inference that
+correct continuous coverage automatically proves
+crack-free pixel rasterization.
+
+\paragraph{The research bridge.}
+This one worked pixel forces together much of the mathematics
+of this volume: affine coordinates, determinants, exact
+predicates, convex polygon intersection, measure,
+expectation, estimator variance, numerical representation,
+independent verification, and experimental design. The next
+graphics volume can now introduce camera clipping,
+interpolation, sample filters, depth and production
+rasterization without pretending that those mechanisms
+were proved by an attractive triangle diagram.

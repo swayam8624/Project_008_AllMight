@@ -22,6 +22,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, "/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15")
 import build_books as epub_helpers  # noqa: E402
 
+from book02_epub_supplements import STAGE as BOOK02_STAGE, Book02EpubSupplement, BOOK02_EPUB_CSS
+from book02_single_volume import epub_frontmatter, epub_references
+from book02_svg_id_repair import repair_epub_duplicate_svg_image_ids
+from book02_epub_reader_polish import polish_book02_epub
+from book02_epub_cover_repair import repair_book02_epub_cover
+
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -148,6 +154,10 @@ class Packager:
         self.asset_dir=out/"assets";self.asset_dir.mkdir(parents=True,exist_ok=True)
         self.math_cache=ROOT/"Build"/"epub-mathml-cache";self.math_cache.mkdir(parents=True,exist_ok=True)
         self.asset_manifest={};self.attachment_by_source={};self.attachments={}
+        # Supplementary EPUB adapter is lazy: the six unrelated stages do
+        # not need Book Two visual libraries or regenerated assets.
+        self.book02_supplement=None
+        self.book02_cover_image=None
         for raw in manifest.get("source_attachment_inventory",{}).get("records",[]):
             rec=dict(raw);rec["sha256"]=rec.get("source_sha256");rec["name"]=(rec.get("source_names") or [Path(rec["source"]).name])[0]
             self.attachments[rec["id"]]=rec
@@ -393,7 +403,18 @@ class Packager:
         for st in selected:
             if mode=="collection":
                 blocks.append({"t":"Header","c":[1,[st["id"],[],[]],[{"t":"Str","c":st["title"]}] ]})
+            if st["id"]==BOOK02_STAGE:
+                if mode=="stage":
+                    blocks[:0]=epub_frontmatter()
+                else:
+                    blocks.extend(epub_frontmatter())
             for row in ordered_rows(self.manifest,st):
+                if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
+                    if self.book02_supplement is None:
+                        self.book02_supplement=Book02EpubSupplement(self.out,self.asset)
+                    if row["id"]=="01-foundations-i-ch017":
+                        blocks.extend(self.book02_supplement.chapter_blocks(
+                            row["id"],mode,prelude=True))
                 ast=self.ast_cache[row["id"]]
                 transformed,refs=self.transform(ast,row,mode,st["id"]);cross.update(refs)
                 rb=transformed.get("blocks",[])
@@ -402,6 +423,12 @@ class Packager:
                         if mode=="collection": node["c"][0]=min(6,int(node["c"][0])+1)
                         elif row["kind"]=="reference" and node["c"][0]==1: node["c"][0]=2
                 blocks.extend(rb);included.append({"id":row["id"],"kind":row["kind"],"stage_id":st["id"],"ast_sha256":row["transformed_ast_sha256"]})
+                # Semantically identical location to the print build insertion
+                # (after this original chapter, never replacing its AST).
+                if st["id"]==BOOK02_STAGE and row["kind"]=="chapter":
+                    blocks.extend(self.book02_supplement.chapter_blocks(row["id"],mode))
+            if st["id"]==BOOK02_STAGE:
+                blocks.extend(epub_references())
         if mode=="stage" and cross:
             blocks.extend([{"t":"Header","c":[1,["cross-stage-reference-index",[],[]],[{"t":"Str","c":"Cross Stage References"}]]},{"t":"Para","c":[{"t":"Str","c":"Each entry links to the corresponding topic in its stage EPUB. The chapter and heading provide a reading locator."}]}])
             for (peer,dest),ref in sorted(cross.items()):
@@ -420,26 +447,108 @@ class Packager:
         label=stage["id"] if stage else "AllMight-Codex-Collection"
         ast,rows,attachments=self.compose(mode,stage)
         ast,presentation_report=epub_helpers.presentation_html_clone(ast,label)
+        # Existing 568 frozen sources remain SHA-locked. Added Book02 math
+        # must also be counted when validating packaged native MathML.
+        expected_math_in_final_ast=sum(1 for n in walk_nodes(ast) if n.get("t")=="Math")
         ast,math_replacements=self.mathml_ast(ast)
         content=self.out/(label+".json");content.write_text(json.dumps(ast,ensure_ascii=False),encoding="utf-8")
         css=self.out/"epub.css"
         css_text=epub_helpers.FINAL_CSS+"\nspan.diagram-panels { display: block; }\nspan.diagram-panels img { display: block; margin: .8em auto; }\npre > code { display: block; min-width: 0; max-width: 100%; white-space: pre-wrap !important; overflow-wrap: anywhere; }\npre > code.sourceCode { white-space: pre-wrap !important; }\npre > code.sourceCode > span { display: block !important; line-height: 1.25; white-space: inherit; overflow-wrap: anywhere; }\n"
+        # The Book Two layout is additive and stage-scoped: do not restyle
+        # the six other volumes or modify the Book One reference EPUB.
+        if stage is None or stage["id"] == BOOK02_STAGE:
+            css_text += BOOK02_EPUB_CSS
         css.write_text(css_text,encoding="utf-8")
         output=self.out/(label+".epub")
-        title=stage["title"] if stage else "AllMight Codex — Complete Collection"
+        title=("From Equations to Geometry" if stage and stage["id"]==BOOK02_STAGE
+               else stage["title"] if stage else "AllMight Codex — Complete Collection")
         split_level="2" if mode=="collection" else "1"
         cmd=[shutil.which("pandoc") or "pandoc",str(content),"--from=json","--to=epub3","--output",str(output),"--css",str(css),f"--split-level={split_level}","--metadata",f"title={title}","--metadata","author=Swayam Singal","--metadata","lang=en"]
+        if stage and stage["id"]==BOOK02_STAGE:
+            cmd.extend(["--metadata", "subtitle=Mathematics, Geometry, and Computational Foundations for Graphics, Simulation, and Research"])
+            if self.book02_cover_image is not None:
+                cmd.extend(["--epub-cover-image", str(self.book02_cover_image)])
         p=subprocess.run(cmd,cwd=self.out,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if p.returncode: raise RuntimeError(f"Pandoc EPUB build failed for {label}: {p.stderr[-4000:]}")
         unknown_tags_escaped=escape_unknown_html_tags(output)
+        # Pandoc may pack more than one scientific raster <image> element
+        # with the same generated SVG id (EPUBCheck RSC-005, file40.svg).
+        # Rename only unreferenced, duplicate image ids; preserve XML pixels
+        # and every other EPUB member. Abort rather than guess on references.
+        if stage is None or stage["id"] == BOOK02_STAGE:
+            svg_id_repairs=repair_epub_duplicate_svg_image_ids(output)
+            if svg_id_repairs["id_renames"]:
+                print("BOOK02_SVG_DUPLICATE_IDS_FIXED",
+                      svg_id_repairs["id_renames"],
+                      svg_id_repairs["details"],flush=True)
+        else:
+            svg_id_repairs={"svg_files_repaired":0,"id_renames":0,"details":{}}
+        # Make the final Book Two EPUB usable on real readers, not only
+        # structurally valid: replace all 51 source-placeholder PNG alts
+        # with hash-verified descriptions and prune the oversized deep TOC.
+        # This operates on a temporary EPUB copy and preserves all chapter
+        # text, equations, code, figures, and non-navigation members.
+        if stage and stage["id"] == BOOK02_STAGE:
+            book02_reader_polish=polish_book02_epub(output)
+            # The cover JPEG was correctly embedded, but the legacy
+            # unknown-tag sanitizer escaped the SVG <image> element in
+            # cover.xhtml, yielding a blank opening page in many readers.
+            # Convert the front cover to a standard, visible XHTML <img>
+            # and adjust the OPF properties without altering its image.
+            book02_cover_repair=repair_book02_epub_cover(
+                output,cover_image=self.book02_cover_image)
+            print("BOOK02_READER_POLISH_OK",book02_reader_polish,flush=True)
+            print("BOOK02_COVER_VISIBLE_OK",book02_cover_repair,flush=True)
+        else:
+            book02_reader_polish=None
+            book02_cover_repair=None
         epub_helpers.declare_epub_mathml_properties(output)
-        expected=sum(1 for row in rows for n in walk_nodes(self.ast_cache[row["id"]]) if n.get("t")=="Math")
+        # Full Book Two reader finishing is additive and stage-scoped.
+        # Source ASTs and the other six volumes are unchanged. The original
+        # Book Two chapters retain their mathematical and code content, while
+        # the EPUB is split into 30–60 KiB XHTML documents, gains the index,
+        # a C++23 exercise workbook, numbered figures and real metadata.
+        # Publish only after the finishing script passes its cross-link audit.
+        book02_publication_finish=None
+        if stage and stage["id"] == BOOK02_STAGE:
+            reader=ROOT/"Tools"/"book02_finish_epub.py"
+            polished=self.out/(label+"-publication-finished.epub")
+            audit=self.out/(label+"-publication-finish-audit.json")
+            command=[sys.executable,str(reader),"--input",str(output),
+                     "--output",str(polished),"--report",str(audit)]
+            completed=subprocess.run(command, cwd=self.out, text=True,
+                                     stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            if completed.returncode != 0:
+                raise RuntimeError("Book Two EPUB publication finishing failed:\n"+
+                                   completed.stdout[-9000:])
+            if not polished.is_file() or not audit.is_file():
+                raise RuntimeError("Book Two EPUB finish returned success without output and audit")
+            book02_publication_finish=json.loads(audit.read_text(encoding="utf-8"))
+            if (book02_publication_finish.get("broken_internal_links") != 0 or
+                book02_publication_finish.get("final_mathml") !=
+                book02_publication_finish.get("original_mathml") or
+                book02_publication_finish.get("chapters") != 16):
+                raise RuntimeError("Book Two source-preservation contract failed")
+            polished.replace(output)
+            print("BOOK02_FULL_READER_EPUB_OK",
+                  book02_publication_finish["xhtml_files"],"XHTML documents;",
+                  book02_publication_finish["new_practice_exercises"],"exercises;",
+                  book02_publication_finish["max_xhtml_kib"],"maximum KiB;",
+                  "author cover preserved",flush=True)
+        expected=expected_math_in_final_ast
+        if math_replacements != expected:
+            raise RuntimeError(f"Incomplete Book02/EPUB MathML conversion: {math_replacements} of {expected}")
         package=epub_helpers.validate_epub_package(output,expected)
         epubcheck="/Users/swayamsingal/.codex/source-cache/allmight-book-production-2026-11-15/epubcheck/epubcheck-5.4.0/epubcheck.jar"
         java=shutil.which("java")
         if not java: raise RuntimeError("Java runtime is unavailable; cannot run pinned EPUBCheck 5.4.0")
         ec=subprocess.run([java,"-jar",epubcheck,str(output)],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        report={"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"unknown_html_like_tokens_escaped":unknown_tags_escaped,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
+        epubcheck_log=self.out/(label+"-epubcheck-full.log")
+        epubcheck_log.write_text(ec.stdout,encoding="utf-8")
+        if ec.returncode:
+            print("BOOK02_EPUBCHECK_REJECTED",ec.returncode,
+                  "full diagnostic:",epubcheck_log,flush=True)
+        report={"book02_cover_sha256":(sha(self.book02_cover_image.read_bytes()) if stage and stage["id"]==BOOK02_STAGE and self.book02_cover_image is not None else None),"generation_id":generation,"artifact":output.name,"path":str(output.resolve()),"sha256":sha(output.read_bytes()),"bytes":output.stat().st_size,"stage_id":stage["id"] if stage else None,"source_rows":len(rows),"chapter_rows":sum(x["kind"]=="chapter" for x in rows),"reference_rows":sum(x["kind"]=="reference" for x in rows),"source_attachments":len(attachments),"source_attachment_sha256":attachments,"expected_math_nodes":expected,"converted_math_nodes":math_replacements,"presentation_clone":presentation_report,"book02_supplement_sources":(self.book02_supplement.used if self.book02_supplement is not None else []),"unknown_html_like_tokens_escaped":unknown_tags_escaped,"svg_id_repairs":svg_id_repairs,"reader_polish":book02_reader_polish,"cover_render_repair":book02_cover_repair,"book02_publication_finish":book02_publication_finish,"package_check":package,"epubcheck":{"version":"5.4.0","exit_code":ec.returncode,"full_log":str(epubcheck_log),"output":ec.stdout[-2500:]},"pandoc_stderr_tail":p.stderr[-1000:]}
         return report
 
 
@@ -601,6 +710,7 @@ def main():
     ap.add_argument("--generation",required=True,help="Generation ID, e.g. .generation-uuihb_gl")
     ap.add_argument("--output-dir",help="Output directory; defaults to Build/<generation>/epubs")
     ap.add_argument("--stage",help="Build only this exact stage ID")
+    ap.add_argument("--book02-cover-image",help="Optional Book Two front-cover JPEG path for the EPUB only; no changes to print interior")
     ap.add_argument("--collection-only",action="store_true",help="Build only the all-stage collection EPUB")
     ap.add_argument("--finalize-crossrefs-only",action="store_true",help="Add verified CFI locators to already-built stage EPUBs without rerunning Pandoc")
     ap.add_argument("--patch-css-only",action="store_true",help="Patch the embedded project stylesheet in the eight existing EPUBs and revalidate without rerunning Pandoc")
@@ -623,6 +733,20 @@ def main():
     all_math=sum(1 for ast in ast_cache.values() for n in walk_nodes(ast) if n.get("t")=="Math")
     if all_math != 39483: raise RuntimeError(f"Expected 39,483 transformed Math nodes, found {all_math}")
     builder=Packager(root,out,manifest,ast_cache,owner,titles,chapter_owner,chapter_title,target_anchor)
+    if args.book02_cover_image:
+        cover=Path(args.book02_cover_image).expanduser().resolve()
+        if not cover.is_file() or cover.suffix.lower() not in (".jpg",".jpeg"):
+            ap.error("--book02-cover-image must reference an existing JPEG; image not found or invalid extension")
+        try:
+            from PIL import Image
+            with Image.open(cover) as img:
+                img.verify()
+            with Image.open(cover) as img:
+                if img.format!="JPEG" or img.width<300 or img.height<450 or img.height<=img.width:
+                    ap.error("Book Two EPUB cover must be a valid portrait JPEG at least 300 x 450 pixels")
+        except (OSError,ValueError) as exc:
+            ap.error("Cannot decode Book Two cover JPEG: "+str(exc))
+        builder.book02_cover_image=cover
     stages=manifest["stages"]
     if args.patch_css_only:
         css=out/"epub.css"

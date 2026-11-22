@@ -1,0 +1,40 @@
+% Sampling with missing support is a mathematical impossibility example.
+\clearpage
+\section*{Research laboratory: a weighted estimator cannot invent missing data}
+\noindent Importance sampling often rewrites an expectation as
+\[
+\mathbb E_p[f(X)]
+=\sum_{x:q(x)>0}q(x)\frac{p(x)}{q(x)}f(x).
+\]
+That equality requires \(p(x)f(x)=0\) wherever \(q(x)=0\);
+for general expectations the proposal must assign positive
+probability to every state having positive target probability.
+Otherwise parts of the target integral are omitted and no
+amount of renormalizing the observed weights can restore them.
+
+For a concrete two-state example, let the target be
+\(p(0)=p(1)=1/2\), and let \(f(0)=0,\ f(1)=1\).
+The true expectation is \(1/2\).
+A proposal \(q(0)=1,\ q(1)=0\) will \emph{never}
+observe state 1. Its sampled weighted contributions are all zero;
+a weighted average built from those samples remains zero
+regardless of the number of repetitions.
+Clipping weights or running more trials under the same proposal
+does not solve the support failure.
+
+When the support condition holds, other risks remain:
+a proposal assigning very small probability to important events
+can produce enormous weights and variance, while reused samples,
+adaptive selection and correlated trajectories complicate the
+interpretation of confidence intervals. Reproducible random seeds
+do not guarantee that observations constitute independent
+statistical units.
+
+\paragraph{Reconstruction exercise.}
+Implement the two-state example with an explicit support check.
+Change the proposal to \(q(1)=0.01\), then compare the sample
+average, importance-weighted estimate and empirical variance over
+many independently seeded experiments. Report how often rare-event
+coverage actually occurs, and separate sampling error from bias.
+Only after those checks should the technique be transported to
+image sampling, geometry reconstruction or research benchmarks.

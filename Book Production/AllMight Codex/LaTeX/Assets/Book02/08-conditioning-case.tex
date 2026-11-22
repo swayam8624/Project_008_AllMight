@@ -1,0 +1,154 @@
+% A carefully factored condition-number example, not a timing claim.
+\clearpage
+\section*{Numerical audit: why a small residual can hide a large error}
+\noindent Consider the nearly dependent matrix
+\[
+A_\delta=\begin{pmatrix}1&1\\1&1+\delta\end{pmatrix},
+\quad
+A_\delta x=b,\quad
+x_*=\begin{pmatrix}2\\-1\end{pmatrix},
+\quad
+b=\begin{pmatrix}1\\1-\delta\end{pmatrix}.
+\]
+This exact problem has a unique answer whenever \(\delta\ne0\).
+Yet uniqueness does not imply numerical stability: as \(\delta\)
+shrinks, the columns become harder to distinguish from observations.
+
+For \(\delta>0\), the trace and determinant of \(A_\delta^TA_\delta\) are
+\[
+\tau=4+2\delta+\delta^2,\qquad
+\det(A_\delta^TA_\delta)=\delta^2.
+\]
+If its eigenvalues are \(\lambda_{\max}\) and \(\lambda_{\min}\),
+their product is \(\delta^2\), and the singular values of \(A_\delta\)
+are the square roots of those eigenvalues. Thus
+\[
+\kappa_2(A_\delta)
+=\sqrt{\frac{\lambda_{\max}}{\lambda_{\min}}}
+=\frac{\lambda_{\max}}{\delta}
+\sim\frac4\delta,\qquad
+\kappa_2(A_\delta^TA_\delta)=\kappa_2(A_\delta)^2.
+\]
+At \(\delta=10^{-3}\), the condition numbers are approximately
+\(4.0020\times10^3\) and \(1.6016\times10^7\), respectively.
+Normal-equation least squares inherits squared conditioning
+\emph{before} accounting for additional floating-point rounding;
+QR and SVD avoid that particular squaring in their solution pathways.
+
+An observation-level illustration exposes the underlying information
+problem, not just the algorithmic one. Hold \(b_1=1\), but perturb
+\(b_2\) upward by \(10^{-4}\). Subtracting the two equations gives
+\(\delta x_2=-\delta+10^{-4}\); for \(\delta=10^{-3}\),
+the recovered coefficients move from \((2,-1)\) to
+\((1.9,-0.9)\). A \(10^{-4}\) change in one observation
+moves each coefficient by \(0.1\).
+The new solution may have almost zero residual for the new data and
+still be far from the true coefficients.
+
+\paragraph{Implementation contract.}
+When a dense least-squares problem is nearly rank deficient, report
+\(\lVert Ax-b\rVert\), relative residual, rank or singular-value threshold,
+the estimated condition number, and coefficient sensitivity.
+Compare pivoted QR/SVD with normal equations using the \emph{same}
+observations and numerical precision. A method can be backward stable
+yet unable to recover information the data never constrained.
+
+\paragraph{Challenge.}
+Sweep \(\delta=10^{-1},10^{-2},\ldots,10^{-8}\).
+Use a library reference implementation rather than promising that a
+handwritten \(2\times2\) inverse is a stable general-purpose solver.
+Plot condition number, observed coefficient error, and residual
+on separate labeled axes. Discuss the scale at which floating-point
+results cease to be trustworthy.
+
+
+\begin{booktwolab}[Matrix conditioning]
+\paragraph{C++23 checkpoint: a matrix problem with a numerical contract.}
+Return to the chapter's conditioning discussion with the native
+\texttt{book02\_workbench matrix} experiment. The exact example is
+\[
+ A=\begin{bmatrix}2&1\\1&3\end{bmatrix},\qquad
+ x_\star=\begin{bmatrix}3/2\\-2\end{bmatrix},\qquad b=Ax_\star.
+\]
+Its answer is known before executing code, so this is a reconstruction
+test rather than a comparison between two implementations that might
+share a bug. The implementation scales the coefficient matrix, selects
+the larger leading pivot and performs two-by-two elimination. It
+rejects a pivot sufficiently small relative to its scaled matrix.
+The rejection is a numerical policy, not an assertion of symbolic rank.
+
+Now replace the second row of \(A\) with the first row multiplied by
+two. The matrix is singular, so a solver must reject it; silently
+returning huge finite components is unacceptable. Next consider
+\[
+ A_\varepsilon=
+ \begin{bmatrix}1&1\\1&1+\varepsilon\end{bmatrix}.
+\]
+Derive its determinant \(\varepsilon\) and explain why the distance from
+singularity is not the same thing as the error of a particular solution.
+For fixed \(b\), the forward error depends on the conditioning of the
+system as well as on roundoff and residual size. Compare the normalized
+residual \(\lVert Ax-b\rVert/(\lVert A\rVert\lVert x\rVert+\lVert b\rVert)\)
+with the forward error \(\lVert x-x_\star\rVert/\lVert x_\star\rVert\).
+Neither quantity should be substituted for the other.
+
+\end{booktwolab}
+
+\paragraph{Independent check.}
+Calculate the inverse of the benign \(2\times2\) matrix by hand, then
+compare its prediction with the C++23 output. Perturb \(b\) and
+\(\varepsilon\) separately to observe two different sensitivities.
+Document the tolerance, the floating-point type, the exact matrix,
+and the parameter range. Before claiming a general solver, implement
+rank-revealing QR and independent higher-precision checks.
+
+
+% Book Two next native C++23 pass: a rank-aware alternative to normal equations.
+\begin{booktwoproof}[Householder QR instead of squaring the condition number]
+For an overdetermined matrix \(A\in\mathbb{R}^{m\times n}\), \(m\ge n\),
+the least-squares task is \(\min_x\|Ax-b\|_2\).
+An orthogonal change of coordinates preserves Euclidean length:
+if a product of Householder reflections yields
+\(AP=Q\begin{bmatrix}R\\0\end{bmatrix}\), where \(P\) permutes
+columns and \(Q^TQ=I\), then
+\[
+ \|Ax-b\|_2^2=
+ \left\|R(P^Tx)-(Q^Tb)_{1:n}\right\|_2^2+
+ \left\|(Q^Tb)_{n+1:m}\right\|_2^2 .
+\]
+The second term is independent of \(x\). Solving the upper
+triangular system determines the first term without forming
+\(A^TA\), whose condition number is ordinarily the square of
+\(\kappa_2(A)\) for full-column-rank \(A\). Each reflection
+\(H=I-2vv^T/(v^Tv)\) annihilates entries below a selected
+diagonal. Column pivoting moves the largest remaining column
+to the front, helping reveal loss of numerical rank.
+
+The native \texttt{advanced::qr\_least\_squares} checks
+input finiteness and uses a scale-relative diagonal threshold.
+It reports a ratio of extreme \emph{QR diagonal magnitudes};
+that ratio is a diagnostic, not a certified singular-value
+condition estimate. At a detected deficient rank it rejects
+the fit instead of inventing a unique coefficient vector.
+\end{booktwoproof}
+
+\begin{booktwolab}[QR sensitivity sweep in C++23]
+The native command \texttt{book02\_workbench qr-sensitivity}
+constructs a four-observation, two-parameter model with
+rows \((1,1)\), \((1,1+\delta)\), \((1,1-\delta)\), and \((2,2)\).
+Its generating parameter is \(x_\star=(2,-1)^T\).
+Only the second observation is perturbed upward by \(10^{-10}\).
+For \(\delta=10^{-1},\ldots,10^{-8}\), it exports
+coefficient error against \(x_\star\), residual RMS, and the
+QR diagonal diagnostic. All quantities come from C++23;
+the optional Python utility only plots the recorded CSV.
+
+Derive the exact unperturbed right-hand side
+\((1,1-\delta,1+\delta,2)^T\). Predict why coefficient
+error can grow as the columns approach dependence, even if
+the residual remains tiny. Inspect the \emph{actual}
+floating-point results rather than requiring an invented
+smooth curve or monotonic progression. The supplied
+implementation is a pedagogical dense pivoted QR,
+not a complete LAPACK-style scaled rank-revealing algorithm.
+\end{booktwolab}

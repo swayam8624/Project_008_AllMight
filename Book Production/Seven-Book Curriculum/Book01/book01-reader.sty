@@ -1,0 +1,307 @@
+% Project AllMight / Book 1: sober academic typesetting layer.
+% Scoped to Book 1. The shared seven-book design file is deliberately untouched.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{book01-reader}[2026/11/19 reader edition]
+\RequirePackage{listings}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{setspace}
+% A deliberately blank recto/verso leaf must carry no running header,
+% footer, or roman numeral. Keep the actual leaf for duplex binding.
+\RequirePackage{emptypage}
+\RequirePackage{makeidx}
+\makeindex
+\RequirePackage{caption}
+\RequirePackage{pdfpages} % Optional author-provided digital cover, full-size PDF page.
+\captionsetup[figure]{font=footnotesize,labelfont=bf,justification=raggedright,singlelinecheck=false,skip=5pt}
+% Text face: conventional Times-family scholarly book typography.
+% The explicit fallbacks permit compilation on smaller TeX installations.
+\IfFontExistsTF{TeX Gyre Termes}
+  {\setmainfont{TeX Gyre Termes}[Ligatures=TeX]}
+  {\setmainfont{TeX Gyre Pagella}[Ligatures=TeX]}
+\IfFontExistsTF{TeX Gyre Termes Math}
+  {\setmathfont{TeX Gyre Termes Math}}
+  {\setmathfont{TeX Gyre Pagella Math}}
+% Box-drawing characters and arrows in real program traces need glyph coverage.
+% Latin Modern Mono is too limited for the existing source diagrams.
+% Never use Scale=MatchLowercase for code: Menlo's x-height matching
+% reduced 8.5pt intended code to roughly 6.97pt in the earlier Mac proof.
+% Specified 9pt listings must produce >=9pt glyph runs regardless of host.
+\IfFontExistsTF{DejaVu Sans Mono}
+  {\setmonofont{DejaVu Sans Mono}[Scale=1,Ligatures=NoCommon]}
+  {\IfFontExistsTF{Menlo}
+    {\setmonofont{Menlo}[Scale=1,Ligatures=NoCommon]}
+    {\setmonofont{Latin Modern Mono}[Scale=1,Ligatures=NoCommon]}}
+\RequirePackage{newunicodechar}
+% Arrows are actual semantic content in the CPU/GPU flow diagrams and prose.
+% TeX Gyre text faces do not contain every arrow glyph. Use a mathematically
+% meaningful, font-independent fallback rather than silently losing arrows.
+% Only the generated Book 1 publication style is affected; source text and
+% verbatim/code listings remain byte-for-byte unchanged.
+\newunicodechar{→}{\ensuremath{\rightarrow}\allowbreak}
+\newunicodechar{←}{\ensuremath{\leftarrow}}
+\newunicodechar{↑}{\ensuremath{\uparrow}}
+\newunicodechar{↓}{\ensuremath{\downarrow}}
+\newunicodechar{↔}{\ensuremath{\leftrightarrow}}
+\newunicodechar{↕}{\ensuremath{\updownarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+
+% An academic print page: dense enough for long mathematical and code examples,
+% with room for a binding and marginal annotations.
+\geometry{
+  paperwidth=7in,paperheight=10in,
+  inner=0.94in,outer=0.67in,bindingoffset=0.02in,
+  top=0.80in,bottom=0.82in,
+  includeheadfoot,headheight=13pt,headsep=0.20in,footskip=0.28in
+}
+% The shared print profile initializes fancyhdr at a different paper size.
+% After our 7x10 geometry override, its old 449.5pt header width persisted
+% against a 388.1pt text measure and clipped both outside running heads.
+% Reset it AFTER geometry and BEFORE installing this volume's headers.
+\setlength{\headwidth}{\textwidth}
+% No artificial page ceiling for the complete digital reader: improve the
+% actual text size and line spacing. Preserve the compact paperback profile,
+% whose trim, binding, and page-count constraints are independent.
+\AtBeginDocument{%
+  \ifdefstring{\AllMightProfile}{ebook}{%
+    \fontsize{10.6}{13.9}\selectfont
+  }{%
+    \fontsize{10}{12.8}\selectfont
+  }%
+}
+\AtBeginDocument{\setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
+  \setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
+  \setlength{\abovedisplayshortskip}{3pt plus 1pt}
+  \setlength{\belowdisplayshortskip}{4pt plus 1pt}}
+\setlength{\parindent}{1.05em}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{5em}
+\linespread{1.0}
+% Ink-first palette. All semantics survive a black-and-white print.
+\definecolor{BOneInk}{HTML}{222831}
+\definecolor{BOneSlate}{HTML}{405A6E}
+\definecolor{BOneMuted}{HTML}{616970}
+\definecolor{BOneRule}{HTML}{C3CAD0}
+% Muted, print-safe colour roles with clear differences on screen.
+% All panels retain visible rules, labels or a left keyline in grayscale.
+\definecolor{BOnePaper}{HTML}{F0F5FA}
+\definecolor{BOneNote}{HTML}{EDF5FB}
+\definecolor{BOnePractice}{HTML}{F1F7EF}
+\definecolor{BOneQuoteWash}{HTML}{F6F8FA}
+\definecolor{BOneCodeAccent}{HTML}{35688E}
+\definecolor{BOneNoteAccent}{HTML}{3C7797}
+\definecolor{BOnePracticeAccent}{HTML}{51765B}
+\definecolor{BOneKeyword}{HTML}{275B87}
+\definecolor{BOneString}{HTML}{8E4F2A}
+\definecolor{BOneComment}{HTML}{4E765F}
+\definecolor{BOneNumber}{HTML}{82599B}
+\colorlet{AMAccent}{BOneSlate}
+\colorlet{AMInk}{BOneInk}
+\colorlet{AMMuted}{BOneMuted}
+\colorlet{AMRule}{BOneRule}
+\definecolor{AMStageOne}{HTML}{405A6E}
+\definecolor{AMStageOneWash}{HTML}{F2F5F7}
+\definecolor{AMStageTwo}{HTML}{786353}
+\definecolor{AMStageTwoWash}{HTML}{F7F5F3}
+\definecolor{AMStageThree}{HTML}{4D6B5A}
+\definecolor{AMStageThreeWash}{HTML}{F3F6F4}
+\definecolor{AMStageFour}{HTML}{645D76}
+\definecolor{AMStageFourWash}{HTML}{F6F5F8}
+\definecolor{AMStageFive}{HTML}{76564F}
+\definecolor{AMStageFiveWash}{HTML}{F7F4F3}
+\color{BOneInk}
+\hypersetup{colorlinks=true,linkcolor=BOneSlate,urlcolor=BOneSlate,
+  citecolor=BOneSlate,pdfborder={0 0 0},
+  bookmarksopen=false,bookmarksnumbered=true}
+% Replace the large display-style headings from the shared production theme.
+\titleformat{\chapter}[display]
+  {\normalfont\color{BOneInk}}
+  {\normalfont\fontsize{10}{12}\selectfont\scshape\color{BOneMuted}Chapter \thechapter}
+  {0.45ex}
+  {\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy\fontsize{18.5}{22}\selectfont\bfseries}
+  [\vspace{0.35ex}{\color{BOneRule}\titlerule[0.75pt]}]
+\titlespacing*{\chapter}{0pt}{-0.8ex}{2.0ex}
+\titleformat{\section}
+  {\normalfont\fontsize{12.4}{15}\selectfont\bfseries\color{BOneInk}}
+  {\thesection}{0.65em}{}
+\titlespacing*{\section}{0pt}{1.65ex plus 0.4ex minus 0.2ex}{0.6ex}
+\titleformat{\subsection}
+  {\normalfont\fontsize{10.8}{13.1}\selectfont\bfseries\color{BOneInk}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{1.25ex plus 0.25ex minus 0.2ex}{0.4ex}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{BOneSlate}}
+  {\thesubsubsection}{0.55em}{}
+\titlespacing*{\subsubsection}{0pt}{1.2ex}{0.35ex}
+% Generated concept headings are compact, unnumbered run-in paragraphs.
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries\color{BOneInk}}{}{0pt}{}
+\titlespacing*{\paragraph}{0pt}{0.9ex plus 0.2ex minus 0.1ex}{0.7em}
+% Widen the section-number box in the table of contents. The book class
+% default 2.3em is too narrow for 16.10--16.12 and 17.10, producing
+% visually concatenated entries such as "16.10From".
+\makeatletter
+\renewcommand*\l@section{\@dottedtocline{1}{1.5em}{3.9em}}
+\makeatother
+
+% Reader-only running furniture: clear all inherited ebook/print slots.
+% Without \fancyhf{}, the global style's right-side page number survived on
+% even pages, doubling the footer; full-width marks also collided in the head.
+\newcommand{\BookShortChapter}{%
+  \ifcase\value{chapter}Front matter%
+  \or Binary representation\or Memory and lifetimes%
+  \or Value semantics\or Testing and failures%
+  \or Generic programming\or Handles and registries%
+  \or CPU systems\or Parallel algorithms%
+  \or GPU architecture\or Builds and reproducibility%
+  \or Borrowing and buffers\or Asynchronous execution%
+  \or Vulkan resources\or Vulkan synchronization%
+  \or Metal execution\or GPU performance%
+  \or Integrated mastery laboratory%
+  \else Reference appendix\fi}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter\quad\BookShortChapter}{}}
+\fancyhf{}
+\fancyhead[LE]{\footnotesize\color{BOneMuted}FROM BITS TO RESEARCH \textbullet\ BOOK ONE}
+\fancyhead[RO]{\footnotesize\color{BOneMuted}\nouppercase{\leftmark}}
+\fancyfoot[LE,RO]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\footnotesize\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
+% Book One belongs to a seven-book intellectual journey. Printed Volume I and
+% Volume II split this book for binding; they are not Books One and Two.
+\newcommand{\BookSeriesTitle}{From Bits to Research}
+\newcommand{\BookSeriesPosition}{Book One of Seven}
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0.19\textheight}
+    {\normalfont\small\scshape\color{BOneSlate}\BookSeriesTitle\par}
+    \vspace{0.45\baselineskip}
+    {\normalfont\small\color{BOneMuted}\BookSeriesPosition\par}
+    \vspace{1.45\baselineskip}
+    {\normalfont\fontsize{25}{29}\selectfont\bfseries\color{BOneInk}\@title\par}
+    \vspace{1.0\baselineskip}
+    {\color{BOneRule}\rule{0.64\textwidth}{0.6pt}\par}
+    \vspace{1.8\baselineskip}
+    {\normalfont\large\@author\par}
+    \vfill
+    {\normalfont\small\color{BOneMuted}Computing \textbullet\ Mathematics \textbullet\
+      Graphics \textbullet\ Simulation \textbullet\ Research\par}
+  \end{titlepage}}
+\makeatother
+
+% The eBook/full digital PDF can use the exact author-supplied cover artwork.
+% An absent asset means the existing typographic title page is retained.
+% A paperback's front/spine/back cover is uploaded separately on KDP.
+\newcommand{\BookTitleCover}{%
+  \IfFileExists{book01-cover.pdf}{%
+    \includepdf[pages=1,fitpaper=true,pagecommand={\thispagestyle{empty}}]{book01-cover.pdf}%
+  }{\maketitle}%
+}
+
+% A reader-facing copyright and reference page; build identities live only in
+% generated provenance manifests, never in the book's visible front matter.
+\newcommand{\BookImprintPage}[2]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \vspace*{0.52\textheight}
+  {\small\color{BOneInk}
+    {\scshape \BookSeriesTitle\space \textbullet\space \BookSeriesPosition}\par
+    \vspace{0.65\baselineskip}
+    \textbf{#1}\par
+    #2\par
+    \vspace{0.95\baselineskip}
+    Copyright \textcopyright\ 2026 Swayam Singal.\par
+    All rights reserved. Third-party works retain their own copyrights and licences.\par
+    \vspace{0.95\baselineskip}
+    References, companion programs, and corrections:\par
+    \url{https://github.com/swayam8624/Project_008_AllMight}\par
+    Consult the references and companion-code guide at the end of this book.\par
+  }\clearpage
+}
+
+% Source-preserving, language-aware code panels. Listing text stays verbatim.
+% The Pandoc Lua filter supplies a whitelisted language, not executable TeX
+% from arbitrary Markdown attributes. Unknown languages remain plain listings.
+% Keep numeric glyph sizes >=9pt, and make panels breakable across pages.
+\lstdefinelanguage{BOneShell}{
+  morekeywords={cd,git,cmake,ninja,python,python3,pip,export,echo,make,
+    mkdir,rm,cp,mv,ls,cat,find,grep,clang++,g++,c++,ctest,brew,env},
+  sensitive=true,morecomment=[l]{\#},morestring=[b]",
+  morestring=[b]'
+}
+\lstdefinelanguage{BOneCMake}{
+  morekeywords={cmake_minimum_required,project,add_executable,add_library,
+    target_link_libraries,target_include_directories,set,option,if,endif,
+    foreach,endforeach,find_package,enable_testing,add_test},
+  sensitive=false,morecomment=[l]{\#},morestring=[b]"
+}
+\lstdefinelanguage{BOneJSON}{
+  morestring=[b]",morecomment=[l]{//},
+  morekeywords={true,false,null},sensitive=true
+}
+\lstdefinelanguage{BOneShader}{
+  morekeywords={kernel,vertex,fragment,device,constant,thread,threadgroup,
+    float,float2,float3,float4,int,uint,uint2,uint3,uint4,half,half2,
+    half3,half4,struct,return,if,else,for,while,texture2d,sampler,
+    buffer,position,namespace,using,void,layout,uniform,shared,group},
+  sensitive=true,morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},morestring=[b]"
+}
+\newtcblisting{BookCode}[1][]{
+  enhanced,breakable,listing only,listing engine=listings,
+  colback=BOnePaper,colframe=BOneRule,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2.2pt}{0pt}{BOneCodeAccent},
+  left=8pt,right=7pt,top=7pt,bottom=7pt,
+  before skip=0.70\baselineskip,after skip=0.75\baselineskip,
+  listing options={
+    language={},basicstyle=\ttfamily\fontsize{9}{11}\selectfont,
+    columns=fullflexible,keepspaces=true,showstringspaces=false,
+    breaklines=true,breakatwhitespace=false,tabsize=4,
+    numbers=none,
+    keywordstyle=\bfseries\color{BOneKeyword},
+    commentstyle=\itshape\color{BOneComment},
+    stringstyle=\color{BOneString},
+    #1
+  }
+}
+% A quotation is not automatically a technical warning or definition.
+% Distinct visual panels preserve that difference instead of mislabelling it.
+\newtcolorbox{BookQuote}{
+  enhanced,breakable,colback=BOneQuoteWash,colframe=BOneRule,
+  boxrule=0.4pt,arc=1.5pt,
+  borderline west={1.4pt}{0pt}{BOneMuted},
+  left=9pt,right=9pt,top=5pt,bottom=5pt,
+  before skip=0.65\baselineskip,after skip=0.65\baselineskip
+}
+\newtcolorbox{BookLearningNote}[1][]{
+  enhanced,breakable,colback=BOneNote,colframe=BOneRule,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2pt}{0pt}{BOneNoteAccent},
+  left=9pt,right=8pt,top=7pt,bottom=7pt,
+  fonttitle=\small\bfseries,title={#1},
+  colbacktitle=BOneNote,coltitle=BOneInk,
+  before skip=0.75\baselineskip,after skip=0.75\baselineskip
+}
+\newtcolorbox{BookPractice}[1][]{
+  enhanced,breakable,colback=BOnePractice,colframe=BOneRule,
+  boxrule=0.45pt,arc=1.5pt,
+  borderline west={2pt}{0pt}{BOnePracticeAccent},
+  left=9pt,right=8pt,top=7pt,bottom=7pt,
+  fonttitle=\small\bfseries,title={#1},
+  colbacktitle=BOnePractice,coltitle=BOneInk,
+  before skip=0.75\baselineskip,after skip=0.75\baselineskip
+}
+% Optional author-owned study material: called at most once per volume.
+\newcommand{\BookStudyMethod}{%
+  \chapter*{Using This Book}
+  \addcontentsline{toc}{chapter}{Using This Book}
+  The purpose of this volume is to connect explanations to programs and
+  reproducible observations. Study a section's argument before consulting
+  its code, reconstruct the implementation, then test the assumptions on
+  which the argument depends. Cases, measurements, and experiments are
+  evidence only for the behavior they actually exercise.
+}

@@ -1,0 +1,94 @@
+% A conservative Fourier-mode statement, with grid assumptions explicit.
+\clearpage
+\section*{Stability laboratory: a smooth picture is not a proof}
+\noindent The continuous heat equation on a unit square is
+\(\partial_tu=\kappa(\partial_{xx}u+\partial_{yy}u)\).
+Its analytical mode
+\(u(x,y,t)=e^{-2\kappa\pi^2 t}\sin(\pi x)\sin(\pi y)\)
+is smooth and decays. The corresponding finite-difference solver
+does not automatically inherit those properties for every time step.
+
+On a uniform grid with spacing \(h\) in both directions, the
+forward-time centered-space discretization is
+\[
+u_{i,j}^{n+1}=u_{i,j}^n+r
+(u_{i+1,j}^n+u_{i-1,j}^n+u_{i,j+1}^n+u_{i,j-1}^n-4u_{i,j}^n),
+\quad
+r=\frac{\kappa\Delta t}{h^2}.
+\]
+The coefficient \(r\) is dimensionless: with \(\kappa\)
+in length-squared per second, \(h^2\) is length-squared and
+\(\Delta t\) is seconds. Keeping track of these units catches
+many subtle mistakes before numerical analysis begins.
+
+For Fourier modes of the periodic or infinite-grid operator,
+the amplification factor is
+\[
+g(k_x,k_y)=1-4r\left(
+\sin^2\frac{k_xh}{2}+\sin^2\frac{k_yh}{2}
+\right).
+\]
+The most demanding mode yields \(g_{\min}=1-8r\).
+Requiring \(\lvert g\rvert\le1\) for every Fourier mode
+gives \(0\le r\le1/4\), or
+\[
+\Delta t\le\frac{h^2}{4\kappa}.
+\]
+This is a classical sufficient limit for the two-dimensional
+forward-Euler, centered-difference heat method; boundary details
+and the actual finite-grid spectrum must be checked before
+transferring a statement about a limiting grid verbatim.
+
+At \(h=1/4\) and \(\kappa=1\), the bound is
+\(\Delta t\le0.015625\). Refining \(h\) by a factor of two
+requires a fourfold smaller step to preserve the same \(r\).
+A more detailed spatial grid can therefore make an explicit
+solver much more expensive even when it has fewer visual artifacts.
+
+\paragraph{Reconstruction challenge.}
+Implement both forward Euler and backward Euler using the same
+discrete Laplacian and boundary constraints.
+Record mode amplification, reference solution errors, total energy,
+and maximum-principle violations separately.
+Show solutions for stable and unstable choices as animations, but
+never use a plausible-looking low-frequency image as a stability test:
+an unobserved high-frequency mode can still grow.
+
+
+\begin{booktwolab}[Stable heat equation]
+\paragraph{C++23 checkpoint: do not let a heat plot hide instability.}
+The native command \texttt{book02\_workbench heat} exports one row for
+each position and time step. The optional
+\texttt{tools/labs/book02\_cpp23/plot.py} script only draws those
+exported rows; it does not calculate a heat update. With uniform grid
+spacing \(\Delta x\), the explicitly stepped one-dimensional heat
+equation has the form
+\[
+u_i^{n+1}=(1-2r)u_i^n+r u_{i-1}^n+r u_{i+1}^n,\qquad
+r=\frac{\alpha\,\Delta t}{(\Delta x)^2}.
+\]
+When \(0\leq r\leq\tfrac12\), each interior update is a convex
+combination of its three neighbors. Thus nonnegative input values
+stay nonnegative and, with fixed zero endpoints, the discrete maximum
+does not grow. The restriction has a physical as well as a computational
+interpretation: refining the grid by a factor of two requires reducing
+the explicit time step by roughly a factor of four at fixed diffusivity.
+
+The executable rejects \(r>\tfrac12\) before calculating a purported
+solution, and keeps its Dirichlet endpoints at zero. To test the
+reasoning, start from a symmetric single-cell pulse and derive the
+values after one step with \(r=\tfrac14\). They are \(0,\tfrac14,
+\tfrac12,\tfrac14,0\). Check symmetry, positivity, and boundary
+values independently of the plotting code. Then request
+\(r=0.51\): rejection, rather than a pretty but physically misleading
+plot, is the expected result.
+
+\end{booktwolab}
+
+\begin{booktwopitfall}[Scope of the discretization]
+This is a one-dimensional explicit stencil, not a finite-element
+heat-method geodesic solver and not an implicit unconditionally stable
+method. The later geometric operators in this book require their own
+mass matrices, boundary treatment, linear solves, and convergence study.
+
+\end{booktwopitfall}

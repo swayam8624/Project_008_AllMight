@@ -1,0 +1,438 @@
+#!/usr/bin/env python3
+"""Offline regression tests for source-preserving Book 1 production guards."""
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+import book01_render_support as book
+
+
+TICK = chr(96) * 3
+
+
+class Book01ProductionTests(unittest.TestCase):
+    def test_mermaid_is_never_passed_as_raw_code(self):
+        source = (
+            "## CPU to GPU transfer\n\n"
+            f"{TICK}mermaid\nflowchart LR\n  A[CPU] --> B[GPU]\n{TICK}\n\n"
+            "## Synchronization\n\n"
+            f"{TICK}mermaid\nsequenceDiagram\nA->>B: Work\n{TICK}\n"
+        )
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            part = root / "book01-expanded-p01"
+            transformed, entries = book.plan_figures(source, 1, 1, part, root)
+            self.assertEqual(len(entries), 2)
+            self.assertNotIn(TICK + "mermaid", transformed)
+            self.assertIn("ALLMIGHTFIGURECH01INDEX001", transformed)
+            tex = book.replace_figure_tokens(transformed, entries)
+            self.assertEqual(tex.count("\\includegraphics"), 2)
+            self.assertNotIn("ALLMIGHTFIGURECH", tex)
+            self.assertIn("CPU to GPU transfer", tex)
+            for entry in entries:
+                self.assertTrue((root / entry["source"]).exists())
+
+    def test_missing_or_duplicate_figure_fails(self):
+        # Even if optional figure metadata is absent, an invalid marker must
+        # be reported as a ValueError before layout information is consulted.
+        token = "ALLMIGHTFIGURECH01INDEX001"
+        marker_only = {"token": token}
+        with self.assertRaisesRegex(ValueError, "Missing/duplicate diagram marker"):
+            book.replace_figure_tokens("There was no image here", [marker_only])
+        with self.assertRaisesRegex(ValueError, "Missing/duplicate diagram marker"):
+            book.replace_figure_tokens(token + "\n" + token, [marker_only])
+
+        with self.assertRaisesRegex(ValueError, "Incomplete diagram metadata"):
+            book.replace_figure_tokens(token, [marker_only])
+
+        # A valid figure entry still renders with its expected caption and
+        # numbered label: protection must not disable successful conversion.
+        complete = {
+            "chapter": 1, "index": 1, "part": 1,
+            "image": "asset.png", "token": token,
+            "caption": "Figure 1.1: Dependency",
+        }
+        rendered = book.replace_figure_tokens(token, [complete])
+        self.assertIn(r"\captionof{figure}{Dependency}", rendered)
+        self.assertIn(r"\label{fig:book01:1:1}", rendered)
+        self.assertNotIn(token, rendered)
+
+    def test_boxed_math_source_and_render_are_checked(self):
+        src = (
+            "It says:\n\n$$\n\\boxed{\n"
+            "\\text{run this kernel over a logical N-dimensional grid}.\n"
+            "}\n$$\n"
+        )
+        stat = book.math_preflight(src, "Ch09")
+        self.assertEqual(stat["boxed_math"], 1)
+        book.check_math_rendered(stat,
+                                 "\\[\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\\]", 9)
+        with self.assertRaises(ValueError):
+            book.check_math_rendered(stat, "\\[x+y\\]", 9)
+
+    def test_math_text_underscore_escape_preserves_subscripts(self):
+        source = (
+            chr(36) * 2 + "\n"
+            + r"\texttt{simd_sum}" + "\n"
+            + chr(36) * 2 + "\n\n"
+            + chr(36) * 2 + "\n"
+            + r"\texttt{simd_prefix_exclusive_sum}" + "\n"
+            + chr(36) * 2 + "\n\n"
+            + chr(36) * 2 + "\n"
+            + r"x_{i} + \text{plain_label} + \texttt{already\_escaped}" + "\n"
+            + chr(36) * 2 + "\n"
+        )
+        stats = book.math_preflight(source, "Chapter 9")
+        protected, formulas = book.plan_math(source, 9)
+        tex = book.replace_math_tokens(protected, formulas)
+        self.assertIn(r"\texttt{simd\_sum}", tex)
+        self.assertIn(r"\texttt{simd\_prefix\_exclusive\_sum}", tex)
+        self.assertIn(r"x_{i}", tex)
+        self.assertIn(r"\text{plain\_label}", tex)
+        self.assertIn(r"\texttt{already\_escaped}", tex)
+        self.assertNotIn(r"\texttt{simd_sum}", tex)
+        self.assertNotIn(r"\\_", tex)
+        book.check_math_rendered(stats, tex, 9)
+
+    def test_math_protection_preserves_boxed_cuda_gpu_and_cpp_expressions(self):
+        math_delim = chr(36) * 2
+        source = (
+            "A scheduling rule.\n\n"
+            + math_delim + "\n"
+            + "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
+            + math_delim + "\n\n"
+            + f"{TICK}cpp\n// literal display delimiter {math_delim} "
+              f"and \\boxed{{x}} in code\n{TICK}\n\n"
+            + math_delim + "\n\\texttt{simd_sum} = 256\n"
+            + math_delim + "\n"
+        )
+        stats = book.math_preflight(source, "Chapter 9")
+        prepared, protected = book.plan_math(source, 9)
+        self.assertEqual(stats["display_math"], 2)
+        self.assertEqual(len(protected), 2)
+        self.assertEqual(stats["boxed_math"], 1)
+        self.assertIn("ALLMIGHTMATHCH09INDEX0001", prepared)
+        self.assertIn(f"{TICK}cpp\n// literal display delimiter", prepared)
+        rendered = book.replace_math_tokens(prepared, protected)
+        self.assertIn(
+            "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}",
+            rendered,
+        )
+        self.assertIn(r"\texttt{simd\_sum} = 256", rendered)
+        book.check_math_rendered(stats, rendered, 9)
+        with self.assertRaises(ValueError):
+            book.replace_math_tokens("missing marker", protected)
+
+    def test_percent_in_math_is_not_latex_comment(self):
+        source = (
+            chr(36) * 2 + "\n"
+            + "\\boxed{\\text{parallelizing 99% does not make "
+              "the remaining serial 1% disappear}.}\n"
+            + chr(36) * 2 + "\n"
+            + chr(36) * 2 + "\n"
+            + "\\text{do identical work 5% faster}.\n"
+            + chr(36) * 2 + "\n"
+        )
+        stats = book.math_preflight(source, "Ch09 and Ch12")
+        protected, entries = book.plan_math(source, 9)
+        converted = book.replace_math_tokens(protected, entries)
+        self.assertIn("99\\%", converted)
+        self.assertIn("1\\%", converted)
+        self.assertIn("5\\%", converted)
+        self.assertNotIn("99\\\\%", converted)
+        book.check_math_rendered(stats, converted, 9)
+        self.assertEqual(
+            book.sanitize_source_math_for_tex(r"99\% and 5%"),
+            r"99\% and 5\%",
+        )
+
+    def test_unsupported_code_fence_metadata_is_normalized_for_pandoc(self):
+        source = (
+            "Serial:\n\n"
+            + f'{TICK}cpp id="x1rcxl"\n'
+              "for each item:\n    if useful:\n        output.push_back(item);\n"
+            + f"{TICK}\n\n"
+            + f'{TICK}text id="0aznm5"\n'
+              "predicate/count\n    ↓\nparallel scan\n"
+            + f"{TICK}\n"
+        )
+        result, count = book.normalize_code_fence_metadata(source)
+        self.assertEqual(count, 2)
+        self.assertIn(f"{TICK}cpp\nfor each item:", result)
+        self.assertIn(f"{TICK}text\npredicate/count", result)
+        self.assertIn("output.push_back(item)", result)
+        self.assertNotIn('id="', result)
+        import shutil
+        import subprocess
+        if shutil.which("pandoc"):
+            pandoc = subprocess.run(
+                ["pandoc", "-f", "markdown", "-t", "latex", "--no-highlight"],
+                input=result, capture_output=True, text=True, check=True,
+            )
+            self.assertEqual(pandoc.stdout.count(r"\begin{verbatim}"), 2)
+            self.assertIn("output.push_back(item)", pandoc.stdout)
+
+    def test_empty_display_and_empty_box_are_rejected(self):
+        for source in ("$$\n\n$$", "$$\n\\boxed{\n}\n$$"):
+            with self.assertRaises(ValueError):
+                book.math_preflight(source, "broken")
+
+    def test_pandoc_math_marker_roundtrip_when_available(self):
+        import shutil
+        import subprocess
+        if not shutil.which("pandoc"):
+            self.skipTest("Pandoc is optional for this unit test")
+        math_delim = chr(36) * 2
+        sample = (
+            "GPU compute uses a logical grid.\n\n"
+            + math_delim + "\n"
+            + "\\boxed{\\text{run this kernel over a logical N-dimensional grid}.}\n"
+            + math_delim + "\n\n"
+            + math_delim + "\n\\texttt{simd_sum} = 256\n"
+            + math_delim + "\n"
+        )
+        stats = book.math_preflight(sample, "Chapter 9")
+        markdown, formulas = book.plan_math(sample, 9)
+        with TemporaryDirectory() as temp:
+            work = Path(temp)
+            source = work / "input.md"
+            source.write_text(markdown, encoding="utf-8")
+            result = subprocess.run(
+                ["pandoc", "-f", "markdown+tex_math_single_backslash+tex_math_double_backslash",
+                 "-t", "latex", "--wrap=none", str(source)],
+                text=True, capture_output=True, check=True,
+            )
+            tex = book.replace_math_tokens(result.stdout, formulas)
+            book.check_math_rendered(stats, tex, 9)
+            self.assertIn("run this kernel over a logical N-dimensional grid", tex)
+            self.assertEqual(len(formulas), 2)
+
+    def test_academic_spacing_preserves_fenced_code_and_math(self):
+        prose = (
+            "### GENERAL COMPUTE & PARALLEL ALGORITHMS\n\n"
+            "$\n\\boxed{\\text{run this kernel}}\n$\n\n"
+            "---\n\n**Workgroup size is an algorithmic choice**\n\n"
+            "A workgroup is not a fixed performance recipe.\n\n"
+            + f"{TICK}text\n---\nliteral code line\n{TICK}\n\n"
+            + "---\n\nThe next section continues.\n"
+        )
+        result, report = book.prepare_reading_structure(prose)
+        self.assertIn("#### Workgroup size is an algorithmic choice", result)
+        self.assertIn("\\boxed{\\text{run this kernel}}", result)
+        self.assertIn(f"{TICK}text\n---\nliteral code line\n{TICK}", result)
+        self.assertNotIn("GENERAL COMPUTE & PARALLEL ALGORITHMS", result)
+        self.assertGreaterEqual(report["promoted_concept_headings"], 1)
+
+    def test_editorial_shell_addition_cannot_hide_lost_source_code(self):
+        original = (
+            "## Example\n\n"
+            + f"{TICK}cpp\nint main() {{ return 0; }}\n{TICK}\n"
+        )
+        derived = (
+            f"{TICK}sh\nc++ -std=c++23 sample.cpp\n{TICK}\n\n"
+            + original
+        )
+        book.verify_fenced_blocks_unchanged(
+            original, derived, 4, "compiler promotion",
+            allowed_new_shell_listings=1,
+        )
+        with self.assertRaisesRegex(ValueError, "fenced-block count changed"):
+            book.verify_fenced_blocks_unchanged(
+                original, derived, 4, "unapproved addition",
+            )
+        with self.assertRaisesRegex(ValueError, "altered, reordered or replaced"):
+            book.verify_fenced_blocks_unchanged(
+                original, derived.replace("int main()", "int false()"),
+                4, "deleted program", allowed_new_shell_listings=1,
+            )
+
+    def test_nested_template_inline_code_breaks_without_changing_verbatim(self):
+        inline = (
+            r"\texttt{dynamic\_cast\textless{}CountingBackend*"
+            r"\textgreater{}(backend.get())}"
+        )
+        nested = (
+            r"\texttt{std::vector\textless{}Slot\textgreater{}::"
+            r"emplace\_back}"
+        )
+        code = (r"\begin{verbatim}" + "\n"
+                + inline + "\n" + r"\end{verbatim}")
+        converted = book.reflow_inline_monospace(
+            inline + "\n" + nested + "\n" + code
+        )
+        self.assertIn(r"\textless{}\allowbreak{}", converted)
+        self.assertIn(r"::\allowbreak{}emplace", converted)
+        self.assertIn(r"Counting\allowbreak{}Backend", converted)
+        self.assertIn(code, converted)
+        self.assertEqual(converted.count(r"\begin{verbatim}"), 1)
+
+    def test_conjunctive_math_wraps_without_dropping_conditions(self):
+        expression = (
+            "\\[\n"
+            r"\operatorname{acceptPath}(R,p)"
+            "\n=\n"
+            r"\operatorname{relativeNoAscent}(p)"
+            "\n"
+            r"\land\operatorname{noObservedSymlink}(R/p)"
+            "\n"
+            r"\land\operatorname{canonicalWithin}(R,R/p)"
+            "\n"
+            r"\land\operatorname{regularFile}(R/p)."
+            "\n\\]"
+        )
+        rendered = book.reflow_long_textual_displays(expression)
+        self.assertIn(r"\begin{aligned}", rendered)
+        self.assertIn(r"\operatorname{acceptPath}(R,p)", rendered)
+        self.assertIn(r"\operatorname{regularFile}(R/p)", rendered)
+        self.assertEqual(rendered.count(r"\land"), 3)
+        self.assertEqual(rendered.count(r"\end{aligned}"), 1)
+        self.assertEqual(
+            book.reflow_long_textual_displays(r"\[a \land b\]"),
+            r"\[a \land b\]"
+        )
+
+    def test_long_textual_math_is_reflowed_without_changing_equations(self):
+        long_claim = (
+            r"\[\boxed{\text{Can another machine, OS, compiler and CI worker "
+            r"actually reconstruct the same engine correctly?}}\]"
+        )
+        pipeline = (
+            r"\[\text{projection}\rightarrow\text{tile counts}"
+            r"\rightarrow\text{scan}\rightarrow\text{key generation}"
+            r"\rightarrow\text{radix histogram}\rightarrow\text{prefix}"
+            r"\rightarrow\text{scatter}\rightarrow\text{composite}.\]"
+        )
+        actual_math = r"\[\boxed{a^2+b^2=c^2}\]"
+        result = book.reflow_long_textual_displays(
+            long_claim + "\n" + pipeline + "\n" + actual_math
+        )
+        self.assertIn(r"\fbox{\parbox{0.82\linewidth}", result)
+        self.assertIn(
+            "Can another machine, OS, compiler and CI worker "
+            "actually reconstruct the same engine correctly?", result
+        )
+        self.assertIn(r"\begin{aligned}", result)
+        self.assertIn(r"\text{projection}", result)
+        self.assertIn(r"\text{composite}.", result)
+        self.assertIn(actual_math, result)
+        self.assertNotIn(r"\boxed{\text{Can another machine", result)
+
+    def test_vulkan_metal_long_display_reflow_does_not_change_operands(self):
+        formula = (
+            "\\[\n"
+            "\\boxed{\n"
+            "\\text{predictability}\n+\n"
+            "\\text{parallel command construction}\n+\n"
+            "\\text{explicit synchronization}\n+\n"
+            "\\text{lower driver overhead}\n"
+            "}\n\\]"
+        )
+        budget = (
+            "\\[\nM_{\\text{required}} =\nM_{\\text{bindings}}\n+\n"
+            "M_{\\text{alignment/padding}}\n+\n"
+            "M_{\\text{temporary scratch}}\n+\n"
+            "M_{\\text{concurrently live outputs}}\n+\n"
+            "M_{\\text{deferred-retirement}}.\n\\]"
+        )
+        sampler = (
+            "\\[\nminification,\nmagnification,\nmip filtering,\n"
+            "addressing,\ncomparison sampling,\nanisotropy,\nLOD range.\n\\]"
+        )
+        resolved = book.reflow_long_textual_displays(
+            formula + "\n" + budget + "\n" + sampler
+        )
+        self.assertIn("parallel command construction", resolved)
+        self.assertIn(r"\fbox{\parbox{0.82\linewidth}", resolved)
+        self.assertIn(r"M_{\text{concurrently live outputs}}", resolved)
+        self.assertIn("comparison sampling", resolved)
+        self.assertGreaterEqual(resolved.count(r"\begin{aligned}"), 2)
+        self.assertIn(r"\end{aligned}", resolved)
+        self.assertEqual(resolved.count(r"\["), 2)
+        # Math that cannot be confidently reflowed must remain exactly as is.
+        real_equation = r"\[\boxed{\frac{a+b}{c}}\]"
+        self.assertEqual(book.reflow_long_textual_displays(real_equation),
+                         real_equation)
+
+    def test_short_boxed_math_remains_exact(self):
+        examples = (
+            r"\[\boxed{x}\]" + "\n"
+            r"\[\boxed{\text{valid}} \]" + "\n"
+            r"\[\text{A}\rightarrow\text{B}\]" + "\n"
+        )
+        self.assertEqual(book.reflow_long_textual_displays(examples), examples)
+
+    def test_tilde_fences_are_protected_from_index_and_prose_changes(self):
+        import book01_index as indexer
+        import book01_publication_edit as editor
+        source = (
+            "## Worked example\n\n"
+            "~~~text\nsymptom:\n    SIMD utilization low\n\n"
+            "evidence:\n    LLC misses high\n~~~\n\n"
+            "A SIMD kernel can be measured.\n"
+        )
+        reader, _ = editor.apply_reader_edits(source, 5)
+        self.assertIn("~~~text\nsymptom:", reader)
+        book.verify_fenced_blocks_unchanged(
+            source, reader, 5, "reader normalization")
+        indexed, entries = indexer.insert_index_tokens(reader, 5)
+        self.assertEqual([item["term"] for item in entries], ["SIMD"])
+        code = indexed[indexed.index("~~~text"):indexed.index("~~~", indexed.index("~~~text") + 6) + 3]
+        self.assertNotIn(r"\index", code)
+        self.assertIn(r"\index{SIMD}", indexed)
+        book.verify_fenced_blocks_unchanged(
+            reader, indexed, 5, "index insertion")
+
+    def test_indented_code_never_receives_index_command(self):
+        import book01_index as indexer
+        source = ("    symptom:\n    SIMD utilization low\n\n"
+                  "A SIMD kernel can be measured.\n")
+        indexed, _ = indexer.insert_index_tokens(source, 5)
+        self.assertNotIn("    \\index", indexed)
+        self.assertEqual(indexed.count(r"\index{SIMD}"), 1)
+
+    def test_long_cpp_listing_wraps_without_stranding_punctuation(self):
+        original = (
+            "\\begin{verbatim}\n"
+            "#include <array>\n"
+            "struct TinyCPU {\n"
+            '    throw std::runtime_error("program counter out of range");\n'
+            "    const unsigned wide = "
+            "static_cast<unsigned>(accumulator) + bytes[address];\n"
+            "};\n"
+            "\\end{verbatim}"
+        )
+        wrapped = book.reflow_long_cpp_verbatim(original)
+        self.assertNotIn("\n;\n", wrapped)
+        self.assertNotIn("\n);\n", wrapped)
+        self.assertEqual(wrapped.count("program counter out of range"), 1)
+        self.assertEqual(wrapped.count("accumulator"), 1)
+        self.assertEqual(wrapped.count(r"\begin{verbatim}"), 1)
+        self.assertIn("\n", wrapped)
+        # A Python listing must not have its indentation or semantics edited.
+        py = "\\begin{verbatim}\ndef long_python_function_name(a, b, c, d):\n    return a + b + c + d\n\\end{verbatim}"
+        self.assertEqual(book.reflow_long_cpp_verbatim(py), py)
+
+    def test_missing_index_inside_verbatim_fails_closed(self):
+        import book01_index as indexer
+        damaged = (
+            "\\begin{verbatim}\n"
+            "\\index{SIMD}\n"
+            "~~~text\n"
+            "\\end{verbatim}"
+        )
+        with self.assertRaisesRegex(ValueError, "Raw index macro leaked"):
+            indexer.replace_index_tokens(damaged, [])
+
+    def test_mermaid_source_hash_checks(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            part = root / "book01-expanded-p02"
+            text, entries = book.plan_figures(
+                f"{TICK}mermaid\nflowchart LR\n A-->B\n{TICK}",
+                5, 2, part, root
+            )
+            self.assertEqual(book.digest((root / entries[0]["source"]).read_bytes()),
+                             entries[0]["diagram_sha256"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>From Equations to Geometry | Numerical Geometry Atlas</title>
+<style>
+:root{--bg:#080d16;--pane:#101b2b;--frame:#233651;--text:#e9f0f9;--muted:#a7b8c9;--cyan:#4ed4e7;--gold:#f0b85e;--red:#ee788e;--violet:#9aafff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% 0%,#162641 0,transparent 60%),var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.shell{max-width:1190px;margin:auto;padding:clamp(20px,4vw,43px)}
+header{border-top:1px solid #8d6837;padding-top:20px}.overline{font-size:11px;text-transform:uppercase;letter-spacing:.22em;color:var(--gold);font-weight:750}
+h1{font-size:clamp(30px,5vw,55px);letter-spacing:-.038em;margin:18px 0 10px;line-height:1.08}
+h1 span{color:var(--gold)}.intro{font-size:13px;color:var(--muted);line-height:1.7;max-width:760px}
+nav{display:flex;flex-wrap:wrap;gap:7px;margin:26px 0 17px}
+button{font:600 12px system-ui;background:#101d2d;color:var(--muted);padding:11px 13px;border:1px solid #28394f;border-radius:6px;cursor:pointer}
+button[aria-selected=true]{border-color:#32a9c0;color:#fff;background:#173040;box-shadow:inset 0 2px var(--cyan)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.workspace{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:14px}
+section.main,aside{background:linear-gradient(145deg,#121e30,#0e1726);border:1px solid var(--frame);border-radius:10px}
+section.main{padding:23px}aside{padding:25px}
+h2{font-size:17px;margin:0 0 8px;letter-spacing:-.014em}
+.explain{color:var(--muted);font-size:12px;line-height:1.64;margin:0}
+canvas{display:block;width:100%;height:410px;border:1px solid #21364c;background:#0b1726;border-radius:7px;margin-top:17px}
+.footnote{color:#98adc5;font-size:11px;line-height:1.65;margin-top:13px}
+label{display:block;color:var(--muted);font-weight:650;font-size:12px;margin:0 0 8px}
+select{width:100%;color:var(--text);border:1px solid #2c4058;padding:10px;border-radius:5px;background:#101e2c}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+.field{margin-top:21px}hr{border:0;border-top:1px solid #30425b;margin:23px 0}
+.metricLabel{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.metricValue{font-size:27px;font-variant-numeric:tabular-nums;font-weight:780;letter-spacing:-.02em;color:var(--cyan);margin:7px 0}
+.metricDetail{font-size:11px;color:var(--muted);line-height:1.65}
+footer{margin-top:27px;padding-top:17px;border-top:1px solid var(--frame);color:var(--muted);font-size:11px;line-height:1.7}
+@media(max-width:790px){.workspace{grid-template-columns:1fr}canvas{height:320px}}
+</style>
+</head>
+<body><div class="shell">
+<header><div class="overline">FROM BITS TO RESEARCH / VOLUME II / EXECUTABLE COMPANION</div>
+<h1>Numerical Geometry Atlas<span>.</span></h1>
+<p class="intro">Explore the actual data behind Book Two's original research figures. The viewer works offline without third-party scripts, APIs, accounts or network access. Every scalar and plotted point comes from the packaged numerical laboratories, with a known analytical reference where possible.</p></header>
+<nav id="tabs" aria-label="Experiments"></nav>
+<div class="workspace">
+<section class="main"><h2 id="title"></h2><p class="explain" id="description"></p>
+<canvas id="plot" role="img" aria-label="Scientific experiment visualization"></canvas>
+<div class="footnote" id="legend"></div></section>
+<aside><div class="overline">CONTROLLED EXPERIMENT</div><h2 style="margin-top:16px" id="controlTitle"></h2>
+<p class="explain" id="controlDescription"></p>
+<div id="controls"></div><hr>
+<div class="metricLabel" id="metricLabel"></div><div class="metricValue" id="metricValue"></div>
+<div class="metricDetail" id="metricDetail"></div><hr>
+<div class="metricLabel">Interpretation boundary</div>
+<p class="metricDetail" id="caveat"></p>
+</aside></div>
+<footer><strong>Methods and provenance:</strong> These are independent teaching implementations inspired by the cited research papers, not reproductions of their published benchmark figures. Source data, figure PDFs/SVGs/PNGs, seeds and test documentation are in the same exported atlas package. A graphical result must not be interpreted as a numerical proof without examining the associated contracts.</footer>
+</div>
+<script id="atlas-json" type="application/json">__ATLAS_DATA__</script>
+<script>
+(function(){
+"use strict";
+const raw=JSON.parse(document.getElementById("atlas-json").textContent);
+const $=id=>document.getElementById(id),c=$("plot"),ctx=c.getContext("2d");
+const palette={ink:"#e9f0fb",muted:"#a7b8cb",gold:"#f0b85e",teal:"#4ed4e7",red:"#ee788e",blue:"#9aafff",grid:"#2b4159"};
+const source=name=>raw.tables[name]||[];
+const views=[
+["surface","3D surface","A numerical scalar lifted into a 3D surface","Height is the computed geodesic distance in metres, not physical terrain elevation.","Change the view and vertical exaggeration; the underlying scientific data never change."],
+["geodesic","Geodesic fields","One mesh, three different scientific questions","The same 25-by-25 vertices carry the heat result, computed distance, exact planar distance, and signed reconstruction error.","Select the scalar; the colour scale and true value range update accordingly."],
+["ransac","RANSAC","Consensus is a choice of geometric threshold","A fixed fitted line is evaluated on all 110 generated observations. The threshold changes membership but does not secretly rerun model fitting.","Vary the threshold and count points selected against the fixed published fit."],
+["fitting","Robust fitting","One outlier changes the objective, not the evidence","Select one curve, always plotted against exactly the same 35 synthetic observations and original generating curve.","Compare the residual error under different objective functions."],
+["sampling","Monte Carlo","Variance is an observed distribution","Each dot is a separately seeded replicate at a declared number of integrand evaluations; exact truth is e minus one.","Select the estimator and equal evaluation budget."],
+["orientation","Predicates","Near-collinearity requires more than a small epsilon","Every sign is evaluated on the stored binary64 coordinates, with explicit reporting of filtered versus exact fallback.","Vary the binary perturbation until the stored input itself becomes collinear."]
+];
+let mode="surface", S={yaw:36,pitch:31,height:1,quantity:"estimated",threshold:.08,fit:"custom_huber_fit",method:"balanced",budget:160,k:46};
+const fmt=(x,d=3)=>Number(x).toFixed(d);
+function frame(){const rect=c.getBoundingClientRect(),pr=Math.min(window.devicePixelRatio||1,2);c.width=Math.round(rect.width*pr);c.height=Math.round(rect.height*pr);ctx.setTransform(pr,0,0,pr,0,0);ctx.fillStyle="#0b1726";ctx.fillRect(0,0,rect.width,rect.height);return[rect.width,rect.height];}
+function point(x,y,colour,size=3){ctx.fillStyle=colour;ctx.beginPath();ctx.arc(x,y,size,0,2*Math.PI);ctx.fill();}
+function stroke(x1,y1,x2,y2,colour,width=1){ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function msg(x,y,content,colour=palette.muted,size=11){ctx.fillStyle=colour;ctx.font=size+"px system-ui";ctx.fillText(content,x,y);}
+function scale(v,lo,hi){return (v-lo)/(hi-lo||1);}
+function baseAxes(w,h){let a={l:46,r:w-19,t:24,b:h-40};stroke(a.l,a.t,a.l,a.b,palette.grid);stroke(a.l,a.b,a.r,a.b,palette.grid);return a;}
+function colour(v,lo,hi,signed=false){let t=Math.max(0,Math.min(1,scale(v,lo,hi)));let rgb;if(signed){let a=Math.abs(t-.5)*2;rgb=t>=.5?[65+160*a,115-35*a,159-50*a]:[53+26*a,122+32*a,164+73*a];}else rgb=[22+209*t,88+100*(1-Math.abs(.5-t)*2),137-76*t];return "rgb("+rgb.map(v=>Math.round(v)).join(",")+")";}
+function metric(title,value,detail,boundary){$("metricLabel").textContent=title;$("metricValue").textContent=value;$("metricDetail").textContent=detail;$("caveat").textContent=boundary;}
+function project(v){let az=S.yaw*Math.PI/180,el=S.pitch*Math.PI/180,x=v.x-1,y=v.y-1,z=v.z*S.height-.9,u=x*Math.cos(az)-y*Math.sin(az),r=x*Math.sin(az)+y*Math.cos(az);return {x:u,y:r*Math.sin(el)-z*Math.cos(el),z:r*Math.cos(el)+z*Math.sin(el)};}
+function surface(){const[w,h]=frame(),data=source("geodesic-surface-3d"),n=25,key=S.quantity==="error"?"error_m":S.quantity==="exact"?"exact_m":"estimated_m";
+const values=data.map(o=>o[key]),rawp=data.map(o=>project({x:o.x_m,y:o.y_m,z:o[key]}));
+const lo=Math.min(...values),hi=Math.max(...values),xmin=Math.min(...rawp.map(v=>v.x)),xmax=Math.max(...rawp.map(v=>v.x)),ymin=Math.min(...rawp.map(v=>v.y)),ymax=Math.max(...rawp.map(v=>v.y));
+const z=Math.min((w-76)/(xmax-xmin||1),(h-74)/(ymax-ymin||1)),pts=rawp.map(v=>[w/2+(v.x-(xmin+xmax)/2)*z,h/2-(v.y-(ymin+ymax)/2)*z]);
+let faces=[];for(let j=0;j<n-1;j++)for(let i=0;i<n-1;i++){let a=j*n+i,b=a+1,d=a+n,e=d+1;faces.push([a,b,e],[a,e,d]);}
+faces.sort((a,b)=>b.reduce((s,k)=>s+rawp[k].z,0)-a.reduce((s,k)=>s+rawp[k].z,0));
+for(let f of faces){let v=f.reduce((s,k)=>s+values[k],0)/3;ctx.fillStyle=colour(v,lo,hi,S.quantity==="error");ctx.strokeStyle="#112335";ctx.lineWidth=.17;ctx.beginPath();ctx.moveTo(pts[f[0]][0],pts[f[0]][1]);for(let k=1;k<3;k++)ctx.lineTo(pts[f[k]][0],pts[f[k]][1]);ctx.closePath();ctx.fill();ctx.stroke();}
+msg(16,22,"Vertical variable: "+key.replaceAll("_"," ")+" (m)",palette.teal,11);
+msg(16,h-12,"Camera rotation and height exaggeration do not change the solver",palette.muted,10);
+metric("Computed scalar range",fmt(lo)+" – "+fmt(hi)+" m","Mesh 625 vertices; z stores a scalar distance/error value, not surface elevation.","Finite-element heat method on a planar convex square; no measured performance claim.");}
+function field(){const[w,h]=frame(),d=source("geodesic-fields"),n=25,key=({estimated:"distance_estimated_m",exact:"distance_exact_m",error:"signed_error_m",heat:"heat"})[S.quantity]||"distance_estimated_m";const values=d.map(x=>x[key]),lo=Math.min(...values),hi=Math.max(...values),size=Math.min(w-100,h-70),cell=size/(n-1),x0=(w-size)/2,y0=(h-size)/2;
+for(let j=0;j<n-1;j++)for(let i=0;i<n-1;i++){let q=j*n+i,v=(values[q]+values[q+1]+values[q+n]+values[q+n+1])/4;ctx.fillStyle=colour(v,lo,hi,S.quantity==="error");ctx.fillRect(x0+i*cell,y0+(n-j-2)*cell,cell+1,cell+1);}
+ctx.strokeStyle=palette.grid;ctx.strokeRect(x0,y0,size,size);point(x0+size/2,y0+size/2,palette.gold,5);msg(x0,y0-10,key+" • "+fmt(lo)+" to "+fmt(hi),palette.teal,10);
+msg(x0,y0+size+18,"Gold star = source at (1 m, 1 m)",palette.muted,10);
+metric("Field minimum to maximum",fmt(lo)+" – "+fmt(hi),key+" from the exact exported numerical field CSV.","The source node also fixes the Poisson gauge; that does not add a physical observation.");}
+function ransac(){const[w,h]=frame(),d=source("ransac-consensus"),a=baseAxes(w,h),X=x=>a.l+scale(x,-4.3,4.3)*(a.r-a.l),Y=y=>a.b-scale(y,-13,11)*(a.b-a.t),abc=raw.metadata["ransac-consensus"].fit_line;
+let count=0;for(let r of d){const accepted=r.ransac_residual<=S.threshold;if(accepted)count++;point(X(r.x),Y(r.y),accepted?palette.teal:palette.red,2.8);}
+for(let i=0;i<100;i++){let x=-4.3+i*8.6/100,next=x+8.6/100;stroke(X(x),Y((-abc.a*x-abc.c)/abc.b),X(next),Y((-abc.a*next-abc.c)/abc.b),palette.gold,1.7);stroke(X(x),Y(2*x+1),X(next),Y(2*next+1),palette.muted,.75);}
+msg(16,20,"Gold = fixed fitted model | grey = generating line",palette.muted,10);msg(16,h-11,"Cyan = inside threshold | rose = outside",palette.muted,10);
+metric("Fixed-model consensus",count+" / 110","Threshold "+fmt(S.threshold,2)+" distance units; changing it does not refit the line.","All 110 points are synthetic; the threshold is an assumption, not automatically inferred ground truth.");}
+function fit(){const[w,h]=frame(),d=source("robust-fitting"),a=baseAxes(w,h),X=x=>a.l+scale(x,0,4)*(a.r-a.l),Y=y=>a.b-scale(y,.3,5.8)*(a.b-a.t);
+for(let r of d)point(X(r.x),Y(r.observed),r.index===13?palette.red:palette.blue,r.index===13?5:3);
+for(let i=1;i<d.length;i++){const u=d[i-1],v=d[i];stroke(X(u.x),Y(u[S.fit]),X(v.x),Y(v[S.fit]),palette.teal,2);stroke(X(u.x),Y(u.generator_truth),X(v.x),Y(v.generator_truth),palette.gold,.8);}
+const rmse=Math.sqrt(d.reduce((s,r)=>s+(r[S.fit]-r.observed)**2,0)/d.length);
+msg(16,20,"Gold = original generating curve | cyan = chosen model",palette.muted,10);msg(16,h-11,"Rose point at index 13 = injected gross outlier",palette.muted,10);
+metric("RMSE over all observations",fmt(rmse,4),"All 35 samples retained. A robust model need not minimize ordinary RMSE.","No real measurement data. The dashed generating curve is known only because this is a synthetic experiment.");}
+function sampling(){const[w,h]=frame(),d=source("mis-variance").filter(r=>r.method===S.method&&r.budget_evaluations===S.budget),a=baseAxes(w,h),vals=d.map(r=>r.signed_error),lo=Math.min(-.10,...vals),hi=Math.max(.10,...vals),Y=y=>a.b-scale(y,lo,hi)*(a.b-a.t);
+stroke(a.l,Y(0),a.r,Y(0),palette.gold,.9);
+for(let i=0;i<d.length;i++)point(a.l+i/(d.length-1)*(a.r-a.l),Y(d[i].signed_error),palette.teal,2.5);
+const mean=vals.reduce((s,x)=>s+x,0)/vals.length,sd=Math.sqrt(vals.reduce((s,x)=>s+(x-mean)**2,0)/(vals.length-1));
+msg(16,20,"One cyan point = one independently seeded replicate",palette.muted,10);msg(16,h-10,"Gold line = exact integral, zero signed error",palette.muted,10);
+metric("Sample std. deviation",fmt(sd,5),"Mean signed error "+fmt(mean,5)+" • "+d.length+" replicates • "+S.budget+" evaluations each","Known exact integral e-1. The error bars are not hardware timings or published MIS performance.");}
+function orientation(){const[w,h]=frame(),d=source("orient2d-certification"),a=baseAxes(w,h),X=x=>a.l+scale(x,2,53)*(a.r-a.l),Y=v=>a.b-scale(Math.log2(v),-54,-1)*(a.b-a.t);
+for(let r of d){const v=Math.max(r.determinant_exact_stored,Math.pow(2,-54)),col=r.decision_path==="filtered-float"?palette.teal:r.orientation_sign?palette.gold:palette.red;point(X(r.k),Y(v),col,r.k===S.k?5:3);}
+const at=d.find(r=>r.k===S.k)||d[0];stroke(X(at.k),a.t,X(at.k),a.b,palette.gold,.6);
+msg(16,20,"Cyan = certified sign | gold = rational fallback | rose = rounded away",palette.muted,10);
+msg(16,h-10,"Horizontal axis = perturbation exponent; vertical = log2 |determinant|",palette.muted,10);
+metric("Stored orientation sign",at.orientation_sign===0?"ZERO":at.orientation_sign>0?"POSITIVE":"NEGATIVE","k="+at.k+" • determinant="+Number(at.determinant_exact_stored).toExponential(3)+" • "+at.decision_path,"The result certifies stored binary64 inputs, not the exact intended decimal geometry.");}
+function control(label,kind,values,name){const container=document.createElement("div");container.className="field";const lab=document.createElement("label");lab.textContent=label;container.appendChild(lab);const elem=document.createElement(kind==="select"?"select":"input");if(kind==="select"){for(const pair of values){const opt=document.createElement("option");opt.value=pair[0];opt.textContent=pair[1];elem.appendChild(opt);}}else{elem.type="range";elem.min=values[0];elem.max=values[1];elem.step=values[2];}elem.value=S[name];elem.addEventListener("input",function(){S[name]=kind==="range"?Number(elem.value):(name==="budget"?Number(elem.value):elem.value);draw();});container.appendChild(elem);$("controls").appendChild(container);}
+function populate(){const host=$("controls");host.replaceChildren();
+if(mode==="surface"){control("Yaw angle","range",[-180,180,1],"yaw");control("Pitch angle","range",[12,80,1],"pitch");control("Vertical exaggeration","range",[.3,2.5,.05],"height");control("Height data","select",[["estimated","Computed distance"],["exact","Exact distance"],["error","Signed reconstruction error"]],"quantity");}
+if(mode==="geodesic")control("View scalar","select",[["estimated","Computed distance"],["exact","Analytic distance"],["error","Signed error"],["heat","Implicit heat"]],"quantity");
+if(mode==="ransac")control("Distance threshold","range",[.02,2,.02],"threshold");
+if(mode==="fitting")control("Fitted model","select",[["custom_huber_fit","Custom Huber"],["scipy_huber_fit","SciPy Huber"],["ordinary_fit","Ordinary least squares"]],"fit");
+if(mode==="sampling"){control("Estimator","select",[["balanced","Balance MIS"],["tilted","Tilted density"],["uniform","Uniform"]],"method");control("Integrand evaluation budget","select",[[40,"40"],[80,"80"],[160,"160"],[320,"320"],[640,"640"]],"budget");}
+if(mode==="orientation")control("Exponent k","range",[2,53,1],"k");
+}
+function draw(){if(mode==="surface")surface();if(mode==="geodesic")field();if(mode==="ransac")ransac();if(mode==="fitting")fit();if(mode==="sampling")sampling();if(mode==="orientation")orientation();$("legend").textContent="The displayed data are exported numerical records. Changing viewer parameters cannot silently alter source datasets or simulate uncomputed benchmarks.";}
+function activate(id){mode=id;for(const b of $("tabs").querySelectorAll("button"))b.setAttribute("aria-selected",String(b.dataset.id===id));const page=views.find(v=>v[0]===id);$("title").textContent=page[2];$("description").textContent=page[3];$("controlTitle").textContent=page[1];$("controlDescription").textContent=page[4];populate();draw();}
+for(const v of views){const b=document.createElement("button");b.textContent=v[1];b.dataset.id=v[0];b.setAttribute("aria-selected","false");b.addEventListener("click",function(){activate(v[0]);});$("tabs").appendChild(b);}
+window.addEventListener("resize",draw);
+activate("surface");
+})();
+</script></body></html>

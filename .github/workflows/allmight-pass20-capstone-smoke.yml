@@ -1,0 +1,39 @@
+name: AllMight Pass20 isolated C++23 capstone smoke
+
+on:
+  push:
+    branches:
+      - curriculum/cpp23-nes-project-pass01
+    paths:
+      - ".github/workflows/allmight-pass20-capstone-smoke.yml"
+      - "tools/labs/book01_end_to_end_cpp23_lab.cpp"
+      - "tools/labs/foundations_course/**"
+      - "tools/labs/nes_course/**"
+      - "Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-real-capstone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate original four-platform workflow with actionlint
+        run: |
+          go version
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.8 .github/workflows/allmight-cpp23-nes-course.yml
+      - name: Configure native C++23 standalone course target
+        run: cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/pass20 -DCMAKE_BUILD_TYPE=Debug
+      - name: Compile exact end-to-end capstone from repository headers
+        run: cmake --build build/pass20 --target book01_end_to_end_cpp23_lab --parallel 2
+      - name: Execute actual capstone and emit JUnit
+        run: |
+          ctest --test-dir build/pass20 -R '^cpp_19e_end_to_end_asset_evidence_cpu_trace$' --output-on-failure --output-junit "$PWD/build/pass20/pass20-ctest.xml"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pass20-capstone-junit
+          path: build/pass20/pass20-ctest.xml
+          if-no-files-found: error

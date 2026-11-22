@@ -1,0 +1,18 @@
+% Book Two Pass 3: source-derived original scientific plate.
+\clearpage
+\section*{Diffusion, reconstruction and signed distance error}
+\noindent The finite-element method assembles stiffness and lumped mass, solves one implicit heat step, normalizes the negative temperature gradient, and reconstructs distance using an anchored Poisson equation. The independent reference is exact straight-line distance on a flat, convex two-metre square.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{book02-figures/rendered/figures/geodesic-fields.pdf}
+\caption{The heat field, recovered geodesic distance and signed error on the same 25-by-25 vertex grid. The source is marked by a gold star. The data come from the educational solver, not from the original published heat-method benchmarks.}
+\label{fig:book02-atlas-geodesic-fields}
+\end{figure}
+
+\noindent\textbf{Reconstruction experiment.} Repeat for a range of grid spacings and heat timestep factors. Measure median and maximum absolute error rather than judging accuracy by a smooth colour ramp.
+
+\noindent\emph{Reproducibility:} The original figure, SVG, print PDF, PNG,
+exact numerical CSV data and machine-readable provenance report are produced
+by \texttt{tools/labs/book02\_visual\_atlas.py}. These are independently
+written educational experiments, not imported research-paper figures.

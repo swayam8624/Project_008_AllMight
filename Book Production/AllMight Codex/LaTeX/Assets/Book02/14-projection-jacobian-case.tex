@@ -1,0 +1,44 @@
+% Positive-Z camera convention and pixel-domain Jacobian.
+\clearpage
+\section*{Verification case: a projection Jacobian has units and a domain}
+\noindent In a positive-depth camera frame, let
+\[
+u=f_x\frac XZ+c_x,\qquad
+v=f_y\frac YZ+c_y,\qquad Z>0.
+\]
+These equations map metric camera coordinates into pixel coordinates.
+The local Jacobian is
+\[
+J=\begin{pmatrix}
+f_x/Z&0&-f_xX/Z^2\\
+0&f_y/Z&-f_yY/Z^2
+\end{pmatrix},
+\]
+whose entries have units of pixels per metre if \(X,Y,Z\) are in metres
+and \(f_x,f_y\) are focal lengths in pixels.
+It is valid only for nonzero positive depth under the chosen
+camera convention.
+
+For \(f_x=f_y=800\), \(c_x=320\), \(c_y=240\) and
+\((X,Y,Z)=(2,1,4)\), the image coordinate is \((720,440)\)
+and
+\[
+J=\begin{pmatrix}200&0&-100\\0&200&-50\end{pmatrix}.
+\]
+The small camera-space displacement
+\(\delta=(0.01,-0.02,0.04)\) has predicted pixel displacement
+\(J\delta=(-2,-6)^T\).
+The \emph{nonlinear} camera formula evaluated at the perturbed point
+instead gives approximately \((-1.9802,-5.9406)\).
+The discrepancy is a local linearization error, not automatically
+a programming defect.
+
+\paragraph{Verification protocol.}
+For fixed positive depth, compare analytic Jacobian columns against
+central finite differences as the perturbation scale decreases;
+record where floating-point cancellation reverses the improvement.
+Repeat nearer to the camera, where terms scale as \(1/Z\) and
+\(1/Z^2\); reject zero and negative depth as outside this
+derivation's domain. Keep the camera sign, pixel-axis and
+column-vector conventions explicit so this mathematics can later
+be translated into a renderer without accidental convention changes.

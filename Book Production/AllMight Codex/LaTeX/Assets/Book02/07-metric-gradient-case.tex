@@ -1,0 +1,55 @@
+% Paired with coordinate-frame transformations.
+\clearpage
+\section*{Verification case: a gradient depends on the chosen ruler}
+\noindent Coordinate derivatives are not automatically vector components.
+Let a world-space point be \(p=Aq\), with
+\[
+A=\begin{pmatrix}2&1\\0&3\end{pmatrix},
+\qquad f(p_x,p_y)=p_x+2p_y.
+\]
+The differential in world coordinates is the linear functional
+\(df_p(\delta p)=\begin{pmatrix}1&2\end{pmatrix}\delta p\).
+With \(p=Aq\), a local coordinate perturbation obeys
+\(\delta p=A\,\delta q\), and therefore
+\[
+df_q(\delta q)=\begin{pmatrix}1&2\end{pmatrix}A\,\delta q
+=\begin{pmatrix}2&7\end{pmatrix}\delta q.
+\]
+The numbers \((2,7)\) are the \emph{covector} coefficients of the local
+differential, not the coordinate components of the same geometric
+steepest-ascent arrow. The local basis is slanted and unequally scaled,
+so local-coordinate dot products do not measure world-space lengths.
+
+The pullback Euclidean metric is
+\[
+G=A^TA=\begin{pmatrix}4&2\\2&10\end{pmatrix},
+\qquad
+\lVert\delta p\rVert^2=\delta q^TG\,\delta q.
+\]
+A metric-gradient vector \(g_q\) is defined by
+\(df_q(\delta q)=g_q^TG\,\delta q\) for \emph{every}
+\(\delta q\). Hence
+\[
+Gg_q=\begin{pmatrix}2\\7\end{pmatrix},\qquad
+g_q=\begin{pmatrix}1/6\\2/3\end{pmatrix}.
+\]
+Multiplying by \(A\) gives the world vector \(Ag_q=(1,2)^T\),
+which matches the standard Euclidean gradient of \(f\).
+
+\paragraph{Why this matters.}
+An optimization routine that takes the coordinate derivatives \((2,7)\)
+as an ordinary direction in the slanted local coordinates changes its
+geometric steepest-ascent meaning. In an orthonormal frame \(G=I\) and
+this distinction is invisible; that convenient special case must not
+be mistaken for the general rule. Surface gradients, covariance
+ellipsoids, constrained optimization and normal transformations all
+rely on the same covector--metric distinction.
+
+\paragraph{Reconstruction exercise.}
+Implement \(A\), \(G\), and the two linear maps in C++23 and Python.
+For five non-axis-aligned perturbations \(\delta q\), check both
+\(df_q(\delta q)=\begin{pmatrix}2&7\end{pmatrix}\delta q\)
+and \(df_q(\delta q)=g_q^TG\delta q\).
+Then replace \(A\) with nearly parallel columns, calculate
+\(\kappa_2(G)\), and explain why the coefficients become sensitive.
+\emph{Do not} claim that a small residual alone proves accurate recovery.

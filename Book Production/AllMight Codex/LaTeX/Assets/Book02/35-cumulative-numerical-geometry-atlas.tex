@@ -1,0 +1,295 @@
+% Book Two Pass 3 cumulative project, additive after the original final chapter.
+\clearpage
+\section*{Cumulative project: the Numerical Geometry Atlas}
+\addcontentsline{toc}{section}{Cumulative project: the Numerical Geometry Atlas}
+
+\noindent A mathematical idea becomes an engineering capability when we can
+derive its governing equations, implement the algorithm, recognize its
+assumption failures, and explain the numerical answer without exaggeration.
+The Numerical Geometry Atlas is the capstone built from the source-led
+laboratories of this book. Each scientific plate has a program that generated
+its data, mathematical reference where available, units, failure conditions,
+and an independent reader reconstruction exercise. The seven figures are
+not copied from the original research papers.
+
+\paragraph{The source code and evidence chain.}
+The \texttt{tools/labs} directory contains the original small numerical
+implementations used in this course. The geometry laboratory checks
+orientation signs and performs reproducible two-dimensional RANSAC fitting.
+The numerical laboratory assembles triangle stiffness and lumped-mass
+matrices, computes a heat-method distance field, and independently fits
+a nonlinear model under Huber loss. The sampling laboratory uses normalized
+proposal densities to estimate an integral with exact analytical value.
+A C++23 companion checks sign certification, discrete energy, numerical
+conditioning and safe handling of uncertain answers.
+
+The renderer \texttt{book02\_visual\_atlas.py} calls the actual mathematical
+implementations and produces three visual forms: PDF vectors for print, SVG
+for scalable screens and digital publishing, and PNG for previews. It saves
+every figure's underlying numerical rows as CSV, with a JSON manifest
+recording units, independent references, seeded experiments, library versions
+and limits of inference. The companion HTML atlas is generated from exactly
+those exported rows, with all required data embedded. It works offline:
+a control can rotate a known computed surface or change the scalar field
+shown, but does not invent a new solve or silently recalculate a research
+result that was never produced by the source implementation.
+
+\paragraph{Checkpoint I: classify geometric orientation reliably.}
+For planar coordinates \(a,b,c\), derive the oriented-area predicate
+\[
+D=(a_x-c_x)(b_y-c_y)-(a_y-c_y)(b_x-c_x).
+\]
+Test a clockwise triangle, a counterclockwise triangle, exact collinearity
+and a near-collinear binary64 input. Explain when the floating-point filter
+can certify a sign and when the rational exact-sign fallback is needed.
+An uncertain C++23 answer must not silently be classified as zero.
+Reversing vertex order must reverse the sign and a valid translation of
+all three vertices must preserve it. Identify a case in which intermediate
+product overflow makes the naive determinant unusable.
+
+\paragraph{Checkpoint II: consensus under outliers.}
+Create a synthetic scene containing 80 near-line samples and 30 structured
+outliers. Implement minimal two-point line fitting, threshold-based
+consensus and orthogonal total-least-squares refinement. Compare the
+robust result with the all-data TLS fit, and disclose the threshold and seed.
+The offline viewer changes consensus membership against a fixed fitted
+line; an actual refit requires running the numerical source program again.
+Compare false acceptance, false rejection, parameter error, and stability
+over separately seeded experiments. No one plot is evidence of universal
+RANSAC superiority.
+
+\paragraph{Checkpoint III: discretize a continuous geometric field.}
+For linear basis functions \(\phi_i\) on a triangle \(T\), derive
+\[
+u(x)=\sum_i u_i\phi_i(x),\qquad
+(K_T)_{ij}=A_T\nabla\phi_i\cdot\nabla\phi_j,\qquad
+E_T(u)=\tfrac12u^TK_Tu.
+\]
+Assemble the sparse positive-semidefinite stiffness matrix and a diagonal
+lumped mass matrix. Check its symmetry, the constant-vector nullspace,
+total mass and nonnegative energy. A discretization may reduce energy yet
+violate a maximum principle; those are different mathematical properties.
+Document matrix signs, units, boundary assumptions and degeneracy handling.
+
+\paragraph{Checkpoint IV: recover geodesics from heat.}
+Take a backward implicit heat step,
+\[
+(M+tK)u=Mu_0,
+\]
+normalize the negative triangle-wise temperature gradient, then solve
+an anchored Poisson equation for distance. Compare the recovered distances
+against the Euclidean reference on a flat convex square. Save the signed
+field error and absolute error separately. Display computed heat, recovered
+distance and signed error side by side. The additional 3D picture lifts
+distance as a vertical scalar and must explicitly say that the height
+does not represent physical terrain.
+
+Repeat over several grid resolutions on the same physical domain.
+Record vertex and triangle counts, spacing, mean and median absolute
+errors, and maximum absolute error. Since the heat timestep is tied
+to mean edge length squared, its scaling is part of the experiment.
+Explain any nonmonotonic result rather than deleting inconvenient
+points. Move the source and change the triangulation to investigate
+the limitations of the baseline.
+
+\paragraph{Checkpoint V: robust nonlinear fitting and identity.}
+Generate samples of \(y=a e^{bx}+c\) with deterministic perturbations
+and one known gross outlier. Derive the residual Jacobian
+\[
+J_i=\begin{pmatrix}e^{bx_i}&a x_i e^{bx_i}&1\end{pmatrix}.
+\]
+Compare ordinary least squares with a damped Huber method and the
+SciPy robust-loss reference. Record the final parameters, value,
+gradient norm, accepted steps and termination status. Include all
+observations in the visual and residual statistics. The estimator
+with the smallest squared residual is not automatically the method
+that best recovers the generating parameters, because the objective
+functions and contamination assumptions differ.
+
+\paragraph{Checkpoint VI: a sampling study that measures uncertainty.}
+For the exact integral \(\int_0^1 e^x\,dx=e-1\), compare uniform,
+tilted-density and balance-heuristic estimators at equal numbers of
+integrand evaluations. Repeat with distinct pseudorandom streams
+and visualize the distributions of signed errors and their sample
+variance. The purpose is to understand support, measure, weighting,
+bias and cost, not to claim that one sampler dominates for every
+integrand. Then design a two-peak function for which the proposals
+have distinct strengths, and compare over an independently justified
+sample and replication budget.
+
+\paragraph{Scientific figure acceptance.}
+Every exported plate must have readable axes, correct units, a
+declared algorithm and seed, a reference formula or validation
+baseline, and an explicit distinction between synthetic data,
+analytical truth and solver output. A heatmap colour scale must
+say whether it represents signed error or magnitude. A 3D surface
+must identify its vertical variable. Never invent hardware speedups,
+paper-reproduction figures or uncertainty intervals for an attractive
+presentation. When measuring runtime later, record machine, compiler,
+compiler flags, software version, workload, independent repeats,
+hardware state and variance.
+
+A checkpoint is accepted only if its tests pass, its output is
+reproducible, invalid inputs fail explicitly, and the numerical
+results in the CSV match the plotted data. The offline viewer must
+work without a network connection and use the exported tables,
+not a separate visual approximation. The reader must be able
+to reconstruct at least one result by hand and one by code.
+
+\paragraph{Beyond the initial atlas.}
+Extend the heat method to alternative domains and boundaries.
+Compare adaptive floating expansions with the rational sign oracle.
+Test RANSAC with competing structures or very low inlier rates.
+Move nonlinear fitting from a curve to a geometric pose problem with
+explicit gauge freedoms. Every extension should include a new
+derivation, adversarial test, independent reference, reconstructed
+figure and a discussion of limits. The object is not to assemble
+the most colourful demonstration; it is to build numerical software
+whose mathematical meaning can be defended.
+
+
+\begin{booktwoconcept}[Native capstone]
+\paragraph{C++23 implementation companion: an evolving numerical geometry engine.}
+The cumulative atlas now has a native implementation spine in
+\texttt{tools/labs/book02\_cpp23}. It is intentionally a single
+inspectable C++23 executable rather than a sequence of Python
+implementations masquerading as C++ exercises. The present milestone
+includes a scaled and pivoted two-by-two solve, an exact bounded-grid
+orientation sign, a conservative binary64 orientation filter,
+centered least-squares line fitting, explicit one-dimensional heat
+stepping, and seeded Monte Carlo integration. These are foundation
+experiments, not a claim that the complete geometric atlas, sparse
+solvers or research methods have been ported to C++23 yet.
+
+\end{booktwoconcept}
+
+\begin{Shaded}
+\begin{verbatim}
+cmake -S tools/labs/book02_cpp23 -B build/book02-cpp23
+cmake --build build/book02-cpp23 --parallel
+ctest --test-dir build/book02-cpp23 --output-on-failure
+build/book02-cpp23/book02_workbench heat \
+  > build/book02-cpp23/heat.csv
+build/book02-cpp23/book02_workbench monte-carlo \
+  > build/book02-cpp23/monte-carlo.csv
+\end{verbatim}
+\end{Shaded}
+
+\paragraph{Project acceptance requires more than a working executable.}
+For each checkpoint, make the reader describe its data representation,
+the invariant that the algorithm promises, the independently derived
+oracle, the failure state, and the conditions under which its output
+can be compared with other implementations. The orientation lab
+distinguishes exact integer signs from uncertain floating-point
+classifications. The least-squares lab distinguishes a zero residual
+on a constructed line from robustness to outliers. The heat lab
+rejects an explicitly unstable step size rather than plotting an
+invalid answer. The Monte Carlo lab exposes a known integral and a
+statistical uncertainty estimate rather than reporting a visually
+convincing curve as mathematical proof.
+
+Python may plot \texttt{heat.csv} or examine exported data, but it
+must not silently replace these algorithms. The explicit goal of
+subsequent chapters and revision passes is a C++23 library capable
+of serving geometry, image formation, simulation, reconstruction,
+and independent research experiments, with numerically defensible
+results and stable serialized evidence. Meaningful next milestones
+are rank-revealing QR/SVD, robust predicates on arbitrary supported
+binary64 values, sparse matrix assembly and solvers, nonlinear
+optimization, uncertainty propagation, and multi-seed inference.
+These are planned extensions and must not be counted as completed
+features until their implementations and tests exist.
+
+\paragraph{One experiment, five ways of knowing it is trustworthy.}
+Take the heat field as an example. First derive the continuum
+equation and units. Second obtain the discrete stencil and stability
+condition. Third independently compute the single-pulse first step.
+Fourth verify the native time series and its conserved or dissipated
+quantities under the stated boundary conditions. Fifth visualize
+the exported rows and decide whether the curve communicates the
+correct physical and numerical story. Each step answers a different
+question; none can be skipped because the PDF contains an appealing
+figure.
+
+
+\begin{booktwoconcept}[Native extension: from a line to a fitted nonlinear scene]
+The next C++23 capstone milestone adds \emph{column-pivoted
+Householder QR} for dense overdetermined least squares
+and a \emph{Huber IRLS/damped Gauss--Newton} fit to
+\(y=a e^{bx}+c\). The optimizer solves augmented least-squares
+steps with that QR routine, and accepts them against the true
+Huber objective. This provides the first direct native
+bridge from linear measurements to robust nonlinear
+inverse problems in the atlas.
+
+Use \texttt{qr-sensitivity} to export a sweep that contrasts
+forward coefficient error and residual size.
+Use \texttt{robust-fit} for solver diagnostics and
+\texttt{robust-data} for every observation and both predicted
+curves. The optional Python renderer reads these C++23 CSV
+records; no optimization is implemented in Python.
+The resulting figures are supporting evidence,
+not automatically certified print proofs. The original
+16 chapters and all earlier demonstrations are preserved.
+\end{booktwoconcept}
+
+\begin{booktwopitfall}[Failure and scale limits]
+Column pivoting and QR improve the numerical solution route;
+they cannot recover parameters that observations do not
+identify. The rank tolerance is a finite-precision policy,
+not symbolic rank or an SVD-based condition estimate.
+The nonlinear solver is dense, starts at a declared
+initialization, has no trust-region convergence guarantee,
+and may fail under an incorrect model, poor initialization
+or adversarial outlier leverage. Compare final gradients,
+termination flags, coefficient errors and residuals,
+not merely the visual appeal of the fitted curves.
+\end{booktwopitfall}
+
+
+\begin{booktwoconcept}[Native geometry capstone: RANSAC line consensus]
+The project now also includes a C++23 RANSAC line
+estimator, a canonical normalized implicit line,
+orthogonal total-least-squares refinement, a
+declared idealized two-point trial bound, and
+explicit consensus re-evaluation after refinement.
+Unlike a vertical-error fit, the orthogonal residual
+uses Euclidean point-to-line distance. The output
+includes the actual selected points and a separate
+all-data TLS comparison. Two native commands,
+\texttt{ransac-summary} and \texttt{ransac-data},
+export diagnostics and all 110 synthetic observations
+to independently inspectable CSV.
+
+Its optional color-coded figure is produced from
+those exact source rows, not from new Python fitting
+code. Native RANSAC is still an educational two-dimensional
+line experiment, not a 3D geometric-vision estimator
+or a production camera-localization implementation.
+\end{booktwoconcept}
+
+
+\begin{booktwoconcept}[Native exactness milestone: finite binary64 orientation]
+The capstone's orientation contract now has a C++23
+\emph{arbitrary finite binary64} exact-sign implementation,
+not just the earlier bounded-integer sign and floating
+filter that returned uncertainty. The standalone
+\texttt{exact\_predicates.hpp} reconstructs each input
+as a signed dyadic rational from its IEEE-754 bits
+and evaluates the determinant with base-\(2^{32}\)
+variable-length integer arithmetic. It handles
+subnormals and overflow-prone coordinate differences
+without rounding intermediate geometry.
+
+The \texttt{orientation-audit} export includes six
+adversarial cases plus 500 finite random bit-pattern
+triples in exact hexadecimal notation. A separate
+Python \texttt{Fraction} program checks all 506 signs
+independently; it is an \emph{oracle}, never the
+mathematical implementation supplied for the reader's
+C++23 project. Invalid nonfinite inputs are rejected.
+This resolves the native finite-input orientation-sign
+milestone only; exact incircle, 3D orientation and
+production-grade adaptive predicate performance remain
+future implementation checkpoints.
+\end{booktwoconcept}

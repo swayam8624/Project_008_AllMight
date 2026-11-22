@@ -1,0 +1,42 @@
+% Exact heat-equation mode for a zero-boundary unit square, diffusivity=1.
+\clearpage
+\section*{Visual laboratory: a differential equation becomes a field}
+\noindent On \((x,y)\in[0,1]^2\), the heat equation with unit diffusivity,
+zero Dirichlet boundary values, and initial mode
+\(u(x,y,0)=\sin(\pi x)\sin(\pi y)\) has exact solution
+\[
+u(x,y,t)=e^{-2\pi^2t}\sin(\pi x)\sin(\pi y).
+\]
+These plots evaluate the exact solution at \(t=0.04\).
+A finite-difference or mesh solver should converge toward this
+reference under a stated resolution and time-integration policy.
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+ group style={group size=2 by 1,horizontal sep=10mm},
+ booktwoaxis,width=0.44\textwidth,height=67mm,
+ xmin=0,xmax=1,ymin=0,ymax=1,
+ xlabel={$x$},ylabel={$y$},
+ point meta min=0,point meta max=0.455,
+ colormap name=booktwothermal
+]
+\nextgroupplot[title={Surface height = temperature},view={47}{33},
+ zmin=0,zmax=0.47]
+\addplot3[surf,shader=interp,draw=none,
+ domain=0:1,y domain=0:1,samples=31,samples y=31]
+{exp(-2*pi*pi*0.04)*sin(deg(pi*x))*sin(deg(pi*y))};
+\nextgroupplot[title={Temperature heatmap},view={0}{90},axis equal image]
+\addplot3[surf,shader=interp,draw=none,
+ domain=0:1,y domain=0:1,samples=31,samples y=31]
+{exp(-2*pi*pi*0.04)*sin(deg(pi*x))*sin(deg(pi*y))};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Exact, dimensionless heat-equation mode at \(t=0.04\), not a
+measured simulation. Both views use identical field values and the same
+color scale; the maximum equals \(e^{-2\pi^2(0.04)}\).}
+\label{fig:book02-heat-diffusion}
+\end{figure}
+\noindent\textbf{Reconstruct it:} solve the same problem with forward and
+backward Euler on increasingly fine grids, report \(L^2\) and
+\(L^\infty\) errors, and identify the explicit-method stability limit.

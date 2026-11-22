@@ -1,0 +1,38 @@
+% Clusters, not duplicate frames, define the independent experimental units.
+\clearpage
+\section*{Verification case: six measurements are not always six independent trials}
+\noindent Suppose an experiment has three independent scenes, each
+recorded for two nearly identical frames. Its paired improvements
+in milliseconds are
+\[
+\begin{array}{c|cc}
+\text{scene}&\text{frame 1}&\text{frame 2}\\\hline
+A&1&1\\B&0&0\\C&-1&-1
+\end{array}
+\]
+The mean improvement is zero whether computed over scenes or frames.
+But the precision estimate depends on \emph{which observations are
+independent}. With three independent scene means \(1,0,-1\), the
+sample standard deviation is \(s_{\mathrm{scene}}=1\) ms and the
+ordinary standard error is \(1/\sqrt3\approx0.577\) ms.
+If the six frames are incorrectly treated as independent, the
+sample standard deviation is \(\sqrt{4/5}\approx0.894\) ms and
+the naive standard error becomes
+\(\sqrt{4/5}/\sqrt6\approx0.365\) ms.
+
+The smaller second number is not earned information. Each duplicate
+frame reflects its scene, so two copies of the same evidence should
+not nearly double the effective experimental sample size.
+Real trajectories can also have temporal autocorrelation,
+heterogeneous difficulty and other dependencies. The relevant
+unit may be a scene, captured sequence, participant or independent
+seed, depending on how the experiment was designed.
+
+\paragraph{Reconstruction.}
+Implement a scene-level paired analysis that first reduces each
+independent scene to a declared statistic. Compare a naive frame
+bootstrap with a clustered bootstrap resampling entire scenes.
+Explain what can and cannot be concluded with only three clusters:
+bootstrap intervals may themselves have poor small-sample coverage.
+Record the pairing, resampling unit and selection rules in the
+experiment ledger rather than treating every logged row as a new trial.

@@ -1,0 +1,42 @@
+% Positive-test posterior with explicit prevalence.
+\clearpage
+\section*{Verification case: likelihood is not posterior probability}
+\noindent Suppose a test detects a condition with sensitivity
+\(P(+\mid D)=0.95\) and false-positive probability
+\(P(+\mid\neg D)=0.05\). Assume the condition occurs in
+\(P(D)=0.01\) of the population. Then Bayes' rule gives
+\[
+\begin{aligned}
+P(D\mid+)
+&=\frac{P(+\mid D)P(D)}
+{P(+\mid D)P(D)+P(+\mid\neg D)P(\neg D)}\\
+&=\frac{0.0095}{0.0095+0.0495}
+\approx0.1610.
+\end{aligned}
+\]
+A positive test means about \(16.1\%\) posterior probability
+under \emph{this declared model}, not \(95\%\).
+The contrast is due to prevalence, not an algebraic inconsistency.
+
+For a hypothetical population of \(10{,}000\), the model expects
+\(100\) affected people, \(95\) true positives and \(495\)
+false positives among the \(9{,}900\) unaffected.
+Thus \(95/(95+495)=95/590\approx0.1610\).
+These are expected counts from the model, not a real dataset.
+
+\paragraph{Use in visual computing.}
+A pose-estimation failure detector or rendering anomaly classifier
+has the same dependence on the prior frequency of failures.
+Changing the deployment population changes predictive values
+even if sensitivity and false-positive rates remain fixed.
+Classifiers must therefore report prevalence, calibration and
+the distinction between conditional likelihood and posterior
+confidence.
+
+\paragraph{Reconstruction.}
+Implement Bayes' rule and compare the direct algebra with
+expected-count reasoning. Sweep prevalence over logarithmically
+spaced values and plot the posterior. Test both impossible
+evidence (\(P(+)=0\)) and inconsistent input probabilities as
+explicit invalid cases; no undefined division should produce a
+plausible confidence score.

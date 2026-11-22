@@ -1,0 +1,119 @@
+% HISTORICAL PROTOTYPE ONLY. NOT a replacement for Chapter 1 or the full manuscript.
+% DO NOT include this file as the canonical chapter, count its 2-page preview
+% as revised-book output, or compile it on the user's behalf.
+% Actual ongoing additions go into the existing canonical long-form manuscript
+% via Supplementary/C++23 Project Labs and tools/apply_cpp23_project_inserts.py.
+% Project AllMight, Seven-Book edition, Book 01, NES project prototype.
+% Intended as a chapter module; includes neither a preamble nor documentclass.
+% C++23 companion: tools/labs/ines_header_cpp23_lab.cpp.
+\section{A Cartridge Is a Contract, Not Just a Bag of Bytes}
+\label{sec:allmight-nes01}
+
+Imagine opening a game file. A naive program sees a sequence of bytes, but the
+emulator must decide which bytes describe the file itself and which bytes belong
+to a program or to graphics. The first sixteen bytes of a conventional iNES
+1.0 file are a \emph{header}: an agreement about how to interpret the rest of
+the file. Our first NES milestone is deliberately smaller than an emulator.
+We will build a reader that proves the layout before any CPU tries to execute
+an instruction. This is the foundation of trustworthy systems software.
+
+\subsection{A bit does not explain itself}
+
+One byte is eight binary digits. Under the ordinary unsigned positional rule,
+its value is $\sum_{i=0}^{7} b_i2^i$, with each $b_i\in\{0,1\}$. This
+explains why a byte can represent an integer from $0$ to $255$, but it does
+not explain whether the byte is a count, a set of flags, a fragment of an
+address, or text. A format supplies that missing meaning. To test bit $k$,
+we form the mask $2^k$ and compute $x\mathbin{\&}2^k$; the result is nonzero
+exactly when bit $k$ is set. To extract the high nibble, compute $x\gg4$.
+These operations do not depend on whether a human writes the value in binary
+or hexadecimal notation.
+
+\subsection{Derive the cartridge layout}
+
+An iNES 1.0 header begins with the four bytes
+\texttt{4E 45 53 1A} (\texttt{NES} followed by \texttt{0x1A}).
+Header byte 4 counts program ROM banks, each exactly $16\,384$ bytes;
+byte 5 counts character ROM banks, each exactly $8\,192$ bytes.
+Header byte 6 contains mirroring, battery, trainer, and four-screen flags
+in its lower four bits, and the low four mapper-ID bits in its upper four.
+Header byte 7 supplies the remaining high mapper-ID bits. Thus, for
+header bytes $h_i$,
+\[
+\mathrm{mapper}=(h_6\gg4)\;\mathbin{|}\;(h_7\mathbin{\&}\mathrm{0xF0}).
+\]
+If byte 6 has its trainer flag set, a 512-byte trainer follows the 16-byte
+header. The payload offsets are therefore
+\[
+\begin{aligned}
+O_{\mathrm{PRG}} &= 16 + (\mathrm{trainer}\ ?\ 512:0),\\
+S_{\mathrm{PRG}} &= 16384h_4,\\
+O_{\mathrm{CHR}} &= O_{\mathrm{PRG}} + S_{\mathrm{PRG}},\\
+S_{\mathrm{CHR}} &= 8192h_5.
+\end{aligned}
+\]
+The conditional expression adds $512$ if the trainer flag is set, otherwise
+zero. A zero CHR-ROM bank count usually indicates CHR RAM allocated by the
+emulator; it does \emph{not} ask us to read 8 KiB
+of nonexistent CHR-ROM bytes from the file. These rules describe legacy
+iNES 1.0; NES 2.0 has different size semantics and must be parsed separately.
+
+\subsection{Validate before constructing runtime state}
+
+It would be tempting to declare a C++ \texttt{struct Header} and read file
+bytes directly into it. That conflates a specified on-disk schema with a
+compiler's object-layout rules and risks using partially read data. Instead,
+our C++23 function receives a \texttt{std::span<const std::uint8\_t>},
+checks that the header exists, checks the signature and version, calculates
+and bounds-checks the payload regions, and returns
+\texttt{std::expected<Layout, ParseError>}.
+The success type names all validated offsets and flags; the error type
+identifies the failure. Checking remaining length by subtraction after
+checking the starting offset avoids the usual unsafe pattern of comparing
+against a possibly overflowing end offset. No dynamic mapper object is
+created while the data is still untrusted.
+
+The unit is implemented in \texttt{tools/labs/ines\_header\_cpp23\_lab.cpp}.
+It uses eleven synthetic cases that require no commercial game files. They
+cover ordinary PRG/CHR banks, trainer displacement, mapper nibble extraction,
+CHR RAM, invalid signatures, short headers, truncated trainer/PRG/CHR data,
+an explicitly rejected NES 2.0 header, zero PRG banks, and four-screen flags.
+Run it with a standards-mode C++23 compiler and warnings enabled. A passing
+test establishes these declared cases only: it does not establish complete
+iNES compatibility or a functioning NES emulator.
+
+\subsection{Connect this milestone to the actual emulator}
+
+The source reference is the author's
+\texttt{NESEmulator/Cartridge.cpp} in the \texttt{NESEmulator} repository.
+It already shows the intended cartridge-to-mapper architecture, but its
+constructor reads a header before checking the read status, assumes payload
+reads succeed, and can mark a cartridge valid without constructing a
+supported mapper. Study that implementation as a \emph{diagnostic case},
+not as an unquestionable answer. Later units will integrate validated
+cartridge storage with a mapper interface, CPU bus, 6502 instruction tracing,
+PPU registers, APU timing, and deterministic frame tests.
+
+\subsection{Check your understanding}
+
+Without running code, take a header with one PRG bank, two CHR banks, and a
+trainer. Calculate the start and length of both payloads, then explain what
+happens if the final CHR byte is missing. Modify the synthetic test fixture
+to verify your prediction. Next, explain why the CPU address \texttt{0x1801}
+refers to the same physical RAM byte as \texttt{0x0001} when the 2-KiB RAM is
+mirrored across the low 8-KiB CPU address window. The solution uses a mask
+\texttt{address \& 0x07FF}; it is a hardware mapping rule, not a general
+property of all addresses.
+
+\paragraph{Completion gate.} A learner can explain the header byte-by-byte,
+derive the offsets, reject malformed images without undefined behavior,
+and reproduce all eleven test cases. Neither a completed emulator nor a
+validated production cartridge loader is claimed at this milestone.
+
+\paragraph{Reference specifications.} Consult the NESdev iNES file-format
+specification (www.nesdev.org/wiki/INES), the NES 2.0 format description
+(www.nesdev.org/wiki/NES\_2.0), and NESdev's mirroring reference
+(www.nesdev.org/wiki/Mirroring). The present lab deliberately rejects a
+header that advertises NES 2.0, whose size and mapper fields differ. Old
+legacy dumps can contain misleading reserved bytes; a production loader
+requires an explicit compatibility policy rather than guessing.

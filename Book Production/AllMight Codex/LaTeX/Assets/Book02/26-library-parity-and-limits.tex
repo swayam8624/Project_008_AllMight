@@ -1,0 +1,62 @@
+% Pass 2 source notes to avoid conflating library presence with execution.
+\clearpage
+\section*{Research reproducibility: library code is evidence, not authority}
+\noindent An independently implemented method, a research paper
+and a production numerical library play distinct roles.
+A paper explains a method and its experimental claims; library
+source provides concrete algorithms, layouts and failure policies;
+a local implementation supplies evidence that the reader has
+understood enough to reconstruct a minimum working case.
+Agreement between two implementations on one easy example
+does not establish correctness on all inputs.
+
+\paragraph{What is actually compared.}
+The accompanying tests check a small mesh heat-method against
+analytical flat-domain Euclidean distance, an assembled
+P1 stiffness and mass matrix against exact energy identities,
+and a damped Huber curve fitter against SciPy's
+\texttt{least\_squares} with the same synthetic observations.
+The orientation witness uses exact rational arithmetic on
+binary64 inputs. RANSAC is compared against an all-data
+total-least-squares baseline on a declared synthetic mixture.
+
+\paragraph{Library signs and units.}
+The positive-semidefinite FEM stiffness here is \(K=-L\)
+for library APIs that adopt a negative-diagonal Laplacian
+\(L\). A change of sign, vertex mass definition or
+Dirichlet boundary treatment can change every numerical result.
+For geometric transforms, the inverse and transpose depend on
+whether coordinates represent points, directions, differentials
+or gradients. A parity harness must first make these conventions
+identical, rather than compare raw output matrices by index.
+
+\paragraph{The current local codebase.}
+The \href{https://github.com/swayam8624/KairoMath}
+{KairoMath repository} contains module files for decomposition,
+SVD, optimization, probability and autograd, while
+\href{https://github.com/swayam8624/KairoPhysicsMath}
+{KairoPhysicsMath} has integrators and rigid-body mathematics.
+Their \texttt{STATUS.md} files explicitly say their claimed
+completion is \emph{unverified} pending exact-head acceptance.
+They should therefore not be cited as fully validated reference
+implementations before their actual compiler/tests pass.
+Related Maveb and Vulkax experiments provide later independent
+case studies, not automatic proof of these modules.
+
+\paragraph{How the reader should report results.}
+For every solver report the version or commit, mathematical
+convention, input grain, shape and units, reference result,
+absolute and relative errors, stopping criteria, hardware,
+compiler/interpreter options and random seed where relevant.
+Differentiate a passed source-level invariant from reproducible
+performance improvements. For randomized results, specify the
+independent unit of inference; ten frames of one event do
+not necessarily constitute ten independent experiments.
+
+\paragraph{Boundary of this laboratory.}
+These examples are reproducible teaching tests. They do not
+replicate published wall-clock figures, external datasets,
+the complete Shewchuk expansion predicates, tufted-cover
+construction, Ceres trust-region solvers, nor all KairoMath
+modules. Each missing claim remains an explicit, testable
+research extension, not an assumed feature.

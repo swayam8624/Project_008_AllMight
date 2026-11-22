@@ -1,0 +1,177 @@
+% Book Two Pass 2: fit a nonlinear model, don't just call an optimizer.
+\clearpage
+\section*{Research reconstruction: nonlinear least squares with outliers}
+\noindent\textbf{Source lineage:} Gauss--Newton and
+Levenberg--Marquardt methods; the
+\href{https://ceres-solver.readthedocs.io/latest/nnls_modeling.html}
+{Ceres Solver nonlinear-least-squares modeling documentation}
+and \href{https://ceres-solver.readthedocs.io/latest/tutorial.html}
+{robust curve-fitting tutorial}. Our small IRLS/Levenberg-like
+solver is independently authored; it is not Ceres code.
+
+\paragraph{Define the measurement problem.}
+Suppose samples \((x_i,y_i)\) follow
+\(y_i=a\exp(bx_i)+c+\epsilon_i\). For parameters
+\(\theta=(a,b,c)^T\), write residuals
+\[
+r_i(\theta)=a e^{bx_i}+c-y_i.
+\]
+The Jacobian row is
+\[
+J_i=\begin{pmatrix}
+e^{bx_i}&a x_i e^{bx_i}&1
+\end{pmatrix}.
+\]
+This derivation is a contract: numerical finite differences
+or automatic differentiation of the same residual should
+agree within justified tolerance away from overflow.
+
+\paragraph{Derive the update.}
+Linearizing around \(\theta\) gives
+\(r(\theta+\Delta)\approx r+J\Delta\).
+Ordinary least squares minimizes \(\frac12\lVert r\rVert^2\);
+its normal-system approximation is
+\(J^TJ\,\Delta=-J^Tr\).
+Direct normal equations may magnify conditioning; production
+solvers use better factorizations and regularization strategies.
+To keep a small educational step well defined, use a positive
+damping term:
+\[
+(J^TWJ+\lambda I)\Delta=-J^TWr.
+\]
+For the Huber loss with threshold \(\delta>0\), a common
+IRLS approximation assigns
+\[
+w_i=\begin{cases}
+1,&|r_i|\le\delta,\\
+\delta/|r_i|,&|r_i|>\delta.
+\end{cases}
+\]
+The corresponding scalar cost is
+\(\rho_\delta(r)=\frac12r^2\) in the quadratic region and
+\(\rho_\delta(r)=\delta(|r|-\delta/2)\) outside it.
+Always measure trial improvement using the \emph{actual robust
+objective}, not the weighted quadratic approximation that
+generated the step.
+
+\paragraph{A controlled outlier experiment.}
+Our companion creates 35 synthetic observations from
+\((a,b,c)=(2,-0.7,0.5)\) with a small deterministic sinusoidal
+perturbation and one declared gross outlier. We fit the same
+observations with three methods: plain nonlinear least squares
+from SciPy, Huber-robust SciPy least squares, and our own
+damped IRLS method. Each estimates \(\theta\), but the
+underlying estimand depends on the objective and noise model.
+
+\paragraph{Verification and limits.}
+Use numerical Jacobian comparisons, final parameter differences,
+robust-objective values, gradient norms and stopping reasons.
+Seed initial conditions explicitly; report whether a solver hit
+its iteration limit or a stationary point. A robust loss does
+\emph{not} guarantee recovery under arbitrary contamination,
+bad initialization, non-identifiable parameters or an incorrect
+forward model. A successful 35-point synthetic experiment
+is not a production claim about bundle adjustment.
+
+\paragraph{Connection to the user's implementation.}
+The public \href{https://github.com/swayam8624/KairoMath/blob/master/Optimization.cppm}
+{KairoMath optimization module} contains general optimization
+settings and a conjugate-gradient result interface. This audit
+has inspected source structure; it has not executed the
+complete KairoMath module suite or proved numerical parity.
+Use the original C++23 module as a case study when its
+exact-head compiler/test gate becomes reproducible.
+
+
+\begin{booktwolab}[Least squares]
+\paragraph{C++23 checkpoint: what ordinary least squares can and cannot do.}
+The command \texttt{book02\_workbench fit} uses the C++23 sample type,
+a centered mean, and the two sums
+\[
+ S_{xx}=\sum_i(x_i-\bar{x})^2,\qquad
+ S_{xy}=\sum_i(x_i-\bar{x})(y_i-\bar{y})
+\]
+to recover \(a=S_{xy}/S_{xx}\) and \(b=\bar{y}-a\bar{x}\) for
+\(y=ax+b\). It returns an error state if \(S_{xx}=0\), because a
+vertical set of samples cannot identify a finite slope in this model.
+The first test fits the exactly constructed line \(y=2x+1\);
+the independent expected answer is therefore \(a=2,b=1\).
+
+\end{booktwolab}
+
+\begin{booktwopitfall}[An outlier is not a roundoff error]
+Now insert an extreme outlier. Explain how one high-leverage sample
+can dominate squared residuals despite centered accumulation. Better
+summation reduces cancellation; it does not make least squares robust
+to contaminated data. The separate RANSAC and robust-loss projects
+earlier in this book are the correct comparison, with thresholds and
+sampling assumptions explicitly disclosed. A further challenge is to
+replace ordinary centered regression with Householder QR and compare
+both methods on a badly conditioned overdetermined system.
+
+\end{booktwopitfall}
+
+
+\begin{booktwoproof}[An augmented QR derivation of the robust step]
+For a current nonlinear parameter estimate, define the Jacobian
+\(J\), residual \(r\), and positive IRLS weights \(w_i\).
+Writing \(W^{1/2}=\operatorname{diag}(\sqrt{w_i})\),
+the damped step minimizes
+\[
+ \left\|\begin{bmatrix}W^{1/2}J\\ \sqrt{\lambda}I\end{bmatrix}
+ \Delta-
+ \begin{bmatrix}-W^{1/2}r\\0\end{bmatrix}\right\|_2^2.
+\]
+Expanding this quadratic recovers the damped
+normal system \( (J^TWJ+\lambda I)\Delta=-J^TWr\).
+But the native solver computes the step by Householder QR
+of the \emph{augmented} matrix: it does not build and
+factor the potentially more ill-conditioned \(J^TWJ\).
+The formula is an approximation at the current \(\theta\),
+not an exact nonlinear solution.
+
+The Huber influence \(\psi_\delta(r)=
+\max(-\delta,\min(r,\delta))\) produces
+\(w_i=\psi_\delta(r_i)/r_i\) for nonzero residuals,
+with \(w_i=1\) at zero. The trial is accepted only when
+\(\sum_i\rho_\delta(r_i(\theta+\Delta))\) really decreases.
+A rejected trial increases damping; an accepted trial
+reduces it. Neither IRLS nor damped Gauss--Newton guarantees
+the global minimum of a nonlinear problem.
+\end{booktwoproof}
+
+\begin{booktwolab}[Two executable estimators, one declared outlier]
+Run \texttt{book02\_workbench robust-fit} for a
+C++23-produced summary and \texttt{robust-data} for
+all 35 computed observations and both fitted curves.
+The generating parameters are \((2,-0.7,0.5)\).
+Observation \(i\), indexed from zero, uses
+\(x_i=i/10\), deterministic perturbation
+\(0.008\sin(0.77i)\), and an additional \(+3.5\)
+at \(i=15\). Both fits start from \((1.5,-0.4,0.3)\).
+The robust experiment uses \(\delta=0.05\);
+a large threshold effectively gives ordinary least squares.
+
+The program checks the analytic Jacobian against
+central finite differences, includes a known-solution
+QR fixture, detects a rank-deficient system, and asserts
+that the robust estimate recovers the synthetic parameters
+more accurately on this \emph{declared} contamination case.
+The CSV reports the stopping status and gradient
+\(\ell_\infty\)-norm at the returned parameters. Costs
+across different Huber thresholds are \emph{not}
+values of the same objective and must not be compared as if
+they were. Try changing the outlier's location, amplitude,
+and the initialization; document cases where robustness fails.
+\end{booktwolab}
+
+\begin{Shaded}
+\begin{verbatim}
+build/book02-cpp23/book02_workbench robust-fit
+build/book02-cpp23/book02_workbench robust-data \
+  > build/book02-cpp23/robust-data.csv
+python3 tools/labs/book02_cpp23/plot.py \
+  build/book02-cpp23/robust-data.csv \
+  --output build/book02-cpp23/robust-data.png
+\end{verbatim}
+\end{Shaded}

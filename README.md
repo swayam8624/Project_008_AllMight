@@ -4,6 +4,8 @@ A growing, self-contained teaching library for the 3,000-part curriculum, organi
 
 GitHub repository: `Project_008_AllMight`.
 
+> **New, experimental C++23 seven-book teaching track:** [[Book Production/Seven-Book Curriculum/README|Project-led seven-book index]] and [[Book Production/Seven-Book Curriculum/source-routing-foundations|39-chapter foundations routing]]. The first chapter addendum and a reproducible NES cartridge laboratory are on the curriculum revision branch. The three canonical masters and existing print production remain authoritative; the seven-book build is not yet complete.
+
 
 ## Canonical teaching volumes — 14 November 2026 local repair
 

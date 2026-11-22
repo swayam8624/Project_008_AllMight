@@ -1,0 +1,40 @@
+% Properly normalized independent bivariate Gaussian; sigma_x=1.2, sigma_y=0.55.
+\clearpage
+\section*{Visual laboratory: a probability density is a geometric field}
+\noindent For independent normal measurements with
+\(\sigma_x=1.2,\;\sigma_y=0.55\), the joint density is
+\[
+p(x,y)=\frac{1}{2\pi(1.2)(0.55)}
+\exp\!\left[-\frac12\!\left(\frac{x^2}{1.2^2}+
+\frac{y^2}{0.55^2}\right)\right].
+\]
+Height and color encode the same density. A taller peak does not imply
+greater total probability: the integral over the full plane is one.
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+ group style={group size=2 by 1,horizontal sep=10mm},
+ booktwoaxis,width=0.44\textwidth,height=63mm,
+ xmin=-3,xmax=3,ymin=-2,ymax=2,
+ xlabel={$x$},ylabel={$y$},
+ point meta min=0,point meta max=0.245,
+ colormap name=booktwothermal
+]
+\nextgroupplot[title={3D probability density},view={40}{28},zmin=0,zmax=0.26]
+\addplot3[surf,shader=interp,draw=none,domain=-3:3,y domain=-2:2,samples=29,samples y=23]
+{exp(-0.5*((x/1.2)^2+(y/0.55)^2))/(2*pi*1.2*0.55)};
+\nextgroupplot[title={Top-down density map},view={0}{90},axis equal image]
+\addplot3[surf,shader=interp,draw=none,domain=-3:3,y domain=-2:2,samples=29,samples y=23]
+{exp(-0.5*((x/1.2)^2+(y/0.55)^2))/(2*pi*1.2*0.55)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Analytical bivariate normal density with covariance
+\(\Sigma=\operatorname{diag}(1.44,0.3025)\).
+The figures depict the formula above, not observed sample frequencies or a confidence region.
+Equal-density contours are ellipses; their probability content must be calculated, not inferred from color alone.}
+\label{fig:book02-gaussian-uncertainty}
+\end{figure}
+\noindent\textbf{Reconstruct it:} draw seeded samples, estimate their
+covariance, and compare empirical contour coverage with the intended
+\(\chi^2_2\) probability levels across many independent replications.

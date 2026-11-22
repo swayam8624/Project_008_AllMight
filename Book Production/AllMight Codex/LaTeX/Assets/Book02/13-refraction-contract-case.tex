@@ -1,0 +1,39 @@
+% Independent refraction arithmetic; unit vectors, outward-facing normal.
+\clearpage
+\section*{Verification case: distinguish total internal reflection from rounding}
+\noindent In the existing optics derivation, the incident unit direction
+\(\mathbf i\) points toward an interface and the surface unit normal
+\(\mathbf n\) points against incidence. Define
+\(c_i=-\mathbf i\cdot\mathbf n\) and \(\eta=n_1/n_2\).
+The transmitted direction, if it exists, is
+\[
+\mathbf t=\eta\mathbf i+(\eta c_i-\sqrt{k})\mathbf n,
+\qquad k=1-\eta^2(1-c_i^2).
+\]
+Suppose a ray passes from refractive index \(1.5\) to \(1.0\)
+at \(45^\circ\), with \(\mathbf i\cdot\mathbf n=-1/\sqrt2\).
+Then
+\[
+k=1-1.5^2\left(1-\frac12\right)=-0.125.
+\]
+There is no real transmitted ray: this is \emph{total internal
+reflection}. Returning a unit transmitted direction by forcing
+\(k\) to zero would produce a geometrically plausible but
+physically incorrect result.
+
+At \(30^\circ\) incidence from the same medium, however,
+\(k=1-2.25(1-\tfrac34)=0.4375\).
+The transmitted sine is \(0.75\), so the refraction angle is
+approximately \(48.59^\circ\). The computed transmitted vector
+should have unit length (within rounding) and point into the
+second medium. The critical angle is
+\(\arcsin(1/1.5)\), approximately \(41.81^\circ\).
+
+\paragraph{Independent checks.}
+Test both directions of propagation, critical incidence, slightly
+subcritical and supercritical incidence, and input normal reversal
+under a \emph{declared} convention. Reject zero-length normals and
+nonfinite input. For \(k<0\), distinguish a tiny roundoff interval
+from physically meaningful total internal reflection using a
+well-justified numerical policy. Do not confuse this directional
+calculation with Fresnel splitting, absorption or spectral dispersion.
