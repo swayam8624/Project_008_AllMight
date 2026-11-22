@@ -30,9 +30,23 @@ target_link_libraries(book03_frames PRIVATE book03_frame_math)
 add_executable(book03_frame_tests tests/frame_math_tests.cpp)
 target_link_libraries(book03_frame_tests PRIVATE book03_frame_math)
 
+# Chapter 03: reuse the first two chapters' canvas and frame types.
+add_library(book03_triangle_geometry INTERFACE)
+target_include_directories(book03_triangle_geometry INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_triangle_geometry INTERFACE cxx_std_23)
+
+add_executable(book03_triangles src/triangle_studio.cpp)
+target_link_libraries(book03_triangles PRIVATE
+    book03_triangle_geometry book03_pixel_canvas)
+
+add_executable(book03_triangle_tests tests/triangle_geometry_tests.cpp)
+target_link_libraries(book03_triangle_tests PRIVATE book03_triangle_geometry)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
-                   book03_frames book03_frame_tests)
+                   book03_frames book03_frame_tests
+                   book03_triangles book03_triangle_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -41,4 +55,5 @@ include(CTest)
 if(BUILD_TESTING)
     add_test(NAME book03_pixel_canvas_contracts COMMAND book03_canvas_tests)
     add_test(NAME book03_affine_frame_contracts COMMAND book03_frame_tests)
+    add_test(NAME book03_triangle_geometry_contracts COMMAND book03_triangle_tests)
 endif()
