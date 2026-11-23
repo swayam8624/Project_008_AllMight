@@ -194,7 +194,7 @@ void sphere_roots_and_ray_domain() {
     near(tangent.metres,5,0,"tangent distance five metres");
 
     const auto close=book03::intersect(
-        Ray3::from({1+1e-15,1,5},{0,0,-1}),sphere);
+        Ray3::from({1+1e-13,1,5},{0,0,-1}),sphere);
     require(close.kind==RaySphereKind::NearTangentUncertain,
             "almost tangent does not receive a certified sign");
 }
