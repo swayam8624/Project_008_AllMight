@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Image, Geometry, Mesh and Curve Contracts
+name: Book 03 - C++23 Image, Geometry, Mesh, Curve and Procedural Contracts
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 eight cumulative geometry laboratories (Ubuntu)
+    name: C++23 nine cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute nine CTests across eight C++23 geometry laboratories
+      - name: Execute ten CTests across nine C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -291,6 +291,82 @@ jobs:
           assert "P(0.5)=(0.00000000,1.87500000,0.00000000)" in repl
           assert "Updated patch-control 1,1" in repl
           print("P08: source-generated SVG/CSV/OBJ, control editing and indexed patch checks verified")
+          PY
+      - name: Verify P09 procedural terrain, closed primitives and implicit edge cache
+        run: |
+          build/book03-p01/book03_world inspect terrain > build/book03-p01/world-terrain.txt
+          build/book03-p01/book03_world inspect cylinder > build/book03-p01/world-cylinder.txt
+          build/book03-p01/book03_world inspect sphere > build/book03-p01/world-sphere.txt
+          build/book03-p01/book03_world inspect implicit > build/book03-p01/world-implicit.txt
+          build/book03-p01/book03_world svg build/book03-p01/world-terrain.svg terrain
+          build/book03-p01/book03_world svg build/book03-p01/world-sphere.svg sphere
+          build/book03-p01/book03_world svg build/book03-p01/world-implicit.svg implicit
+          build/book03-p01/book03_world obj build/book03-p01/world-terrain.obj terrain
+          build/book03-p01/book03_world obj build/book03-p01/world-cylinder.obj cylinder
+          build/book03-p01/book03_world obj build/book03-p01/world-sphere.obj sphere
+          build/book03-p01/book03_world obj build/book03-p01/world-implicit.obj implicit
+          build/book03-p01/book03_world csv build/book03-p01/world-points.csv terrain
+          printf 'shape cylinder\nradius 0.8\ninspect\nshape implicit\nresolution 9\ninspect\nobj build/book03-p01/world-repl-implicit.obj\nquit\n' | build/book03-p01/book03_world repl > build/book03-p01/world-repl.txt
+          python3 - <<'PY'
+          import csv
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          ns="{http://www.w3.org/2000/svg}"
+          fixtures={
+              "terrain":(169,288,456,48,1),
+              "cylinder":(26,48,72,0,2),
+              "sphere":(62,120,180,0,2)
+          }
+          for name,(vertices,faces,edges,boundary,chi) in fixtures.items():
+              body=(base/f"world-{name}.txt").read_text(encoding="utf-8")
+              assert f"shape={name}" in body
+              assert f"positions={vertices} referenced={vertices} faces={faces} edges={edges}" in body
+              assert f"Euler V-E+F={chi}" in body
+              assert f"boundary={boundary}" in body
+              assert "winding-conflict=0 nonmanifold=0" in body
+              assert "disconnected-vertex-fans=0" in body
+          implicit=(base/"world-implicit.txt").read_text()
+          assert "shape=implicit" in implicit
+          assert "Euler V-E+F=2" in implicit
+          assert "boundary=0" in implicit
+          assert "winding-conflict=0 nonmanifold=0" in implicit
+          assert "closed-orientable-edge-candidate=yes" in implicit
+          m=re.search(r"global cached edge crossings=(\d+)",implicit)
+          assert m,implicit
+          implicit_cached=int(m.group(1))
+          assert implicit_cached>100
+          for name in ("world-terrain.svg","world-sphere.svg","world-implicit.svg"):
+              root=ET.parse(base/name).getroot()
+              assert root.tag==ns+"svg"
+              assert root.find(ns+"title") is not None
+              assert root.find(ns+"desc") is not None
+              assert len(root.findall(ns+"polygon"))>30
+              assert len(root.findall(ns+"line"))>30
+          for name,(v,f,*_) in fixtures.items():
+              obj=(base/f"world-{name}.obj").read_text().splitlines()
+              vertices=[row for row in obj if row.startswith("v ")]
+              faces=[row for row in obj if row.startswith("f ")]
+              assert len(vertices)==v and len(faces)==f
+              assert all(1<=int(idx)<=v for face in faces for idx in face.split()[1:])
+          obj=(base/"world-implicit.obj").read_text().splitlines()
+          assert len([row for row in obj if row.startswith("v ")])==implicit_cached
+          faces=[row for row in obj if row.startswith("f ")]
+          assert len(faces)>100
+          assert all(1<=int(idx)<=implicit_cached for face in faces for idx in face.split()[1:])
+          with (base/"world-points.csv").open(newline="",encoding="utf-8") as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)==169
+          assert [int(row["id"]) for row in rows]==list(range(169))
+          repl=(base/"world-repl.txt").read_text()
+          assert "Updated shape=cylinder" in repl
+          assert "Updated radius=0.8" in repl
+          assert "Updated shape=implicit" in repl
+          assert "Updated resolution=9" in repl
+          assert "Euler V-E+F=2" in repl
+          assert (base/"world-repl-implicit.obj").is_file()
+          print("P09: analytic generator topologies, current fixture exports and grid-edge cached isosurface inspected")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
