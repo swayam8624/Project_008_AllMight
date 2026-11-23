@@ -121,13 +121,8 @@ struct Page {double x{},y{};};
     return image;
 }
 
-[[nodiscard]] std::pair<Mesh3,MeshReport> analyze(const WorldState& state) {
-    Mesh3 mesh=state.mesh();
-    return {std::move(mesh),book03::inspect_mesh(mesh)};
-}
-// Do not pass a moved-from Mesh3 to the topology analyzer. C++17's
-// function-argument evaluation order for initializer elements does not make
-// this valid; the compiler should see a materialized graph before move.
+// Analyze the populated graph before moving it into the result pair:
+// moving it first would make topology inspection read a moved-from mesh.
 [[nodiscard]] std::pair<Mesh3,MeshReport> generated(const WorldState& state) {
     Mesh3 m=state.mesh();
     MeshReport r=book03::inspect_mesh(m);
