@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="478" viewBox="0 0 960 478" role="img" aria-labelledby="title desc">
+<title id="title">A proven numerical error interval can certify positive or negative orientation</title>
+<desc id="desc">Three horizontal axes each mark zero. A left interval lies entirely below zero, so a rigorous bound certifies negative sign. A middle interval crosses zero and must use stronger arithmetic. A right interval lies entirely above zero and certifies positive sign. This demonstrates the logic of a filtered orientation predicate, not an error-bound implementation in the current P05 code.</desc>
+<rect width="960" height="478" rx="18" fill="#fbfaf7"/>
+<text x="34" y="37" font-size="22" font-family="sans-serif" fill="#284450" font-weight="600">A fast sign is trustworthy only when its error interval cannot cross zero</text>
+<text x="34" y="59" font-size="13" font-family="sans-serif" fill="#637b80">Conceptual decision diagram: measured approximation D̂ and proven error bound ±E</text>
+<g font-family="sans-serif" font-size="16" fill="#395866" font-weight="600">
+<text x="50" y="120">Certified negative</text>
+<text x="50" y="242">Uncertain: fall back</text>
+<text x="50" y="366">Certified positive</text>
+</g>
+<g stroke="#889ea6" stroke-width="2"><path d="M280 139 H892"/><path d="M280 259 H892"/><path d="M280 381 H892"/></g>
+<g stroke="#c7d6da" stroke-width="1.4" stroke-dasharray="5 5"><path d="M586 96 V429"/></g>
+<g font-family="sans-serif" font-size="13" fill="#657a80">
+<text x="579" y="91">0</text>
+<text x="572" y="452">Zero threshold</text>
+</g>
+<!-- Negative interval -230 to -90 relative to zero at x=586 -->
+<rect x="346" y="124" width="140" height="31" rx="8" fill="#bcd8e6" stroke="#357d9f" stroke-width="2"/>
+<path d="M346 138 H486" stroke="#357d9f" stroke-width="3"/>
+<circle cx="416" cy="139" r="8" fill="#357d9f" stroke="white" stroke-width="2"/>
+<text x="497" y="147" font-family="monospace" font-size="14" fill="#31677c">D̂ + E &lt; 0</text>
+<!-- Uncertain interval crosses 0 -->
+<rect x="515" y="245" width="143" height="30" rx="8" fill="#f0d5ae" stroke="#be8748" stroke-width="2"/>
+<path d="M515 260 H658" stroke="#be8748" stroke-width="3"/>
+<circle cx="585" cy="260" r="8" fill="#be8748" stroke="white" stroke-width="2"/>
+<text x="672" y="265" font-family="monospace" font-size="14" fill="#955c33">0 is inside</text>
+<!-- positive interval -->
+<rect x="683" y="368" width="140" height="30" rx="8" fill="#b6dfd3" stroke="#237f6a" stroke-width="2"/>
+<path d="M683 382 H823" stroke="#237f6a" stroke-width="3"/>
+<circle cx="753" cy="381" r="8" fill="#237f6a" stroke="white" stroke-width="2"/>
+<text x="668" y="355" font-family="monospace" font-size="14" fill="#266e62">D̂ − E &gt; 0</text>
+<rect x="33" y="424" width="892" height="39" rx="9" fill="#eaf2f0"/>
+<text x="50" y="448" font-family="sans-serif" font-size="14" fill="#3a6269">Without a proved bound E, the middle decision must not be called certified.</text>
+</svg>
