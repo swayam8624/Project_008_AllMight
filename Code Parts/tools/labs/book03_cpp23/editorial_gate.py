@@ -71,6 +71,8 @@ def main() -> int:
         LAB / "include/book03/mesh_topology.hpp",
         LAB / "src/mesh_studio.cpp",
         LAB / "tests/mesh_topology_tests.cpp",
+        LAB / "include/book03/halfedge_mesh.hpp",
+        LAB / "tests/halfedge_mesh_tests.cpp",
     ]:
         check(path.exists(), f"missing required source: {path}")
 
@@ -175,6 +177,7 @@ def main() -> int:
         "18-coincident-positions-separate-vertices.svg": chapter7,
         "19-nonmanifold-edge-and-bowtie.svg": chapter7,
         "20-closed-indexed-house.svg": chapter7,
+        "21-halfedge-twins-and-cycles.svg": chapter7,
     }
     for filename, owning_chapter in figure_owners.items():
         figure = BOOK / "Assets" / filename
@@ -205,7 +208,7 @@ def main() -> int:
     check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
           "RGB8 PPM serialization contract missing")
 
-    print("Book03/P01–P07: seven narrative chapters, source location and twenty original SVG figure contracts checked.")
+    print("Book03/P01–P07: seven narrative chapters, source location and twenty-one original SVG figure contracts checked.")
     print("No LaTeX/PDF/EPUB builds were requested or performed.")
     return 0
 
