@@ -88,3 +88,18 @@ The new \`Chapters/04 - Move the World Without Losing It.md\` develops identity,
 The new C++23 companion \`Code Parts/tools/labs/book03_cpp23/include/book03/affine2.hpp\` provides that affine contract; \`src/transform_studio.cpp\` uses the earlier chapters' canvas, frame and triangle structures to generate inspectable SVG/PPM outputs and a native command-line playground; \`tests/affine2_tests.cpp\` adds deterministic scalar/property checks. Original source figures \`Assets/07-transform-family.svg\`, \`08-transform-order.svg\` and \`09-normals-under-shear.svg\` illustrate the concepts and remain inside the unchanged Book03 notes folder.
 
 **Source-integrity boundary:** none of the inspected original full masters, reading copies or LaTeX-generated Stage 03 chapter fragments was rewritten, shortened or moved. The entrypoint audit is not a completed full-body source-unit reconciliation. That deeper step must precede any claim of whole-book completion or release.
+
+
+## Pass 05 — robust predicate sources require subsection-level routing
+
+The new reader Chapter 05, \`Chapters/05 - The Triangle That Almost Wasn't There.md\`, develops exact decisions for finite stored IEEE binary64 geometry through a disappearing-triangle story. It adds two independent adversarial scenarios—large representable products whose naive difference rounds to zero despite a true \(-4\) determinant; and the smallest subnormal coordinates whose positive determinant underflows in ordinary binary64 multiplication—plus explicit differentiation of **input rounding** from **arithmetic rounding**.
+
+The new project under \`Code Parts/tools/labs/book03_cpp23/\` comprises:
+- \`include/book03/exact_orient2d.hpp\` — a novel, independently authored binary64 dyadic big-integer sign oracle; bounded exact-int64 fast path reuses P03. This does not implement Shewchuk expansion arithmetic.
+- \`tests/exact_orient2d_tests.cpp\` — 5,000 deterministic exact half-grid references, extreme and invalid values, topological consistency and hard numeric failure fixtures.
+- \`src/precision_studio.cpp\` — numeric inspector and C++-generated decision-report CSV and SVG, including an interactive query.
+- \`Assets/10-the-vanishing-triangle.svg\`, \`11-subnormal-area.svg\`, and \`12-certified-sign-interval.svg\` — original accessible figures, the last explaining *what a certified floating filter would need*, not falsely claiming P05 implements it.
+
+The [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) inspects the original long Computing Foundations/34 source **beyond the first robust-predicate section**. Its subsequent material covers finite camera frusta, corner derivations, inverse view-projection, zero-to-one depth, reversed-Z, infinity, planes and culling. Preserve and route these substantial original sections to Books 03 Chapters 13–17 and downstream rendering chapters; never discard them because the new numerical predicate chapter reuses the original heading's first subject.
+
+The actual legacy full bodies and their source-span hashes remain to be verified and source-unit reconciled before Book 03 release. Published Books 1–2, original continuous notes, derived reading copies, LaTeX staging and the \`From Bits to Research/\` output tree have not been edited.
