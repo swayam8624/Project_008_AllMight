@@ -224,6 +224,25 @@ struct SignedInteger {
 
 } // namespace exact_detail
 
+// This is a DIAGNOSTIC for the book's naive product-subtraction failure,
+// never an exact or certified predicate. Force two separate binary64-rounded
+// products so an optimizing compiler cannot fuse the expression into FMA.
+// Volatile is intentional ONLY for this demonstration. It is not a generally
+// recommended strategy for numerical stability or an arbitrary floating
+// precision specification.
+[[nodiscard]] inline double naive_orientation_two_rounded_products(
+    Point2 a,Point2 b,Point2 c) {
+    if(!finite(a)||!finite(b)||!finite(c))
+        throw std::invalid_argument("naive diagnostic requires finite inputs");
+    const double abx=b.x-a.x;
+    const double aby=b.y-a.y;
+    const double acx=c.x-a.x;
+    const double acy=c.y-a.y;
+    volatile double first=abx*acy;
+    volatile double second=aby*acx;
+    return first-second;
+}
+
 enum class ExactOrientPath { BoundedInteger, ExactBinary64Dyadic };
 
 struct ExactOrientResult {
