@@ -58,11 +58,27 @@ add_executable(book03_affine_tests tests/affine2_tests.cpp)
 target_link_libraries(book03_affine_tests PRIVATE
     book03_affine2 book03_triangle_geometry)
 
+# Chapter 05: the exact represented-binary64 orientation oracle is
+# fully standard C++23. Its proof-carrying slow path uses integer limbs.
+add_library(book03_exact_orient2d INTERFACE)
+target_include_directories(book03_exact_orient2d INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_exact_orient2d INTERFACE cxx_std_23)
+
+add_executable(book03_precision src/precision_studio.cpp)
+target_link_libraries(book03_precision PRIVATE
+    book03_exact_orient2d book03_triangle_geometry)
+
+add_executable(book03_exact_tests tests/exact_orient2d_tests.cpp)
+target_link_libraries(book03_exact_tests PRIVATE
+    book03_exact_orient2d book03_triangle_geometry)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
                    book03_triangles book03_triangle_tests
-                   book03_transforms book03_affine_tests)
+                   book03_transforms book03_affine_tests
+                   book03_precision book03_exact_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -73,4 +89,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_affine_frame_contracts COMMAND book03_frame_tests)
     add_test(NAME book03_triangle_geometry_contracts COMMAND book03_triangle_tests)
     add_test(NAME book03_affine_transform_contracts COMMAND book03_affine_tests)
+    add_test(NAME book03_binary64_exact_orientation_contracts COMMAND book03_exact_tests)
 endif()
