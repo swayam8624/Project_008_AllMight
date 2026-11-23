@@ -109,6 +109,73 @@ That reversal is intentional. If the triangles form a consistently oriented surf
 
 If you have ever stitched two pieces of cloth, imagine their shared seam. Each piece approaches the seam from its own inside, so the oriented seam is traversed in opposite directions when we walk around their separate boundaries.
 
+## Giving every edge an address of its own: half-edges
+
+Our canonical edge keys answer a question: “Who uses this shared undirected edge?” But suppose we want to walk around the house's roof without scanning every triangle, or move directly from one face across its shared edge into the next face.
+
+For that, geometry-processing systems often store a more explicit connectivity structure called a **half-edge**.
+
+The name sounds peculiar. We are not cutting a physical edge into two equal-length pieces. A half-edge is one *directed use* of an edge along a particular oriented face boundary. When two consistently oriented faces share an interior edge, their two directed uses make a natural pair.
+
+Think of a narrow street between two houses. One address says “travel from A to B alongside the first house.” The other says “travel from B to A alongside the second house.” They refer to the same physical street but carry different directions and face owners.
+
+A half-edge record can store the IDs of its origin, destination and incident face, plus three navigation handles:
+
+- \`next\`: the next directed edge as we walk around the same face;
+- \`previous\`: the preceding edge around that face;
+- \`twin\`: the oppositely directed use belonging to the neighboring face.
+
+For a triangle, following \`next\` three times must return us to the starting half-edge:
+
+\[
+\boxed{\operatorname{next}^3(h)=h.}
+\tag{7.H1}
+\]
+
+Likewise the previous edge should undo a next step:
+
+\[
+\boxed{\operatorname{previous}(\operatorname{next}(h))=h.}
+\tag{7.H2}
+\]
+
+And for a legitimate interior twin pair,
+
+\[
+\boxed{\operatorname{twin}(\operatorname{twin}(h))=h,}
+\tag{7.H3}
+\]
+
+with reversed endpoints. The equations are not mystical. They are promises about a tiny navigational graph that a debugger can inspect directly.
+
+![Two triangle face loops with next and previous links, and the opposite directed half-edges along their common diagonal joined as twins.](../Assets/21-halfedge-twins-and-cycles.svg)
+
+*Figure 7.5 — A half-edge is a face-owned directed use of an indexed edge. Each triangle has a three-link face cycle. A legitimate pair of opposite uses across an interior edge may be joined by a symmetric twin relationship.*
+
+### What if there is no neighboring face?
+
+For a boundary edge, there is no second incident surface face to pair with. Different half-edge libraries make different choices. One may represent the missing twin by an invalid handle. Another may create an explicit boundary half-edge with no incident face and connect those boundary uses into boundary loops.
+
+Our P07 reference chooses the simpler **invalid-handle convention**. That makes the limitation visible: a boundary edge has no usable twin. It is not a fake neighboring face.
+
+A winding-conflict edge is also problematic. If both incident faces walk the shared edge in the same direction, they are not the two opposite half-edges our invariant expects. A lazy implementation might still pair them and hope nobody notices. We deliberately **refuse** to create that twin.
+
+A three-face nonmanifold edge is worse. If there are three or more directed uses, which one should be the unique twin? Choosing an arbitrary pair would discard or misrepresent the others. Our little half-edge builder leaves all the affected twins invalid and relies on the incidence report to expose the nonmanifold structure.
+
+This is a case where *refusing to represent an invalid relationship* is better engineering than silently inventing one.
+
+### Why engines care, and why handles have a lifetime
+
+Once a half-edge twin is valid, crossing from a face to its neighbor is essentially one indexed lookup. Walking around a face follows the \`next\` cycle. A vertex's incident region can be explored by combining \`twin\` and \`next\` under the declared orientation and boundary conventions.
+
+The original longer mesh chapter develops a one-ring rotation formula: for an outgoing half-edge \(h\), a common interior traversal is \(\operatorname{next}(\operatorname{twin}(h))\). The exact expression depends on whether the data structure records the origin or destination vertex, how face cycles are oriented, and how boundary half-edges are represented. A boundary or missing twin changes the traversal rules.
+
+The reference code in \`include/book03/halfedge_mesh.hpp\` constructs three face-owned records for each valid indexed triangle, creates twins only for two opposite directed uses, and validates face cycles and symmetric twins. It does **not** implement a mutable modeling engine. If you edit the topology, you must rebuild its handles; old half-edge indices are no longer guaranteed to identify the same connection. Production libraries often use generations, stable handles and ownership rules to prevent stale references from silently pointing at new objects.
+
+The most useful learning exercise is to break one link on purpose. Change a half-edge's \`next\` handle so that it points to itself, then run the validator. A good invariant reports the broken cycle before a later algorithm loops forever.
+
+This is an important addition to our numerical discipline. Chapter 05 protected decisions about **coordinates**. Chapter 07 protects decisions about **relationships**. Both prevent silent, plausible-looking errors from spreading into later systems.
+
 ## Boundary, interior, conflict and nonmanifold
 
 Gather the list of all face uses of each undirected edge. Then ask how many uses it has.
