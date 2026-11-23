@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–06; six substantial narrative chapters, six cumulative C++23 laboratories and sixteen original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–07; seven substantial narrative chapters, seven cumulative C++23 laboratories, eight source-authored CTests and twenty-one original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -19,17 +19,20 @@
 7. [Chapter 04 — Move the World Without Losing It](Chapters/04%20-%20Move%20the%20World%20Without%20Losing%20It.md) — affine and homogeneous transformations, active/passive frames, pivots, inverses, normals and conditioning.
 8. [Chapter 05 — The Triangle That Almost Wasn't There](Chapters/05%20-%20The%20Triangle%20That%20Almost%20Wasn%27t%20There.md) — reproducible cancellation and underflow, exact represented-binary64 predicates, signed integer limbs and uncertainty.
 9. [Chapter 06 — Step Out of the Page](Chapters/06%20-%20Step%20Out%20of%20the%20Page.md) — complete 3D world foundations, cross products, planes, normals, ray/plane/sphere intersections and conditioning.
-10. [P01–P06: C++23 Image, Frame, Triangle, Affine, Exact Predicate and 3D Spatial Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
-11. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
-12. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
-13. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
-14. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
-15. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
-16. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
-17. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
-18. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
-19. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
-20. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
+10. [Chapter 07 — One Shape, Many Triangles](Chapters/07%20-%20One%20Shape%2C%20Many%20Triangles.md) — indexed mesh identity, edge incidence, orientation, halfedge twins, bow-tie fans, invisible seams, Euler and CSR/Laplacian.
+11. [P01–P07: C++23 Image, Frame, Triangle, Affine, Predicate, 3D and Mesh Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
+12. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
+13. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
+14. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
+15. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
+16. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
+17. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
+18. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
+19. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
+20. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
+21. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
+22. [Pass 07 original-source audit](PASS07_LEGACY_AUDIT.md) — actually inspected halfedge, winged-edge, vertex-link, CSR and Laplacian source sections.
+23. [Pass 07 evidence record](PASS07_EVIDENCE.md) — authored mesh and halfedge C++23 project, figures, exact combinatorial checks and outstanding runtime/release gates.
 
 ## What is already authored?
 
@@ -45,7 +48,9 @@ Pass 05 drafts the full numerical-geometry chapter, with three original explanat
 
 Pass 06 drafts the long three-dimensional transition chapter: points and displacements in space, dot and cross, true face normals, planes and signed distances, forward rays and their intersection policies, spheres and stable quadratic root selection. Four new original scientific figures continue the series visual style. A native `geometry3d.hpp` math reference, `spatial_studio.cpp` oblique 3D scene viewer (SVG/CSV/REPL) and independent `geometry3d_tests.cpp` suite introduce 2,500 deterministic vector identities and boundary cases. The P03 bounded exact 2D orientation serves as an independent source of evidence for a triangle embedded in the 3D XY plane, without falsely claiming that the new 3D cross product is exact.
 
-The first six passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
+Pass 07 adds the long indexed-mesh reader chapter, five original vector teaching plates, an exact integer-index topology report with eight deliberate valid/invalid fixtures, a disjoint-set component and vertex-fan inspector, equal-valued coordinate seam reporting, per-face-corner UV domains, a compact indexed halfedge face/twin validator, and CSR adjacency with a source-documented scalar uniform graph Laplacian. Its two independent C++23 test suites include 300 deterministic strip count oracles; the native mesh studio produces selectable-fixture SVG/CSV plus numerical inspection. The CMake project now contains seven cumulative labs and eight CTests. The original long mesh chapter, halfedge/winged-edge and boundary-loop proofs are mapped but not overwritten.
+
+The first seven passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
 
 ## Teaching voice
 
@@ -82,7 +87,7 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 04 | Narrative affine transformations, active/passive bases, homogeneous matrices, inverse and pivot, normal transform, original SVG plates and C++23 affine house studio | Authored; native C++23 and final publication validation reported separately |
 | 05 | Exact binary64 orientation, cancellation/subnormal/overflow witnesses, source-preserving numerical chapter, 3 SVG figures and CSV/SVG diagnostic lab | Authored; independent target-build and observed CI success remain open |
 | 06 | 3D coordinate and normal mathematics, plane/ray/sphere intersection, spatial SVG/CSV/REPL, four figures and 2,500 seeded cross/dot checks | Authored; target compiler execution and observed CI success remain open |
-| 07 | Indexed meshes, shared topology, adjacency and model-data validity | Not started |
+| 07 | Indexed 3D mesh incidence, closed house reference, disconnected seam, winding/nonmanifold/bow-tie diagnostics, per-corner UVs, halfedge cycles/twins, CSR/Laplacian, five SVGs | Authored; original source preserved; compiler/CTest and final reader proof remain open |
 | 08 | 3D cameras, poses and projection | Not started |
 | 09 | CPU clipping, triangle rasterization and visibility | Not started |
 | 10 | Lens/sensor/image formation and calibration | Not started |
