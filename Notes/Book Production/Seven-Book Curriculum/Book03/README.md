@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–04; four substantial narrative chapters, four cumulative C++23 laboratories and nine original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–05; five substantial narrative chapters, five cumulative C++23 laboratories and twelve original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -17,13 +17,16 @@
 5. [Chapter 02 — Every Place Needs an Address](Chapters/02%20-%20Every%20Place%20Needs%20an%20Address.md) — full narrative on points, displacements, frames, inverse transforms and world-to-image mapping.
 6. [Chapter 03 — Shapes That Know Their Borders](Chapters/03%20-%20Shapes%20That%20Know%20Their%20Borders.md) — signed area, winding, barycentrics, interpolation, exact bounded integer predicates and uncertain floating boundaries.
 7. [Chapter 04 — Move the World Without Losing It](Chapters/04%20-%20Move%20the%20World%20Without%20Losing%20It.md) — affine and homogeneous transformations, active/passive frames, pivots, inverses, normals and conditioning.
-8. [P01–P04: C++23 Image, Frame, Triangle and Affine Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
-9. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
-10. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
-11. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
-12. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
-13. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
-14. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
+8. [Chapter 05 — The Triangle That Almost Wasn't There](Chapters/05%20-%20The%20Triangle%20That%20Almost%20Wasn%27t%20There.md) — reproducible cancellation and underflow, exact represented-binary64 predicates, signed integer limbs and uncertainty.
+9. [P01–P05: C++23 Image, Frame, Triangle, Affine and Exact-Predicate Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
+10. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
+11. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
+12. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
+13. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
+14. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
+15. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
+16. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
+17. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
 
 ## What is already authored?
 
@@ -35,7 +38,9 @@ Pass 03 adds a third long narrative chapter with two scientific diagrams, a boun
 
 Pass 04 adds the fourth narrative chapter with original affine/transform-order/normal diagrams, a new homogeneous-affine 2D C++23 module, independent numerical tests including 2,000 deterministic transform round trips, and a house studio with inspectable matrices, SVG/PPM output, transform-order witness and editable terminal REPL.
 
-The first four passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
+Pass 05 drafts the full numerical-geometry chapter, with three original explanatory SVG figures and a self-contained C++23 exact orientation predicate for **finite stored IEEE binary64 coordinates**. The exact engine uses the previous bounded-int64 oracle for small integer inputs and a signed arbitrary-limb dyadic path otherwise, with 5,000 deterministic cross-checks specified in the new test source. The project adds a numeric observatory with an interactive REPL and reproducible SVG/CSV decision reports.
+
+The first five passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
 
 ## Teaching voice
 
@@ -70,7 +75,7 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 02 | Coordinate frames, inverse transforms, typed point/vector math, image mapping, terminal coordinate playground, two SVG diagrams | Authored; compilation/verification reported separately |
 | 03 | Signed orientation/area, barycentric triangle containment/interpolation, bounded exact oracle, user-editable triangle REPL and original figures | Introductory triangle work authored; full mesh topology and advanced adaptive predicates reserved for Chapters 05 and 07 |
 | 04 | Narrative affine transformations, active/passive bases, homogeneous matrices, inverse and pivot, normal transform, original SVG plates and C++23 affine house studio | Authored; native C++23 and final publication validation reported separately |
-| 05 | Robust geometry and adaptive-predicate chapter with original-source reconciliation | Not started |
+| 05 | Exact binary64 orientation, cancellation/subnormal/overflow witnesses, source-preserving numerical chapter, 3 SVG figures and CSV/SVG diagnostic lab | Authored; independent target-build and observed CI success remain open |
 | 06 | Meshes, topology and real model data | Not started |
 | 07 | 3D cameras, poses and projection | Not started |
 | 08 | CPU clipping, triangle rasterization and visibility | Not started |
