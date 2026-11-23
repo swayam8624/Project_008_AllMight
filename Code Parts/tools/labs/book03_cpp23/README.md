@@ -170,3 +170,50 @@ P04 uses explicit row-major array **serialization** for printed homogeneous matr
 P04 RGB8 output intentionally paints simplified flat-color triangles. It is **not** physically based rendering, a production camera, a depth-buffered rasterizer, or a GPU experiment. The exact triangle test developed earlier retains its separate bounded integer domain. This project is about trustworthy transforms, not prematurely claiming capabilities that later books will develop.
 
 The CI workflow checks target compilation, CTest execution, numeric REPL order, PPM byte size and SVG structure once it is actually run. **Do not report “passed” merely because the checks are written.** The final combined PDF/EPUB build remains the author's later Mac-side review; running this lab must not write to the established local \`From Bits to Research/\` publication library.
+
+
+---
+
+## Chapter 05 — P05 Exact-Orientation Laboratory
+
+**Purpose.** Demonstrate a *real*, reproducible topology failure in ordinary binary64 product-subtraction and fix that decision with an exact sign for the **stored** finite input coordinates. It is the next chapter in the cumulative Book 03 project; nothing about P01–P04 needs to be overwritten.
+
+### Read these three new files
+
+1. \`include/book03/exact_orient2d.hpp\` — binary64-to-integer bit decoding; magnitude limbs and carry-safe exact add/subtract/multiply; bounded integer path; exact dyadic fallback; exact triangle point containment. It also includes a deliberate *naive* diagnostic with **two separately rounded products**, using volatile stores solely to avoid optimization silently fusing away the teaching example.
+2. \`tests/exact_orient2d_tests.cpp\` — exact minus-four cancellation; smallest subnormal positive orientation even when the ordinary product underflows; maximum finite-coordinate extreme cases; signed zero, invalid inputs, exact on-edge classification, 5,000 deterministic half-integer inputs compared with the independent P03 bounded-integer oracle.
+3. \`src/precision_studio.cpp\` — inspect stored coordinates (17 significant digits), naive numerical result, exact signed result, and the chosen path; write a fixture CSV and a mathematically grounded diagnostic SVG; interactively enter six finite coordinates and save the corresponding report.
+
+### The numerical contract in one sentence
+
+For **finite IEEE-754 binary64 coordinate values actually represented in memory**, the exact oracle computes the correct sign of the 2D orientation determinant using a bounded int64 oracle or exact arbitrary-limb signed integer arithmetic.
+
+The core insight is that every finite binary64 \(x\) can be written as an exact signed integer \(N_x 2^{-1074}\). On this common scale, the whole orientation determinant's sign is the exact sign of an integer expression. The code requires the standard eight-byte IEEE binary64 format and documents the 32-bit limb arithmetic proof. It never promises correctness relative to lost pre-storage measurement/decimal information.
+
+**This is NOT a Shewchuk-style adaptive floating error-bound filter.** It is adaptive by accepted integer range and exact dyadic fallback, not a claim to best-in-class runtime. The paper by Jonathan Shewchuk is credited in the narrative bibliography and inspected source ledger; no third-party implementation was imported.
+
+### Reader commands
+
+~~~text
+book03_precision inspect
+book03_precision point 0 0 10000000000000000 10000000000000002 10000000000000002 10000000000000004
+book03_precision csv orientation-cases.csv
+book03_precision svg orientation-decisions.svg
+book03_precision repl
+~~~
+
+The initial hard case is deliberately **not** to scale:
+
+- \(A=(0,0)\), \(B=(N,N+2)\), \(C=(N+2,N+4)\), with \(N=10^{16}\).
+- All coordinates are representable. Exact determinant: \(-4\). Naive two-rounded-product determinant: zero.
+- \`orient_binary64\` must report exact sign \(-1\) using the dyadic limb path.
+- Another fixture uses the smallest positive subnormal \(\eta=2^{-1074}\). Its exact area-sign is positive, but the naive \(\eta^2\) product underflows.
+- A third fixture demonstrates positive exact sign despite overflowing naive product. A fourth shows **input rounding**: \(N+1\) was not preserved in binary64, so no exact predicate can reconstruct it.
+
+The \`repl\` accepts \`triangle ax ay bx by cx cy\`, \`inspect\`, \`cases\`, \`csv PATH\`, \`svg PATH\`, \`reset\` and \`quit\`. Every report is computed from the same C++23 exact predicate. SVG panels are **qualitative computed diagnoses**. No benchmark or statistical speedups are invented.
+
+### Verification plan
+
+The CMake targets are \`book03_precision\` and \`book03_exact_tests\`; the CTest name is \`book03_binary64_exact_orientation_contracts\`, registered beside earlier four tests. The GitHub workflow is authored to compile all five projects, execute CTest, inspect exact and naive fixture values, parse the generated CSV and SVG, and exercise the numerical REPL.
+
+**Do not call a test passing until observed compiler and test logs confirm it.** Cross-compiler or performance claims require separate execution. All source outputs are local build artifacts, not Book 03 EPUB/PDF releases. Leave the \`From Bits to Research/\` publication library, compiled LaTeX staging, original books and continuous notes untouched.
