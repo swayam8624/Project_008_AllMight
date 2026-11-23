@@ -102,6 +102,12 @@ add_executable(book03_mesh_tests tests/mesh_topology_tests.cpp)
 target_link_libraries(book03_mesh_tests PRIVATE
     book03_mesh_topology book03_geometry3d)
 
+# Same Chapter 07, second independent test target: build/traverse half-edge
+# face cycles and only assign twins when incidence is exactly two and opposite.
+add_executable(book03_halfedge_tests tests/halfedge_mesh_tests.cpp)
+target_link_libraries(book03_halfedge_tests PRIVATE
+    book03_mesh_topology book03_geometry3d)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -109,7 +115,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_transforms book03_affine_tests
                    book03_precision book03_exact_tests
                    book03_space book03_space_tests
-                   book03_mesh book03_mesh_tests)
+                   book03_mesh book03_mesh_tests
+                   book03_halfedge_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -123,4 +130,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_binary64_exact_orientation_contracts COMMAND book03_exact_tests)
     add_test(NAME book03_3d_geometry_ray_plane_sphere_contracts COMMAND book03_space_tests)
     add_test(NAME book03_mesh_topology_incidence_and_manifold_contracts COMMAND book03_mesh_tests)
+    add_test(NAME book03_halfedge_cycle_and_twin_contracts COMMAND book03_halfedge_tests)
 endif()
