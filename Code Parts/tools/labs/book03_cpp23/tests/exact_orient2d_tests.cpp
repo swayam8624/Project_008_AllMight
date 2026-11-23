@@ -76,8 +76,7 @@ void catastrophic_product_cancellation() {
     const Point2 a{0,0},b{n,n+2},c{n+2,n+4};
     require(b.y==n+2 && c.x==n+2 && c.y==n+4,
             "the fixture's distinct binary64 values must survive");
-    const double naive=(b.x-a.x)*(c.y-a.y) -
-                       (b.y-a.y)*(c.x-a.x);
+    const double naive=book03::naive_orientation_two_rounded_products(a,b,c);
     require(naive==0.0,"the deliberately fragile double oracle fails");
     const auto exact=book03::orient_binary64(a,b,c);
     require(exact.sign==-1,"exact dyadic oracle must recover negative four");
@@ -105,8 +104,7 @@ void subnormals_and_exponent_extremes() {
     require(tiny>0.0 && tiny/2.0==0.0,
             "gradual-subnormal minimum binary64 witness");
     const Point2 a{0,0},b{tiny,0},c{0,tiny};
-    const double naive=(b.x-a.x)*(c.y-a.y) -
-                       (b.y-a.y)*(c.x-a.x);
+    const double naive=book03::naive_orientation_two_rounded_products(a,b,c);
     require(naive==0.0,"tiny positive determinant underflows in naive double");
     const auto result=book03::orient_binary64(a,b,c);
     require(result.sign==+1 &&
