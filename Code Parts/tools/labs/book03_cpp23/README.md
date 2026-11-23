@@ -217,3 +217,47 @@ The \`repl\` accepts \`triangle ax ay bx by cx cy\`, \`inspect\`, \`cases\`, \`c
 The CMake targets are \`book03_precision\` and \`book03_exact_tests\`; the CTest name is \`book03_binary64_exact_orientation_contracts\`, registered beside earlier four tests. The GitHub workflow is authored to compile all five projects, execute CTest, inspect exact and naive fixture values, parse the generated CSV and SVG, and exercise the numerical REPL.
 
 **Do not call a test passing until observed compiler and test logs confirm it.** Cross-compiler or performance claims require separate execution. All source outputs are local build artifacts, not Book 03 EPUB/PDF releases. Leave the \`From Bits to Research/\` publication library, compiled LaTeX staging, original books and continuous notes untouched.
+
+
+---
+
+## Chapter 06 — P06 Three-Dimensional Geometry and Spatial Studio
+
+**One cumulative C++23 project, six chapters.** We have moved from Chapter 01's bounded pixels to Chapter 02's frames, Chapter 03's triangles, Chapter 04's affine transforms, Chapter 05's represented-binary64 exact 2D orientation, and now a distinct 3D geometry layer. The old modules and their independent tests are preserved. This laboratory is pure C++23; no graphics API, GUI, Python runtime, linear-algebra dependency or network access is needed.
+
+**Read in this order:**
+
+1. \`include/book03/geometry3d.hpp\` — true right-handed three-dimensional \`Point3\` versus \`Vector3\`, dot/cross, stable three-argument \`std::hypot\`, unit directions, \`Triangle3\` winding/normal, normalized planes with signed distances, \`Ray3\` with \`t\` measured in metres, \`Sphere3\`, and explicit ray-plane/ray-sphere result statuses. Read all numeric-policy comments.
+2. \`tests/geometry3d_tests.cpp\` — typed point/vector compile-time restrictions; orthogonality/winding; old P03 exact 2D oriented area embedded into the 3D XY plane; unit-normal distances; analytic and independently substituted ray-plane hit; parallel/copolanar/behind/uncertain outcomes; sphere entry/exit/tangency and near-tangency; zero, nonfinite and overflow rejection; 2,500 deterministic cross/dot property inputs.
+3. \`src/spatial_studio.cpp\` — numeric inspector, original 3D house/sphere wireframe SVG, CSV of actual primitive query results, and a terminal REPL for reader-specified rays. The same C++23 geometry objects are used for the numeric report, SVG and CSV; no independent script duplicates hit math.
+4. \`CMakeLists.txt\` — \`book03_space\` executable, \`book03_space_tests\` and the sixth registered CTest \`book03_3d_geometry_ray_plane_sphere_contracts\`.
+
+**Commands:**
+
+~~~bash
+cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release
+cmake --build build/book03-p01 --parallel 4
+ctest --test-dir build/book03-p01 --output-on-failure
+build/book03-p01/book03_space inspect
+build/book03-p01/book03_space svg build/book03-p01/house-3d.svg
+build/book03-p01/book03_space csv build/book03-p01/ground-and-sphere.csv
+build/book03-p01/book03_space repl
+~~~
+
+The terminal accepts \`ray ox oy oz dx dy dz\`, \`inspect\`, \`svg FILE\`, \`csv FILE\`, \`reset\`, \`help\` and \`quit\`. Example:
+
+~~~text
+ray 1 3 2 0 -1 0
+inspect
+svg your-ray.svg
+csv your-ray.csv
+quit
+~~~
+
+For the above ray, the infinite floor plane \(Y=0\) is met at \(t=3\) metres with point \((1,0,2)\). The direction entered by the reader is normalized in \`Ray3::from\`; the reported \(t\) measures physical distance in metres. The sphere is a separate independent query, not an arbitrary polygon/collider system.
+
+**Diagram convention:** world \((X,Y,Z)\) is right-handed, with \(+Y\) up; the page mapping is \`u=430+52*x-30*z\`, \`v=370+20*x-55*y+18*z\` with coefficients in pixels per metre. This is a parallel **oblique illustration**, not a calibrated camera or a real perspective projection. The generated SVG contains a world grid, original house geometry, a triangulated roof normal, sphere wireframe rings and markers for actual hit points when present.
+
+**Numerical limitations that must remain explicit:** the unit-normal/normalized-ray factories improve contracts but do not certify arbitrary huge/small construction results. Ray-plane near-parallel and ray-sphere near-tangent decisions use *documented heuristic thresholds* and expose uncertainty; they are not proved exact 3D predicates. The previous Chapter 05 exact sign applies to two-dimensional triples only. A plane hit is not yet a bounded triangle hit, a ray-sphere hit is not a mesh/scene query, and no unimplemented visibility or perspective system should be inferred from a wireframe picture.
+
+**Validation contract:** execute the six CTests on a supported C++23 compiler, compare explicit numeric witnesses with independently derived values, parse the generated SVG, read the CSV rows and inspect visual placement. The dedicated GitHub CI source defines these checks, but successful execution must be observed before reporting a pass. The final Book 03 PDF/EPUB compilation remains reserved for the author's full-book Mac review, with the publication directory and old books unchanged.
