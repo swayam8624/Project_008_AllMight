@@ -417,6 +417,74 @@ The algorithm works without comparing floating-point coordinates. That is both f
 
 One subtlety remains. If a face repeats the same vertex index twice, it does not form an ordinary triangular cell. We flag it separately and exclude it from the normal edge-incidence graph. A triangle with three *distinct* vertex IDs but collinear positions is a different issue: its combinatorial face exists, yet its geometric area is zero. We report both conditions independently.
 
+## Why your neighbors influence your shape: sparse adjacency and the graph Laplacian
+
+Once we know which vertices are actually connected, we can do more than navigate. We can build computations whose answers depend on the neighborhood graph.
+
+Imagine a line of children holding hands. Each child looks at the positions of the children whose hands they hold and takes a small step toward their average. If we tell the wrong children to hold hands, the smoothing movement is wrong—even if everybody began at the correct coordinates.
+
+The same idea appears in geometry processing. For a vertex \(i\), let
+
+\[
+N(i)=\{j:\{i,j\}\text{ is an indexed mesh edge}\}
+\]
+
+be its **one-ring neighboring vertex IDs**. The neighbor relation is based on the indexed graph, not geometric proximity. In the seam example, two distinct vertices at identical XYZ positions are still not neighbors merely because they coincide.
+
+If a scalar value \(x_i\) lives at each vertex, a simple **uniform graph Laplacian** is
+
+\[
+\boxed{(Lx)_i=\sum_{j\in N(i)}(x_i-x_j).}
+\tag{7.L1}
+\]
+
+It measures how a vertex's value differs from those connected to it. For the reference quad with scalar values \((0,1,2,3)\), the neighbors are
+
+\[
+N(0)=\{1,2,3\},\quad N(1)=\{0,2\},
+\]
+\[
+N(2)=\{0,1,3\},\quad N(3)=\{0,2\}.
+\]
+
+Therefore the Laplacian is
+
+\[
+Lx=(-6,\ 0,\ 2,\ 4).
+\tag{7.L2}
+\]
+
+You can check the first value by hand: \((0-1)+(0-2)+(0-3)=-6\). The entries sum to zero because each undirected edge contributes an equal-and-opposite difference. A constant field has Laplacian zero.
+
+This is a **graph** Laplacian. It is not yet the cotangent-weighted discrete Laplace–Beltrami operator often used to approximate surface differential geometry. Proper curvature, boundary handling and smoothing stability require further mathematical choices and belong in the deeper geometry-processing material. Our goal here is to show how an innocent mistake in the neighbor graph changes the very numerical operator we thought we were computing.
+
+### Store neighbors without thousands of little allocations
+
+For a small example, a \`std::vector<std::vector<uint32_t>>\` is clear: one vector per vertex, containing its neighboring IDs.
+
+For a larger static mesh, we can flatten those neighbor lists into two arrays using **compressed sparse row**, or CSR. The first contains offsets:
+
+~~~text
+offsets = [0, 3, 5, 8, 10]
+~~~
+
+and the second contains every neighbor ID in sequence:
+
+~~~text
+neighbors = [1,2,3, 0,2, 0,1,3, 0,2]
+~~~
+
+The neighbors of vertex \(i\) occupy the half-open span
+
+\[
+[\operatorname{offsets}[i],\operatorname{offsets}[i+1]).
+\tag{7.L3}
+\]
+
+This compact representation is the same general idea used in sparse matrices and graph algorithms. It is efficient when the graph is mostly read rather than repeatedly edited. If the mesh changes, rebuilding its CSR representation is often simpler and safer than trying to change offsets in place.
+
+Our P07 module includes \`build_vertex_csr()\` and a very small \`VertexCSR::laplacian()\`. The tests independently check the quad's neighbor IDs, total degree \(2E=10\), constant-field behavior and the fact that the seam's unused stored vertex has no neighbors. These are not claims about GPU performance or a production smoothing algorithm: they are precise, reproducible links between topology and mathematics.
+
 ## The C++23 model: geometry and identity in their proper places
 
 We are not going to create a second incompatible engine. Our cumulative companion already knows \`Point3\`, \`Vector3\`, \`Triangle3\` and basic geometry from Chapter 06.
