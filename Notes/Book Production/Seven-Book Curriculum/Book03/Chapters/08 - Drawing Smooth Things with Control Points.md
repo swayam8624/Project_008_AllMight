@@ -51,7 +51,7 @@ L(t)=A+t(B-A).
 \tag{8.3}
 \]
 
-That formulation matters in C++23 because \(A\) and \(B\) have type \`Point3\`, while \(B-A\) has type \`Vector3\`. We never need to invent the illegal operation “point plus point.”
+That formulation matters in C++23 because \(A\) and \(B\) have type `Point3`, while \(B-A\) has type `Vector3`. We never need to invent the illegal operation “point plus point.”
 
 Now imagine that instead of walking from \(A\) to \(B\) once, we repeatedly interpolate between points that were *themselves* interpolated. Something magical happens: the final point follows a curve.
 
@@ -122,7 +122,7 @@ The final midpoint is
 
 The control polygon went all the way up to \(y=2\), but the curve's midpoint sits at \(y=1.5\). It is gently arched instead of making sharp turns.
 
-If our C++23 \`CubicBezier3::at(0.5)\` returns anything other than \((1,1.5,0)\) for these XY controls embedded at \(z=0\), something is wrong.
+If our C++23 `CubicBezier3::at(0.5)` returns anything other than \((1,1.5,0)\) for these XY controls embedded at \(z=0\), something is wrong.
 
 <escape> </escape>
 
@@ -305,6 +305,43 @@ Why the denominator? Because raw derivatives change if we change how fast the pa
 
 At a cusp or a parameter where \(C'(t)=0\), the standard formula is undefined. A routine must not quietly divide by zero and invent a normal or curvature. Our first P08 library teaches tangents and second derivatives and flags degenerate normal construction at the patch level; a certified curvature and arc-length tool belongs to a later numerical-geometry pass.
 
+## A deeper secret: the blossom behind de Casteljau
+
+The de Casteljau construction is not merely a clever arrangement of midpoints. The old MIT cubic-curves lecture also develops a mathematical idea called the **blossom** (or polar form), which explains why evaluation, subdivision, and changes of polynomial basis fit together.
+
+Suppose one cubic coordinate is written as \(C(t)=at^3+bt^2+ct+d\). Its blossom is a function of **three** parameters:
+
+\[
+\boxed{\mathcal B(u,v,w)
+=a\,uvw+\frac b3(uv+uw+vw)+\frac c3(u+v+w)+d.}
+\tag{8.A1}
+\]
+
+This new function is **symmetric**: swapping any of its arguments does not change the answer. It is **affine separately in each argument**: fixing two inputs leaves a linear expression in the third. And on the **diagonal**, it returns the original cubic:
+
+\[
+\boxed{\mathcal B(t,t,t)=C(t).}
+\tag{8.A2}
+\]
+
+Substitute \(u=v=w=t\) to check it. The three pairwise products become \(3t^2\), and the sum of the three parameters becomes \(3t\). The fractions vanish and the original cubic remains.
+
+The Bézier controls themselves are special blossom evaluations:
+
+\[
+P_0=\mathcal B(0,0,0),\quad
+P_1=\mathcal B(0,0,1),\quad
+P_2=\mathcal B(0,1,1),\quad
+P_3=\mathcal B(1,1,1).
+\tag{8.A3}
+\]
+
+Now repeatedly use affinity to replace one argument at a time by \(t\). You recover exactly the interpolation stages of de Casteljau. Changing the starting and ending parameter values gives the new control points of a subdivided curve.
+
+In the language of a child: de Casteljau is a game of finding points between points; the blossom is the rulebook proving the same game always produces the correct cubic. It is valuable later for degree elevation, arbitrary subintervals, and polynomial geometric identities.
+
+Our P08 code implements the actual evaluations and splits, not a generic blossom library. The advanced original lecture's full blossom derivation is preserved in the source atlas and should not be discarded from final series composition.
+
 ## Splitting a curve without changing its shape
 
 What if our tree needs a leaf growing at one particular point, and we want to keep the segment of the branch before that point as a separate editable curve?
@@ -403,7 +440,7 @@ Now try three second cubics.
 
 A smooth-looking screen image is weak evidence for these distinctions. The derivatives provide a stronger test.
 
-The P08 \`join_continuity\` routine measures the endpoint gap, derivative gap and second-derivative gap, and separately tests positive tangent-direction alignment. Its tolerances are declared inputs with units and interpretation; it does not pretend an arbitrary epsilon is an exact theorem about floating coordinates.
+The P08 `join_continuity` routine measures the endpoint gap, derivative gap and second-derivative gap, and separately tests positive tangent-direction alignment. Its tolerances are declared inputs with units and interpretation; it does not pretend an arbitrary epsilon is an exact theorem about floating coordinates.
 
 ![Four join levels: a gap, a position-only corner, tangent-aligned but speed-mismatched G1 join, and a C1/C2 smooth join.](../Assets/24-curve-continuity.svg)
 
@@ -490,6 +527,24 @@ If we reparameterize the curve onto a time interval of five seconds, endpoint ve
 
 That is the sort of small units mistake that produces wild or sluggish camera motion while every matrix multiplication seems correct.
 
+### A road that really passes through its waypoints: Catmull–Rom
+
+Not every path is supposed to avoid its middle controls. A camera may need to pass *through* the front gate, the window and the tree, rather than merely bend toward those locations. **Catmull–Rom** splines provide an interpolating alternative.
+
+For a simple uniform segment from waypoint \(Q_i\) to \(Q_{i+1}\), choose Hermite endpoint tangents from their neighboring waypoints:
+
+\[
+T_i=\frac{Q_{i+1}-Q_{i-1}}2,\qquad
+T_{i+1}=\frac{Q_{i+2}-Q_i}2.
+\tag{8.C1}
+\]
+
+Then use our Hermite basis to construct the segment. It passes through \(Q_i,Q_{i+1}\), and when adjacent segments share a consistent tangent at a waypoint they can achieve \(C^1\) continuity under compatible uniform parameters.
+
+Notice the difference from ordinary Bézier handles: these waypoints **are** intended to be visited. But the simple uniform formula does not guarantee pleasant behavior if the waypoints are unevenly spaced. It can overshoot or loop. Centripetal and chordal parameterizations, endpoint tangent policies, and explicit speed controls exist for good reasons.
+
+The P08 library supplies the Hermite building block but does not advertise a complete Catmull–Rom editing system. The original camera-motion source chapter includes a substantially deeper treatment and remains part of the later curve-and-camera integration.
+
 ## B-splines: when a garden path has many control points
 
 A single cubic Bézier segment gives us four controls. What happens when the garden path becomes longer, with ten, twenty, or hundreds of shaping handles?
@@ -543,7 +598,7 @@ At \(t=0\), it starts at \((1,0)\), not at \(Q_0=(0,0)\). At \(t=1\), it ends at
 
 The controls steer the shape. They are not required to be points through which the span passes.
 
-This is exactly the sort of detail a library should reveal in its type and documentation. Our API calls it \`UniformCubicBSplineSpan3\`, not a generic \`NURBSCurve\` claiming to handle the entire family.
+This is exactly the sort of detail a library should reveal in its type and documentation. Our API calls it `UniformCubicBSplineSpan3`, not a generic `NURBSCurve` claiming to handle the entire family.
 
 ### Translate a B-spline span into Bézier language
 
@@ -577,6 +632,29 @@ We verify the \(C^2\) claim by converting both spans to Bézier form, then indep
 ![Two successive uniform cubic B-spline spans influenced by overlapping groups of four controls, smoothly meeting at their shared knot.](../Assets/25-uniform-bspline-spans.svg)
 
 *Figure 8.4 — The overlapping local control windows help neighboring spans share smooth derivatives. Knots, degree and multiplicity govern the general theory; the P08 implementation handles a specifically declared uniform cubic case.*
+
+### Knots, weights and why CAD circles are not ordinary polynomial cubics
+
+Our uniform nonrational cubic B-spline span is an honest first case, not all of spline theory. A general B-spline uses a **knot vector** that controls where polynomial pieces meet and how the basis functions overlap. Knot multiplicity changes smoothness: an ordinary degree-\(p\) spline has \(C^{p-r}\) continuity at an interior knot of multiplicity \(r\), under the standard regularity assumptions. Thus a cubic with a single simple knot is typically \(C^2\), while a repeated knot reduces the number of matched derivatives.
+
+Repeated **control points** and repeated **knots** are not the same operation. Nor does a nonrational polynomial cubic magically reproduce a perfect circle simply by adding more segments.
+
+A rational Bézier curve adds weights \(w_i\) and divides one weighted polynomial by another:
+
+\[
+\boxed{
+R(t)=
+\frac{\sum_i w_i\,b_i(t)\,P_i}
+{\sum_i w_i\,b_i(t)}.
+}
+\tag{8.N1}
+\]
+
+For a simple exact quarter-circle, choose *quadratic* controls \(P_0=(1,0)\), \(P_1=(1,1)\), \(P_2=(0,1)\) with weights \(w=(1,\sqrt2/2,1)\). At the midpoint \(t=1/2\), the rational expression evaluates to \((\sqrt2/2,\sqrt2/2)\), precisely on the unit circle. More generally the entire rational quadratic segment represents the circular arc exactly in real arithmetic.
+
+**NURBS**—nonuniform rational B-splines—combine knot-vector freedom and rational weights. They are crucial in CAD, but also require careful handling of basis domains, repeated knots, zero denominators, seam continuity and trimming. Our P08 code explicitly supports only a *nonrational uniform cubic span*. It would be misleading to label it a NURBS implementation.
+
+The existing MIT curve and surface source materials cover rational circles, splines, and knot effects. Keep those proofs in the complete series even though the introductory implementation currently concentrates on a minimal, fully traceable subset.
 
 ## Turning a perfect mathematical curve into a finite drawing
 
@@ -620,7 +698,7 @@ If both interior controls lie sufficiently close to the chord, we can draw the c
 
 This generates many segments near strong bends and few near straight regions.
 
-But we have to name the guarantee carefully. In exact real arithmetic, the control-hull argument is sound. Our C++23 implementation evaluates the distances and subdivisions using \`double\`, so it does **not** supply a formally rounded-up interval bound for arbitrary representable controls. We call the result \`tolerance_met_under_float_policy\`, not “certified Hausdorff distance.”
+But we have to name the guarantee carefully. In exact real arithmetic, the control-hull argument is sound. Our C++23 implementation evaluates the distances and subdivisions using `double`, so it does **not** supply a formally rounded-up interval bound for arbitrary representable controls. We call the result `tolerance_met_under_float_policy`, not “certified Hausdorff distance.”
 
 There is still a difference between a mathematically motivated conservative criterion and a fully certified floating-point implementation. Chapter 05 taught us why that distinction matters.
 
@@ -651,7 +729,7 @@ An honest function should never loop forever or quietly claim it met an impossib
 
 Our adaptive algorithm has a maximum subdivision depth, at most sixteen levels in the classroom implementation. If it reaches the depth limit before its control-hull test passes, it still returns the generated approximation but explicitly sets
 
-\`tolerance_met_under_float_policy = false\`.
+`tolerance_met_under_float_policy = false`.
 
 A caller can then decide whether to increase the budget, reject the output, or accept a lower-quality preview. The library does not erase its own failure.
 
@@ -842,7 +920,7 @@ E=3(2)(3)+2+3=23.
 
 There are \(2(2+3)=10\) boundary edges and \(13\) interior edges. The Euler characteristic is \(12-23+12=1\).
 
-Our tests derive those numbers independently, then ask \`inspect_mesh()\` to verify the generated mesh. The patch evaluator and the topology inspector have different internal algorithms; agreement is meaningful.
+Our tests derive those numbers independently, then ask `inspect_mesh()` to verify the generated mesh. The patch evaluator and the topology inspector have different internal algorithms; agreement is meaningful.
 
 For the interactive garden, we use a \(12\times12\) parameter grid by default. It produces \(13^2=169\) positions, \(2(12)^2=288\) triangular faces, and
 
@@ -889,13 +967,13 @@ The source code and its reports should make these distinctions visible.
 
 All of this lives in the same cumulative C++23 laboratory tree:
 
-\`Code Parts/tools/labs/book03_cpp23/\`.
+`Code Parts/tools/labs/book03_cpp23/`.
 
-We add \`include/book03/curves3d.hpp\`: cubic Bézier, direct Bernstein evaluation, de Casteljau splitting, derivatives, Hermite conversion, one uniform cubic B-spline span, continuity measurements, adaptive polyline tessellation, a bicubic tensor-product patch and indexed grid sampling.
+We add `include/book03/curves3d.hpp`: cubic Bézier, direct Bernstein evaluation, de Casteljau splitting, derivatives, Hermite conversion, one uniform cubic B-spline span, continuity measurements, adaptive polyline tessellation, a bicubic tensor-product patch and indexed grid sampling.
 
-We add \`tests/curves3d_tests.cpp\`: hand-solvable arch cases, two independent cubic evaluation paths, subdivision identity, continuity counterexamples, Hermite and B-spline equivalences, loop/nonzero-error cases, tensor-product plane derivatives and independent P07 mesh-count oracles.
+We add `tests/curves3d_tests.cpp`: hand-solvable arch cases, two independent cubic evaluation paths, subdivision identity, continuity counterexamples, Hermite and B-spline equivalences, loop/nonzero-error cases, tensor-product plane derivatives and independent P07 mesh-count oracles.
 
-And we add \`src/curve_studio.cpp\`: a tiny terminal-led modeling studio. It owns editable control locations, tolerance and patch controls. Its *actual source geometry* drives the numerical report, figure, sampled coordinate file and exported indexed mesh.
+And we add `src/curve_studio.cpp`: a tiny terminal-led modeling studio. It owns editable control locations, tolerance and patch controls. Its *actual source geometry* drives the numerical report, figure, sampled coordinate file and exported indexed mesh.
 
 The commands are deliberately ordinary:
 
@@ -923,7 +1001,7 @@ quit
 
 Changing a curve control alters the curve, its subdivision and the exported SVG/CSV. Changing a patch control alters the sampled 3D canopy and the indexed OBJ. If the tessellation tolerance is too strict for the allowed depth, the report says so.
 
-The \`OBJ\` output is intentionally small and plain: it writes \`v\` positions and 1-based \`f\` triangle indices, with no materials, UVs, normals, camera, trim or units metadata beyond its explicit comments. A reader should not mistake an OBJ exporter for a complete asset pipeline. Chapter 10 will teach that boundary in depth.
+The `OBJ` output is intentionally small and plain: it writes `v` positions and 1-based `f` triangle indices, with no materials, UVs, normals, camera, trim or units metadata beyond its explicit comments. A reader should not mistake an OBJ exporter for a complete asset pipeline. Chapter 10 will teach that boundary in depth.
 
 The generated SVG uses a stated parallel oblique projection for illustration. It is not the physical camera model we will develop in later chapters, and it is not a measured performance graph. It draws the control polygon differently from the evaluated curve so nobody confuses handles with actual curve points.
 
@@ -1015,10 +1093,10 @@ The tree has learned to bend. Soon the entire landscape will learn to grow.
 
 ## Source custody and further study
 
-Our canonical legacy mathematics and graphics notes must be preserved as written. This independent new reader chapter is **an additive pedagogical edition**, not permission to replace or shorten thousands of lines of earlier derivations. The previous long mesh source's later half-edge/CSR and surface-quality sections are routed separately in \`PASS07_LEGACY_AUDIT.md\`; a precise path and full source-span check for any earlier original spline-specific sections is recorded as **pending** in \`PASS08_LEGACY_AUDIT.md\` rather than invented. We cannot call original knowledge integrated merely because we have written a new chapter.
+Our canonical legacy mathematics and graphics notes must be preserved as written. This independent new reader chapter is **an additive pedagogical edition**, not permission to replace or shorten thousands of lines of earlier derivations. The original source atlas at `Notes/Chapter Edition/02 - Graphics Vision and XR/36 - Source Atlas and Reconstruction Checkpoints.md` maps **MITG-02 — Cubic curves** and **MITG-03 — Curves and surfaces** to legacy Chapters 01 and 02. The existing `02 - Surfaces, Topology and Parameterization.md` declares Graphics master lines **2204–3118** and develops bicubic tensor-product patches, partial derivatives, patch seams, subdivision and parameterization. These original sections were directly inspected and mapped in `PASS08_LEGACY_AUDIT.md`. Their full source-body reconciliation remains open; the new reader does not replace those longer sources.
 
 Fundamental references: Gerald Farin, *Curves and Surfaces for CAGD: A Practical Guide*, fifth edition (de Casteljau, Bernstein, spline, derivative and surface chapters): https://shop.elsevier.com/books/curves-and-surfaces-for-cagd/farin/978-1-55860-737-8 ; Pomax, *A Primer on Bézier Curves* (interactive interpolation, derivatives, subdivisions and joins): https://pomax.github.io/bezierinfo/ ; Patrikalakis, Maekawa and Cho, *Shape Interrogation for Computer Aided Design and Manufacturing*, Springer: https://link.springer.com/book/10.1007/978-3-642-04074-0 . Study third-party figures and implementation licenses before reproducing either; the P08 figures and C++23 code are original implementations of established mathematics.
 
-**Companion:** \`Code Parts/tools/labs/book03_cpp23/include/book03/curves3d.hpp\`, \`src/curve_studio.cpp\`, \`tests/curves3d_tests.cpp\`.
+**Companion:** `Code Parts/tools/labs/book03_cpp23/include/book03/curves3d.hpp`, `src/curve_studio.cpp`, `tests/curves3d_tests.cpp`.
 
 **Read next:** Chapter 09 — Making a World from Rules (planned).
