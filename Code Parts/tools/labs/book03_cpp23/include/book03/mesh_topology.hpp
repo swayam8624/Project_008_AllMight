@@ -45,6 +45,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <span>
 #include <string>
 #include <stdexcept>
 #include <tuple>
@@ -324,6 +325,65 @@ private:
     }
     out.duplicate_position_groups=out.coincident_index_groups.size();
     return out;
+}
+
+// Compressed Sparse Row (CSR) adjacency for a STATIC indexed mesh.
+// offsets[v]..offsets[v+1] gives unique neighbor vertex IDs in one flat
+// array. This is a view of TOPOLOGICAL edges (not spatially close points).
+// Rebuild after edits; the span is valid while this object is not mutated.
+struct VertexCSR {
+    std::vector<std::size_t> offsets{};
+    std::vector<std::uint32_t> neighbors{};
+
+    [[nodiscard]] std::span<const std::uint32_t> adjacent(
+        std::size_t vertex) const {
+        if(vertex+1>=offsets.size())
+            throw std::out_of_range("CSR vertex index out of bounds");
+        return {neighbors.data()+offsets[vertex],
+                offsets[vertex+1]-offsets[vertex]};
+    }
+
+    // Uniform UNNORMALIZED graph Laplacian Lx = sum_{j in N(i)} (xi-xj).
+    // This is a discrete graph operation, not the cotangent-mesh Laplacian,
+    // and NOT a geometrically faithful curvature estimator.
+    [[nodiscard]] std::vector<double> laplacian(
+        const std::vector<double>& scalar) const {
+        if(offsets.empty()||scalar.size()+1!=offsets.size())
+            throw std::invalid_argument(
+                "scalar field must match CSR vertex count");
+        for(double x:scalar) if(!std::isfinite(x))
+            throw std::invalid_argument("Laplacian input must be finite");
+        std::vector<double> out(scalar.size(),0.0);
+        for(std::size_t v=0;v<scalar.size();++v) {
+            double sum=0;
+            for(auto neighbor:adjacent(v)) {
+                sum += scalar[v]-scalar[neighbor];
+            }
+            if(!std::isfinite(sum))
+                throw std::overflow_error("Laplacian result nonfinite");
+            out[v]=sum;
+        }
+        return out;
+    }
+};
+
+[[nodiscard]] inline VertexCSR build_vertex_csr(const Mesh3& mesh) {
+    const MeshReport report=inspect_mesh(mesh);
+    std::vector<std::set<std::uint32_t>> adjacency(
+        mesh.positions.size());
+    for(const EdgeRecord& edge:report.edges) {
+        adjacency[edge.key.lo].insert(edge.key.hi);
+        adjacency[edge.key.hi].insert(edge.key.lo);
+    }
+    VertexCSR result{};
+    result.offsets.reserve(adjacency.size()+1);
+    result.offsets.push_back(0);
+    for(const auto& neighbors:adjacency) {
+        result.neighbors.insert(result.neighbors.end(),
+                                neighbors.begin(),neighbors.end());
+        result.offsets.push_back(result.neighbors.size());
+    }
+    return result;
 }
 
 // Familiar square in the 3D XY plane, consistently triangulated.
