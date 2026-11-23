@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Pixel, Frame, Triangle, Affine, Exact Predicate Contracts
+name: Book 03 - C++23 Image, Geometry, Exact Predicate and Spatial Contracts
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 image, frame, triangle, affine and exact-predicate tests (Ubuntu)
+    name: C++23 all six geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute all five C++23 geometry and exact-predicate contracts
+      - name: Execute all six C++23 labs including 3D spatial contracts
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -159,6 +159,44 @@ jobs:
               data = (root / name).read_text()
               assert "negative (-1)" in data and "Naive binary64 determinant = 0" in data
           print("P05: exact sign, lost naive sign, underflow, overflow, CSV and SVG verified")
+          PY
+      - name: Check 3D spatial ray-plane, sphere and SVG / CSV contracts
+        run: |
+          build/book03-p01/book03_space inspect > build/book03-p01/spatial-inspect.txt
+          build/book03-p01/book03_space svg build/book03-p01/space-3d.svg
+          build/book03-p01/book03_space csv build/book03-p01/space-hits.csv
+          printf 'ray 1 3 2 0 -1 0\ninspect\nsvg build/book03-p01/space-custom.svg\nquit\n' | build/book03-p01/book03_space repl > build/book03-p01/spatial-repl.txt
+          python3 - <<'PY'
+          import csv
+          import math
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          base = Path("build/book03-p01")
+          ns = "{http://www.w3.org/2000/svg}"
+          for name in ("space-3d.svg", "space-custom.svg"):
+              root = ET.parse(base / name).getroot()
+              assert root.tag == ns + "svg"
+              assert root.find(ns + "title") is not None
+              assert root.find(ns + "desc") is not None
+              assert len(root.findall(ns + "line")) >= 15
+              assert len(root.findall(ns + "circle")) >= 3
+          with (base / "space-hits.csv").open(newline="", encoding="utf-8") as file:
+              rows = {row["primitive"]: row for row in csv.DictReader(file)}
+          assert set(rows) == {"ground", "sphere"}
+          assert rows["ground"]["status"] == "forward-hit"
+          assert rows["ground"]["has_hit"] == "1"
+          assert math.isclose(float(rows["ground"]["metres"]), 4.0, abs_tol=1e-12)
+          assert math.isclose(float(rows["ground"]["y"]), 0.0, abs_tol=1e-12)
+          assert rows["sphere"]["status"] == "miss"
+          assert rows["sphere"]["has_hit"] == "0"
+          default = (base / "spatial-inspect.txt").read_text()
+          assert "Ground Y=0: forward-hit" in default
+          assert "Front roof-panel normal" in default
+          custom = (base / "spatial-repl.txt").read_text()
+          assert "Ground Y=0: forward-hit" in custom
+          assert "t = 3.000000000 metres" in custom
+          assert "hit = (1.000000000,0.000000000,2.000000000)" in custom
+          print("P06: signed geometry, 3D source visualization and ray CSV contracts verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
