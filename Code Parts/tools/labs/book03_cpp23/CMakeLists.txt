@@ -108,6 +108,22 @@ add_executable(book03_halfedge_tests tests/halfedge_mesh_tests.cpp)
 target_link_libraries(book03_halfedge_tests PRIVATE
     book03_mesh_topology book03_geometry3d)
 
+# Chapter 08: de Casteljau/Bernstein/Hermite/uniform cubic spline curves,
+# derivative joins, adaptive chord tessellation, and indexed 3D patches.
+# It reuses the Point3 and Mesh3 sources rather than inventing new types.
+add_library(book03_curve_math INTERFACE)
+target_include_directories(book03_curve_math INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_curve_math INTERFACE cxx_std_23)
+
+add_executable(book03_curves src/curve_studio.cpp)
+target_link_libraries(book03_curves PRIVATE
+    book03_curve_math book03_mesh_topology)
+
+add_executable(book03_curves_tests tests/curves3d_tests.cpp)
+target_link_libraries(book03_curves_tests PRIVATE
+    book03_curve_math book03_mesh_topology)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -116,7 +132,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_precision book03_exact_tests
                    book03_space book03_space_tests
                    book03_mesh book03_mesh_tests
-                   book03_halfedge_tests)
+                   book03_halfedge_tests
+                   book03_curves book03_curves_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -131,4 +148,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_3d_geometry_ray_plane_sphere_contracts COMMAND book03_space_tests)
     add_test(NAME book03_mesh_topology_incidence_and_manifold_contracts COMMAND book03_mesh_tests)
     add_test(NAME book03_halfedge_cycle_and_twin_contracts COMMAND book03_halfedge_tests)
+    add_test(NAME book03_curve_spline_tessellation_and_patch_contracts COMMAND book03_curves_tests)
 endif()
