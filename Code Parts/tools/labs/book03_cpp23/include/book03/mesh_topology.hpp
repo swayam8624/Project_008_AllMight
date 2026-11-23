@@ -44,6 +44,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <string>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
