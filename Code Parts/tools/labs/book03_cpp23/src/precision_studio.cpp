@@ -85,8 +85,7 @@ struct Case {
 }
 
 [[nodiscard]] double naive_orientation(Point2 a,Point2 b,Point2 c) {
-    return (b.x-a.x)*(c.y-a.y) -
-           (b.y-a.y)*(c.x-a.x);
+    return book03::naive_orientation_two_rounded_products(a,b,c);
 }
 
 [[nodiscard]] std::string naive_state(double x, int exact) {
