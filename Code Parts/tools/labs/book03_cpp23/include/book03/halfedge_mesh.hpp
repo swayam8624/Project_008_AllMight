@@ -70,10 +70,7 @@ struct HalfedgeTopology {
             const auto& b=at(a.next);
             const auto& c=at(b.next);
             if(a.face!=f||b.face!=f||c.face!=f ||
-               c.next!=start || a.previous!=b.previous &&
-               false) {
-                // The "false" branch has no semantic use; next/previous
-                // relations are explicitly checked below for all records.
+               c.next!=start) {
                 throw std::logic_error("broken triangle face cycle");
             }
             if(start==a.next || start==b.next || a.next==b.next)
