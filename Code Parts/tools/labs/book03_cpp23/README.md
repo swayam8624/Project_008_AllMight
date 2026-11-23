@@ -367,3 +367,68 @@ Adaptive recursion measures each cubic's interior controls against the *finite c
 **Validation:** CMake includes eight cumulative labs and **nine CTests**. The dedicated Book 03 CI source is authored to compile and run the ninth test, inspect the current editable REPL control, parse generated SVG/CSV, and verify every OBJ face references 1..169. It also checks default patch source counts and a known modified Bézier midpoint. These sources **have not been reported as executed successfully** until independent compiler/CTest/CI logs confirm them.
 
 **Publication:** No chapter's PNG/PDF/EPUB is promoted by this project. Original Book 01 and Book 02 distribution assets, continuous notes, derived chapter editions and the final `From Bits to Research/` publication routes remain unchanged.
+
+
+---
+
+## Chapter 09 — P09 Procedural World Workshop
+
+This lab turns mathematical rules into **real indexed 3D triangle meshes** using only C++23 and the earlier P06/P07 geometry and topology modules. It is additive to the existing P01–P08 labs; it does not overwrite any original project or production publication.
+
+**Reading and execution order:**
+
+1. `include/book03/procedural_geometry.hpp`: begin with `TerrainField`, its analytic `height(x,z)` and upward `normal(x,z)`; continue with `make_heightfield()` and its explicitly reversed winding in the world XZ ground plane. Next follow the `make_capped_cylinder()` angular modulo wrapping and shared-cap indices, then `make_uv_sphere()` with exactly one north/south pole index.
+2. Read `SphereDistance`: the analytic SDF is \(\|\mathbf p\|-r\), with negative interior, positive exterior and a radial gradient undefined at the origin. Compare `central_gradient()` to the analytic gradient under an explicit step size rather than believing finite differences are exact.
+3. Read `extract_sphere_isosurface()`: sample a bounded Cartesian field grid, divide each cube into **six fixed tetrahedra**, interpolate strict sign changes by \(t=f_A/(f_A-f_B)\), and cache the intersection ID by canonical original **lattice edge**. One inside/three outside or three inside/one outside gives one triangle; two inside/two outside gives two triangles. Orient each output triangle radially outward as a sphere-specific contract. The function rejects exact-zero sampled grid vertices instead of silently allowing repeated/degenerate output.
+4. `tests/procedural_geometry_tests.cpp`: these independent oracles derive terrain \(V=(m+1)(n+1)\), \(E=3mn+m+n\), \(F=2mn\), \(B=2(m+n)\), \(\chi=1\); capped cylinder \(V=2s+2\), \(E=6s\), \(F=4s\), \(\chi=2\); UV sphere \(V=2+s(t-1)\), \(F=2s(t-1)\), \(E=3s(t-1)\), \(\chi=2\); and the closed sphere candidate's edge incidence. They also check radial orientation and wrong-input rejection. A controlled implicit-sphere comparison checks grid-edge vertex reuse and sphere topology, not CAD accuracy.
+5. `src/procedural_studio.cpp`: a terminal REPL for shape, resolution, radius and terrain amplitude; SVG from actual indexed faces and edge keys; OBJ from real indexed positions and faces; CSV of actual source-generated positions. The visualization uses a static parallel oblique map and does **not** claim a calibrated camera, hidden-surface removal or measured GPU output.
+
+**Commands after cumulative CMake build:**
+
+~~~bash
+build/book03-p01/book03_world inspect terrain
+build/book03-p01/book03_world inspect cylinder
+build/book03-p01/book03_world inspect sphere
+build/book03-p01/book03_world inspect implicit
+build/book03-p01/book03_world svg terrain.svg terrain
+build/book03-p01/book03_world obj capped-cylinder.obj cylinder
+build/book03-p01/book03_world csv uv-sphere-vertices.csv sphere
+build/book03-p01/book03_world repl
+~~~
+
+REPL:
+
+~~~text
+shape terrain
+resolution 12
+amplitude 0.65
+inspect
+svg wavy-ground.svg
+shape cylinder
+radius 0.8
+obj small-tower.obj
+shape sphere
+resolution 12
+inspect
+shape implicit
+resolution 9
+inspect
+obj extracted-sphere.obj
+reset
+quit
+~~~
+
+The default studio uses 12 subdivisions, sphere/cylinder radius **0.91 m**, terrain amplitude **0.45 m**, and a square \(4\times4\) m ground domain. For implicit extraction, the cubic lattice half-extent is **1.5 m** and the radius must fit strictly inside it. The controlled nine-cell and thirteen-cell independent oracle tests instead use the same radius **0.91 m** and a 1.5 m half-extent.
+
+**Quick count ledger for default meshes:**
+
+| Shape | Indexed V | Indexed E | Faces F | Boundary edges | Euler | Expected |
+|---|---:|---:|---:|---:|---:|---|
+| Heightfield 12×12 | 169 | 456 | 288 | 48 | 1 | One connected open disk |
+| Capped cylinder, 12 slices | 26 | 72 | 48 | 0 | 2 | One closed genus-zero candidate |
+| UV sphere, 12 slices × 6 stacks | 62 | 180 | 120 | 0 | 2 | One closed genus-zero candidate |
+| Sphere SDF marching tetra, grid 12³ | Resolution-dependent; verify live | Resolution-dependent | Resolution-dependent | Expected 0 | Expected 2 | One closed sphere-like component under strict sample/tie assumptions |
+
+**Important numeric limitations:** `make_heightfield` is a graph and cannot represent an overhang. The cylinder's geometric cap rims need separate per-corner shading normals in a renderer, even though geometric ring indices are intentionally shared. Longitude is periodic; the UV sphere stores one pole vertex each rather than a degenerate pole ring. The implicit extraction is **only for a centered sphere** in its present radial orientation policy; no exact-zero lattice ties, generalized SDF/occupancy extraction, general CAD trimming, topological repair, self-intersection certification or geometric error bound is claimed.
+
+**CI and release:** The cumulative CMake adds the **ninth native C++23 lab** and the **tenth CTest**, `book03_procedural_heightfield_sphere_cylinder_isosurface_contracts`. The dedicated Book03 workflow is authored to check source editorial location, compile all labs, execute CTest, then inspect numeric reports and generated SVG/CSV/OBJ for all four shapes and live REPL edits. An authored check is **not** an observed passing build. This project does not write to the final EPUB/PDF library or regenerate any legacy manuscript.
