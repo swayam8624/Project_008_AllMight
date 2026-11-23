@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Pixel, Frame, Triangle, Affine and SVG Contracts
+name: Book 03 - C++23 Pixel, Frame, Triangle, Affine, Exact Predicate Contracts
 
 on:
   push:
@@ -6,16 +6,18 @@ on:
       - curriculum/book03-geometry-images-pass01
     paths:
       - "Code Parts/tools/labs/book03_cpp23/**"
+      - "Notes/Book Production/Seven-Book Curriculum/Book03/**"
       - ".github/workflows/book03-cpp23-pixel-canvas.yml"
   pull_request:
     paths:
       - "Code Parts/tools/labs/book03_cpp23/**"
+      - "Notes/Book Production/Seven-Book Curriculum/Book03/**"
       - ".github/workflows/book03-cpp23-pixel-canvas.yml"
   workflow_dispatch:
 
 jobs:
   native-cpp23:
-    name: C++23 image, frame, triangle and affine tests (Ubuntu)
+    name: C++23 image, frame, triangle, affine and exact-predicate tests (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute pixel, frame, triangle and affine C++23 contracts
+      - name: Execute all five C++23 geometry and exact-predicate contracts
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -119,6 +121,44 @@ jobs:
           assert math.isclose(float(m.group(1)),2.0,abs_tol=1e-7)
           assert math.isclose(float(m.group(2)),1.0,abs_tol=1e-7)
           print("Affine P04 REPL, PPM, SVG and numeric contracts inspected")
+          PY
+      - name: Verify exact binary64 predicate report and honest diagnosis
+        run: |
+          build/book03-p01/book03_precision inspect > build/book03-p01/predicate-inspect.txt
+          build/book03-p01/book03_precision csv build/book03-p01/predicate-cases.csv
+          build/book03-p01/book03_precision svg build/book03-p01/predicate-cases.svg
+          build/book03-p01/book03_precision point 0 0 10000000000000000 10000000000000002 10000000000000002 10000000000000004 > build/book03-p01/predicate-point.txt
+          printf 'triangle 0 0 10000000000000000 10000000000000002 10000000000000002 10000000000000004\ninspect\nsvg build/book03-p01/predicate-repl.svg\nquit\n' | build/book03-p01/book03_precision repl > build/book03-p01/predicate-repl.txt
+          python3 - <<'PY'
+          import csv
+          import math
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          root = Path("build/book03-p01")
+          with (root / "predicate-cases.csv").open(newline="", encoding="utf-8") as f:
+              rows = {r["case"]: r for r in csv.DictReader(f)}
+          assert len(rows) == 6
+          cancellation = rows["Product cancellation"]
+          assert cancellation["exact_sign"] == "-1"
+          assert float(cancellation["naive_determinant"]) == 0.0
+          assert cancellation["exact_path"] == "binary64-dyadic"
+          underflow = rows["Subnormal underflow"]
+          assert underflow["exact_sign"] == "1"
+          assert float(underflow["naive_determinant"]) == 0.0
+          assert rows["Product overflow"]["exact_sign"] == "1"
+          assert not math.isfinite(float(rows["Product overflow"]["naive_determinant"]))
+          assert rows["Input rounding"]["exact_sign"] == "0"
+          assert rows["Simple reference"]["exact_path"] == "bounded-integer"
+          ns = "{http://www.w3.org/2000/svg}"
+          for name in ("predicate-cases.svg", "predicate-repl.svg"):
+              svg = ET.parse(root / name).getroot()
+              assert svg.tag == ns + "svg"
+              assert svg.find(ns + "title") is not None
+              assert svg.find(ns + "desc") is not None
+          for name in ("predicate-point.txt", "predicate-repl.txt"):
+              data = (root / name).read_text()
+              assert "negative (-1)" in data and "Naive binary64 determinant = 0" in data
+          print("P05: exact sign, lost naive sign, underflow, overflow, CSV and SVG verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
