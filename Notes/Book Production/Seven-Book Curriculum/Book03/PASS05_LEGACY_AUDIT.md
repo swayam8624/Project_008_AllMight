@@ -1,0 +1,54 @@
+# Book 03 — Pass 05 legacy-source audit: numerical geometry is not one paragraph
+
+**Date:** 23 November 2026  
+**Branch:** curriculum/book03-geometry-images-pass01  
+**Status:** direct original reading-copy inspection of **selected precise ranges**, not full-source replacement or certified full-book source reconciliation.
+
+## Existing source actually inspected
+
+The long-standing source derived from Computing Foundations is:
+
+\`Notes/Chapter Edition/01 - Computing Foundations/34 - Robust Predicates and Camera Sensitivity.md\`
+
+Its inspected Git blob is \`c75a9727e22b771187f941ddfebe0042bb8ee9ba\`. Its own source-derivation header states original master \`Computing Foundations - From Bits to C++ and Systems APIs.md\` lines **84339–87111**, and declares that span's SHA256 as \`f824915709a11c867778d38638510a33752e0269c1d2d5233cf5caca04f05d7c\`. This SHA256 comes from the preexisting header; it was **not independently rehashed** from the complete master in this pass.
+
+### Source lines inspected: approximately 20–115 in the reading-copy chapter
+
+The source already establishes the 2D orientation determinant, the topological failure of inconsistent signs during triangulation, the role of an error-bound filter, expansion arithmetic via error-free transformations, exactness *relative to represented binary inputs*, and the distinction between predicates and geometric constructions. It gives a concrete \(10^8\)-scale orientation example and routes robust predicates into clipping, point-in-polygon, camera calibration and rasterization.
+
+**Action:** Preserve all of this full derivation in the final Book 03 source composition. New Chapter 05 makes its central idea understandable by a child and supplies a new independently implemented exact-dyadic standard-C++23 oracle for a declared input format. The new oracle is NOT claimed to be Shewchuk's faster expansion implementation, nor is P05 a complete replacement for the original numerical proofs.
+
+### Source lines inspected: approximately 115–465
+
+Important observation: the same original source chapter **continues beyond the predicate discussion** into a substantial camera frustum derivation, including six half-spaces, FOV-derived near/far frustum extents, analytical eight-corner constructions, inverse-view-projection unprojection, reversed-Z depth endpoint logic, and infinite-far direction handling. Those are not merely footnotes to predicates.
+
+**Action:** These sections must be mapped to Book 03 **Chapters 13–17** and the later full camera/projection/clip-space treatment. They must not disappear because a new Chapter 05 happens to reuse the historic Chapter 34 title's first subject. The inspected copy explains that conventional zero-to-one near and far depth endpoints swap in reversed-Z and that a homogeneous unprojection with \(w=0\) may represent a point at infinity rather than a valid finite Cartesian point. Preserve those contracts when building the 3D camera module.
+
+This illustrates why source routing must operate **at subsection level** instead of mapping one long legacy chapter to one newly written reader chapter by its title.
+
+## External foundational research checked
+
+- Jonathan Richard Shewchuk, *Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates*, **Discrete & Computational Geometry**, 18:305–363 (1997). Author-maintained paper and source links: https://www.cs.cmu.edu/~quake/robust.html and https://people.eecs.berkeley.edu/~jrs/jrspapers.html.
+- NIST Digital Library of Mathematical Functions, section on arithmetic and error measures: https://dlmf.nist.gov/3.1. It describes the IEEE binary32/64 significand and exponent structure used to justify the binary64 dyadic decomposition.
+
+P05's implementation is **independently authored** and algorithmically distinct from Shewchuk's exact floating expansion algorithms. It uses signed arbitrary-size integers on a fixed \(2^{-1074}\) scale, with a previously proven bounded-integer fast route. No third-party predicate source was copied into the repository.
+
+## Proved claim versus unverified implementation
+
+The mathematical theorem is straightforward: every finite stored IEEE binary64 value equals an exact integer multiplied by \(2^{-1074}\). If the integer arithmetic is correctly implemented with sufficient limbs and carry/borrow handling, the sign of the integer determinant equals the sign of the determinant of those stored coordinates.
+
+But a theorem about the **algorithm** is not automatically a machine-verified proof that a particular C++ source file has no bug. P05 therefore adds deterministic tests: a \(-4\) cancellation witness, subnormal underflow, huge coordinate overflow, 5,000 independent half-integer reference cases, cyclic/winding symmetry, zero, degenerate and invalid-input scenarios. Their source presence is not a claim they passed on any target compiler.
+
+The separate visualization is an observed-data **schema** generated by the program, not a chart claiming benchmark timings.
+
+## Promised full-source reconciliation
+
+1. Continue reading the **rest** of the legacy Chapter 34 body and categorize every subsection by target reader chapter, including numerical geometry, frustum planes, clipping and calibration.
+2. Verify source-span SHA256 hashes against actual continuous master slices before authoring a definitive preservation manifest.
+3. Route original equations, code, examples, figures and citations; do not merely point at a whole old chapter and call the original content integrated.
+4. Keep the new long narrative chapters and additive C++ labs, but avoid copying or shortening old material wholesale. Full reader composition must preserve the original knowledge and make the order coherent.
+5. Keep \`Notes/Continuous Notes/\`, \`Notes/Chapter Edition/\`, legacy LaTeX generation, and \`From Bits to Research/\` publication library unchanged until the full author-reviewed Book 03 release.
+
+## Follow-up to Chapter 06
+
+After the exact 2D orientation predicate, Chapter 06 introduces the 3D dot/cross product, planes, distances, line/plane/triangle intersection, 3D normal covectors and geometric conditioning. It should carry the lesson that a correct discrete predicate is not a guarantee of accurate *constructed* coordinates. Full physically based light and numerical camera-sensitivity research remain in the appropriate later parts and volumes.
