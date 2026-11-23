@@ -67,7 +67,7 @@ build/book03-p01/book03_frames svg build/book03-p01/rotated.svg 2 1 90
 build/book03-p01/book03_frames repl
 ~~~
 
-Within the REPL, try entering \`origin 2 1\`, \`angle 90\`, \`point 3 1\`, \`save diagram.svg\` and \`quit\`. The expected reported world point is approximately (1,4) metres. SVG exports visualize the current local triangle over an image-oriented coordinate grid. The actual geometric correctness evidence remains the mathematical tests, not the mere appearance of the vector diagram.
+Within the REPL, try entering `origin 2 1`, `angle 90`, `point 3 1`, `save diagram.svg` and `quit`. The expected reported world point is approximately (1,4) metres. SVG exports visualize the current local triangle over an image-oriented coordinate grid. The actual geometric correctness evidence remains the mathematical tests, not the mere appearance of the vector diagram.
 
 **Known boundaries:** This is a 2D affine teaching model. A 3D scene graph requires third axes, homogeneous conventions and pose contracts; a pinhole camera requires intrinsics, perspective and clipping. The inverse rejects bases whose determinant is below a deliberately conservative relative/absolute threshold. It is not an adaptive exact arithmetic proof and is not intended as a universal geometric singularity oracle.
 
@@ -82,10 +82,10 @@ The triangle project extends **the same** C++23 course, not a renamed publicatio
 
 **Read and inspect these sources in order:**
 
-1. \`include/book03/triangle_geometry.hpp\` — exact bounded \`IntegerPoint2\` orientation/containment; floating \`Triangle2\` barycentric sampling, signed twice-area, interpolation and deliberately noncertified near-boundary uncertainty. Read the source's numeric-domain proof.
-2. \`tests/triangle_geometry_tests.cpp\` — an independent shoelace reference, 4,000 deterministic integer-oracle checks, winding/translation/reflection properties, affine invariance of weights, interpolation values, bad-input and degeneracy tests.
-3. \`src/triangle_studio.cpp\` — CLI numeric inspection, C++-generated barycentric PPM image, SVG diagram and an interactive REPL. No camera API or GPU is hidden in the implementation.
-4. \`CMakeLists.txt\` — target \`book03_triangles\` and independent CTest target \`book03_triangle_tests\` added alongside existing chapter projects.
+1. `include/book03/triangle_geometry.hpp` — exact bounded `IntegerPoint2` orientation/containment; floating `Triangle2` barycentric sampling, signed twice-area, interpolation and deliberately noncertified near-boundary uncertainty. Read the source's numeric-domain proof.
+2. `tests/triangle_geometry_tests.cpp` — an independent shoelace reference, 4,000 deterministic integer-oracle checks, winding/translation/reflection properties, affine invariance of weights, interpolation values, bad-input and degeneracy tests.
+3. `src/triangle_studio.cpp` — CLI numeric inspection, C++-generated barycentric PPM image, SVG diagram and an interactive REPL. No camera API or GPU is hidden in the implementation.
+4. `CMakeLists.txt` — target `book03_triangles` and independent CTest target `book03_triangle_tests` added alongside existing chapter projects.
 
 **Student-visible P03 interface**
 
@@ -97,11 +97,11 @@ book03_triangles svg triangle-static.svg
 book03_triangles repl
 ~~~
 
-The \`inspect\` mode's default triangle uses Cartesian +Y-up coordinates: A=(0,0), B=(6,0), C=(0,4), query P=(1.5,1). It prints signed twice-area=24, weights=(0.5,0.25,0.25), an interior classification and the 17.5 scalar interpolation result for corner values 10/20/30.
+The `inspect` mode's default triangle uses Cartesian +Y-up coordinates: A=(0,0), B=(6,0), C=(0,4), query P=(1.5,1). It prints signed twice-area=24, weights=(0.5,0.25,0.25), an interior classification and the 17.5 scalar interpolation result for corner values 10/20/30.
 
-The \`ppm\` and \`svg\` standalone commands are controlled **image-coordinate demonstrations** on a fixed 640×420 triangle with +v downward. Do not mistake the negative numeric winding of that example for an error in the +Y-up reference triangle. The colored triangle is a teaching interpolation of encoded channel values, not a physically linear-light result.
+The `ppm` and `svg` standalone commands are controlled **image-coordinate demonstrations** on a fixed 640×420 triangle with +v downward. Do not mistake the negative numeric winding of that example for an error in the +Y-up reference triangle. The colored triangle is a teaching interpolation of encoded channel values, not a physically linear-light result.
 
-The \`repl\` is interactive and can now write a separate SVG using the **current user-edited triangle**, not the fixed sample plate:
+The `repl` is interactive and can now write a separate SVG using the **current user-edited triangle**, not the fixed sample plate:
 
 ~~~text
 triangle 0 0 6 0 0 4
@@ -112,13 +112,13 @@ area
 quit
 ~~~
 
-The \`save\` command draws the current Cartesian triangle and last query using a documented 25 px/metre world-to-image projection; for visual legibility, all points must be within [-10,10] m in x and y. The numeric inspector itself is not artificially restricted to that SVG preview domain.
+The `save` command draws the current Cartesian triangle and last query using a documented 25 px/metre world-to-image projection; for visual legibility, all points must be within [-10,10] m in x and y. The numeric inspector itself is not artificially restricted to that SVG preview domain.
 
 **Correctness boundaries**
 
-The exact orientation and containment results require integer coordinates within [-1e6,+1e6]. This limit is proven to fit \`int64_t\` determinant operations. This is a **true bounded exact oracle**, not a claim of a full arbitrary-precision kernel.
+The exact orientation and containment results require integer coordinates within [-1e6,+1e6]. This limit is proven to fit `int64_t` determinant operations. This is a **true bounded exact oracle**, not a claim of a full arbitrary-precision kernel.
 
-The floating barycentric query is **not certified numerically** for all representable binary64 coordinates. It returns \`BoundaryUncertain\` or \`DegenerateOrUncertified\` when its documented guard is too small for a safe classroom classification. That guard is an explanatory filter, not a rigorous adaptive error bound. Chapter 05 will cover such methods in much greater depth with the pre-existing manuscript preserved.
+The floating barycentric query is **not certified numerically** for all representable binary64 coordinates. It returns `BoundaryUncertain` or `DegenerateOrUncertified` when its documented guard is too small for a safe classroom classification. That guard is an explanatory filter, not a rigorous adaptive error bound. Chapter 05 will cover such methods in much greater depth with the pre-existing manuscript preserved.
 
 **Validation protocol:** Build the lab's CMake targets, execute all CTests, inspect P03's numeric output, check PPM header/payload and SVG XML, inspect the gradient visually, and record toolchain + source identity. The GitHub CI file defines the same checks but must not be called passing until an actual successful run is observed. The author still owns the final Mac Book 03 PDF/EPUB build.
 
@@ -131,10 +131,10 @@ The floating barycentric query is **not certified numerically** for all represen
 
 ### Read in this order
 
-1. \`include/book03/affine2.hpp\` — the six coefficients of a column-vector 2D affine map, an explicit 3×3 row-major **storage** export, translation/rotation/scale/shear/reflection constructors, matrix-composition operator, pivot transformation, conservative inverse, and inverse-transpose normal transform. Inspect all comments about frames and numerical limitations.
-2. \`tests/affine2_tests.cpp\` — independent hand-calculated examples, comparison against the P02 \`Frame2\` contract, P03 triangle determinant/weight invariance, normal perpendicularity, invalid/singular transforms, and 2,000 deterministic seeded round trips.
-3. \`src/transform_studio.cpp\` — inspectable world-space matrices, immutable local house vertices, C++-generated SVG and PPM, a numerical transform-order illustration, and a terminal REPL that can save its current transformed house.
-4. \`CMakeLists.txt\` — \`book03_transforms\` executable, \`book03_affine_tests\` test binary, and \`book03_affine_transform_contracts\` CTest next to the previous three chapters' targets.
+1. `include/book03/affine2.hpp` — the six coefficients of a column-vector 2D affine map, an explicit 3×3 row-major **storage** export, translation/rotation/scale/shear/reflection constructors, matrix-composition operator, pivot transformation, conservative inverse, and inverse-transpose normal transform. Inspect all comments about frames and numerical limitations.
+2. `tests/affine2_tests.cpp` — independent hand-calculated examples, comparison against the P02 `Frame2` contract, P03 triangle determinant/weight invariance, normal perpendicularity, invalid/singular transforms, and 2,000 deterministic seeded round trips.
+3. `src/transform_studio.cpp` — inspectable world-space matrices, immutable local house vertices, C++-generated SVG and PPM, a numerical transform-order illustration, and a terminal REPL that can save its current transformed house.
+4. `CMakeLists.txt` — `book03_transforms` executable, `book03_affine_tests` test binary, and `book03_affine_transform_contracts` CTest next to the previous three chapters' targets.
 
 ### Student interface
 
@@ -159,7 +159,7 @@ ppm my-transformed-house.ppm
 quit
 ~~~
 
-Each new command is **pre-multiplied in world space**. The line above rotates the local point first and translates second; the \`point\` command should report approximately world (2,1) metres. The diagram and image use the same exact C++23 \`Affine2\` calculation, with the shared P02 \`ImageMap2\` converting world +Y up to image +v down. The two-order SVG displays why \`T*R\` and \`R*T\` are not interchangeable.
+Each new command is **pre-multiplied in world space**. The line above rotates the local point first and translates second; the `point` command should report approximately world (2,1) metres. The diagram and image use the same exact C++23 `Affine2` calculation, with the shared P02 `ImageMap2` converting world +Y up to image +v down. The two-order SVG displays why `T*R` and `R*T` are not interchangeable.
 
 The demonstration exports are limited to an 840×580 image canvas and require the transformed house's vertices to remain inside it. When a user moves a vertex beyond the visible bounds, the export refuses the operation rather than pretending that clipped geometry was implemented. Clipping belongs to Chapter 17 and is not hidden in this early lab.
 
@@ -169,7 +169,7 @@ P04 uses explicit row-major array **serialization** for printed homogeneous matr
 
 P04 RGB8 output intentionally paints simplified flat-color triangles. It is **not** physically based rendering, a production camera, a depth-buffered rasterizer, or a GPU experiment. The exact triangle test developed earlier retains its separate bounded integer domain. This project is about trustworthy transforms, not prematurely claiming capabilities that later books will develop.
 
-The CI workflow checks target compilation, CTest execution, numeric REPL order, PPM byte size and SVG structure once it is actually run. **Do not report “passed” merely because the checks are written.** The final combined PDF/EPUB build remains the author's later Mac-side review; running this lab must not write to the established local \`From Bits to Research/\` publication library.
+The CI workflow checks target compilation, CTest execution, numeric REPL order, PPM byte size and SVG structure once it is actually run. **Do not report “passed” merely because the checks are written.** The final combined PDF/EPUB build remains the author's later Mac-side review; running this lab must not write to the established local `From Bits to Research/` publication library.
 
 
 ---
@@ -180,9 +180,9 @@ The CI workflow checks target compilation, CTest execution, numeric REPL order, 
 
 ### Read these three new files
 
-1. \`include/book03/exact_orient2d.hpp\` — binary64-to-integer bit decoding; magnitude limbs and carry-safe exact add/subtract/multiply; bounded integer path; exact dyadic fallback; exact triangle point containment. It also includes a deliberate *naive* diagnostic with **two separately rounded products**, using volatile stores solely to avoid optimization silently fusing away the teaching example.
-2. \`tests/exact_orient2d_tests.cpp\` — exact minus-four cancellation; smallest subnormal positive orientation even when the ordinary product underflows; maximum finite-coordinate extreme cases; signed zero, invalid inputs, exact on-edge classification, 5,000 deterministic half-integer inputs compared with the independent P03 bounded-integer oracle.
-3. \`src/precision_studio.cpp\` — inspect stored coordinates (17 significant digits), naive numerical result, exact signed result, and the chosen path; write a fixture CSV and a mathematically grounded diagnostic SVG; interactively enter six finite coordinates and save the corresponding report.
+1. `include/book03/exact_orient2d.hpp` — binary64-to-integer bit decoding; magnitude limbs and carry-safe exact add/subtract/multiply; bounded integer path; exact dyadic fallback; exact triangle point containment. It also includes a deliberate *naive* diagnostic with **two separately rounded products**, using volatile stores solely to avoid optimization silently fusing away the teaching example.
+2. `tests/exact_orient2d_tests.cpp` — exact minus-four cancellation; smallest subnormal positive orientation even when the ordinary product underflows; maximum finite-coordinate extreme cases; signed zero, invalid inputs, exact on-edge classification, 5,000 deterministic half-integer inputs compared with the independent P03 bounded-integer oracle.
+3. `src/precision_studio.cpp` — inspect stored coordinates (17 significant digits), naive numerical result, exact signed result, and the chosen path; write a fixture CSV and a mathematically grounded diagnostic SVG; interactively enter six finite coordinates and save the corresponding report.
 
 ### The numerical contract in one sentence
 
@@ -206,17 +206,17 @@ The initial hard case is deliberately **not** to scale:
 
 - \(A=(0,0)\), \(B=(N,N+2)\), \(C=(N+2,N+4)\), with \(N=10^{16}\).
 - All coordinates are representable. Exact determinant: \(-4\). Naive two-rounded-product determinant: zero.
-- \`orient_binary64\` must report exact sign \(-1\) using the dyadic limb path.
+- `orient_binary64` must report exact sign \(-1\) using the dyadic limb path.
 - Another fixture uses the smallest positive subnormal \(\eta=2^{-1074}\). Its exact area-sign is positive, but the naive \(\eta^2\) product underflows.
 - A third fixture demonstrates positive exact sign despite overflowing naive product. A fourth shows **input rounding**: \(N+1\) was not preserved in binary64, so no exact predicate can reconstruct it.
 
-The \`repl\` accepts \`triangle ax ay bx by cx cy\`, \`inspect\`, \`cases\`, \`csv PATH\`, \`svg PATH\`, \`reset\` and \`quit\`. Every report is computed from the same C++23 exact predicate. SVG panels are **qualitative computed diagnoses**. No benchmark or statistical speedups are invented.
+The `repl` accepts `triangle ax ay bx by cx cy`, `inspect`, `cases`, `csv PATH`, `svg PATH`, `reset` and `quit`. Every report is computed from the same C++23 exact predicate. SVG panels are **qualitative computed diagnoses**. No benchmark or statistical speedups are invented.
 
 ### Verification plan
 
-The CMake targets are \`book03_precision\` and \`book03_exact_tests\`; the CTest name is \`book03_binary64_exact_orientation_contracts\`, registered beside earlier four tests. The GitHub workflow is authored to compile all five projects, execute CTest, inspect exact and naive fixture values, parse the generated CSV and SVG, and exercise the numerical REPL.
+The CMake targets are `book03_precision` and `book03_exact_tests`; the CTest name is `book03_binary64_exact_orientation_contracts`, registered beside earlier four tests. The GitHub workflow is authored to compile all five projects, execute CTest, inspect exact and naive fixture values, parse the generated CSV and SVG, and exercise the numerical REPL.
 
-**Do not call a test passing until observed compiler and test logs confirm it.** Cross-compiler or performance claims require separate execution. All source outputs are local build artifacts, not Book 03 EPUB/PDF releases. Leave the \`From Bits to Research/\` publication library, compiled LaTeX staging, original books and continuous notes untouched.
+**Do not call a test passing until observed compiler and test logs confirm it.** Cross-compiler or performance claims require separate execution. All source outputs are local build artifacts, not Book 03 EPUB/PDF releases. Leave the `From Bits to Research/` publication library, compiled LaTeX staging, original books and continuous notes untouched.
 
 
 ---
@@ -227,10 +227,10 @@ The CMake targets are \`book03_precision\` and \`book03_exact_tests\`; the CTest
 
 **Read in this order:**
 
-1. \`include/book03/geometry3d.hpp\` — true right-handed three-dimensional \`Point3\` versus \`Vector3\`, dot/cross, stable three-argument \`std::hypot\`, unit directions, \`Triangle3\` winding/normal, normalized planes with signed distances, \`Ray3\` with \`t\` measured in metres, \`Sphere3\`, and explicit ray-plane/ray-sphere result statuses. Read all numeric-policy comments.
-2. \`tests/geometry3d_tests.cpp\` — typed point/vector compile-time restrictions; orthogonality/winding; old P03 exact 2D oriented area embedded into the 3D XY plane; unit-normal distances; analytic and independently substituted ray-plane hit; parallel/coplanar/behind/uncertain outcomes; sphere entry/exit/tangency and near-tangency; zero, nonfinite and overflow rejection; 2,500 deterministic cross/dot property inputs.
-3. \`src/spatial_studio.cpp\` — numeric inspector, original 3D house/sphere wireframe SVG, CSV of actual primitive query results, and a terminal REPL for reader-specified rays. The same C++23 geometry objects are used for the numeric report, SVG and CSV; no independent script duplicates hit math.
-4. \`CMakeLists.txt\` — \`book03_space\` executable, \`book03_space_tests\` and the sixth registered CTest \`book03_3d_geometry_ray_plane_sphere_contracts\`.
+1. `include/book03/geometry3d.hpp` — true right-handed three-dimensional `Point3` versus `Vector3`, dot/cross, stable three-argument `std::hypot`, unit directions, `Triangle3` winding/normal, normalized planes with signed distances, `Ray3` with `t` measured in metres, `Sphere3`, and explicit ray-plane/ray-sphere result statuses. Read all numeric-policy comments.
+2. `tests/geometry3d_tests.cpp` — typed point/vector compile-time restrictions; orthogonality/winding; old P03 exact 2D oriented area embedded into the 3D XY plane; unit-normal distances; analytic and independently substituted ray-plane hit; parallel/coplanar/behind/uncertain outcomes; sphere entry/exit/tangency and near-tangency; zero, nonfinite and overflow rejection; 2,500 deterministic cross/dot property inputs.
+3. `src/spatial_studio.cpp` — numeric inspector, original 3D house/sphere wireframe SVG, CSV of actual primitive query results, and a terminal REPL for reader-specified rays. The same C++23 geometry objects are used for the numeric report, SVG and CSV; no independent script duplicates hit math.
+4. `CMakeLists.txt` — `book03_space` executable, `book03_space_tests` and the sixth registered CTest `book03_3d_geometry_ray_plane_sphere_contracts`.
 
 **Commands:**
 
@@ -244,7 +244,7 @@ build/book03-p01/book03_space csv build/book03-p01/ground-and-sphere.csv
 build/book03-p01/book03_space repl
 ~~~
 
-The terminal accepts \`ray ox oy oz dx dy dz\`, \`inspect\`, \`svg FILE\`, \`csv FILE\`, \`reset\`, \`help\` and \`quit\`. Example:
+The terminal accepts `ray ox oy oz dx dy dz`, `inspect`, `svg FILE`, `csv FILE`, `reset`, `help` and `quit`. Example:
 
 ~~~text
 ray 1 3 2 0 -1 0
@@ -254,9 +254,9 @@ csv your-ray.csv
 quit
 ~~~
 
-For the above ray, the infinite floor plane \(Y=0\) is met at \(t=3\) metres with point \((1,0,2)\). The direction entered by the reader is normalized in \`Ray3::from\`; the reported \(t\) measures physical distance in metres. The sphere is a separate independent query, not an arbitrary polygon/collider system.
+For the above ray, the infinite floor plane \(Y=0\) is met at \(t=3\) metres with point \((1,0,2)\). The direction entered by the reader is normalized in `Ray3::from`; the reported \(t\) measures physical distance in metres. The sphere is a separate independent query, not an arbitrary polygon/collider system.
 
-**Diagram convention:** world \((X,Y,Z)\) is right-handed, with \(+Y\) up; the page mapping is \`u=430+52*x-30*z\`, \`v=370+20*x-55*y+18*z\` with coefficients in pixels per metre. This is a parallel **oblique illustration**, not a calibrated camera or a real perspective projection. The generated SVG contains a world grid, original house geometry, a triangulated roof normal, sphere wireframe rings and markers for actual hit points when present.
+**Diagram convention:** world \((X,Y,Z)\) is right-handed, with \(+Y\) up; the page mapping is `u=430+52*x-30*z`, `v=370+20*x-55*y+18*z` with coefficients in pixels per metre. This is a parallel **oblique illustration**, not a calibrated camera or a real perspective projection. The generated SVG contains a world grid, original house geometry, a triangulated roof normal, sphere wireframe rings and markers for actual hit points when present.
 
 **Numerical limitations that must remain explicit:** the unit-normal/normalized-ray factories improve contracts but do not certify arbitrary huge/small construction results. Ray-plane near-parallel and ray-sphere near-tangent decisions use *documented heuristic thresholds* and expose uncertainty; they are not proved exact 3D predicates. The previous Chapter 05 exact sign applies to two-dimensional triples only. A plane hit is not yet a bounded triangle hit, a ray-sphere hit is not a mesh/scene query, and no unimplemented visibility or perspective system should be inferred from a wireframe picture.
 
@@ -267,15 +267,15 @@ For the above ray, the infinite floor plane \(Y=0\) is met at \(t=3\) metres wit
 
 ## Chapter 07 — P07 Indexed Mesh Topology and Half-Edge Studio
 
-The little 3D house now has actual **indexed mesh identity**. Source geometry and topology are separate; coincident XYZ coordinates do not imply shared vertex indices. The P07 lab is cumulative with \`Point3\`/\`Triangle3\` from Chapter 06.
+The little 3D house now has actual **indexed mesh identity**. Source geometry and topology are separate; coincident XYZ coordinates do not imply shared vertex indices. The P07 lab is cumulative with `Point3`/`Triangle3` from Chapter 06.
 
 **Suggested reading order:**
 
-1. \`include/book03/mesh_topology.hpp\`: \`Mesh3\` uses \`positions\` and \`TriangleIndices\`; an optional per-face-corner UV array demonstrates how two face corners can refer to one position but use different texture coordinates. Read \`EdgeKey\`, \`EdgeUse\`, and \`MeshReport\` before reading \`inspect_mesh()\`. It classifies boundary edges, consistently opposite shared uses, winding conflicts, and edges with three or more incident faces. It tests local vertex fans for bow ties, reports exact equal-valued duplicate-position groups **without welding**, and counts face components using shared indexed edges.
-2. \`tests/mesh_topology_tests.cpp\`: independent known quad and house oracles; flipped winding, separate coincident seam vertices, a three-face edge, bow-tie vertex, repeated-index versus geometric-zero-area faces, invalid index/UV/coordinate rejection, and **300 deterministic indexed strips** checked against independently derived counts \(V=2(N+1)\), \(E=4N+1\), \(F=2N\).
-3. \`include/book03/halfedge_mesh.hpp\`: an additional traversable representation of each eligible face's three directed uses, with \`next\`, \`previous\`, and optionally \`twin\`. The convention is explicit: boundary, winding-conflict, and >2-face edges have *no fabricated twin*. The validator checks \`next^3\` cycles, inverse next/previous links, endpoint reversal and symmetric twins. Handles are rebuild-local, not stable generational IDs.
-4. \`tests/halfedge_mesh_tests.cpp\`: the independent eighth CTest verifies face-cycle and twin contracts, that every edge of the closed house has a twin, that defective edges and vertex-only contact never receive spurious twins, and that deliberately broken links are detected.
-5. \`src/mesh_studio.cpp\`: CLI inspector, SVG/CSV and interactive fixture selector. The diagram maps real indexed 3D coordinates through an explicitly **oblique parallel illustration**, with edge color for each incidence class. A screenshot alone cannot reveal a coincident-but-disconnected seam; use the report and CSV.
+1. `include/book03/mesh_topology.hpp`: `Mesh3` uses `positions` and `TriangleIndices`; an optional per-face-corner UV array demonstrates how two face corners can refer to one position but use different texture coordinates. Read `EdgeKey`, `EdgeUse`, and `MeshReport` before reading `inspect_mesh()`. It classifies boundary edges, consistently opposite shared uses, winding conflicts, and edges with three or more incident faces. It tests local vertex fans for bow ties, reports exact equal-valued duplicate-position groups **without welding**, and counts face components using shared indexed edges.
+2. `tests/mesh_topology_tests.cpp`: independent known quad and house oracles; flipped winding, separate coincident seam vertices, a three-face edge, bow-tie vertex, repeated-index versus geometric-zero-area faces, invalid index/UV/coordinate rejection, and **300 deterministic indexed strips** checked against independently derived counts \(V=2(N+1)\), \(E=4N+1\), \(F=2N\).
+3. `include/book03/halfedge_mesh.hpp`: an additional traversable representation of each eligible face's three directed uses, with `next`, `previous`, and optionally `twin`. The convention is explicit: boundary, winding-conflict, and >2-face edges have *no fabricated twin*. The validator checks `next^3` cycles, inverse next/previous links, endpoint reversal and symmetric twins. Handles are rebuild-local, not stable generational IDs.
+4. `tests/halfedge_mesh_tests.cpp`: the independent eighth CTest verifies face-cycle and twin contracts, that every edge of the closed house has a twin, that defective edges and vertex-only contact never receive spurious twins, and that deliberately broken links are detected.
+5. `src/mesh_studio.cpp`: CLI inspector, SVG/CSV and interactive fixture selector. The diagram maps real indexed 3D coordinates through an explicitly **oblique parallel illustration**, with edge color for each incidence class. A screenshot alone cannot reveal a coincident-but-disconnected seam; use the report and CSV.
 
 **CLI and reader interaction:**
 
@@ -291,7 +291,7 @@ book03_mesh csv house-edges.csv house
 book03_mesh repl
 ~~~
 
-In the \`repl\`:
+In the `repl`:
 
 ~~~text
 fixture seam
@@ -303,10 +303,67 @@ inspect
 quit
 ~~~
 
-Fixtures: \`house\`, \`quad\`, \`flipped\`, \`seam\`, \`nonmanifold\`, \`bowtie\`, \`degenerate\` and \`collinear\`. The saved results always reflect the current selected fixture; no stale default drawing is substituted.
+Fixtures: `house`, `quad`, `flipped`, `seam`, `nonmanifold`, `bowtie`, `degenerate` and `collinear`. The saved results always reflect the current selected fixture; no stale default drawing is substituted.
 
 The closed reference house has **10 positions, 24 undirected edges and 16 triangular faces** with two opposite incident uses per edge; its combinatorial Euler characteristic is \(10-24+16=2\). Its closedness and orientation status is a set of *necessary local checks*, not a certified self-intersection-free embedding or physical watertightness proof. The quad is a disk with \((V,E,F)=(4,5,2)\), Euler one and four boundary edges. The seam fixture stores seven positions, references six, has six boundary edges and two edge-connected face components. A single vertex-only bow tie has a disconnected fan without a three-face edge.
 
-**Safety / scope:** \`inspect_mesh\` uses exact discrete index and direction comparisons, but ordinary floating-point cross products to report geometric zero-area faces. It is **not** an exact 3D degeneracy predicate and does not automatically weld identical positions or repair meshes. The twin builder deliberately avoids nonmanifold or same-direction pairings. The half-edge constructor is immutable/rebuild-based and does not implement surface edits, generation-safe handles, boundary loop extraction, self-intersection certification or an accelerated renderer. These remain separate problems.
+**Safety / scope:** `inspect_mesh` uses exact discrete index and direction comparisons, but ordinary floating-point cross products to report geometric zero-area faces. It is **not** an exact 3D degeneracy predicate and does not automatically weld identical positions or repair meshes. The twin builder deliberately avoids nonmanifold or same-direction pairings. The half-edge constructor is immutable/rebuild-based and does not implement surface edits, generation-safe handles, boundary loop extraction, self-intersection certification or an accelerated renderer. These remain separate problems.
 
-**Quality gates:** the CMake project registers the seventh laboratory, \`book03_mesh\` and two P07 test executables: \`book03_mesh_tests\` and \`book03_halfedge_tests\`. The cumulative CTest count is now **eight** (P01–P06 one each, P07 two). The dedicated CI source also checks the reference house count and incidence, the seam's separate components and equal positions, bow-tie fan, three-face-edge classification, and source-generated SVG and CSV outputs. Tests must be actually executed before claiming a pass. None of these commands writes to the author's final Book 03 PDF/EPUB publication library.
+**Quality gates:** the CMake project registers the seventh laboratory, `book03_mesh` and two P07 test executables: `book03_mesh_tests` and `book03_halfedge_tests`. The cumulative CTest count is now **eight** (P01–P06 one each, P07 two). The dedicated CI source also checks the reference house count and incidence, the seam's separate components and equal positions, bow-tie fan, three-face-edge classification, and source-generated SVG and CSV outputs. Tests must be actually executed before claiming a pass. None of these commands writes to the author's final Book 03 PDF/EPUB publication library.
+
+
+---
+
+## Chapter 08 — P08 Curve, Spline and Bicubic Patch Workshop
+
+**Purpose:** Make smooth mathematical geometry *genuinely editable* while preserving the original native C++23 project and the indexed topology contracts from P07. The original controller is a terminal REPL, not a fake interactive screenshot. It can change both curve and patch control points and regenerate all source-derived output files.
+
+**Source reading order:**
+
+1. `include/book03/curves3d.hpp`. Start at `curve_lerp()` and `CubicBezier3::at()`. Follow de Casteljau's three levels, then compare `bernstein_at()` as a separately implemented analytic evaluation. Continue through the exact algebraic split, first and second parameter derivatives, direct Hermite basis, nonrational uniform cubic B-spline span (and its conversion to a cubic Bézier), \(C^0/G^1/C^1/C^2\) join criteria, finite-chord control-hull based adaptive tessellation and its explicit exhausted-depth status.
+2. `BicubicBezierPatch3` in the same header. Sixteen `Point3` controls have row index \(u\) and column index \(v\). Evaluate four cubic curves along \(u\), then one along \(v\), and differentiate each direction independently. A unit normal follows from \(S_u \times S_v\) if the cross product is nonzero. `patch_to_indexed_mesh()` makes an explicit rectangular parameter grid with one vertex ID per sampled location and shared edge indices inside the grid; it does **not** stitch independently generated patches.
+3. `tests/curves3d_tests.cpp`. The ninth independent CTest verifies hard numerical witnesses, de Casteljau against Bernstein at 2,001 samples, exact reparameterization identities under subdivision, Hermite and Bézier conversion, uniform cubic B-spline span basis and \(C^2\) joins, \(G^1\)-not-\(C^1\) and \(C^1\)-not-\(C^2\) examples, a curve whose endpoints coincide but whose interior does not, explicit depth-budget exhaustion, and independent P07 indexed patch-grid invariants.
+4. `src/curve_studio.cpp`. Source-generated SVG depicts the actual evaluated curve, editable handles, and patch sampling. CSV exports actual adaptive \((t,x,y,z)\) samples. OBJ exports only indexed vertices and triangle faces, using 1-based IDs; no materials, trim, UVs, normals or camera are claimed. All outputs are determined by the same in-memory controls and geometry math.
+
+**Reader commands (after the cumulative CMake build):**
+
+~~~bash
+build/book03-p01/book03_curves inspect
+build/book03-p01/book03_curves svg build/book03-p01/garden-curves.svg
+build/book03-p01/book03_curves csv build/book03-p01/garden-samples.csv
+build/book03-p01/book03_curves obj build/book03-p01/garden-patch.obj
+build/book03-p01/book03_curves repl
+~~~
+
+The REPL understands:
+
+~~~text
+control 1 -2 3 0
+control 2 2 3 0
+tolerance 0.015
+inspect
+svg taller-arch.svg
+csv taller-arch.csv
+patch-control 1 1 -0.666667 4.0 -0.666667
+obj adjusted-canopy.obj
+reset
+quit
+~~~
+
+**Mathematically checkable fixtures:** The code's default curve is a four-metre-wide garden arch with controls \((-2,0,0),(-2,2,0),(2,2,0),(2,0,0)\). At \(t=0.5\), its point is \((0,1.5,0)\), the derivative is \((6,0,0)\), the second derivative \((0,-12,0)\). Chapter 08's first hand derivation uses the **two-metre-wide** arch \((0,0),(0,2),(2,2),(2,0)\), whose midpoint derivative is **\((3,0)\)**. These are deliberately different widths, not a contradiction. Changing studio control \(P_1\) to height 3 while leaving other controls alone increases the default curve's midpoint Y to **1.875**.
+
+The default patch has \(12\times12\) parameter cells, **169 shared indexed positions**, **288 triangles**, **456 unique undirected indexed edges**, **48 boundary edges**, Euler characteristic one. For a generic \(m\times n\) grid:
+
+\[
+V=(m+1)(n+1),\quad F=2mn,\quad E=3mn+m+n,\quad B=2(m+n).
+\]
+
+The patch topology is inspected using the P07 `inspect_mesh()` module as an independent connectedness, winding, boundary and Euler check. This protects against a patch implementation that merely draws visually overlapping disconnected triangle soup.
+
+**Numerical contract:** `t,u,v` must be finite in \([0,1]\). Curve/patch controls must be finite. Hermite endpoint tangents are derivatives with respect to normalized parameter, not automatically metres per second. The B-spline supports a **single nonrational uniform cubic span**, not general NURBS; knot vectors, weights and trimming are deliberately documented but not implemented.
+
+Adaptive recursion measures each cubic's interior controls against the *finite chord segment* and subdivides until the stated criterion is met or the depth budget is exhausted. Its exact-math control-hull distance argument is conservative, but a `double` implementation is **not** a proven floating upper interval bound. The returned `tolerance_met_under_float_policy` and terminal bound are diagnostic, not a certified Hausdorff metric. Zero-length endpoint chord does **not** erase a loop.
+
+**Validation:** CMake includes eight cumulative labs and **nine CTests**. The dedicated Book 03 CI source is authored to compile and run the ninth test, inspect the current editable REPL control, parse generated SVG/CSV, and verify every OBJ face references 1..169. It also checks default patch source counts and a known modified Bézier midpoint. These sources **have not been reported as executed successfully** until independent compiler/CTest/CI logs confirm them.
+
+**Publication:** No chapter's PNG/PDF/EPUB is promoted by this project. Original Book 01 and Book 02 distribution assets, continuous notes, derived chapter editions and the final `From Bits to Research/` publication routes remain unchanged.
