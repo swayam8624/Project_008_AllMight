@@ -337,10 +337,10 @@ struct VertexCSR {
 
     [[nodiscard]] std::span<const std::uint32_t> adjacent(
         std::size_t vertex) const {
-        if(vertex+1>=offsets.size())
+        if(offsets.empty() || vertex>=offsets.size()-1)
             throw std::out_of_range("CSR vertex index out of bounds");
-        return {neighbors.data()+offsets[vertex],
-                offsets[vertex+1]-offsets[vertex]};
+        return std::span<const std::uint32_t>{neighbors}.subspan(
+            offsets[vertex],offsets[vertex+1]-offsets[vertex]);
     }
 
     // Uniform UNNORMALIZED graph Laplacian Lx = sum_{j in N(i)} (xi-xj).
