@@ -192,6 +192,54 @@ void distinct_degeneracies_are_separate() {
             "unreferenced stored point does not change mesh-cell Euler");
 }
 
+void csr_graph_and_laplacian_contracts() {
+    const auto mesh=book03::reference_quad();
+    const auto graph=book03::build_vertex_csr(mesh);
+    require(graph.offsets==std::vector<std::size_t>{0,3,5,8,10},
+            "quad CSR offsets match 3,2,3,2 unique neighbor degrees");
+    require(graph.neighbors==std::vector<std::uint32_t>{
+                1,2,3, 0,2, 0,1,3, 0,2},
+            "CSR neighbors are sorted indexed adjacencies");
+    require(graph.neighbors.size()==10,
+            "sum vertex valences is 2E=10 for undirected quad");
+    require(graph.adjacent(0).size()==3 &&
+            graph.adjacent(1).size()==2,
+            "CSR view exposes correct per-vertex degree");
+    const auto field=graph.laplacian({0,1,2,3});
+    require(field==std::vector<double>{-6,0,2,4},
+            "independent uniform graph Laplacian witness");
+    double sum=0;
+    for(double value:field)sum+=value;
+    require(sum==0.0,
+            "undirected graph Laplacian conserves sum of constant weights");
+    require(graph.laplacian({5,5,5,5}) ==
+            std::vector<double>{0,0,0,0},
+            "constant field has zero graph Laplacian");
+
+    // The duplicate-position seam must NOT create a topological neighbor
+    // between separately indexed vertices at the same XYZ location.
+    const auto seam=book03::build_vertex_csr(
+        book03::fixture_mesh("seam"));
+    require(seam.offsets.size()==8,
+            "7 stored positions have 8 CSR offsets");
+    require(seam.adjacent(3).empty(),
+            "unused position has zero indexed valence");
+    require(seam.adjacent(0).size()==2 &&
+            seam.adjacent(4).size()==2,
+            "two coincident positions belong to different local triangles");
+
+    must_throw<std::out_of_range>(
+        [&]{(void)graph.adjacent(4);},
+        "CSR rejects out-of-range index");
+    must_throw<std::invalid_argument>(
+        [&]{(void)graph.laplacian({1,2,3});},
+        "Laplacian rejects wrong scalar field length");
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    must_throw<std::invalid_argument>(
+        [&]{(void)graph.laplacian({0,nan,0,0});},
+        "Laplacian rejects NaN input");
+}
+
 void malformed_input_rejected() {
     const double nan=std::numeric_limits<double>::quiet_NaN();
     const double inf=std::numeric_limits<double>::infinity();
@@ -272,6 +320,7 @@ int main() {
         third_face_breaks_manifold_incidence();
         bow_tie_vertex_not_detected_by_edge_incidence_alone();
         distinct_degeneracies_are_separate();
+        csr_graph_and_laplacian_contracts();
         malformed_input_rejected();
         seeded_independent_edge_count_witnesses();
         std::cout << "Book03/P07: topology contracts, closed house, "
