@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="970" height="540" viewBox="0 0 970 540" role="img" aria-labelledby="title desc">
+<title id="title">A square of two indexed triangles and their opposite diagonal edge directions</title>
+<desc id="desc">In world XY coordinates, vertices 0=(0,0), 1=(1,0), 2=(1,1), and 3=(0,1) form two triangles F0=(0,1,2) and F1=(0,2,3). They share the diagonal edge with canonical key (0,2), but F0 traverses it 2 to 0 and F1 traverses 0 to 2. The surface has 4 vertices, 5 undirected edges, 2 faces, 4 boundary edges and Euler characteristic 1.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0 L9 4 L0 8 Z" fill="#426f75"/></marker></defs>
+<rect width="970" height="540" rx="18" fill="#fbfaf6"/>
+<text x="34" y="38" font-size="24" font-weight="600" font-family="sans-serif" fill="#264653">One square, two faces, one shared edge</text>
+<text x="34" y="59" font-size="14" font-family="sans-serif" fill="#687d83">IDs describe which corners are shared. Directed edge uses describe how each face travels.</text>
+<rect x="34" y="83" width="548" height="408" rx="13" fill="#eff4f0"/>
+<polygon points="140,393 474,393 474,130" fill="#c5e4d9" stroke="none"/>
+<polygon points="140,393 474,130 140,130" fill="#ead9c8" stroke="none"/>
+<path d="M140 393 H474 V130 H140 Z" fill="none" stroke="#395963" stroke-width="3"/>
+<path d="M140 393 L474 130" stroke="#277d71" stroke-width="5" stroke-dasharray="9 8"/>
+<g font-size="17" font-family="sans-serif" font-weight="600" fill="#294b55">
+<text x="121" y="415">V0 (0,0)</text><text x="478" y="418">V1 (1,0)</text>
+<text x="480" y="117">V2 (1,1)</text><text x="57" y="115">V3 (0,1)</text>
+</g>
+<g fill="#2f606c" stroke="white" stroke-width="2">
+<circle cx="140" cy="393" r="8"/><circle cx="474" cy="393" r="8"/><circle cx="474" cy="130" r="8"/><circle cx="140" cy="130" r="8"/>
+</g>
+<path d="M438 148 L160 365" stroke="#a35e4a" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M164 377 L448 151" stroke="#316d8b" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="340" y="267" font-size="15" fill="#a35e4a" font-family="sans-serif">F0: 2→0</text>
+<text x="183" y="286" font-size="15" fill="#316d8b" font-family="sans-serif">F1: 0→2</text>
+<text x="368" y="369" font-size="17" fill="#286b60" font-family="sans-serif" font-weight="600">F0</text>
+<text x="168" y="165" font-size="17" fill="#935b40" font-family="sans-serif" font-weight="600">F1</text>
+<rect x="611" y="91" width="329" height="395" rx="12" fill="#eaf2ef"/>
+<text x="631" y="125" font-size="18" font-weight="600" font-family="sans-serif" fill="#345764">Indexed face records</text>
+<g font-family="monospace" font-size="16" fill="#385963">
+<text x="631" y="171">F0 = (0,1,2)</text><text x="631" y="203">F1 = (0,2,3)</text>
+<text x="631" y="257">shared key = (0,2)</text>
+<text x="631" y="289">incidences = 2</text>
+<text x="631" y="333">V=4   E=5   F=2</text>
+<text x="631" y="365">χ = 4 − 5 + 2 = 1</text>
+</g>
+<text x="631" y="413" font-family="sans-serif" font-size="14" fill="#356960">4 boundary, 1 interior edge</text>
+<text x="631" y="436" font-family="sans-serif" font-size="13" fill="#627c80">Opposite traversal = consistent.</text>
+<text x="34" y="521" font-family="sans-serif" font-size="13" fill="#657c80">A diagonal can be the same undirected edge while having two opposite directed uses.</text>
+</svg>
