@@ -261,3 +261,52 @@ For the above ray, the infinite floor plane \(Y=0\) is met at \(t=3\) metres wit
 **Numerical limitations that must remain explicit:** the unit-normal/normalized-ray factories improve contracts but do not certify arbitrary huge/small construction results. Ray-plane near-parallel and ray-sphere near-tangent decisions use *documented heuristic thresholds* and expose uncertainty; they are not proved exact 3D predicates. The previous Chapter 05 exact sign applies to two-dimensional triples only. A plane hit is not yet a bounded triangle hit, a ray-sphere hit is not a mesh/scene query, and no unimplemented visibility or perspective system should be inferred from a wireframe picture.
 
 **Validation contract:** execute the six CTests on a supported C++23 compiler, compare explicit numeric witnesses with independently derived values, parse the generated SVG, read the CSV rows and inspect visual placement. The dedicated GitHub CI source defines these checks, but successful execution must be observed before reporting a pass. The final Book 03 PDF/EPUB compilation remains reserved for the author's full-book Mac review, with the publication directory and old books unchanged.
+
+
+---
+
+## Chapter 07 — P07 Indexed Mesh Topology and Half-Edge Studio
+
+The little 3D house now has actual **indexed mesh identity**. Source geometry and topology are separate; coincident XYZ coordinates do not imply shared vertex indices. The P07 lab is cumulative with \`Point3\`/\`Triangle3\` from Chapter 06.
+
+**Suggested reading order:**
+
+1. \`include/book03/mesh_topology.hpp\`: \`Mesh3\` uses \`positions\` and \`TriangleIndices\`; an optional per-face-corner UV array demonstrates how two face corners can refer to one position but use different texture coordinates. Read \`EdgeKey\`, \`EdgeUse\`, and \`MeshReport\` before reading \`inspect_mesh()\`. It classifies boundary edges, consistently opposite shared uses, winding conflicts, and edges with three or more incident faces. It tests local vertex fans for bow ties, reports exact equal-valued duplicate-position groups **without welding**, and counts face components using shared indexed edges.
+2. \`tests/mesh_topology_tests.cpp\`: independent known quad and house oracles; flipped winding, separate coincident seam vertices, a three-face edge, bow-tie vertex, repeated-index versus geometric-zero-area faces, invalid index/UV/coordinate rejection, and **300 deterministic indexed strips** checked against independently derived counts \(V=2(N+1)\), \(E=4N+1\), \(F=2N\).
+3. \`include/book03/halfedge_mesh.hpp\`: an additional traversable representation of each eligible face's three directed uses, with \`next\`, \`previous\`, and optionally \`twin\`. The convention is explicit: boundary, winding-conflict, and >2-face edges have *no fabricated twin*. The validator checks \`next^3\` cycles, inverse next/previous links, endpoint reversal and symmetric twins. Handles are rebuild-local, not stable generational IDs.
+4. \`tests/halfedge_mesh_tests.cpp\`: the independent eighth CTest verifies face-cycle and twin contracts, that every edge of the closed house has a twin, that defective edges and vertex-only contact never receive spurious twins, and that deliberately broken links are detected.
+5. \`src/mesh_studio.cpp\`: CLI inspector, SVG/CSV and interactive fixture selector. The diagram maps real indexed 3D coordinates through an explicitly **oblique parallel illustration**, with edge color for each incidence class. A screenshot alone cannot reveal a coincident-but-disconnected seam; use the report and CSV.
+
+**CLI and reader interaction:**
+
+~~~text
+book03_mesh inspect house
+book03_mesh inspect quad
+book03_mesh inspect seam
+book03_mesh inspect flipped
+book03_mesh inspect nonmanifold
+book03_mesh inspect bowtie
+book03_mesh svg house-topology.svg house
+book03_mesh csv house-edges.csv house
+book03_mesh repl
+~~~
+
+In the \`repl\`:
+
+~~~text
+fixture seam
+inspect
+svg invisible-seam.svg
+csv seam-edges.csv
+fixture nonmanifold
+inspect
+quit
+~~~
+
+Fixtures: \`house\`, \`quad\`, \`flipped\`, \`seam\`, \`nonmanifold\`, \`bowtie\`, \`degenerate\` and \`collinear\`. The saved results always reflect the current selected fixture; no stale default drawing is substituted.
+
+The closed reference house has **10 positions, 24 undirected edges and 16 triangular faces** with two opposite incident uses per edge; its combinatorial Euler characteristic is \(10-24+16=2\). Its closedness and orientation status is a set of *necessary local checks*, not a certified self-intersection-free embedding or physical watertightness proof. The quad is a disk with \((V,E,F)=(4,5,2)\), Euler one and four boundary edges. The seam fixture stores seven positions, references six, has six boundary edges and two edge-connected face components. A single vertex-only bow tie has a disconnected fan without a three-face edge.
+
+**Safety / scope:** \`inspect_mesh\` uses exact discrete index and direction comparisons, but ordinary floating-point cross products to report geometric zero-area faces. It is **not** an exact 3D degeneracy predicate and does not automatically weld identical positions or repair meshes. The twin builder deliberately avoids nonmanifold or same-direction pairings. The half-edge constructor is immutable/rebuild-based and does not implement surface edits, generation-safe handles, boundary loop extraction, self-intersection certification or an accelerated renderer. These remain separate problems.
+
+**Quality gates:** the CMake project registers the seventh laboratory, \`book03_mesh\` and two P07 test executables: \`book03_mesh_tests\` and \`book03_halfedge_tests\`. The cumulative CTest count is now **eight** (P01–P06 one each, P07 two). The dedicated CI source also checks the reference house count and incidence, the seam's separate components and equal positions, bow-tie fan, three-face-edge classification, and source-generated SVG and CSV outputs. Tests must be actually executed before claiming a pass. None of these commands writes to the author's final Book 03 PDF/EPUB publication library.
