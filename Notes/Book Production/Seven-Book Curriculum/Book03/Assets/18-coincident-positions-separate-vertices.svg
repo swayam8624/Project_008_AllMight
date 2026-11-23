@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1010" height="525" viewBox="0 0 1010 525" role="img" aria-labelledby="title desc">
+<title id="title">Two square pictures can hide different indexed connectivity</title>
+<desc id="desc">Left: two triangles F0=(0,1,2) and F1=(0,2,3) share vertex IDs 0 and 2 and hence a diagonal edge, forming one edge-connected component with 5 edges. Right: the second face instead has vertices (4,5,6) with exactly the same XYZ positions as original vertices (0,2,3). There are 7 stored positions including unused ID 3, only 6 referenced vertices, 6 edges, 6 boundary edges and 2 edge-connected components. Despite the visually matching square, the two index complexes differ.</desc>
+<rect width="1010" height="525" rx="17" fill="#fbfaf6"/>
+<text x="32" y="38" font-size="24" font-family="sans-serif" font-weight="600" fill="#284957">Same picture. Different model.</text>
+<text x="32" y="61" font-size="14" font-family="sans-serif" fill="#647e82">Matching coordinates do not make matching vertex identifiers.</text>
+<rect x="26" y="87" width="464" height="360" rx="13" fill="#e9f3ef"/>
+<rect x="514" y="87" width="469" height="360" rx="13" fill="#f2ece8"/>
+<g font-family="sans-serif" font-size="19" font-weight="600" fill="#305764">
+<text x="45" y="120">A real shared diagonal</text>
+<text x="534" y="120">A seam with no shared IDs</text>
+</g>
+<polygon points="115,381 384,381 384,146" fill="#b5ddd0"/>
+<polygon points="115,381 384,146 115,146" fill="#e7d3bc"/>
+<path d="M115 381 H384 V146 H115 Z M115 381 L384 146" fill="none" stroke="#237b6c" stroke-width="4"/>
+<polygon points="600,381 869,381 869,146" fill="#b5ddd0"/>
+<polygon points="600,381 869,146 600,146" fill="#e7d3bc"/>
+<path d="M600 381 H869 V146 H600 Z" fill="none" stroke="#415d67" stroke-width="3"/>
+<path d="M600 381 L869 146" fill="none" stroke="#b66948" stroke-width="5" stroke-dasharray="9 6"/>
+<g font-size="14" font-family="monospace" fill="#345c68">
+<text x="96" y="401">0</text><text x="386" y="402">1</text>
+<text x="385" y="137">2</text><text x="103" y="136">3</text>
+<text x="585" y="403">0 and 4</text><text x="870" y="403">1</text>
+<text x="848" y="137">2 and 5</text><text x="576" y="136">6 (same as 3)</text>
+</g>
+<text x="46" y="435" font-size="13" font-family="sans-serif" fill="#276d60">F0=(0,1,2); F1=(0,2,3)</text>
+<text x="534" y="435" font-size="13" font-family="sans-serif" fill="#9c633e">F0=(0,1,2); F1=(4,5,6)</text>
+<text x="37" y="481" font-size="15" font-family="monospace" fill="#2e6f64">5 edges • 4 boundaries • 1 face component</text>
+<text x="535" y="481" font-size="15" font-family="monospace" fill="#a25d40">6 edges • 6 boundaries • 2 components</text>
+<text x="37" y="506" font-size="12" font-family="sans-serif" fill="#687a7f">No automatic welding: an intentional UV or normal seam may need separate rendering corners.</text>
+</svg>
