@@ -87,13 +87,29 @@ add_executable(book03_space_tests tests/geometry3d_tests.cpp)
 target_link_libraries(book03_space_tests PRIVATE
     book03_geometry3d book03_triangle_geometry)
 
+# Chapter 07: indexed mesh identity, shared-edge incidence, orientability
+# diagnostics, nonmanifold vertices and the source-generated mesh inspector.
+add_library(book03_mesh_topology INTERFACE)
+target_include_directories(book03_mesh_topology INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_mesh_topology INTERFACE cxx_std_23)
+
+add_executable(book03_mesh src/mesh_studio.cpp)
+target_link_libraries(book03_mesh PRIVATE
+    book03_mesh_topology book03_geometry3d)
+
+add_executable(book03_mesh_tests tests/mesh_topology_tests.cpp)
+target_link_libraries(book03_mesh_tests PRIVATE
+    book03_mesh_topology book03_geometry3d)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
                    book03_triangles book03_triangle_tests
                    book03_transforms book03_affine_tests
                    book03_precision book03_exact_tests
-                   book03_space book03_space_tests)
+                   book03_space book03_space_tests
+                   book03_mesh book03_mesh_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -106,4 +122,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_affine_transform_contracts COMMAND book03_affine_tests)
     add_test(NAME book03_binary64_exact_orientation_contracts COMMAND book03_exact_tests)
     add_test(NAME book03_3d_geometry_ray_plane_sphere_contracts COMMAND book03_space_tests)
+    add_test(NAME book03_mesh_topology_incidence_and_manifold_contracts COMMAND book03_mesh_tests)
 endif()
