@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Image, Geometry, Predicate, Spatial and Mesh Contracts
+name: Book 03 - C++23 Image, Geometry, Mesh and Curve Contracts
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 seven cumulative geometry laboratories (Ubuntu)
+    name: C++23 eight cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute seven C++23 labs including indexed mesh topology
+      - name: Execute nine CTests across eight C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -244,6 +244,53 @@ jobs:
           assert "Selected seam" in repl
           assert "face-edge-components=2" in repl
           print("P07: closed house incidence, seam, bow tie, nonmanifold, live REPL, SVG and CSV verified")
+          PY
+      - name: Validate P08 cubic curves, adaptive samples and indexed patch artifacts
+        run: |
+          build/book03-p01/book03_curves inspect > build/book03-p01/curve-inspect.txt
+          build/book03-p01/book03_curves svg build/book03-p01/garden-curves.svg
+          build/book03-p01/book03_curves csv build/book03-p01/garden-samples.csv
+          build/book03-p01/book03_curves obj build/book03-p01/garden-patch.obj
+          printf 'control 1 -2 3 0\ntolerance 0.015\ninspect\nsvg build/book03-p01/curve-repl.svg\npatch-control 1 1 -0.666667 4 -0.666667\nobj build/book03-p01/curve-repl.obj\nquit\n' | build/book03-p01/book03_curves repl > build/book03-p01/curve-repl.txt
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          base=Path("build/book03-p01")
+          nsv="{http://www.w3.org/2000/svg}"
+          for name in ("garden-curves.svg", "curve-repl.svg"):
+              root=ET.parse(base/name).getroot()
+              assert root.tag==nsv+"svg"
+              assert root.find(nsv+"title") is not None
+              assert root.find(nsv+"desc") is not None
+              assert len(root.findall(nsv+"polygon"))==288
+              assert len(root.findall(nsv+"polyline"))>=1
+              assert len(root.findall(nsv+"circle"))>=4
+          with (base/"garden-samples.csv").open(newline="", encoding="utf-8") as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)>=4
+          ts=[float(row["t"]) for row in rows]
+          assert ts[0]==0.0 and ts[-1]==1.0
+          assert all(0<=a<b<=1 for a,b in zip(ts,ts[1:]))
+          for name in ("garden-patch.obj","curve-repl.obj"):
+              obj=(base/name).read_text(encoding="utf-8").splitlines()
+              verts=[line for line in obj if line.startswith("v ")]
+              faces=[line for line in obj if line.startswith("f ")]
+              assert len(verts)==169 and len(faces)==288
+              assert all(
+                  1<=int(id)<=169
+                  for face in faces
+                  for id in face.split()[1:])
+          report=(base/"curve-inspect.txt").read_text(encoding="utf-8")
+          assert "Cubic Bézier, de Casteljau" in report
+          assert "Patch mesh: V=169 E=456 F=288 boundary=48 chi=1" in report
+          assert "Tessellation floating-policy met=yes" in report
+          repl=(base/"curve-repl.txt").read_text(encoding="utf-8")
+          assert "Updated control 1" in repl
+          assert "Tolerance=0.015" in repl
+          assert "P(0.5)=(0.00000000,1.87500000,0.00000000)" in repl
+          assert "Updated patch-control 1,1" in repl
+          print("P08: source-generated SVG/CSV/OBJ, control editing and indexed patch checks verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
