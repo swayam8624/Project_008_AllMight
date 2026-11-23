@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="485" viewBox="0 0 920 485" role="img" aria-labelledby="title desc">
+<title id="title">A positive subnormal triangle area underflows to zero in ordinary double arithmetic</title>
+<desc id="desc">Let eta equal the smallest positive binary64 subnormal 2^-1074. Triangle A=(0,0), B=(eta,0), C=(0,eta) is a real nondegenerate triangle of the represented coordinates. Its exact signed twice-area eta squared equals 2^-2148, which is positive but cannot be stored as a nonzero double. The naive double multiplication yields zero; exact integer-scaled arithmetic returns positive orientation. The triangle is heavily enlarged for illustration.</desc>
+<rect width="920" height="485" rx="18" fill="#fbfaf7"/>
+<text x="38" y="37" fill="#294451" font-family="sans-serif" font-size="23" font-weight="600">Too small for the multiplication, not too small to exist</text>
+<text x="38" y="59" fill="#637a81" font-family="sans-serif" font-size="14">A subnormal input survives; its squared value does not survive ordinary binary64 storage</text>
+<rect x="39" y="90" width="396" height="314" rx="11" fill="#edf3f1" stroke="#d7e4e0"/>
+<rect x="452" y="90" width="426" height="314" rx="11" fill="#f2f4f1" stroke="#d7e4e0"/>
+<g stroke="#9baeb3" stroke-width="2"><path d="M97 342 H391"/><path d="M97 342 V118"/></g>
+<polygon points="97,342 337,342 97,140" fill="#b9ded3" stroke="#2d8173" stroke-width="3"/>
+<g fill="#1c776a" stroke="#fff" stroke-width="2"><circle cx="97" cy="342" r="7"/><circle cx="337" cy="342" r="7"/><circle cx="97" cy="140" r="7"/></g>
+<g font-family="sans-serif" font-size="15" fill="#315d64">
+<text x="109" y="360">A = (0,0)</text>
+<text x="272" y="365">B = (η,0)</text>
+<text x="107" y="137">C = (0,η)</text>
+</g>
+<text x="61" y="389" font-family="sans-serif" font-size="12" fill="#6d8486">Illustration hugely magnified; not to scale</text>
+<text x="475" y="127" font-family="monospace" font-size="16" fill="#355360">η = 2^-1074</text>
+<text x="475" y="163" font-family="monospace" font-size="16" fill="#355360">Exact D = η × η</text>
+<text x="475" y="190" font-family="monospace" font-size="17" fill="#23766c" font-weight="600">= 2^-2148 &gt; 0</text>
+<path d="M472 219 H852" stroke="#c5d6d1" stroke-width="1.5"/>
+<text x="475" y="251" font-family="sans-serif" font-size="16" fill="#aa6144">Naive double:</text>
+<text x="475" y="281" font-family="monospace" font-size="18" fill="#a35a40">round(η × η) = 0</text>
+<path d="M472 302 H852" stroke="#c5d6d1" stroke-width="1.5"/>
+<text x="475" y="331" font-family="sans-serif" font-size="16" fill="#176d61">Exact dyadic integers:</text>
+<text x="475" y="361" font-family="monospace" font-size="18" fill="#176d61">sign(1 × 1) = +1</text>
+<text x="39" y="448" font-family="sans-serif" font-size="15" fill="#3b6169">The determinant's magnitude underflows as a double; its exact sign is still meaningful.</text>
+</svg>
