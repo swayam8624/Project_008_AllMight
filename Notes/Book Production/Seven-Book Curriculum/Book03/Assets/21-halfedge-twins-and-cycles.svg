@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1010" height="545" viewBox="0 0 1010 545" role="img" aria-labelledby="title desc">
+<title id="title">Half-edge next cycles and symmetric twins across one indexed diagonal</title>
+<desc id="desc">Two triangles F0=(0,1,2) and F1=(0,2,3) cover a square. Each face has a three-halfedge directed cycle with next and previous references. The common indexed diagonal from 2 to 0 in face F0 is paired to the opposite directed use 0 to 2 in face F1 as symmetric twins. Boundary uses have no twin in the chosen invalid-handle convention.</desc>
+<defs>
+  <marker id="headGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#2b7e71"/></marker>
+  <marker id="headBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#416f97"/></marker>
+</defs>
+<rect width="1010" height="545" rx="18" fill="#fbfaf6"/>
+<text x="32" y="37" font-family="sans-serif" font-size="23" font-weight="600" fill="#254653">Each face has a directed cycle; two faces can share a twin pair</text>
+<text x="32" y="59" font-family="sans-serif" font-size="13" fill="#657c81">Half-edges are whole directed edge USES, not half-length geometric line segments.</text>
+<rect x="23" y="89" width="569" height="402" rx="12" fill="#eff4f0"/>
+<polygon points="139,402 483,402 483,139" fill="#b9ded2" fill-opacity=".7"/>
+<polygon points="139,402 483,139 139,139" fill="#c9dbe9" fill-opacity=".7"/>
+<path d="M139 402 H483 V139 H139 Z M139 402 L483 139" stroke="#718f93" stroke-width="2" fill="none"/>
+<g stroke-width="4" fill="none" stroke-linecap="round">
+<path d="M179 393 H466" stroke="#2b7e71" marker-end="url(#headGreen)"/>
+<path d="M489 384 V165" stroke="#2b7e71" marker-end="url(#headGreen)"/>
+<path d="M469 158 L156 391" stroke="#2b7e71" marker-end="url(#headGreen)"/>
+<path d="M163 374 L466 147" stroke="#416f97" marker-end="url(#headBlue)"/>
+<path d="M448 133 H165" stroke="#416f97" marker-end="url(#headBlue)"/>
+<path d="M132 154 V379" stroke="#416f97" marker-end="url(#headBlue)"/>
+</g>
+<g font-family="sans-serif" font-size="14" fill="#365965">
+<text x="112" y="424">v0</text><text x="486" y="424">v1</text>
+<text x="492" y="132">v2</text><text x="109" y="132">v3</text>
+<text x="412" y="354" font-weight="600" fill="#25776b">F0</text>
+<text x="170" y="174" font-weight="600" fill="#356f99">F1</text>
+</g>
+<rect x="608" y="99" width="374" height="390" rx="11" fill="#e9f2ef"/>
+<text x="627" y="131" font-size="18" font-weight="600" font-family="sans-serif" fill="#325765">Indexed half-edge contract</text>
+<g font-family="monospace" font-size="15" fill="#42636b">
+<text x="625" y="170">F0 loop: 0→1→2→0</text>
+<text x="625" y="201">F1 loop: 0→2→3→0</text>
+<text x="625" y="253" fill="#277769">shared 2→0 in F0</text>
+<text x="625" y="279" fill="#376c97">shared 0→2 in F1</text>
+<text x="625" y="323">twin(twin(h)) = h</text>
+<text x="625" y="352">next³(h) = h</text>
+<text x="625" y="379">previous(next(h)) = h</text>
+</g>
+<text x="626" y="426" font-family="sans-serif" font-size="13" fill="#57767a">Boundary use: twin is invalid</text>
+<text x="626" y="446" font-family="sans-serif" font-size="13" fill="#57767a">Conflict / 3-face edge: no fake twin</text>
+<text x="30" y="521" font-family="sans-serif" font-size="13" fill="#637a81">A valid twin pair exists only across two opposite directed uses of the same indexed undirected edge.</text>
+</svg>
