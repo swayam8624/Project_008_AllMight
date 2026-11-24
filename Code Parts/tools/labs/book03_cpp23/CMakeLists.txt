@@ -174,6 +174,16 @@ target_link_libraries(book03_rotation PRIVATE book03_rotation3 book03_scene_fore
 add_executable(book03_rotation_tests tests/rotation3_tests.cpp)
 target_link_libraries(book03_rotation_tests PRIVATE book03_rotation3 book03_scene_forest)
 
+# Chapter 13: calibrated pinhole and rigid camera pose.
+add_library(book03_pinhole INTERFACE)
+target_include_directories(book03_pinhole INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_pinhole INTERFACE cxx_std_23)
+add_executable(book03_camera src/pinhole_studio.cpp)
+target_link_libraries(book03_camera PRIVATE book03_pinhole book03_rotation3)
+add_executable(book03_camera_tests tests/pinhole_camera_tests.cpp)
+target_link_libraries(book03_camera_tests PRIVATE book03_pinhole book03_rotation3)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -187,7 +197,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_world book03_world_tests
                    book03_assets book03_asset_tests
                    book03_scene book03_scene_tests
-                   book03_rotation book03_rotation_tests)
+                   book03_rotation book03_rotation_tests
+                   book03_camera book03_camera_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -207,4 +218,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_obj_corner_domains_and_gltf_bounds_contracts COMMAND book03_asset_tests)
     add_test(NAME book03_affine_scene_forest_contracts COMMAND book03_scene_tests)
     add_test(NAME book03_rotation_and_rigid_pose_contracts COMMAND book03_rotation_tests)
+    add_test(NAME book03_calibrated_pinhole_contracts COMMAND book03_camera_tests)
 endif()
