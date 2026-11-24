@@ -680,3 +680,16 @@ book03_renderer obj INPUT.obj OUTPUT.ppm
 ~~~
 
 The exact backend suite and gallery passed C++23/UBSan locally. The native 320x240 gallery's full image was checked by an independent rational oracle: 76531 exact colors and 269 exact checker-boundary samples checked for permitted colors. The OBJ adapter is committed with its 40000-pixel rectangle test but is not native-validated; local GitHub DNS resolution blocked full dependency retrieval. See PASS21_EVIDENCE.md. No full cumulative build or CI pass is asserted.
+
+
+---
+
+## P22 — Thin-Lens Simulator
+
+Read `include/book03/thin_lens.hpp`, `tests/lens_tests.cpp` and `src/lens_studio.cpp`. All distances are millimetres; the positive real-image domain and finite pupil are explicit. Compare analytic geometric blur with opposite pupil ray intersections, and compute algebraic focus limits and a separate infinity-focus diffraction scale.
+
+~~~text
+book03_lens csv lens.csv
+~~~
+
+Exact committed source hashes matched the locally compiled C++23/UBSan suite and studio. All 3,000 seeded configurations and 404 exported rows passed the stated independent checks. This is not a compound lens or full aperture-visibility renderer. See PASS22_EVIDENCE.md. Cumulative build and CI remain unverified.
