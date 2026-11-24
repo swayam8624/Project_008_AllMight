@@ -205,3 +205,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 14 — homogeneous projection and depth representation
 
 [Chapter 14](Chapters/14%20-%20From%20a%203D%20Point%20to%20a%20Screen%20Address.md) derives calibrated perspective, orthographic matrices, explicit clip membership, NDC, viewport, finite/infinite forward/reverse depth and a controlled scalar depth-storage experiment. [PASS14_LEGACY_AUDIT.md](PASS14_LEGACY_AUDIT.md) records actual inspected legacy 33 and 34 source identities and outstanding primitive clipping, frustum, API and rasterization subjects. The native projection debugger reuses P13 calibration, adds the fifteenth authored CTest and six new figures (60 cumulative). Source-written tests and CI are not observed runtime passes. Original manuscripts and distribution paths remain unchanged.
+
+
+## Pass 15 — stereo geometry, triangulation and depth sensitivity
+
+[Chapter 15](Chapters/15%20-%20Two%20Eyes%20Looking%20at%20One%20House.md) derives aligned stereo, corrected disparity, local uncertainty, epipolar constraints, essential/fundamental matrices, ideal rectification and general closest-ray reconstruction. [PASS15_LEGACY_AUDIT.md](PASS15_LEGACY_AUDIT.md) records directly located legacy 32 and 35 passages and preserved stereo/XR obligations. The new C++23 laboratory reuses P13 calibration and P12 pose, adding the sixteenth authored CTest and six original diagrams (66 cumulative). No native execution or complete legacy reconciliation is asserted. The original sources and published artifacts remain unchanged.
