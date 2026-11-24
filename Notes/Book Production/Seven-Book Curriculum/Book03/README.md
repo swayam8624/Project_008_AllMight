@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–17; seventeen substantial narrative chapters, seventeen cumulative C++23 laboratories, eighteen source-authored CTests and seventy-seven original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–18; eighteen substantial narrative chapters, eighteen cumulative C++23 laboratories, nineteen source-authored CTests and eighty-two original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -30,39 +30,42 @@
 18. [Chapter 15 — Two Eyes Looking at One House](Chapters/15%20-%20Two%20Eyes%20Looking%20at%20One%20House.md) — disparity, epipolar geometry, calibrated triangulation and uncertainty.
 19. [Chapter 16 — The Long Journey of One Vertex](Chapters/16%20-%20The%20Long%20Journey%20of%20One%20Vertex.md) — indexed vertex processing, raw clip payloads and perspective-correct interpolation.
 20. [Chapter 17 — Shapes That Refuse to Leave the Window](Chapters/17%20-%20Shapes%20That%20Refuse%20to%20Leave%20the%20Window.md) — segment and homogeneous polygon clipping, raw payloads and provenance.
-21. [P01–P17: C++23 Image, Frame, Triangle, Affine, Predicate, 3D, Mesh, Curve, Procedural, Asset Trust, Scene, Rotation, Camera, Projection, Stereo, Vertex and Clipping Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
-22. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
-23. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
-24. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
-25. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
-26. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
-27. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
-28. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
-29. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
-30. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
-31. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
-32. [Pass 07 original-source audit](PASS07_LEGACY_AUDIT.md) — actually inspected halfedge, winged-edge, vertex-link, CSR and Laplacian source sections.
-33. [Pass 07 evidence record](PASS07_EVIDENCE.md) — authored mesh and halfedge C++23 project, figures, exact combinatorial checks and outstanding runtime/release gates.
-34. [Pass 08 original-source audit](PASS08_LEGACY_AUDIT.md) — actual inspected original MIT graphics source sections on cubic curves, splines, patches and later subdivision material.
-35. [Pass 08 evidence record](PASS08_EVIDENCE.md) — new cubic/B-spline/Hermite math, studio, original illustrations and unobserved runtime gates.
-36. [Pass 09 original-source audit](PASS09_LEGACY_AUDIT.md) — original parametric and implicit surface proofs, SDFs, learned-shape source atlas and preserved later material.
-37. [Pass 09 evidence record](PASS09_EVIDENCE.md) — procedural mesh generators, numerical/topological checks, source exports, original figures and open execution gates.
-38. [Pass 10 original-source audit](PASS10_LEGACY_AUDIT.md) — actual OBJ/glTF, per-corner shading, half-edge/topology and scene source paths, with implementation boundaries.
-39. [Pass 10 evidence record](PASS10_EVIDENCE.md) — native OBJ subset/import studio, glTF bounds kernel, eleven CTests and open runtime acceptance gates.
-40. [Pass 11 original-source audit](PASS11_LEGACY_AUDIT.md) — hierarchy, transform-chain and shading source custody.
-41. [Pass 11 evidence record](PASS11_EVIDENCE.md) — scene forest, five instances, twelfth CTest and outstanding validation.
-42. [Pass 12 original-source audit](PASS12_LEGACY_AUDIT.md) — quaternion, animation and rigid-pose source custody.
-43. [Pass 12 evidence record](PASS12_EVIDENCE.md) — orientation debugger, thirteenth CTest and outstanding validation.
-44. [Pass 13 original-source audit](PASS13_LEGACY_AUDIT.md) — pinhole, intrinsics, pose and projection sensitivity custody.
-45. [Pass 13 evidence record](PASS13_EVIDENCE.md) — native camera simulator, fourteenth CTest and outstanding gates.
-46. [Pass 14 original-source audit](PASS14_LEGACY_AUDIT.md) — projection, clipping and depth source custody.
-47. [Pass 14 evidence record](PASS14_EVIDENCE.md) — scalar depth experiment, fifteenth CTest and acceptance boundaries.
-48. [Pass 15 original-source audit](PASS15_LEGACY_AUDIT.md) — stereo, disparity, calibration and XR source custody.
-49. [Pass 15 evidence record](PASS15_EVIDENCE.md) — reconstruction laboratory and sixteenth CTest.
-50. [Pass 16 original-source audit](PASS16_LEGACY_AUDIT.md) — vertex and varying source custody.
-51. [Pass 16 evidence record](PASS16_EVIDENCE.md) — vertex tracer, seventeenth CTest and P05 CSV correction.
-52. [Pass 17 original-source audit](PASS17_LEGACY_AUDIT.md) — homogeneous planes and clipping source custody.
-53. [Pass 17 evidence record](PASS17_EVIDENCE.md) — clipping explorer, eighteenth CTest and numerical limitations.
+21. [Chapter 18 — Who Owns the Edge](Chapters/18%20-%20Who%20Owns%20the%20Edge.md) — exact snapped integer coverage, top-left ownership and incremental edge functions.
+22. [P01–P18: C++23 Image, Frame, Triangle, Affine, Predicate, 3D, Mesh, Curve, Procedural, Asset Trust, Scene, Rotation, Camera, Projection, Stereo, Vertex, Clipping and Raster Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
+23. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
+24. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
+25. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
+26. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
+27. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
+28. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
+29. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
+30. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
+31. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
+32. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
+33. [Pass 07 original-source audit](PASS07_LEGACY_AUDIT.md) — actually inspected halfedge, winged-edge, vertex-link, CSR and Laplacian source sections.
+34. [Pass 07 evidence record](PASS07_EVIDENCE.md) — authored mesh and halfedge C++23 project, figures, exact combinatorial checks and outstanding runtime/release gates.
+35. [Pass 08 original-source audit](PASS08_LEGACY_AUDIT.md) — actual inspected original MIT graphics source sections on cubic curves, splines, patches and later subdivision material.
+36. [Pass 08 evidence record](PASS08_EVIDENCE.md) — new cubic/B-spline/Hermite math, studio, original illustrations and unobserved runtime gates.
+37. [Pass 09 original-source audit](PASS09_LEGACY_AUDIT.md) — original parametric and implicit surface proofs, SDFs, learned-shape source atlas and preserved later material.
+38. [Pass 09 evidence record](PASS09_EVIDENCE.md) — procedural mesh generators, numerical/topological checks, source exports, original figures and open execution gates.
+39. [Pass 10 original-source audit](PASS10_LEGACY_AUDIT.md) — actual OBJ/glTF, per-corner shading, half-edge/topology and scene source paths, with implementation boundaries.
+40. [Pass 10 evidence record](PASS10_EVIDENCE.md) — native OBJ subset/import studio, glTF bounds kernel, eleven CTests and open runtime acceptance gates.
+41. [Pass 11 original-source audit](PASS11_LEGACY_AUDIT.md) — hierarchy, transform-chain and shading source custody.
+42. [Pass 11 evidence record](PASS11_EVIDENCE.md) — scene forest, five instances, twelfth CTest and outstanding validation.
+43. [Pass 12 original-source audit](PASS12_LEGACY_AUDIT.md) — quaternion, animation and rigid-pose source custody.
+44. [Pass 12 evidence record](PASS12_EVIDENCE.md) — orientation debugger, thirteenth CTest and outstanding validation.
+45. [Pass 13 original-source audit](PASS13_LEGACY_AUDIT.md) — pinhole, intrinsics, pose and projection sensitivity custody.
+46. [Pass 13 evidence record](PASS13_EVIDENCE.md) — native camera simulator, fourteenth CTest and outstanding gates.
+47. [Pass 14 original-source audit](PASS14_LEGACY_AUDIT.md) — projection, clipping and depth source custody.
+48. [Pass 14 evidence record](PASS14_EVIDENCE.md) — scalar depth experiment, fifteenth CTest and acceptance boundaries.
+49. [Pass 15 original-source audit](PASS15_LEGACY_AUDIT.md) — stereo, disparity, calibration and XR source custody.
+50. [Pass 15 evidence record](PASS15_EVIDENCE.md) — reconstruction laboratory and sixteenth CTest.
+51. [Pass 16 original-source audit](PASS16_LEGACY_AUDIT.md) — vertex and varying source custody.
+52. [Pass 16 evidence record](PASS16_EVIDENCE.md) — vertex tracer, seventeenth CTest and P05 CSV correction.
+53. [Pass 17 original-source audit](PASS17_LEGACY_AUDIT.md) — homogeneous planes and clipping source custody.
+54. [Pass 17 evidence record](PASS17_EVIDENCE.md) — clipping explorer, eighteenth CTest and numerical limitations.
+55. [Pass 18 original-source audit](PASS18_LEGACY_AUDIT.md) — raster sample ownership custody.
+56. [Pass 18 evidence record](PASS18_EVIDENCE.md) — observed standalone GCC/UBSan pass and remaining gates.
 
 ## What is already authored?
 
@@ -100,7 +103,9 @@ Pass 16 connects indexed asset tuples to model/view/projection and derives recip
 
 Pass 17 adds rectangular segment clipping, homogeneous triangle clipping, source-corner provenance and fan triangulation. Five new figures bring the total to 77. The eighteenth CTest is authored but native execution remains unobserved.
 
-The first seventeen passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
+Pass 18 adds bounded integer sample ownership with five figures (82 cumulative). Its exact-hash-matched standalone coverage test passed natively under GCC 14.2.0 with UBSan. Integrated studio, cumulative CMake/CTest and publication remain unverified.
+
+The first eighteen passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
 
 ## Teaching voice
 
@@ -148,5 +153,6 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 15 | Calibrated stereo, epipolar constraints, triangulation, correspondence counterexamples and uncertainty | Authored; native runtime and original-source reconciliation pending |
 | 16 | Indexed vertex processing, clip payloads, smooth varying interpolation and NDC depth | Authored; native runtime and source reconciliation pending |
 | 17 | Rectangular and homogeneous primitive clipping, intersection payloads, provenance and fan assembly | Authored; native runtime and source reconciliation pending |
-| 18+ | Sample ownership through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 18 | Integer triangle coverage, top-left sample ownership and incremental edge evaluation | Authored; standalone native suite passed; integration pending |
+| 19+ | Visibility through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
