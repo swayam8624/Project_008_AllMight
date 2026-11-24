@@ -235,3 +235,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 20 — sampling, aliasing and footprint integration
 
 [Chapter 20](Chapters/20%20-%20A%20Pixel%20Is%20Not%20a%20Tiny%20Square%20of%20Reality.md) derives aliasing, sinc box response, midpoint quadrature and coverage error; it explains reconstruction, SSAA/MSAA, mipmaps and temporal sampling. [PASS20_LEGACY_AUDIT.md](PASS20_LEGACY_AUDIT.md) maps targeted original material. [PASS20_EVIDENCE.md](PASS20_EVIDENCE.md) records actual exact-hash-matched GCC/UBSan runs, 2,000 seeded trials and 960 independently checked exported rows. Five figures bring the cumulative count to 92. The twenty-first CTest is registered. Full pipeline, cumulative CI and publication remain unverified.
+
+
+## Pass 21 — assembled software renderer
+
+[Chapter 21](Chapters/21%20-%20A%20Whole%20Rasterizer%20We%20Can%20Explain.md) connects the previous additive libraries, with a native-tested opaque screen-space backend and separately gated OBJ/model/clip adapter. [PASS21_LEGACY_AUDIT.md](PASS21_LEGACY_AUDIT.md) records actual inspected API identities. [PASS21_EVIDENCE.md](PASS21_EVIDENCE.md) records GCC/UBSan execution, exact source hashes, 76800 checked pixels (76531 exact color matches and 269 permitted checker-boundary colors), and an explicit DNS blocker for full integration. Three new figures bring the total to 95. Two new CTests bring the authored count to 23. No native full-front-end success or publication is asserted.
