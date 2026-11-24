@@ -275,3 +275,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 28 — features and robust correspondence verification
 
 [Chapter 28](Chapters/28%20-%20Finding%20the%20Same%20Corner%20Twice.md) derives the structure tensor, Harris response, patch normalization and RANSAC probability; separates descriptor matching and geometric verification. [PASS28_LEGACY_AUDIT.md](PASS28_LEGACY_AUDIT.md) records targeted source custody and primary references. [PASS28_EVIDENCE.md](PASS28_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan runs, 107 translated image pairs, 50 robust fits and 2500 held-out correspondences. Four figures bring the count to 124; the thirtieth CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 29 — sparse reconstruction
+
+[Chapter 29](Chapters/29%20-%20Building%20a%20Scene%20from%20Pictures.md) implements calibrated essential-pose recovery, multi-ray triangulation and fixed-pose point refinement; derives joint bundle adjustment and describes incremental view registration. [PASS29_LEGACY_AUDIT.md](PASS29_LEGACY_AUDIT.md) records P27 dependency, chapter plan and primary references. [PASS29_EVIDENCE.md](PASS29_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution, 80 point refinements, 100 trials, 10,000 points and independent CSV/geometry checks. Five figures bring the count to 129; the thirty-first CTest is registered. Cumulative integration and publication remain pending.
