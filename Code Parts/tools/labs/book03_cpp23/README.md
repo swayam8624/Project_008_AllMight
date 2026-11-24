@@ -492,3 +492,21 @@ The restricted glTF layout fixture uses a 256-byte buffer, view start 16 and len
 **Testing:** CMake now declares **ten cumulative C++23 labs and eleven CTests**, including `book03_obj_corner_domains_and_gltf_bounds_contracts`. The Book03 GitHub Actions source runs native compilation and CTest, then creates a real local seam OBJ fixture, checks four-versus-six vertex identity, parses source SVG and GPU CSV exports, verifies the separate attribute indices, exercises the REPL and checks the known glTF byte witness. **Do not report these tests as green before an actual CMake/CTest/GitHub Actions execution is observed.**
 
 **Publication:** Final PDF/EPUB compilation is deferred until all 32 Book03 chapters and original-source reconciliations are finished. The original continuous notes, derived chapter editions, legacy LaTeX stage and already published Books 01–02 remain read-only.
+
+
+---
+
+## P11 — Shared-asset Scene Forest
+
+Read `include/book03/scene_forest.hpp` in order: Linear3 column maps, SceneAffine, scene_translate/scale/rotate_y, SceneNode/SceneEvaluation, SceneForest::evaluate and reparent, five_tree_world. Then read `tests/scene_forest_tests.cpp` and `src/scene_studio.cpp`. One seven-position, three-face local tree mesh is referenced by five nodes. Kahn's iterative ordering evaluates parents first, even if array order is reversed. Nodes are distinct from assets. Reparenting with world preservation solves L_new = inverse(W_parent) W_child and keeps full affine shear. Normals use the inverse transpose; negative determinant reverses winding parity. Inverse rejection is heuristic, not certified. The bounds scan transforms all source positions.
+
+After the eventual cumulative native build, the reader can run:
+
+~~~text
+book03_scene inspect
+book03_scene svg five-trees.svg
+book03_scene csv five-trees.csv
+book03_scene repl
+~~~
+
+REPL commands: `move 0 2 0 0`, `parent 3 1 world`, `parent 0 2 local` (cycle rejected), `inspect`, `svg FILE`, `csv FILE`, `quit`. The SVG is an oblique diagnostic projection, without a camera, visibility or material implementation. The CSV records origins, bounds and determinant. The independent twelfth CTest exercises numeric witnesses, shared identity, parent order, 5000-node chain, singular inverse and failed-edit rollback. No native test pass is asserted yet.
