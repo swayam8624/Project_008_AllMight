@@ -599,3 +599,20 @@ book03_vertex svg varying-edge.svg
 ~~~
 
 The fixed OBJ witness has w=(2,4,8), screen centroid UV=(2/7,1/7), and forward depth=85/114. Along its second edge corrected V=t/(2-t), rather than t. The independent tests include seam and draw-state identities, stage transforms, rejection cases and 3,000 seeded original-surface round trips. Source registration is verified separately from native execution.
+
+
+---
+
+## P17 — Primitive Clipping Explorer
+
+Read `include/book03/primitive_clipping.hpp` after vertex_pipeline.hpp. Start with Window2, outcodes, cohen_sutherland and liang_barsky, then ClipPlane, ClipVertex, clip_mix, clip_crossing, clip_triangle, to_screen_vertex and fan_triangulate. Homogeneous clipping retains raw smooth varyings and original triangle-corner weights. Generated normal vectors remain unnormalized. The six closed planes are followed by positive-w and full membership checks. Floating boundary failures are explicit; no certified watertightness is claimed.
+
+After the eventual native build:
+
+~~~text
+book03_clip inspect
+book03_clip csv clipped-polygon.csv
+book03_clip svg clipped-polygon.svg
+~~~
+
+The fixed fixture produces a four-vertex polygon and two fan triangles. Tests include 4,000 seeded line comparisons, 2,000 single-plane triangle provenance checks and a behind-camera projection witness. The studio is not an interactive editor or filled rasterizer. Native execution remains unverified.
