@@ -462,6 +462,10 @@ An importer that quietly welds vertices while parsing cannot provide this eviden
 
 The P10 importer is therefore **nonrepairing by design**. It keeps the original position indices and distinct corner streams. The P07 inspector generates the diagnostic report. The decision to mutate geometry belongs to a separate, explicit operation.
 
+![A five-stage repair procedure preserves the original asset, diagnoses the issue, chooses a policy, edits an explicit copy and revalidates the required invariants.](../Assets/39-deliberate-repair-transaction.svg)
+
+*Figure 10.6 — A repair needs an explicit target contract and before/after evidence. Silently welding or deleting data during parsing can hide both the problem and the user's original intent.*
+
 ### Why Euler characteristic alone is not a repair certificate
 
 A closed connected orientable genus-zero surface has Euler characteristic two. But the number two alone is not enough to certify everything we want.
