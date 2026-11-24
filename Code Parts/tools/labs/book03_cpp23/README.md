@@ -546,3 +546,21 @@ book03_camera repl
 ~~~
 
 REPL: `focal 800 800`, `move 0 0 2`, `yaw 15`, `principal 300 220`, `ray 319 239`, `inspect`, `csv FILE`, `svg FILE`, `reset`, `quit`. The default 640x480 model has focal scales 400 px, principal point (320,240) and seven world landmarks. The outputs are point projection diagnostics, not rasterized triangles or camera visibility. The fourteenth CTest contains 3,000 seeded optical Jacobian and round-trip cases. No successful native run is asserted yet. No PDF/EPUB is generated.
+
+
+---
+
+## P14 — Projection and Depth Debugger
+
+Read `include/book03/projection_pipeline.hpp`: Homogeneous4, ProjectionMatrix, DepthMap, perspective_matrix, orthographic_matrix, classify_clip, perspective_divide, Viewport and trace_projection. The convention is column vectors, graphics local -Z forward, zero-to-one NDC depth and top-left viewport. Storage is row-major; this is independent of mathematical multiplication. Compare `tests/projection_pipeline_tests.cpp` with `src/projection_studio.cpp`. The point classifier is not a primitive clipper.
+
+After the eventual native CMake build:
+
+~~~text
+book03_projection inspect
+book03_projection csv depth-storage.csv
+book03_projection svg depth-curves.svg
+book03_projection repl
+~~~
+
+REPL commands: `point 1 1 -4`, `reverse`, `forward`, `depth 0.1 0` (infinite), `depth 1 9`, `ortho`, `perspective`, `inspect`, `csv FILE`, `svg FILE`, `quit`. The CSV and SVG always use the fixed infinite-far near-0.1 reference experiment, not the current REPL policy. CSV contains 964 data rows for IEEE binary32 and uniform 24-bit storage in both depth orders. It isolates storage quantization, not actual GPU errors. No observed native build/CTest success is asserted.
