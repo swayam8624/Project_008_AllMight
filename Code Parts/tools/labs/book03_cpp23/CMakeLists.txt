@@ -164,6 +164,16 @@ target_link_libraries(book03_scene PRIVATE book03_scene_forest book03_mesh_topol
 add_executable(book03_scene_tests tests/scene_forest_tests.cpp)
 target_link_libraries(book03_scene_tests PRIVATE book03_scene_forest book03_mesh_topology)
 
+# Chapter 12: proper rotations, unit quaternion and rigid pose contracts.
+add_library(book03_rotation3 INTERFACE)
+target_include_directories(book03_rotation3 INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_rotation3 INTERFACE cxx_std_23)
+add_executable(book03_rotation src/rotation_studio.cpp)
+target_link_libraries(book03_rotation PRIVATE book03_rotation3 book03_scene_forest)
+add_executable(book03_rotation_tests tests/rotation3_tests.cpp)
+target_link_libraries(book03_rotation_tests PRIVATE book03_rotation3 book03_scene_forest)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -176,7 +186,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_curves book03_curves_tests
                    book03_world book03_world_tests
                    book03_assets book03_asset_tests
-                   book03_scene book03_scene_tests)
+                   book03_scene book03_scene_tests
+                   book03_rotation book03_rotation_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -195,4 +206,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_procedural_heightfield_sphere_cylinder_isosurface_contracts COMMAND book03_world_tests)
     add_test(NAME book03_obj_corner_domains_and_gltf_bounds_contracts COMMAND book03_asset_tests)
     add_test(NAME book03_affine_scene_forest_contracts COMMAND book03_scene_tests)
+    add_test(NAME book03_rotation_and_rigid_pose_contracts COMMAND book03_rotation_tests)
 endif()
