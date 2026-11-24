@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 twenty cumulative geometry laboratories (Ubuntu)
+    name: C++23 twenty-one cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute twenty-one CTests across twenty C++23 geometry laboratories
+      - name: Execute twenty-three CTests across twenty-one C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -794,6 +794,47 @@ jobs:
                   value=sum(signal(i+(k+0.5)/n) for k in range(n))/n
                   assert abs(float(row[key])-value)<1e-12
           print("P20: all 960 analytic sampling rows verified")
+          PY
+      - name: Verify P21 renderer gallery and OBJ integration
+        run: |
+          build/book03-p01/book03_renderer_gallery build/book03-p01/renderer-gallery.ppm > build/book03-p01/renderer-report.txt
+          cat > build/book03-p01/renderer-quad.obj <<'OBJ'
+          v -1 -1 0
+          v 1 -1 0
+          v 1 1 0
+          v -1 1 0
+          vt 0 0
+          vt 1 0
+          vt 1 1
+          vt 0 1
+          f 1/1 2/2 3/3
+          f 1/1 3/3 4/4
+          OBJ
+          build/book03-p01/book03_renderer obj build/book03-p01/renderer-quad.obj build/book03-p01/renderer-quad.ppm > build/book03-p01/renderer-quad.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          from collections import Counter
+          base=Path("build/book03-p01")
+          def read_ppm(name,w,h):
+              header,payload=(base/name).read_bytes().split(b"\n255\n",1)
+              assert header==f"P6\n{w} {h}".encode()
+              assert len(payload)==3*w*h
+              return [payload[i:i+3] for i in range(0,len(payload),3)]
+          pixels=read_ppm("renderer-gallery.ppm",320,240)
+          counts=Counter(pixels)
+          # Checker discontinuities can change shade across compilers; mask
+          # and aggregate board occupancy must remain exact.
+          assert counts[bytes((53,63,72))]==46581
+          assert counts[bytes((237,158,97))]==11172
+          assert counts[bytes((81,123,109))]+counts[bytes((139,206,184))]==19047
+          assert len(counts)==4
+          assert "covered=41012" in (base/"renderer-report.txt").read_text()
+          quad=read_ppm("renderer-quad.ppm",640,480)
+          assert "covered=40000" in (base/"renderer-quad.txt").read_text()
+          for i,p in enumerate(quad):
+              x,y=i%640,i//640
+              assert (p!=bytes((53,63,72)))==(220<=x<420 and 140<=y<340)
+          print("P21: native gallery mask and full OBJ-to-image rectangle contract")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
