@@ -244,6 +244,16 @@ target_link_libraries(book03_visibility PRIVATE book03_visibility_lib book03_ras
 add_executable(book03_visibility_tests tests/visibility_tests.cpp)
 target_link_libraries(book03_visibility_tests PRIVATE book03_visibility_lib book03_raster_coverage)
 
+# Chapter 20: analytic sampling and numerical quadrature.
+add_library(book03_sampling_lib INTERFACE)
+target_include_directories(book03_sampling_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_sampling_lib INTERFACE cxx_std_23)
+add_executable(book03_sampling src/sampling_studio.cpp)
+target_link_libraries(book03_sampling PRIVATE book03_sampling_lib)
+add_executable(book03_sampling_tests tests/sampling_tests.cpp)
+target_link_libraries(book03_sampling_tests PRIVATE book03_sampling_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -264,7 +274,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_vertex book03_vertex_tests
                    book03_clip book03_clip_tests
                    book03_raster book03_raster_tests
-                   book03_visibility book03_visibility_tests)
+                   book03_visibility book03_visibility_tests
+                   book03_sampling book03_sampling_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -291,4 +302,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_primitive_clipping_contracts COMMAND book03_clip_tests)
     add_test(NAME book03_integer_raster_coverage_contracts COMMAND book03_raster_tests)
     add_test(NAME book03_opaque_visibility_contracts COMMAND book03_visibility_tests)
+    add_test(NAME book03_sampling_and_quadrature_contracts COMMAND book03_sampling_tests)
 endif()
