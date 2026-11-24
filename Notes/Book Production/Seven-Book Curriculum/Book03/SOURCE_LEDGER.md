@@ -210,3 +210,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 15 — stereo geometry, triangulation and depth sensitivity
 
 [Chapter 15](Chapters/15%20-%20Two%20Eyes%20Looking%20at%20One%20House.md) derives aligned stereo, corrected disparity, local uncertainty, epipolar constraints, essential/fundamental matrices, ideal rectification and general closest-ray reconstruction. [PASS15_LEGACY_AUDIT.md](PASS15_LEGACY_AUDIT.md) records directly located legacy 32 and 35 passages and preserved stereo/XR obligations. The new C++23 laboratory reuses P13 calibration and P12 pose, adding the sixteenth authored CTest and six original diagrams (66 cumulative). No native execution or complete legacy reconciliation is asserted. The original sources and published artifacts remain unchanged.
+
+
+## Pass 16 — indexed vertex processing and projective interpolation
+
+[Chapter 16](Chapters/16%20-%20The%20Long%20Journey%20of%20One%20Vertex.md) connects P10 rendering tuples and P11–14 affine/camera/projection contracts, retains raw clip payloads, derives reciprocal-w surface interpolation and separate screen-linear depth, and introduces the vertex-stage tracer. [PASS16_LEGACY_AUDIT.md](PASS16_LEGACY_AUDIT.md) records actual inspected legacy 33 and 41 material and remaining work. The seventeenth authored CTest and six new original SVGs (72 cumulative) are registered. The earlier P05 CSV duplicate case label was corrected. No native run or full source reconciliation is asserted. All original and published paths remain unchanged.
