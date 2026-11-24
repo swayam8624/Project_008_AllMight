@@ -758,3 +758,17 @@ book03_epipolar epipolar.csv
 ~~~
 
 Native GCC C++23/UBSan passed exact F recovery, planar rejection and scale-invariant residual tests; 100 noise-sweep fits with 5,000 held-out correspondences completed. Independent NumPy geometry fixture and Python CSV checks are documented in PASS27_EVIDENCE.md. No robust matching or essential-pose recovery yet. Cumulative build and CI remain pending.
+
+
+---
+
+## P28 — Feature Matching and Robust Verification
+
+Read `include/book03/features.hpp`, then `include/book03/robust_matches.hpp` (depends on P27 epipolar.hpp), `tests/feature_tests.cpp` and `src/matching_studio.cpp`. Track detector response, descriptor distance and geometric residual as separate quantities.
+
+~~~text
+book03_feature_tests
+book03_matching matching.csv
+~~~
+
+Standalone GCC C++23/UBSan: 107 correct translated feature pairs and 50 successful synthetic RANSAC fits, 2500 held-out correspondences, 50 independently checked CSV summaries. This does not constitute end-to-end real-photo reconstruction; random outliers are not coherent false correspondences. See PASS28_EVIDENCE.md. Cumulative build and CI pending.
