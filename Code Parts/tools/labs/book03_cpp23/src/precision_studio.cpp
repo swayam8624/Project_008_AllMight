@@ -153,7 +153,11 @@ void write_csv(std::ostream& out,const Case& current) {
     out << std::setprecision(std::numeric_limits<double>::max_digits10);
     out << "case,ax,ay,bx,by,cx,cy,naive_determinant,naive_status,"
            "exact_sign,exact_path\n";
-    for(const Case& x:report_rows(current)) {
+    auto rows=report_rows(current);
+    // Keep the current-case label distinct from the five fixture keys.
+    // The first row may otherwise duplicate the default cancellation case.
+    rows[0].name="Current triangle";
+    for(const Case& x:rows) {
         const auto exact=book03::orient_binary64(x.a,x.b,x.c);
         const double naive=naive_orientation(x.a,x.b,x.c);
         out << x.name << ","
