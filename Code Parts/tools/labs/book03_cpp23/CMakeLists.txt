@@ -254,6 +254,20 @@ target_link_libraries(book03_sampling PRIVATE book03_sampling_lib)
 add_executable(book03_sampling_tests tests/sampling_tests.cpp)
 target_link_libraries(book03_sampling_tests PRIVATE book03_sampling_lib)
 
+# Chapter 21: native-validated backend and separately gated front end.
+add_library(book03_software_renderer INTERFACE)
+target_include_directories(book03_software_renderer INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_software_renderer INTERFACE cxx_std_23)
+add_executable(book03_renderer_gallery src/renderer_gallery.cpp)
+target_link_libraries(book03_renderer_gallery PRIVATE book03_software_renderer book03_visibility_lib book03_sampling_lib)
+add_executable(book03_renderer_tests tests/renderer_tests.cpp)
+target_link_libraries(book03_renderer_tests PRIVATE book03_software_renderer)
+add_executable(book03_renderer src/renderer_obj.cpp)
+target_link_libraries(book03_renderer PRIVATE book03_software_renderer book03_primitive_clipping)
+add_executable(book03_renderer_frontend_tests tests/renderer_frontend_tests.cpp)
+target_link_libraries(book03_renderer_frontend_tests PRIVATE book03_software_renderer book03_primitive_clipping)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -275,7 +289,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_clip book03_clip_tests
                    book03_raster book03_raster_tests
                    book03_visibility book03_visibility_tests
-                   book03_sampling book03_sampling_tests)
+                   book03_sampling book03_sampling_tests
+                   book03_renderer_gallery book03_renderer_tests
+                   book03_renderer book03_renderer_frontend_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -303,4 +319,6 @@ if(BUILD_TESTING)
     add_test(NAME book03_integer_raster_coverage_contracts COMMAND book03_raster_tests)
     add_test(NAME book03_opaque_visibility_contracts COMMAND book03_visibility_tests)
     add_test(NAME book03_sampling_and_quadrature_contracts COMMAND book03_sampling_tests)
+    add_test(NAME book03_renderer_backend_contracts COMMAND book03_renderer_tests)
+    add_test(NAME book03_renderer_frontend_contracts COMMAND book03_renderer_frontend_tests)
 endif()
