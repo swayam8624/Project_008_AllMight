@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 twelve cumulative geometry laboratories (Ubuntu)
+    name: C++23 thirteen cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute thirteen CTests across twelve C++23 geometry laboratories
+      - name: Execute fourteen CTests across thirteen C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -504,6 +504,48 @@ jobs:
           assert root.find(ns+"desc") is not None
           assert len(root.findall(ns+"line"))==15
           print("P12: quaternion norm, proper basis, short-arc interpolation and lock witness verified")
+          PY
+      - name: Verify P13 calibrated landmark projection and camera rays
+        run: |
+          build/book03-p01/book03_camera inspect > build/book03-p01/camera-report.txt
+          build/book03-p01/book03_camera svg build/book03-p01/camera.svg
+          build/book03-p01/book03_camera csv build/book03-p01/camera.csv
+          printf 'focal 800 800\ncsv build/book03-p01/camera-zoom.csv\nreset\nmove 0 0 2\ncsv build/book03-p01/camera-moved.csv\nreset\nray 319 239\nquit\n' | build/book03-p01/book03_camera repl > build/book03-p01/camera-repl.txt
+          python3 - <<'PY'
+          import csv
+          import math
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          def read(name):
+              with (base/name).open(newline="") as f:
+                  return {row["name"]: row for row in csv.DictReader(f)}
+          nominal=read("camera.csv")
+          zoom=read("camera-zoom.csv")
+          moved=read("camera-moved.csv")
+          assert len(nominal)==len(zoom)==len(moved)==7
+          for name,row in nominal.items():
+              x,y,z=(float(row[k]) for k in ("X_world","Y_world","Z_world"))
+              for data,depth,f in ((nominal,-z,400),(zoom,-z,800),(moved,2-z,400)):
+                  p=data[name]
+                  assert abs(float(p["axial_depth"])-depth)<1e-10
+                  u,v=320+f*x/depth,240-f*y/depth
+                  assert abs(float(p["u"])-u)<1e-10
+                  assert abs(float(p["v"])-v)<1e-10
+                  assert int(p["inside"])==int(0<=u<640 and 0<=v<480)
+                  direction=(x,y,-depth)
+                  length=math.sqrt(sum(q*q for q in direction))
+                  for k,q in zip(("ray_x","ray_y","ray_z"),direction):
+                      assert abs(float(p[k])-q/length)<1e-10
+          assert abs(float(nominal["roof"]["v"])-32)<1e-10
+          assert abs(float(nominal["base-left"]["u"])-240)<1e-10
+          assert "ray " in (base/"camera-repl.txt").read_text()
+          root=ET.parse(base/"camera.svg").getroot()
+          ns="{http://www.w3.org/2000/svg}"
+          assert root.find(ns+"title") is not None
+          assert root.find(ns+"desc") is not None
+          assert len(root.findall(ns+"circle"))==7
+          print("P13: calibrated projections, zoom versus camera motion, rays and actual SVG samples verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
