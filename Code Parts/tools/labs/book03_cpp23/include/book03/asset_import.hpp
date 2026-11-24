@@ -259,6 +259,30 @@ inline void obj_check_convex_quad(const ObjAsset& a,
     }
 }
 
+// Do NOT call std::getline on an unlimited untrusted file line and only
+// check the length after its allocation. Read with an explicit byte budget.
+// CRLF is accepted; the trailing CR is removed on a completed line.
+[[nodiscard]] inline bool obj_bounded_line(
+    std::istream& input,std::string& line,
+    std::size_t max_chars,std::size_t line_number) {
+    line.clear();
+    for(;;) {
+        const int ch=input.get();
+        if(ch==std::char_traits<char>::eof()) {
+            if(input.bad())throw std::runtime_error("OBJ stream I/O failure");
+            if(!line.empty()&&line.back()=='\r')line.pop_back();
+            return !line.empty();
+        }
+        if(ch=='\n') {
+            if(!line.empty()&&line.back()=='\r')line.pop_back();
+            return true;
+        }
+        if(line.size()>=max_chars)
+            throw ObjInputError(line_number,"input line too long");
+        line.push_back(static_cast<char>(ch));
+    }
+}
+
 [[nodiscard]] inline ObjAsset import_obj(
     std::istream& source,ObjImportLimits limits={}) {
     if(limits.max_lines==0||limits.max_line_chars==0||
@@ -268,12 +292,11 @@ inline void obj_check_convex_quad(const ObjAsset& a,
     ObjAsset a{};
     std::size_t line_num=0;
     std::string line{};
-    while(std::getline(source,line)) {
+    while(obj_bounded_line(source,line,limits.max_line_chars,
+                           line_num+1)) {
         ++line_num;
         if(line_num>limits.max_lines)
             throw ObjInputError(line_num,"input line count exceeds limit");
-        if(line.size()>limits.max_line_chars)
-            throw ObjInputError(line_num,"input line too long");
         const auto words=obj_tokens(line);
         if(words.empty())continue;
         const auto& kind=words[0];
