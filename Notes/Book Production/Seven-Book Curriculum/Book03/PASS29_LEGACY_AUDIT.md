@@ -1,0 +1,5 @@
+# Pass 29 — Source custody
+
+Inspected P27 epipolar.hpp blob 0568a83769ed3401a590e0feb3fca2675fe68462; exact dependency compiled. Existing chapter plan blob 77937aecee267f9772c742da0a979c030385af4c specifies minimal SfM, poses, sparse points, bundle adjustment and metrics. P29 expands the two-view and robust-fitting sequence with native essential decomposition, multi-ray triangulation and fixed-pose refinement. PnP and joint bundle adjustment are derived/discussed rather than implemented.
+
+Primary references: Schönberger and Frahm, Structure-from-Motion Revisited, CVPR 2016, https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html ; Triggs et al., Bundle Adjustment — A Modern Synthesis, LNCS 1883, 2000, https://thoth.inrialpes.fr/people/triggs/pubs/Triggs-hdr-papers.pdf . Reference identities verified; new derivations and code independently authored. Original manuscript custody and full-source reconciliation remain pending. Next: Chapter 30 — Points Become Surfaces.
