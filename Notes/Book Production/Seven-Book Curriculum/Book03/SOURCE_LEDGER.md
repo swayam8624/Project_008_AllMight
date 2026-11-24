@@ -215,3 +215,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 16 — indexed vertex processing and projective interpolation
 
 [Chapter 16](Chapters/16%20-%20The%20Long%20Journey%20of%20One%20Vertex.md) connects P10 rendering tuples and P11–14 affine/camera/projection contracts, retains raw clip payloads, derives reciprocal-w surface interpolation and separate screen-linear depth, and introduces the vertex-stage tracer. [PASS16_LEGACY_AUDIT.md](PASS16_LEGACY_AUDIT.md) records actual inspected legacy 33 and 41 material and remaining work. The seventeenth authored CTest and six new original SVGs (72 cumulative) are registered. The earlier P05 CSV duplicate case label was corrected. No native run or full source reconciliation is asserted. All original and published paths remain unchanged.
+
+
+## Pass 17 — continuous and homogeneous primitive clipping
+
+[Chapter 17](Chapters/17%20-%20Shapes%20That%20Refuse%20to%20Leave%20the%20Window.md) derives Cohen–Sutherland, Liang–Barsky, Sutherland–Hodgman, six homogeneous planes, generated raw varying payloads, provenance and fan assembly. [PASS17_LEGACY_AUDIT.md](PASS17_LEGACY_AUDIT.md) records inspected legacy 33/34 passages and actual P14/P16 dependencies. Five original figures bring the source count to 77, and the eighteenth authored CTest is registered. The bounded floating clipper does not claim certified watertightness. Native execution and complete legacy reconciliation remain pending. Original and published files are unchanged.
