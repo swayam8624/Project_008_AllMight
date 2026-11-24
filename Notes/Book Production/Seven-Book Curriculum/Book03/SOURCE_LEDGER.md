@@ -250,3 +250,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 23 — distortion, injectivity and angular projection
 
 [Chapter 23](Chapters/23%20-%20Why%20Straight%20Lines%20Bow.md) develops normalized Brown–Conrady distortion, Jacobians, global separation, damped Newton inversion, image-remapping principles and five angular families. [PASS23_LEGACY_AUDIT.md](PASS23_LEGACY_AUDIT.md) maps targeted original Computing Foundations 35 and Graphics Vision and XR 03 passages. [PASS23_EVIDENCE.md](PASS23_EVIDENCE.md) records exact-hash-matched GCC/UBSan tests, 4,000 seeded point trials, 505 angular round trips and 265 independently verified CSV rows. Five figures bring the total to 105, and the twenty-fifth CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 24 — physical exposure and sensor measurements
+
+[Chapter 24](Chapters/24%20-%20Light%20Becomes%20a%20Measurement.md) distinguishes radiance, irradiance, radiant exposure, photon/electron counts and ADC codes; derives shot/dark/read noise and saturation contracts. [PASS24_LEGACY_AUDIT.md](PASS24_LEGACY_AUDIT.md) maps the inspected original Computing Foundations 36 passage. [PASS24_EVIDENCE.md](PASS24_EVIDENCE.md) records exact-hash-matched GCC/UBSan runs and 17 independently checked exposure rows. Three figures bring the total to 108, and the twenty-sixth CTest is registered. Cumulative integration and publication remain pending.
