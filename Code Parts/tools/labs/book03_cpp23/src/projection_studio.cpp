@@ -25,6 +25,11 @@ void inspect(const ProjectionMatrix& m,Point3 p) {
 // This isolates storage rounding; it is NOT a prediction of GPU arithmetic,
 // actual depth-buffer format behavior, Z fighting, or complete error bounds.
 double quantize(double q,bool floating) {
+    static_assert(std::numeric_limits<float>::is_iec559 &&
+                  std::numeric_limits<float>::radix==2 &&
+                  std::numeric_limits<float>::digits==24 &&
+                  std::numeric_limits<float>::max_exponent==128,
+                  "storage experiment requires IEEE binary32 float");
     q=std::clamp(q,0.0,1.0); // controlled in-range analytic samples only
     constexpr double levels=16777215.0;
     return floating?static_cast<double>(static_cast<float>(q)):
