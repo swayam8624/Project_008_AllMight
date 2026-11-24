@@ -270,3 +270,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 27 — epipolar estimation
 
 [Chapter 27](Chapters/27%20-%20Two%20Photographs%2C%20One%20Hidden%20Point.md) expands P15 stereo geometry into normalized eight-point estimation, rank-two correction, Sampson residual, essential-pose hypotheses and scale ambiguity. [PASS27_LEGACY_AUDIT.md](PASS27_LEGACY_AUDIT.md) records inspected reader/code identities and the Hartley reference. [PASS27_EVIDENCE.md](PASS27_EVIDENCE.md) records exact-hash-matched GCC/UBSan runs, 100 studio fits and 5,000 held-out correspondences, plus separate NumPy geometry verification. Four figures bring the count to 120; the twenty-ninth CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 28 — features and robust correspondence verification
+
+[Chapter 28](Chapters/28%20-%20Finding%20the%20Same%20Corner%20Twice.md) derives the structure tensor, Harris response, patch normalization and RANSAC probability; separates descriptor matching and geometric verification. [PASS28_LEGACY_AUDIT.md](PASS28_LEGACY_AUDIT.md) records targeted source custody and primary references. [PASS28_EVIDENCE.md](PASS28_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan runs, 107 translated image pairs, 50 robust fits and 2500 held-out correspondences. Four figures bring the count to 124; the thirtieth CTest is registered. Cumulative integration and publication remain pending.
