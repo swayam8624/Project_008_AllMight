@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 twenty-two cumulative geometry laboratories (Ubuntu)
+    name: C++23 twenty-three cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute twenty-four CTests across twenty-two C++23 geometry laboratories
+      - name: Execute twenty-five CTests across twenty-three C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -858,6 +858,33 @@ jobs:
               assert math.isclose(p,expected/0.004,abs_tol=1e-9)
               assert math.isclose(airy,2.44*0.00055*n,abs_tol=1e-12)
           print("P22: 404 analytic lens and pupil-ray rows verified")
+          PY
+      - name: Verify P23 distortion coordinates and inverse residuals
+        run: |
+          build/book03-p01/book03_distortion build/book03-p01/distortion.csv
+          python3 - <<'PY'
+          import csv
+          import math
+          from pathlib import Path
+          with Path("build/book03-p01/distortion.csv").open(newline="") as f:
+              rows=list(csv.DictReader(f))
+          expected=[(i/10,j/10) for j in range(-8,9) for i in range(-8,9)
+                    if math.hypot(i/10,j/10)<=.98]
+          assert len(rows)==len(expected)==265
+          def forward(x,y):
+              q=x*x+y*y
+              L=1-.18*q+.04*q**2-.005*q**3
+              return x*L+.008*x*y-.003*(3*x*x+y*y), y*L+.004*(x*x+3*y*y)-.006*x*y
+          for row,(x,y) in zip(rows,expected):
+              a,b,xd,yd,xx,yy,res,n=map(float,(row[k] for k in
+                  ("x","y","xd","yd","recovered_x","recovered_y","residual","iterations")))
+              assert (a,b)==(x,y)
+              assert math.dist((xd,yd),forward(x,y))<1e-14
+              assert math.dist((xx,yy),(x,y))<5e-12
+              rr=math.dist(forward(xx,yy),(xd,yd))
+              assert rr<=1.001e-12 and abs(rr-res)<1e-14
+              assert 0<=n<=40 and n==int(n)
+          print("P23: all 265 independent distortion and inverse measurements verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
