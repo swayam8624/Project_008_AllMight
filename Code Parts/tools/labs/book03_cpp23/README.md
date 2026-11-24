@@ -719,3 +719,16 @@ book03_sensor sensor.csv
 ~~~
 
 Exact committed source hashes match the native GCC/UBSan runs. A 100,000-sample moment test and a 170,000-exposure sweep passed; 17 aggregate rows were independently checked. This is an independent-pixel synthetic model, not real sensor calibration. See PASS24_EVIDENCE.md. Cumulative build and CI remain pending.
+
+
+---
+
+## P25 — Color and Response Laboratory
+
+Read `include/book03/color.hpp`, `tests/color_tests.cpp` and `src/color_studio.cpp`. Keep linear and encoded RGB distinct. Convert through relative XYZ D65, preserve signed coordinates, and apply a separate explicit gamut policy.
+
+~~~text
+book03_color color.csv
+~~~
+
+Native C++23/UBSan passed 10,000 seeded triplets; the independently derived primary matrices and transfer oracle verified all 729 exported rows. See PASS25_EVIDENCE.md. This is not an ICC engine or calibrated display. Cumulative build and CI remain pending.
