@@ -298,6 +298,16 @@ target_link_libraries(book03_sensor PRIVATE book03_sensor_lib)
 add_executable(book03_sensor_tests tests/sensor_tests.cpp)
 target_link_libraries(book03_sensor_tests PRIVATE book03_sensor_lib)
 
+# Chapter 25: relative linear color spaces and display response.
+add_library(book03_color_lib INTERFACE)
+target_include_directories(book03_color_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_color_lib INTERFACE cxx_std_23)
+add_executable(book03_color src/color_studio.cpp)
+target_link_libraries(book03_color PRIVATE book03_color_lib)
+add_executable(book03_color_tests tests/color_tests.cpp)
+target_link_libraries(book03_color_tests PRIVATE book03_color_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -324,7 +334,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_renderer book03_renderer_frontend_tests
                    book03_lens book03_lens_tests
                    book03_distortion book03_distortion_tests
-                   book03_sensor book03_sensor_tests)
+                   book03_sensor book03_sensor_tests
+                   book03_color book03_color_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -357,4 +368,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_thin_lens_contracts COMMAND book03_lens_tests)
     add_test(NAME book03_distortion_contracts COMMAND book03_distortion_tests)
     add_test(NAME book03_sensor_contracts COMMAND book03_sensor_tests)
+    add_test(NAME book03_color_contracts COMMAND book03_color_tests)
 endif()
