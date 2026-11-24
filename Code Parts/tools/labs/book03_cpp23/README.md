@@ -582,3 +582,20 @@ book03_stereo repl
 ~~~
 
 REPL: `noise -20`, `inspect`, `noise 0`, `baseline 0.05`, `point 1 1 -16`, `csv FILE`, `svg FILE`, `quit`. Default focal scale 400 px and baseline 0.2 m reconstruct the generating point (1,1,-4). The deliberately wrong horizontal match reconstructs (0.5,0.5,-2), illustrating the insufficiency of reprojection consistency. CSV contains 101 synthetic depth samples with sigma disparity 0.25 pixels and mapped interval endpoints. SVG draws actual synthetic corresponding house points. No automatic image matching, calibration or native test pass is asserted.
+
+
+---
+
+## P16 — Indexed Vertex Pipeline Tracer
+
+Read `include/book03/vertex_pipeline.hpp` after asset_import.hpp, scene_forest.hpp, rotation3.hpp and projection_pipeline.hpp. Follow VertexStage::process and draw, then screen_barycentrics and interpolate_inside_triangle. Draw-scoped reuse is by full rendering ID. The raw clip coordinate and payload remain available even if a screen position does not exist. Smooth UV/world position use normalized reciprocal-w weights; divided NDC depth uses screen weights. Interpolated normals are renormalized. This is not a clipper or coverage rasterizer.
+
+After the eventual native build:
+
+~~~text
+book03_vertex inspect
+book03_vertex csv varying-edge.csv
+book03_vertex svg varying-edge.svg
+~~~
+
+The fixed OBJ witness has w=(2,4,8), screen centroid UV=(2/7,1/7), and forward depth=85/114. Along its second edge corrected V=t/(2-t), rather than t. The independent tests include seam and draw-state identities, stage transforms, rejection cases and 3,000 seeded original-surface round trips. Source registration is verified separately from native execution.
