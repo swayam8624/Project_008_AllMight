@@ -200,3 +200,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 13 — calibrated pinhole, optical coordinate frames and inverse rays
 
 [Chapter 13](Chapters/13%20-%20The%20Tiny%20Hole%20That%20Makes%20a%20Picture.md) derives the forward camera model, calibration, FOV, pixel-center and image-edge conventions, crop/resize, axial versus ray-range depth, world rays and optical-space Jacobian. The actual inspected legacy 32 and 37 source identities and remaining specialized material are recorded in [PASS13_LEGACY_AUDIT.md](PASS13_LEGACY_AUDIT.md). The C++23 pinhole simulator reuses P12 rigid poses and P06 rays, exports real projected landmark source coordinates, and adds the fourteenth authored CTest. Five original figures bring the cumulative count to 54. Native runtime, complete legacy reconciliation and publication are unverified. All original and published source paths remain preserved.
+
+
+## Pass 14 — homogeneous projection and depth representation
+
+[Chapter 14](Chapters/14%20-%20From%20a%203D%20Point%20to%20a%20Screen%20Address.md) derives calibrated perspective, orthographic matrices, explicit clip membership, NDC, viewport, finite/infinite forward/reverse depth and a controlled scalar depth-storage experiment. [PASS14_LEGACY_AUDIT.md](PASS14_LEGACY_AUDIT.md) records actual inspected legacy 33 and 34 source identities and outstanding primitive clipping, frustum, API and rasterization subjects. The native projection debugger reuses P13 calibration, adds the fifteenth authored CTest and six new figures (60 cumulative). Source-written tests and CI are not observed runtime passes. Original manuscripts and distribution paths remain unchanged.
