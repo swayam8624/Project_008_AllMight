@@ -37,7 +37,7 @@ void hand_witness(){
 void depth_contract(){
     for(auto order:{DepthOrder::Forward,DepthOrder::Reverse}){
         const bool rev=order==DepthOrder::Reverse;
-        for(std::optional<double> far:{std::optional<double>{1000},std::nullopt}){
+        for(const auto far:std::array<std::optional<double>,2>{1000.0,std::nullopt}){
             DepthMap d{.5,far,order};
             near(d.perspective_depth(.5),rev?1:0);
             if(far)near(d.perspective_depth(*far),rev?0:1);
