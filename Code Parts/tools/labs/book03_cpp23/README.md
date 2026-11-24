@@ -616,3 +616,21 @@ book03_clip svg clipped-polygon.svg
 ~~~
 
 The fixed fixture produces a four-vertex polygon and two fan triangles. Tests include 4,000 seeded line comparisons, 2,000 single-plane triangle provenance checks and a behind-camera projection witness. The studio is not an interactive editor or filled rasterizer. Native execution remains unverified.
+
+
+---
+
+## P18 — Integer Triangle Coverage Explorer
+
+Read `include/book03/raster_coverage.hpp`: snapping, checked edge determinant, inclusive_edge, signed bounds and rasterize_triangle. Coverage uses a 256-step grid with half-integer pixel centers, Y down, positive normalized area and top-left equality ownership. The callback supplies unbiased barycentric weights in original vertex order. Compare direct-evaluation tests and `src/raster_studio.cpp`, which connects P17 clipping to P01 Canvas. No depth buffer or shading yet.
+
+~~~text
+book03_raster inspect
+book03_raster csv coverage.csv
+book03_raster ppm coverage.ppm
+book03_raster inspect clipped
+book03_raster csv clipped-coverage.csv clipped
+book03_raster ppm clipped-coverage.ppm clipped
+~~~
+
+The default rectangle must cover 391 samples once and none twice. The standalone exact-hash-matched C++23 coverage test passed with GCC 14.2.0 and UBSan. The integrated studio and cumulative CMake/CTest remain unverified. See Book03 PASS18_EVIDENCE.md.
