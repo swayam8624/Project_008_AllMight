@@ -528,3 +528,21 @@ book03_rotation repl
 ~~~
 
 REPL: `axis 0 0 1 120`, `sample 0.5`, `euler 30 90 20`, `inspect`, `start`, `axis 1 1 1 120`, `csv FILE`, `svg FILE`, `quit`. The default 61 samples follow a 120-degree Z rotation. The near-lock Euler flag is diagnostic; the quaternion stays authoritative. The near-coincidence branch uses NLERP, not exact constant angular speed. The thirteenth authored CTest checks analytic rotations, 3,000 seeded cases and 10,000 accumulated updates. No successful native test run is asserted yet. No PDF or EPUB is generated in this pass.
+
+
+---
+
+## P13 — Calibrated Pinhole Camera Simulator
+
+Read `include/book03/pinhole_camera.hpp` in this order: CameraIntrinsics and centered_fov, crop and resize; PinholeCamera optical, project, optical_direction, ray, pixel_ray, unproject_axial and optical_jacobian. The rigid pose is camera-to-world, graphics local -Z is forward, optical +Z is forward and +Y is down. Continuous coordinates use the top-left image-edge convention, integer pixel samples use half-integer centers. Axial depth is not unit-ray range. Read the independent `tests/pinhole_camera_tests.cpp` then the actual `src/pinhole_studio.cpp` exporter.
+
+After the eventual CMake build:
+
+~~~text
+book03_camera inspect
+book03_camera svg landmarks.svg
+book03_camera csv landmarks.csv
+book03_camera repl
+~~~
+
+REPL: `focal 800 800`, `move 0 0 2`, `yaw 15`, `principal 300 220`, `ray 319 239`, `inspect`, `csv FILE`, `svg FILE`, `reset`, `quit`. The default 640x480 model has focal scales 400 px, principal point (320,240) and seven world landmarks. The outputs are point projection diagnostics, not rasterized triangles or camera visibility. The fourteenth CTest contains 3,000 seeded optical Jacobian and round-trip cases. No successful native run is asserted yet. No PDF/EPUB is generated.
