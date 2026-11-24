@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–25; twenty-five substantial narrative chapters, twenty-five cumulative C++23 laboratories, twenty-seven source-authored CTests and one hundred twelve original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–26; twenty-six substantial narrative chapters, twenty-six cumulative C++23 laboratories, twenty-eight source-authored CTests and one hundred sixteen original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -186,7 +186,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 23 | Distortion, Jacobians, numerical inversion and angular camera families | Authored; standalone native tests and studio passed |
 | 24 | Exposure, photon statistics, dark and read noise, full well, gain and ADC | Authored; standalone native tests and studio passed |
 | 25 | Relative XYZ, linear RGB, Display P3, transfer curves, white balance and HDR | Authored; standalone native tests and studio passed |
-| 26+ | Calibration through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 26 | Spatial camera DLT, decomposition, planar constraints, reprojection and noise | Authored; standalone native tests and studio passed |
+| 27+ | Epipolar geometry through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
 
 
@@ -198,3 +199,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 25
 
 [Chapter 25 — Colors That Tell the Truth](Chapters/25%20-%20Colors%20That%20Tell%20the%20Truth.md) moves from spectra and metamerism to XYZ, chromaticity, primary matrices, signed gamut coordinates, sRGB response, neutral balance and relative HDR. P25 includes four analytical SVG figures and the C++23 color laboratory. [Evidence](PASS25_EVIDENCE.md) and [source custody](PASS25_LEGACY_AUDIT.md) record exact native results and limits. Next: Chapter 26 — Teaching a Camera About Itself.
+
+
+## Pass 26
+
+[Chapter 26 — Teaching a Camera About Itself](Chapters/26%20-%20Teaching%20a%20Camera%20About%20Itself.md) derives normalized spatial DLT, camera decomposition, planar calibration constraints, distortion refinement principles and held-out verification. Four SVG figures and a native C++23 spatial calibration lab accompany the reader. [Evidence](PASS26_EVIDENCE.md) and [source custody](PASS26_LEGACY_AUDIT.md) record actual results and limits. Next: Chapter 27 — Two Photographs, One Hidden Point.
