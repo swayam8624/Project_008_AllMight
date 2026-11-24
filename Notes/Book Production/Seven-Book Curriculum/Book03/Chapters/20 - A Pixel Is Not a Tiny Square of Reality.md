@@ -1,0 +1,276 @@
+# Chapter 20 — A Pixel Is Not a Tiny Square of Reality
+
+*From Geometry to Images — Part IV: The picture becomes an algorithm*  
+*Reader edition / C++23 laboratory P20*
+
+> A photograph is a finite collection of measurements. It is not the continuous world cut into tiny boxes.
+
+## The fence starts dancing
+
+The dragon is now correctly visible in front of the house. But as we move our camera, the thin fence behind it begins to shimmer. Sometimes two fence rails appear to merge. A distant tiled roof seems to develop broad stripes that were never painted on it.
+
+Nothing in the geometry necessarily broke. Our coverage and depth tests can be perfectly consistent while the image still changes in surprising ways.
+
+Imagine looking through a row of equally spaced narrow holes in a sheet of paper. Behind the paper is a striped wall. Shift the wall a little, and the holes may suddenly reveal only dark stripes. Shift it again and they reveal only bright ones. You have not measured the entire wall; you have measured it at particular locations.
+
+Our rasterizer has been doing something similar. One pixel center receives one visibility decision. If the scene changes rapidly between centers, the measurements may fail to describe it. This chapter explains what that failure means and what we can do about it.
+
+## A sample, a footprint and a reconstruction
+
+Let a continuous one-dimensional image signal be \(s(x)\). We measure x in pixels, using the image-edge convention. The center of pixel i is \(x_i=i+1/2\).
+
+A point sample is
+
+\[
+p_i=s(i+1/2).
+\tag{20.1}
+\]
+
+Another possible measurement is the average over a unit-width footprint:
+
+\[
+b_i=\int_i^{i+1}s(x)\,dx.
+\tag{20.2}
+\]
+
+The interval length is one, so the integral is already its average. This is an ideal box-filtered measurement, not a universal model of a physical sensor or display.
+
+The distinction matters. A narrow white object between two sample centers can disappear in point sampling. Its integral over a pixel footprint may still be nonzero.
+
+In two dimensions, a normalized filter \(h\) defines a measurement at center \(c\):
+
+\[
+b(c)=\int_{\mathbb R^2}s(x)h(c-x)\,dx,
+\qquad \int h(x)\,dx=1.
+\tag{20.3}
+\]
+
+A unit-area rectangular box is one possible h. A sensor's optical blur, active area and electronic processing may lead to other effective filters.
+
+After measuring a discrete sequence, we can reconstruct a continuous approximation by combining shifted kernels:
+
+\[
+\hat s(x)=\sum_i p_i r(x-x_i).
+\tag{20.4}
+\]
+
+The prefilter h and reconstruction kernel r have different jobs. A prefilter suppresses frequencies before sampling; reconstruction estimates values between existing measurements. A beautiful interpolation of inadequate measurements cannot recover information that was never distinguishable in the samples.
+
+![Point measurement and box integration differ for a narrow feature and an edge.](../Assets/88-point-versus-footprint.svg)
+
+*Figure 20.1 — A sample location, its possible footprint and the reconstruction of a signal are separate concepts.*
+
+## Frequencies: count the stripes, not the pixels
+
+A convenient controlled signal is
+
+\[
+s(x)=\tfrac12+\tfrac12\cos(2\pi f x+\phi),
+\tag{20.5}
+\]
+
+where f is cycles per pixel and phase \(\phi\) is in radians. The signal stays between zero and one. Its DC component is one half and its oscillating amplitude is one half.
+
+At f=0.2, a complete oscillation occupies five pixels. At f=1.2, it occupies less than a pixel.
+
+Sampling once per pixel creates a surprising ambiguity. At \(x_i=i+1/2\),
+
+\[
+\cos(2\pi(f+1)x_i+\phi-\pi)
+=\cos(2\pi f x_i+\phi+2\pi i).
+\tag{20.6}
+\]
+
+The right side is exactly the original cosine in real arithmetic. Therefore the signals with frequencies 0.2 and 1.2, with phases adjusted as above, produce identical samples even though their continuous oscillations are different.
+
+![Two different continuous waves agree at every half-integer sample center.](../Assets/89-alias-witness.svg)
+
+*Figure 20.2 — The samples cannot tell us which continuous wave generated them. The apparent low-frequency pattern is an alias.*
+
+More generally, the discrete complex exponential is periodic in frequency with period equal to the sample rate. Real cosines also have a sign symmetry when phase is handled consistently. Frequencies fold into the representable baseband.
+
+The Nyquist–Shannon sampling theorem says that an appropriately band-limited continuous signal can be reconstructed from uniform samples when its maximum frequency is strictly below half the sample rate, under the theorem's ideal assumptions. With one sample per pixel, that is 0.5 cycles per pixel.
+
+This is not a guarantee that every scene can be reconstructed from a single sample per pixel. Sharp edges and discontinuities are not strictly band-limited. The theorem motivates prefiltering rather than promising perfect recovery of arbitrary geometry.
+
+At exactly the Nyquist frequency, phase can create ambiguity: a sinusoid may vanish at every sampling location. The strict band-limit condition matters.
+
+## Derive the box-filter response
+
+Insert equation (20.5) into the footprint integral centered at c:
+
+\[
+b(c)=\int_{c-1/2}^{c+1/2}
+[\tfrac12+\tfrac12\cos(2\pi f x+\phi)]\,dx.
+\]
+
+Integrating and applying the sine difference identity yields
+
+\[
+\boxed{b(c)=\tfrac12+\tfrac12\cos(2\pi f c+\phi)
+\frac{\sin(\pi f)}{\pi f}.}
+\tag{20.7}
+\]
+
+At f=0 the ratio has limit one. This ratio is the normalized sinc function. The box filter preserves the constant component and multiplies each oscillating component by sinc(f).
+
+At f=1,2,3 and other nonzero integer frequencies, the box integral averages complete cycles and the oscillation cancels. At 0.5 cycles per pixel, the amplitude factor is \(2/\pi\), not zero.
+
+The box is therefore not an ideal low-pass filter. It attenuates high frequencies but does not eliminate every frequency above Nyquist. Its signed response also has negative lobes, corresponding to a phase reversal of an oscillating component.
+
+![The signed sinc response of a unit box, with the Nyquist boundary marked separately.](../Assets/90-box-frequency-response.svg)
+
+*Figure 20.3 — Footprint integration suppresses many rapid oscillations, but its frequency response is not a brick-wall cutoff.*
+
+An ideal band-limiting filter has a rectangular frequency response and a sinc-shaped spatial kernel with infinite support. That is not generally practical for a local image operation. Finite filters trade frequency rejection, ringing, blur, computational cost and support size.
+
+Nearest-neighbor reconstruction uses a piecewise constant kernel. Linear interpolation uses a triangle kernel in one dimension; its response is proportional to sinc squared. Bilinear interpolation is the separable two-dimensional counterpart. A Gaussian can suppress rapid variation smoothly, while a windowed sinc or Lanczos-style filter approximates a sharper reconstruction with finite support and possible ringing. None is universally optimal.
+
+## Supersampling is numerical integration
+
+Rather than evaluate the exact integral analytically for every scene, divide each pixel footprint into n equal intervals and sample their midpoints:
+
+\[
+\boxed{\hat b_n(c)=\frac1n\sum_{k=0}^{n-1}
+s(c-\tfrac12+(k+\tfrac12)/n).}
+\tag{20.8}
+\]
+
+This is composite midpoint quadrature. For a twice continuously differentiable signal over the footprint,
+
+\[
+|\hat b_n-b|\le\frac{\max |s''|}{24n^2}.
+\tag{20.9}
+\]
+
+To see where the bound comes from, expand each subinterval around its midpoint. Its linear term integrates to zero by symmetry. The second-derivative remainder is bounded by half the maximum second derivative times the squared offset. Integrating over the interval of width 1/n gives the bound \(M/(24n^3)\) per interval; adding n intervals gives equation (20.9).
+
+For our cosine, \(M=\tfrac12(2\pi f)^2\). Higher frequencies require finer quadrature to attain the same bound. The inequality is an analytic real-arithmetic estimate; the native tests allow a small floating tolerance.
+
+For a discontinuous step, the smoothness assumption fails. Let a vertical edge at coordinate e divide black on its left from white on its right. Its exact footprint coverage is
+
+\[
+b(c)=\operatorname{clamp}(c+\tfrac12-e,0,1).
+\tag{20.10}
+\]
+
+Uniform midpoint samples instead give the fraction of sample locations on or to the right of e. For this particular single straight step, the coverage error is at most 1/(2n) in exact arithmetic. It is not the smooth-signal quadratic bound.
+
+![A vertical edge moves through one pixel, comparing exact fractional coverage and four midpoint samples.](../Assets/91-step-coverage-and-resolve.svg)
+
+*Figure 20.4 — Finite sampling quantizes the fractional coverage. More samples can reduce this error but do not turn it into an exact continuous integral.*
+
+In two dimensions, a regular m-by-m supersampling pattern has \(m^2\) sample locations. A 4-by-4 grid uses sixteen evaluations, not four. Our native experiment uses one-dimensional signals: its 4 and 16 denote four and sixteen evaluations along the unit interval, not complete 2D rendering costs.
+
+A regularly spaced pattern can itself alias. A rotated grid, stratification, or randomized offsets can trade structured artifacts for noise. Those choices need separate analysis; increasing the count does not guarantee monotonic improvement for every possible signal or phase.
+
+## SSAA, MSAA and the texture that still shimmers
+
+Supersample antialiasing evaluates coverage, visibility and shading at multiple subpixel locations, then resolves those measurements. Multisample antialiasing commonly stores multiple coverage/depth samples but may share a fragment shading result among them. Exact invocation frequency depends on the pipeline and sample-shading policy.
+
+This distinction explains why MSAA can improve polygon silhouettes without fully solving aliasing inside a triangle's procedural shader. If a texture alternates rapidly across the surface, one shared shading evaluation cannot represent every texture variation in the footprint.
+
+A texture lookup estimates a signal defined on a parameterized surface. Under perspective, one screen pixel maps to a varying footprint in texture coordinates. A distant or oblique surface may cover many texels. Point lookup or even bilinear lookup at the finest resolution can miss the high-frequency content.
+
+A mipmap stores successively prefiltered texture levels. A local estimate of the screen-to-texture Jacobian gives a footprint scale. For a normalized texture of width U and height V, one simple isotropic estimate is
+
+\[
+\rho=\max(\|(Uu_x,Vv_x)\|,\|(Uu_y,Vv_y)\|),
+\quad L=\log_2(\max(1,\rho)).
+\tag{20.11}
+\]
+
+This is a heuristic for level selection, not a full anisotropic integral. Trilinear filtering interpolates between adjacent mip levels; anisotropic filtering addresses elongated footprints more effectively. Texture derivatives, mip construction and border/wrap policy must all use consistent coordinates.
+
+A similar issue appears in time. A moving thin line can pass between successive frames. Temporal antialiasing can combine jittered samples from multiple frames using motion-aware reprojection, but visibility changes, disocclusion and incorrect motion can invalidate history. A temporal resolve is not an unlimited accumulation of interchangeable measurements.
+
+## Average light before encoding it
+
+If two linear-light measurements are zero and one, their equally weighted average is 0.5. Under standard sRGB encoding,
+
+\[
+E(x)=
+\begin{cases}
+12.92x,&x\le0.0031308,\\
+1.055x^{1/2.4}-0.055,&x>0.0031308.
+\end{cases}
+\tag{20.12}
+\]
+
+Encoding the resolved linear value gives approximately 0.73536, not 0.5. Averaging already-encoded values generally changes the intended light measurement.
+
+The native lab includes this simple check. Full color management, HDR, exposure and tone mapping belong to later chapters. Our cosine and step values are defined in linear-light units throughout.
+
+## The controlled native experiment
+
+The sampling header evaluates a continuous cosine, its analytic box integral, midpoint quadrature, a step-edge coverage model and an sRGB transfer function. No GPU is needed to falsify the mathematical assumptions.
+
+We compiled the exact committed header, test and studio sources under GCC 14.2.0 with undefined-behavior sanitization. The native test passed 2,000 seeded cosine/step trials, the half-integer alias witness, the constant and integer-cycle integral cases, and the linear-light resolve check.
+
+The studio exported 960 rows: five frequencies, three phases and 64 pixel centers. An independent Python implementation verified every point, 4-sample, 16-sample and analytic box value to absolute tolerance \(10^{-12}\).
+
+The table reports root-mean-square error against the analytic box integral over 192 measurements per frequency. All numbers are dimensionless linear-light intensity errors.
+
+| Cycles/pixel | Point | 4 samples | 16 samples |
+|---:|---:|---:|---:|
+| 0.2 | 0.02272908 | 0.00135934 | 0.00008473 |
+| 0.6 | 0.17560517 | 0.00679432 | 0.00041434 |
+| 1.2 | 0.40726376 | 0.00906220 | 0.00051160 |
+| 2.0 | 0.36672792 | $<10^{-12}$ | $<10^{-12}$ |
+| 3.7 | 0.37946430 | 0.28267849 | 0.00231365 |
+
+![Measured RMSE from the native sampling exports for five frequencies and three sample counts.](../Assets/92-native-sampling-errors.svg)
+
+*Figure 20.5 — Native scalar quadrature results, verified against an independent analytic reference. The experiment isolates sampling, not GPU speed or complete image quality.*
+
+The 2.0-cycle case illustrates an important trap: a regularly spaced quadrature pattern can happen to cancel a periodic signal exactly. That does not imply the method integrates all nearby frequencies exactly. At 3.7 cycles per pixel, the four-point pattern has substantial error.
+
+The lab is deliberately one-dimensional. It does not implement actual multisample coverage storage, texture mipmaps, motion vectors or temporal history. It explains those techniques to prepare for a later renderer.
+
+Read `include/book03/sampling.hpp`, then `tests/sampling_tests.cpp` and `src/sampling_studio.cpp`. After building:
+
+~~~text
+book03_sampling csv samples.csv
+~~~
+
+Try adding a frequency near 4 cycles per pixel, changing the phase, or changing the number of midpoint locations. Compare against the analytic box, not only the previous approximate output.
+
+## Your turn
+
+**Reconstruct.** Explain why a point sample and a unit-box measurement differ for a narrow bright stripe.
+
+**Falsify.** Show that frequencies 0.2 and 1.2 produce the same half-integer samples with the phase shift in equation (20.6).
+
+**Implement.** Derive the exact unit-box integral of the cosine and evaluate its DC limit.
+
+**Transfer.** Calculate the maximum second derivative for a signal at frequency 2. Use it to estimate a conservative midpoint error bound for 16 samples.
+
+**Reconstruct.** For a pixel centered at 0.5 and an edge at 0.3, calculate exact white coverage and the four-point estimate.
+
+**Explain.** Why does regular supersampling sometimes fail for a high-frequency periodic signal? Why does a box prefilter not guarantee ideal band limitation?
+
+**Challenge.** Compare SSAA and MSAA for a silhouette and for an interior checkerboard texture.
+
+**Implement.** Write a loop that accumulates linear-light samples and encodes only the average. Compare with averaging the encoded samples.
+
+**Falsify.** Explain why bilinear filtering alone does not resolve a footprint that covers dozens of texels.
+
+**Transfer.** Describe a moving edge for which previous-frame history should be rejected rather than blindly blended.
+
+### Selected answers
+
+At frequency two, \(M=8\pi^2\), so the 16-point midpoint bound is \(8\pi^2/(24\cdot256)\), about 0.01285. It is conservative: this particular integer-cycle pattern can cancel exactly.
+
+For the edge at 0.3, exact coverage is 0.7. The midpoint positions are 0.125,0.375,0.625,0.875, so three of four are white and the estimate is 0.75. The error is 0.05.
+
+The encoded average of zero and one is 0.5, but the correctly encoded linear-light average is approximately 0.73536.
+
+## The entire picture awaits
+
+We now have a continuous image model, a way to sample it, and an explanation of the information that sampling can lose. We have also learned why valid visibility and consistent coverage are not sufficient for a stable image.
+
+**Chapter 21 — A Whole Rasterizer We Can Explain** will connect the actual asset, model, camera, clipping, coverage, interpolation and depth stages into a deterministic CPU renderer. It must produce inspectable images and measurable acceptance evidence, not just another collection of disconnected formulas.
+
+## Source custody
+
+The original Computing Foundations chapter 33 (Projection, Clipping, and Raster Sampling), Git blob ef481955be60941713582f1e5600191498f4bd8d, retains the sample-center convention (located line 3130) and temporal-jitter context (located line 3389). P20 independently expands that material with analytic sampling and quadrature. Original notes remain unchanged; full source-unit reconciliation and final publication remain separate gates.
