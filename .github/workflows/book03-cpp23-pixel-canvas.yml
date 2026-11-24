@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 ten cumulative geometry laboratories (Ubuntu)
+    name: C++23 eleven cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute eleven CTests across ten C++23 geometry laboratories
+      - name: Execute twelve CTests across eleven C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -436,6 +436,42 @@ jobs:
           assert "Loaded demo seam" in repl
           assert "winding-conflict=1" in repl
           print("P10: independent face/UV/normal index domains, live audit and glTF layout witness verified")
+          PY
+      - name: Verify P11 shared assets, world transforms and rejected cycles
+        run: |
+          build/book03-p01/book03_scene inspect > build/book03-p01/scene-report.txt
+          build/book03-p01/book03_scene svg build/book03-p01/scene.svg
+          build/book03-p01/book03_scene csv build/book03-p01/scene.csv
+          printf 'parent 3 1 world\ninspect\nparent 0 2 local\ninspect\ncsv build/book03-p01/scene-reparent.csv\nquit\n' | build/book03-p01/book03_scene repl > build/book03-p01/scene-repl.txt
+          python3 - <<'PY'
+          import csv
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          report=(base/"scene-report.txt").read_text()
+          assert "Assets=1 Nodes=7 Instances=5" in report
+          assert "node 3 tree B origin=(-1,0,0)" in report
+          assert "node 5 tree D origin=(5,0,0)" in report
+          with (base/"scene.csv").open(newline="") as f:
+              rows={int(row["node"]):row for row in csv.DictReader(f)}
+          assert set(rows)=={2,3,4,5,6}
+          assert all(row["asset"]=="0" for row in rows.values())
+          assert float(rows[6]["determinant"])<0
+          assert abs(float(rows[5]["max_y"])-3.25)<1e-12
+          with (base/"scene-reparent.csv").open(newline="") as f:
+              after={int(row["node"]):row for row in csv.DictReader(f)}
+          for node in rows:
+              for field in ("x","y","z","min_x","min_y","min_z","max_x","max_y","max_z"):
+                  assert abs(float(after[node][field])-float(rows[node][field]))<1e-12
+          repl=(base/"scene-repl.txt").read_text()
+          assert "Updated parent" in repl
+          assert "Rejected: cycle in scene parent graph" in repl
+          root=ET.parse(base/"scene.svg").getroot()
+          ns="{http://www.w3.org/2000/svg}"
+          assert root.find(ns+"title") is not None
+          assert root.find(ns+"desc") is not None
+          assert len(root.findall(ns+"polygon"))==15
+          print("P11: five shared mesh instances, world pose and cycle rejection verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
