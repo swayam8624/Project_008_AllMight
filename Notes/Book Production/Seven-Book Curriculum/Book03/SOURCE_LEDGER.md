@@ -245,3 +245,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 22 — thin-lens optical image formation
 
 [Chapter 22](Chapters/22%20-%20A%20Lens%20Bends%20the%20Story.md) derives image distance, signed magnification, geometric blur, pupil-ray intersections, acceptable focus limits and hyperfocal distance, with separate diffraction and aberration context. [PASS22_LEGACY_AUDIT.md](PASS22_LEGACY_AUDIT.md) maps original Graphics Vision and XR 03 lines 18–126. [PASS22_EVIDENCE.md](PASS22_EVIDENCE.md) records exact-hash-matched native GCC/UBSan passes, 3,000 configurations and 404 independently checked CSV rows. Five new figures bring the count to 100; twenty-four CTests are registered. Full cumulative integration and publication remain pending.
+
+
+## Pass 23 — distortion, injectivity and angular projection
+
+[Chapter 23](Chapters/23%20-%20Why%20Straight%20Lines%20Bow.md) develops normalized Brown–Conrady distortion, Jacobians, global separation, damped Newton inversion, image-remapping principles and five angular families. [PASS23_LEGACY_AUDIT.md](PASS23_LEGACY_AUDIT.md) maps targeted original Computing Foundations 35 and Graphics Vision and XR 03 passages. [PASS23_EVIDENCE.md](PASS23_EVIDENCE.md) records exact-hash-matched GCC/UBSan tests, 4,000 seeded point trials, 505 angular round trips and 265 independently verified CSV rows. Five figures bring the total to 105, and the twenty-fifth CTest is registered. Cumulative integration and publication remain pending.
