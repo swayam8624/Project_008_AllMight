@@ -61,7 +61,10 @@ struct PinholeCamera {
     RigidPose camera_to_world{};
     // Do not conflate local graphics coordinates with optical coordinates.
     [[nodiscard]] Point3 optical(Point3 world) const {
-        const auto p=camera_to_world.inverse().point(world);
+        // Evaluate R^T(P-C) directly. Forming -R^T C first and
+        // then adding R^T P can lose local detail through cancellation.
+        const Point3 center=camera_to_world.point({0,0,0});
+        const auto p=camera_to_world.rotation.inverse().apply(world-center);
         return {p.x,-p.y,-p.z};
     }
     [[nodiscard]] CameraProjection project(Point3 world) const {
