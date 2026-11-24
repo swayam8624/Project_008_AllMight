@@ -448,8 +448,11 @@ struct GltfLayout {
     const auto components=static_cast<std::size_t>(accessor.type);
     if(components<1||components>4||accessor.count==0)
         throw std::invalid_argument("invalid glTF type/count");
-    if(accessor.normalized && accessor.component==GltfComponent::Float)
-        throw std::invalid_argument("floating glTF accessor cannot be normalized");
+    if(accessor.normalized &&
+       (accessor.component==GltfComponent::Float ||
+        accessor.component==GltfComponent::UnsignedInt))
+        throw std::invalid_argument(
+            "glTF FLOAT and UNSIGNED_INT cannot be normalized");
     if(view.byte_offset>total_buffer_bytes ||
        view.byte_length>total_buffer_bytes-view.byte_offset)
         throw std::out_of_range("bufferView extends outside buffer");
