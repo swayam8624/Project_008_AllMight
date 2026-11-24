@@ -1,4 +1,4 @@
-name: Book 03 - C++23 Image, Geometry, Mesh, Curve and Procedural Contracts
+name: Book 03 - C++23 Geometry, Procedural and Asset Trust Contracts
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 nine cumulative geometry laboratories (Ubuntu)
+    name: C++23 ten cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute ten CTests across nine C++23 geometry laboratories
+      - name: Execute eleven CTests across ten C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -367,6 +367,75 @@ jobs:
           assert "Euler V-E+F=2" in repl
           assert (base/"world-repl-implicit.obj").is_file()
           print("P09: analytic generator topologies, current fixture exports and grid-edge cached isosurface inspected")
+          PY
+      - name: Verify P10 OBJ face tuples, imported geometry and glTF bounds witness
+        run: |
+          build/book03-p01/book03_assets demo seam > build/book03-p01/asset-seam.txt
+          build/book03-p01/book03_assets demo broken > build/book03-p01/asset-broken.txt
+          build/book03-p01/book03_assets demo repeated > build/book03-p01/asset-repeated.txt
+          build/book03-p01/book03_assets layout > build/book03-p01/asset-gltf-layout.txt
+          cat > build/book03-p01/asset-seam.obj <<'OBJ'
+          # two triangles; four position IDs, six distinct UV/normal tuples
+          v 0 0 0
+          v 1 0 0
+          v 1 1 0
+          v 0 1 0
+          vt 0 0
+          vt 1 0
+          vt 1 1
+          vt 0.2 0
+          vt 0.9 0.9
+          vt 0.2 1
+          vn 0 0 1
+          vn 0 0 -1
+          f 1/1/1 2/2/1 3/3/1
+          f 1/4/2 3/5/2 4/6/2
+          OBJ
+          build/book03-p01/book03_assets inspect build/book03-p01/asset-seam.obj > build/book03-p01/asset-file-inspect.txt
+          build/book03-p01/book03_assets svg build/book03-p01/asset-seam.obj build/book03-p01/asset-seam.svg
+          build/book03-p01/book03_assets gpu build/book03-p01/asset-seam.obj build/book03-p01/asset-gpu.csv
+          printf 'demo broken\ninspect\ndemo seam\ninspect\nsvg build/book03-p01/asset-repl.svg\ngpu build/book03-p01/asset-repl.csv\nquit\n' | build/book03-p01/book03_assets repl > build/book03-p01/asset-repl.txt
+          python3 - <<'PY'
+          import csv
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          seam=(base/"asset-seam.txt").read_text(encoding="utf-8")
+          broken=(base/"asset-broken.txt").read_text(encoding="utf-8")
+          repeated=(base/"asset-repeated.txt").read_text(encoding="utf-8")
+          file_report=(base/"asset-file-inspect.txt").read_text(encoding="utf-8")
+          assert "Position vertices=4 rendering-tuple vertices=6 triangular faces=2" in seam
+          assert "Indexed V=4 E=5 F=2 Euler=1" in seam
+          assert "Boundary=4 consistent-interior=1 winding-conflict=0 nonmanifold=0" in seam
+          assert "winding-conflict=1" in broken
+          assert "AUDIT FAILED:" in broken
+          assert "repeated-index-faces=1" in repeated
+          assert "AUDIT FAILED:" in repeated
+          assert "Position vertices=4 rendering-tuple vertices=6" in file_report
+          gltf=(base/"asset-gltf-layout.txt").read_text()
+          assert "first byte=24" in gltf and "after last byte=132" in gltf
+          namespace="{http://www.w3.org/2000/svg}"
+          for name in ("asset-seam.svg","asset-repl.svg"):
+              root=ET.parse(base/name).getroot()
+              assert root.tag==namespace+"svg"
+              assert root.find(namespace+"title") is not None
+              assert root.find(namespace+"desc") is not None
+              assert len(root.findall(namespace+"polygon"))==2
+              assert len(root.findall(namespace+"line"))==5
+          for name in ("asset-gpu.csv","asset-repl.csv"):
+              with (base/name).open(newline="", encoding="utf-8") as fp:
+                  rows=list(csv.DictReader(fp))
+              assert len(rows)==6
+              assert {int(row["position_id"]) for row in rows}=={0,1,2,3}
+              first=[row for row in rows if row["position_id"]=="0"]
+              assert len(first)==2
+              assert first[0]["uv_id"]!=first[1]["uv_id"]
+              assert first[0]["normal_id"]!=first[1]["normal_id"]
+          repl=(base/"asset-repl.txt").read_text()
+          assert "Loaded demo broken" in repl
+          assert "Loaded demo seam" in repl
+          assert "winding-conflict=1" in repl
+          print("P10: independent face/UV/normal index domains, live audit and glTF layout witness verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
