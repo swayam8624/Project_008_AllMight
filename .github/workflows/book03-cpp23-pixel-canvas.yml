@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 seventeen cumulative geometry laboratories (Ubuntu)
+    name: C++23 eighteen cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute eighteen CTests across seventeen C++23 geometry laboratories
+      - name: Execute nineteen CTests across eighteen C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -701,6 +701,38 @@ jobs:
           assert len(root.findall(ns+"polygon"))==2
           assert len(root.findall(ns+"circle"))==4
           print("P17: four clip vertices, two fan triangles, raw UV and source provenance")
+          PY
+      - name: Verify P18 integer coverage and clipped fan sample ownership
+        run: |
+          build/book03-p01/book03_raster inspect > build/book03-p01/raster-report.txt
+          build/book03-p01/book03_raster csv build/book03-p01/coverage.csv
+          build/book03-p01/book03_raster ppm build/book03-p01/coverage.ppm
+          build/book03-p01/book03_raster csv build/book03-p01/clipped-coverage.csv clipped
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          assert "hits=391 single=391 multiple=0" in (base/"raster-report.txt").read_text()
+          for filename in ("coverage.csv","clipped-coverage.csv"):
+              with (base/filename).open(newline="") as f:
+                  rows=list(csv.DictReader(f))
+              assert len(rows)==32*24
+              for i,row in enumerate(rows):
+                  x,y=i%32,i//32
+                  assert (int(row["x"]),int(row["y"]))==(x,y)
+                  if filename=="coverage.csv":
+                      expected=4<=x<=26 and 3<=y<=19
+                  else:
+                      # Independent analytic trapezoid: x in [0,16],
+                      # upper edge y=9-3*x/16; lower y=15+3*x/16.
+                      u,v=x+0.5,y+0.5
+                      expected=0<=u<16 and 9-3*u/16<=v<15+3*u/16
+                  assert int(row["hits"])==int(expected)
+          header,payload=(base/"coverage.ppm").read_bytes().split(b"\n255\n",1)
+          assert header==b"P6\n32 24"
+          assert len(payload)==32*24*3
+          assert sum(payload[i:i+3]==bytes((49,133,107)) for i in range(0,len(payload),3))==391
+          print("P18: rectangle and clipped fan analytic ownership masks and P6 bytes")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
