@@ -288,6 +288,16 @@ target_link_libraries(book03_distortion PRIVATE book03_distortion_lib)
 add_executable(book03_distortion_tests tests/distortion_tests.cpp)
 target_link_libraries(book03_distortion_tests PRIVATE book03_distortion_lib)
 
+# Chapter 24: physical exposure, stochastic charge and digitization.
+add_library(book03_sensor_lib INTERFACE)
+target_include_directories(book03_sensor_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_sensor_lib INTERFACE cxx_std_23)
+add_executable(book03_sensor src/sensor_studio.cpp)
+target_link_libraries(book03_sensor PRIVATE book03_sensor_lib)
+add_executable(book03_sensor_tests tests/sensor_tests.cpp)
+target_link_libraries(book03_sensor_tests PRIVATE book03_sensor_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -313,7 +323,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_renderer_gallery book03_renderer_tests
                    book03_renderer book03_renderer_frontend_tests
                    book03_lens book03_lens_tests
-                   book03_distortion book03_distortion_tests)
+                   book03_distortion book03_distortion_tests
+                   book03_sensor book03_sensor_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -345,4 +356,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_renderer_frontend_contracts COMMAND book03_renderer_frontend_tests)
     add_test(NAME book03_thin_lens_contracts COMMAND book03_lens_tests)
     add_test(NAME book03_distortion_contracts COMMAND book03_distortion_tests)
+    add_test(NAME book03_sensor_contracts COMMAND book03_sensor_tests)
 endif()
