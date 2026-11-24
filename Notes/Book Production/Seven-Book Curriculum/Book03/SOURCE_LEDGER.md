@@ -255,3 +255,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 24 — physical exposure and sensor measurements
 
 [Chapter 24](Chapters/24%20-%20Light%20Becomes%20a%20Measurement.md) distinguishes radiance, irradiance, radiant exposure, photon/electron counts and ADC codes; derives shot/dark/read noise and saturation contracts. [PASS24_LEGACY_AUDIT.md](PASS24_LEGACY_AUDIT.md) maps the inspected original Computing Foundations 36 passage. [PASS24_EVIDENCE.md](PASS24_EVIDENCE.md) records exact-hash-matched GCC/UBSan runs and 17 independently checked exposure rows. Three figures bring the total to 108, and the twenty-sixth CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 25 — color and display response
+
+[Chapter 25](Chapters/25%20-%20Colors%20That%20Tell%20the%20Truth.md) derives spectral ambiguity, XYZ/xyY and primary matrices, linear-light encoding contracts, RAW neutral gains and a relative HDR operator. [PASS25_LEGACY_AUDIT.md](PASS25_LEGACY_AUDIT.md) maps targeted source custody and W3C references. [PASS25_EVIDENCE.md](PASS25_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan passes, 10,000 triplets and 729 independent CSV checks. Four figures bring the total to 112, and the twenty-seventh CTest is registered. Cumulative integration and publication remain pending.
