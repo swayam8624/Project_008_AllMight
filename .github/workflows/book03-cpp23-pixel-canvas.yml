@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 twenty-one cumulative geometry laboratories (Ubuntu)
+    name: C++23 twenty-two cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute twenty-three CTests across twenty-one C++23 geometry laboratories
+      - name: Execute twenty-four CTests across twenty-two C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -835,6 +835,29 @@ jobs:
               x,y=i%640,i//640
               assert (p!=bytes((53,63,72)))==(220<=x<420 and 140<=y<340)
           print("P21: native gallery mask and full OBJ-to-image rectangle contract")
+          PY
+      - name: Verify P22 thin-lens ray geometry and blur measurements
+        run: |
+          build/book03-p01/book03_lens csv build/book03-p01/lens.csv
+          python3 - <<'PY'
+          import csv
+          import math
+          from pathlib import Path
+          with Path("build/book03-p01/lens.csv").open(newline="") as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)==404
+          for i,row in enumerate(rows):
+              n,z,b,ray,p,airy=map(float,(row[k] for k in
+                  ("f_number","object_mm","blur_mm","ray_diameter_mm","blur_pixels","airy_mm")))
+              assert n==(2,4,8,16)[i//101] and z==500+95*(i%101)
+              vs=1/(1/50-1/3000)
+              vz=1/(1/50-1/z)
+              expected=50/n*abs(1-vs/vz)
+              assert math.isclose(b,expected,abs_tol=1e-12)
+              assert math.isclose(ray,expected,abs_tol=1e-12)
+              assert math.isclose(p,expected/0.004,abs_tol=1e-9)
+              assert math.isclose(airy,2.44*0.00055*n,abs_tol=1e-12)
+          print("P22: 404 analytic lens and pupil-ray rows verified")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
