@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-only checks for Book 03 / Passes 01–14.
+"""Source-only checks for Book 03 / Passes 01–15.
 
 This validates names, manuscript location, original figures and references.
 It deliberately does not compile LaTeX, rewrite the manuscript, build an EPUB
@@ -31,6 +31,7 @@ CHAPTER_11 = BOOK / "Chapters/11 - The Same Tree in Five Worlds.md"
 CHAPTER_12 = BOOK / "Chapters/12 - Rotations Without Headaches.md"
 CHAPTER_13 = BOOK / "Chapters/13 - The Tiny Hole That Makes a Picture.md"
 CHAPTER_14 = BOOK / "Chapters/14 - From a 3D Point to a Screen Address.md"
+CHAPTER_15 = BOOK / "Chapters/15 - Two Eyes Looking at One House.md"
 SVG = "{http://www.w3.org/2000/svg}"
 
 
@@ -63,6 +64,7 @@ def main() -> int:
         CHAPTER_12,
         CHAPTER_13,
         CHAPTER_14,
+        CHAPTER_15,
         LAB / "CMakeLists.txt",
         LAB / "include/book03/pixel_canvas.hpp",
         LAB / "src/main.cpp",
@@ -108,6 +110,9 @@ def main() -> int:
         LAB / "include/book03/projection_pipeline.hpp",
         LAB / "src/projection_studio.cpp",
         LAB / "tests/projection_pipeline_tests.cpp",
+        LAB / "include/book03/stereo_geometry.hpp",
+        LAB / "src/stereo_studio.cpp",
+        LAB / "tests/stereo_geometry_tests.cpp",
     ]:
         check(path.exists(), f"missing required source: {path}")
 
@@ -271,6 +276,17 @@ def main() -> int:
         check(phrase.lower() in chapter14.lower(),
               f"fourteenth chapter missing essential concept: {phrase}")
 
+    chapter15 = CHAPTER_15.read_text(encoding="utf-8")
+    check(len(chapter15) > 27_000, "fifteenth chapter unexpectedly truncated")
+    for phrase in [
+        "Two Eyes Looking at One House", "baseline", "disparity",
+        "principal point", "epipolar", "essential matrix", "fundamental matrix",
+        "rectification", "cheirality", "reprojection", "uncertainty",
+        "Reconstruct", "Falsify", "Implement", "Chapter 16",
+    ]:
+        check(phrase.lower() in chapter15.lower(),
+              f"fifteenth chapter missing essential concept: {phrase}")
+
     figure_owners = {
         "01-pixel-addresses.svg": chapter,
         "02-lines-and-discrete-pixels.svg": chapter,
@@ -332,6 +348,12 @@ def main() -> int:
         "58-clip-before-divide.svg": chapter14,
         "59-reciprocal-depth-curves.svg": chapter14,
         "60-depth-storage-precision.svg": chapter14,
+        "61-stereo-baseline-and-rays.svg": chapter15,
+        "62-corrected-disparity.svg": chapter15,
+        "63-disparity-and-depth-uncertainty.svg": chapter15,
+        "64-epipolar-plane-and-lines.svg": chapter15,
+        "65-closest-rays-midpoint.svg": chapter15,
+        "66-wrong-match-perfect-geometry.svg": chapter15,
     }
     for filename, owning_chapter in figure_owners.items():
         figure = BOOK / "Assets" / filename
@@ -362,7 +384,7 @@ def main() -> int:
     check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
           "RGB8 PPM serialization contract missing")
 
-    print("Book03/P01–P14: fourteen narrative chapters, source location and sixty original SVG figure contracts checked.")
+    print("Book03/P01–P15: fifteen narrative chapters, source location and sixty-six original SVG figure contracts checked.")
     print("No LaTeX/PDF/EPUB builds were requested or performed.")
     return 0
 
@@ -371,5 +393,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (AssertionError, ET.ParseError) as exc:
-        print(f"Book03/P01–P14 editorial gate FAILED: {exc}", file=sys.stderr)
+        print(f"Book03/P01–P15 editorial gate FAILED: {exc}", file=sys.stderr)
         sys.exit(1)
