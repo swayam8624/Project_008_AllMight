@@ -268,6 +268,16 @@ target_link_libraries(book03_renderer PRIVATE book03_software_renderer book03_pr
 add_executable(book03_renderer_frontend_tests tests/renderer_frontend_tests.cpp)
 target_link_libraries(book03_renderer_frontend_tests PRIVATE book03_software_renderer book03_primitive_clipping)
 
+# Chapter 22: ideal paraxial thin lens in millimetres.
+add_library(book03_thin_lens INTERFACE)
+target_include_directories(book03_thin_lens INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_thin_lens INTERFACE cxx_std_23)
+add_executable(book03_lens src/lens_studio.cpp)
+target_link_libraries(book03_lens PRIVATE book03_thin_lens)
+add_executable(book03_lens_tests tests/lens_tests.cpp)
+target_link_libraries(book03_lens_tests PRIVATE book03_thin_lens)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -291,7 +301,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_visibility book03_visibility_tests
                    book03_sampling book03_sampling_tests
                    book03_renderer_gallery book03_renderer_tests
-                   book03_renderer book03_renderer_frontend_tests)
+                   book03_renderer book03_renderer_frontend_tests
+                   book03_lens book03_lens_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -321,4 +332,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_sampling_and_quadrature_contracts COMMAND book03_sampling_tests)
     add_test(NAME book03_renderer_backend_contracts COMMAND book03_renderer_tests)
     add_test(NAME book03_renderer_frontend_contracts COMMAND book03_renderer_frontend_tests)
+    add_test(NAME book03_thin_lens_contracts COMMAND book03_lens_tests)
 endif()
