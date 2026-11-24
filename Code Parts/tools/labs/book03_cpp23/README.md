@@ -693,3 +693,16 @@ book03_lens csv lens.csv
 ~~~
 
 Exact committed source hashes matched the locally compiled C++23/UBSan suite and studio. All 3,000 seeded configurations and 404 exported rows passed the stated independent checks. This is not a compound lens or full aperture-visibility renderer. See PASS22_EVIDENCE.md. Cumulative build and CI remain unverified.
+
+
+---
+
+## P23 — Distortion Laboratory
+
+Read `include/book03/distortion.hpp`, `tests/distortion_tests.cpp`, and `src/distortion_studio.cpp`. The forward map consumes normalized CV coordinates. Derive the analytic Jacobian and conservative injectivity bound, then follow the damped Newton inverse and its status. The five angular projection helpers share a restricted forward-hemisphere domain.
+
+~~~text
+book03_distortion distortion.csv
+~~~
+
+The exact committed C++23 sources passed GCC 14.2.0 with UBSan. Four thousand seeded point round trips and finite-difference Jacobian checks, 505 angular round trips and 265 independently checked grid exports passed. Point mapping is not full image undistortion or physical lens calibration. See PASS23_EVIDENCE.md. Cumulative build and CI remain unverified.
