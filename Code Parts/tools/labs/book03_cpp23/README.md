@@ -653,3 +653,16 @@ book03_visibility ppm winners.ppm
 ~~~
 
 Both exact-hash-matched standalone test and studio sources passed GCC 14.2.0 with UBSan. All four modes produced 288 surface-1, 96 surface-2 and 384 empty samples. All 3,072 CSV rows passed an independent analytic oracle; forward and reversed/swapped images were byte-identical. Cumulative integration and CI remain unverified. See PASS19_EVIDENCE.md in the reader.
+
+
+---
+
+## P20 — Analytic Sampling Workshop
+
+Read `include/book03/sampling.hpp`, then `tests/sampling_tests.cpp` and `src/sampling_studio.cpp`. The signal is a linear-light cosine parameterized in cycles/pixel and phase radians. Compare point sampling, composite midpoint integration and analytic unit-box response; examine the single-step coverage model and encode only after resolving linear light.
+
+~~~text
+book03_sampling csv samples.csv
+~~~
+
+The exact committed three source files compiled and ran under GCC 14.2.0 with UBSan. Two thousand seeded trials passed; all 960 exported measurements were independently verified. The experiment is one-dimensional, not an MSAA or temporal renderer. See PASS20_EVIDENCE.md. Cumulative integration is pending.
