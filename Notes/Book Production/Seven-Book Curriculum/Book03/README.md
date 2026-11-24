@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–09; nine substantial narrative chapters, nine cumulative C++23 laboratories, ten source-authored CTests and thirty-three original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–10; ten substantial narrative chapters, ten cumulative C++23 laboratories, eleven source-authored CTests and thirty-nine original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -22,23 +22,26 @@
 10. [Chapter 07 — One Shape, Many Triangles](Chapters/07%20-%20One%20Shape%2C%20Many%20Triangles.md) — indexed mesh identity, edge incidence, orientation, halfedge twins, bow-tie fans, invisible seams, Euler and CSR/Laplacian.
 11. [Chapter 08 — Drawing Smooth Things with Control Points](Chapters/08%20-%20Drawing%20Smooth%20Things%20with%20Control%20Points.md) — de Casteljau, Hermite, B-spline, blossoms, continuity, adaptive tessellation, bicubic patches and real indexed mesh output.
 12. [Chapter 09 — Making a World from Rules](Chapters/09%20-%20Making%20a%20World%20from%20Rules.md) — real indexed terrain, capped cylinder, pole-safe sphere, signed distance and shared-edge marching tetrahedra.
-13. [P01–P09: C++23 Image, Frame, Triangle, Affine, Predicate, 3D, Mesh, Curve and Procedural Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
-14. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
-15. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
-16. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
-17. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
-18. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
-19. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
-20. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
-21. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
-22. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
-23. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
-24. [Pass 07 original-source audit](PASS07_LEGACY_AUDIT.md) — actually inspected halfedge, winged-edge, vertex-link, CSR and Laplacian source sections.
-25. [Pass 07 evidence record](PASS07_EVIDENCE.md) — authored mesh and halfedge C++23 project, figures, exact combinatorial checks and outstanding runtime/release gates.
-26. [Pass 08 original-source audit](PASS08_LEGACY_AUDIT.md) — actual inspected original MIT graphics source sections on cubic curves, splines, patches and later subdivision material.
-27. [Pass 08 evidence record](PASS08_EVIDENCE.md) — new cubic/B-spline/Hermite math, studio, original illustrations and unobserved runtime gates.
-28. [Pass 09 original-source audit](PASS09_LEGACY_AUDIT.md) — original parametric and implicit surface proofs, SDFs, learned-shape source atlas and preserved later material.
-29. [Pass 09 evidence record](PASS09_EVIDENCE.md) — procedural mesh generators, numerical/topological checks, source exports, original figures and open execution gates.
+13. [Chapter 10 — A Mesh You Can Trust](Chapters/10%20-%20A%20Mesh%20You%20Can%20Trust.md) — strict OBJ corner streams, GPU tuple identity, indexed topology diagnostics, normals, safe convex triangulation and glTF buffer-offset checks.
+14. [P01–P10: C++23 Image, Frame, Triangle, Affine, Predicate, 3D, Mesh, Curve, Procedural and Asset Trust Studios](../../../../Code%20Parts/tools/labs/book03_cpp23/README.md) — numerical code, exact tests, terminal REPL and source-generated SVG diagrams.
+15. [Pass 02 original-source audit](PASS02_LEGACY_AUDIT.md) — records the inspected camera/geometry foundation spans without editing the canonical manuscripts.
+16. [Pass 02 evidence record](PASS02_EVIDENCE.md) — provenance, exact changes and what is not yet verified.
+17. [Pass 03 source audit](PASS03_LEGACY_AUDIT.md) — original geometry/rasterization content preserved with exact source identities.
+18. [Pass 03 evidence record](PASS03_EVIDENCE.md) — what the third round actually delivered and which acceptance gates remain.
+19. [Pass 04 source audit](PASS04_LEGACY_AUDIT.md) — maps original basis, active/passive, camera and normal-source boundaries.
+20. [Pass 04 evidence record](PASS04_EVIDENCE.md) — authored code, mathematical checks and honest validation limits.
+21. [Pass 05 source-subsection audit](PASS05_LEGACY_AUDIT.md) — robust predicates plus original camera-frustum content routed to their proper chapters.
+22. [Pass 05 evidence record](PASS05_EVIDENCE.md) — exact input-representation proof, tests, reporting and remaining acceptance gates.
+23. [Pass 06 original-source audit](PASS06_LEGACY_AUDIT.md) — actual inspected 3D ray/mesh/camera source entrypoints, with subsequent chapters' responsibilities preserved.
+24. [Pass 06 evidence record](PASS06_EVIDENCE.md) — new 3D math APIs, tests, figures, source custody and open validation gates.
+25. [Pass 07 original-source audit](PASS07_LEGACY_AUDIT.md) — actually inspected halfedge, winged-edge, vertex-link, CSR and Laplacian source sections.
+26. [Pass 07 evidence record](PASS07_EVIDENCE.md) — authored mesh and halfedge C++23 project, figures, exact combinatorial checks and outstanding runtime/release gates.
+27. [Pass 08 original-source audit](PASS08_LEGACY_AUDIT.md) — actual inspected original MIT graphics source sections on cubic curves, splines, patches and later subdivision material.
+28. [Pass 08 evidence record](PASS08_EVIDENCE.md) — new cubic/B-spline/Hermite math, studio, original illustrations and unobserved runtime gates.
+29. [Pass 09 original-source audit](PASS09_LEGACY_AUDIT.md) — original parametric and implicit surface proofs, SDFs, learned-shape source atlas and preserved later material.
+30. [Pass 09 evidence record](PASS09_EVIDENCE.md) — procedural mesh generators, numerical/topological checks, source exports, original figures and open execution gates.
+31. [Pass 10 original-source audit](PASS10_LEGACY_AUDIT.md) — actual OBJ/glTF, per-corner shading, half-edge/topology and scene source paths, with implementation boundaries.
+32. [Pass 10 evidence record](PASS10_EVIDENCE.md) — native OBJ subset/import studio, glTF bounds kernel, eleven CTests and open runtime acceptance gates.
 
 ## What is already authored?
 
@@ -60,7 +63,9 @@ Pass 08 authors the complete garden-tree curve-and-patch reader chapter, includi
 
 Pass 09 authors the full procedural-world reader chapter, six new mathematical SVGs and a native C++23 generation lab. It implements a heightfield with analytic up normals, a capped cylinder with modulo angular winding, a sphere with unique pole vertices, and an implicit sphere from a bounded Cartesian field using fixed marching tetrahedra and globally shared cached intersection vertex IDs. Its C++23 tests independently validate terrain/disk and capped-cylinder/sphere topologies, SDF signs/gradients, unsupported grid ties and under-sampling, and the restricted sphere extraction's genus-zero closure. The native world REPL exports live source-derived SVG, indexed OBJ and CSV. Existing source-atlas and earlier full geometry/learned-shape manuscripts are mapped and remain untouched. The nine cumulative C++23 labs now declare ten CTests; native success has not yet been independently observed. **Figures total 33.**
 
-The first nine passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
+Pass 10 creates a substantive new chapter about trusting imported geometry rather than trusting a parser-success flag. Six original scientific SVGs explain four validation layers, the four-topological/six-rendering-vertex UV/normal seam, convex-only quad triangulation, glTF two-offset and stride byte addressing, edge-winding audit failures, and deliberate before/after repair policies. The native C++23 source adds a bounded OBJ subset parser with independent face-corner position/UV/normal indices, safe one-based and negative resolution, full-tuple GPU vertex deduplication, P07 topology diagnostics, explicit unsupported-feature rejection, an overflow-aware glTF binary accessor layout checker, and a small interactive Asset Trust Studio that can inspect real OBJ files and export source-derived SVG/CSV evidence. The source-authored eleventh CTest includes adversarial input and counterexamples. Original long mesh topology and per-corner attribute manuscripts were directly inspected and mapped rather than modified. **Figures total 39; labs total 10; CTests authored total 11.**
+
+The first ten passes do **not** assert that all 32 chapters have been drafted, that the legacy source has been fully integrated, that the C++ tests have passed without observed results, or that a PDF or EPUB exists. Later passes will use the substantial legacy chapter material at the locations documented in SOURCE_LEDGER.md. The author explicitly plans to compile and visually review the finished book on macOS at the end of the book-development process.
 
 ## Teaching voice
 
@@ -100,9 +105,11 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 07 | Indexed 3D mesh incidence, closed house reference, disconnected seam, winding/nonmanifold/bow-tie diagnostics, per-corner UVs, halfedge cycles/twins, CSR/Laplacian, five SVGs | Authored; original source preserved; compiler/CTest and final reader proof remain open |
 | 08 | Bézier de Casteljau/Bernstein, Hermite, B-spline span, C/G joins, adaptive tessellation and 16-control bicubic indexed patch; six figures and editable C++23 studio | Authored; C++23/CI native success and source-unit reconciliation pending |
 | 09 | Procedural heightfield/capped cylinder/UV sphere/strict implicit sphere, analytic normals, grid-edge shared extraction, independent counts and six original figures | Authored; native execution and source-unit reconciliation pending |
-| 10 | 3D cameras, poses and projection | Not started |
-| 11 | CPU clipping, triangle rasterization and visibility | Not started |
-| 12 | Lens/sensor/image formation and calibration | Not started |
-| 13 | Stereo geometry and introductory reconstruction | Not started |
-| 14+ | Complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 10 | Trustworthy imported OBJ subset, per-corner UV/normal index domains, GPU tuple conversion, glTF buffer layout proof, topology audit, six original diagrams | Authored; native runtime and full original-source reconciliation pending |
+| 11 | 3D scene hierarchy, shared mesh instances, local/world pose transforms and normal matrices | Not started |
+| 12 | 3D cameras, poses and projection | Not started |
+| 13 | CPU clipping, triangle rasterization and visibility | Not started |
+| 14 | Lens/sensor/image formation and calibration | Not started |
+| 15 | Stereo geometry and introductory reconstruction | Not started |
+| 16+ | Complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
