@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 thirteen cumulative geometry laboratories (Ubuntu)
+    name: C++23 fourteen cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute fourteen CTests across thirteen C++23 geometry laboratories
+      - name: Execute fifteen CTests across fourteen C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -546,6 +546,51 @@ jobs:
           assert root.find(ns+"desc") is not None
           assert len(root.findall(ns+"circle"))==7
           print("P13: calibrated projections, zoom versus camera motion, rays and actual SVG samples verified")
+          PY
+      - name: Verify P14 homogeneous projection and controlled depth storage study
+        run: |
+          build/book03-p01/book03_projection inspect > build/book03-p01/projection-report.txt
+          build/book03-p01/book03_projection csv build/book03-p01/depth-storage.csv
+          build/book03-p01/book03_projection svg build/book03-p01/depth-curves.svg
+          printf 'reverse\ninspect\npoint 0 0 -0.5\ninspect\ndepth 0.1 0\northo\nquit\n' | build/book03-p01/book03_projection repl > build/book03-p01/projection-repl.txt
+          python3 - <<'PY'
+          import csv
+          import math
+          import struct
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          report=(base/"projection-report.txt").read_text()
+          assert "screen 420,140 depth=0.84375" in report
+          repl=(base/"projection-repl.txt").read_text()
+          assert "screen 420,140 depth=0.15625" in repl
+          assert "Rejected by clip membership" in repl
+          assert "orthographic needs finite far" in repl
+          with (base/"depth-storage.csv").open(newline="") as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)==964
+          for row in rows:
+              d=float(row["axial"])
+              reverse=row["order"]=="reverse"
+              q=0.1/d if reverse else 1-0.1/d
+              stored=(struct.unpack("f",struct.pack("f",q))[0]
+                  if row["storage"]=="float32"
+                  else math.floor(q*16777215+0.5)/16777215)
+              assert abs(float(row["stored"])-stored)<1e-14
+              if stored==(0 if reverse else 1):
+                  assert row["status"]=="infinity"
+              else:
+                  recovered=0.1/stored if reverse else 0.1/(1-stored)
+                  assert row["status"]=="finite"
+                  assert math.isclose(float(row["reconstructed"]),recovered,rel_tol=1e-12)
+          last={(r["order"],r["storage"]):float(r["abs_error"]) for r in rows[-4:]}
+          assert last["forward","float32"]>1000
+          assert last["reverse","float32"]<0.01
+          root=ET.parse(base/"depth-curves.svg").getroot()
+          ns="{http://www.w3.org/2000/svg}"
+          assert root.find(ns+"title") is not None
+          assert len(root.findall(ns+"polyline"))==2
+          print("P14: analytic clip trace, depth orders, storage quantization and inverse-depth witnesses")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
