@@ -432,3 +432,63 @@ The default studio uses 12 subdivisions, sphere/cylinder radius **0.91 m**, terr
 **Important numeric limitations:** `make_heightfield` is a graph and cannot represent an overhang. The cylinder's geometric cap rims need separate per-corner shading normals in a renderer, even though geometric ring indices are intentionally shared. Longitude is periodic; the UV sphere stores one pole vertex each rather than a degenerate pole ring. The implicit extraction is **only for a centered sphere** in its present radial orientation policy; no exact-zero lattice ties, generalized SDF/occupancy extraction, general CAD trimming, topological repair, self-intersection certification or geometric error bound is claimed.
 
 **CI and release:** The cumulative CMake adds the **ninth native C++23 lab** and the **tenth CTest**, `book03_procedural_heightfield_sphere_cylinder_isosurface_contracts`. The dedicated Book03 workflow is authored to check source editorial location, compile all labs, execute CTest, then inspect numeric reports and generated SVG/CSV/OBJ for all four shapes and live REPL edits. An authored check is **not** an observed passing build. This project does not write to the final EPUB/PDF library or regenerate any legacy manuscript.
+
+
+---
+
+## Chapter 10 — P10 Native OBJ Asset Trust Workshop
+
+**Goal:** Understand exactly what “loaded successfully” does and does not establish. Convert a narrow but real Wavefront OBJ subset into (a) the *logical* indexed geometric mesh needed by P07 topology, and (b) the separately indexed rendering-vertex tuple stream. Validate a small glTF 2.0 byte-layout subset using overflow-aware arithmetic, without pretending to parse a GLB/JSON scene.
+
+**Read in this order:**
+
+1. `include/book03/asset_import.hpp`. Start at `ObjInputError`, `ObjImportLimits`, `obj_bounded_line` and `obj_decimal`: source lines are limited as they are read, numeric tokens must be fully consumed and finite, and the importer refuses unsupported directives. `obj_resolve_index` handles positive one-based OBJ references and negative references to each currently defined stream separately. `obj_corner` decodes `p`, `p/t`, `p//n` and `p/t/n` without inventing absent attributes.
+2. Continue through `obj_check_convex_quad`: only planar **strictly convex** four-corner polygons are fan-triangulated; general concave and N-gons are explicitly not claimed. `import_obj` preserves all accepted face corners with their original attribute IDs, while `ObjAsset::topological_mesh` shares *position IDs* and `ObjAsset::to_rendering_mesh` creates one GPU vertex per distinct `(position,UV,normal)` tuple.
+3. Read `inspect_obj_asset`, which reuses P07 `inspect_mesh` to distinguish a grammatical face from a valid connected nondegenerate surface, and separately records bounds, ignored metadata warnings and zero supplied normal vectors.
+4. Read `GltfBufferView`, `GltfAccessor`, and `check_gltf_layout`. The authoritative glTF 2.0 bufferView/accessor math is `bufferView.byteOffset + accessor.byteOffset + i*effectiveStride`. The bounded implementation computes element size, validates ranges/alignment and checks count by division *before* a possibly overflowing multiplication. It only supports a documented component/vector subset and **does not** parse glTF JSON, GLB, scene hierarchy, sparse accessors or actual bytes.
+5. Read `tests/asset_import_tests.cpp`. Its independent tests construct a square that has four geometric position IDs but six unified GPU tuples, negative indices resolved at face time and against independent streams, correct `p//n`, convex quad triangulation, refusal of concave/self-intersecting/warped quads and general N-gons, line and face budgets, malformed tokens, legal-but-broken faces, misleading zero normals and glTF offset/stride/count overflow adversaries.
+6. Read `src/asset_studio.cpp`. It loads a real, size-bounded OBJ from a local path, prints source and P07 topology diagnostics, renders actual triangle/edge evidence in an illustrative SVG and exports the real rendering tuple stream as CSV. Its REPL replaces the active asset only after a candidate file parses successfully. The fixed SVG map is an oblique diagnostic diagram, **not** a calibrated camera or a robust visibility renderer.
+
+**Commands after building the cumulative CMake project:**
+
+~~~bash
+build/book03-p01/book03_assets demo seam
+build/book03-p01/book03_assets demo quad
+build/book03-p01/book03_assets demo broken
+build/book03-p01/book03_assets demo repeated
+
+build/book03-p01/book03_assets inspect model.obj
+build/book03-p01/book03_assets svg model.obj model-audit.svg
+build/book03-p01/book03_assets gpu model.obj model-gpu-tuples.csv
+build/book03-p01/book03_assets layout
+build/book03-p01/book03_assets repl
+~~~
+
+REPL:
+
+~~~text
+demo broken
+inspect
+demo seam
+inspect
+svg good-seam.svg
+gpu seam-gpu.csv
+file model.obj
+inspect
+layout
+quit
+~~~
+
+**Small checkable data:**
+
+For two square faces `f 1/1/1 2/2/1 3/3/1` and `f 1/4/2 3/5/2 4/6/2`, the geometry has **4 positions, 5 indexed edges, 2 faces, Euler 1, 4 boundary edges, 1 consistent interior edge**, while its rendering stream has **6 distinct per-corner tuples**. That is intentional, not a corrupted import.
+
+An OBJ `f -3/-3/-1 -2/-2/-1 -1/-1/-1` is resolved against position, UV and normal stream counts **at the instant the face is read**, with all resulting indices zero-based. A later declaration does not change the already resolved face.
+
+The restricted glTF layout fixture uses a 256-byte buffer, view start 16 and length 128, stride 24, accessor relative offset 8, five `VEC3 FLOAT` values with packed size 12. The global element starts are **24,48,72,96,120** and the exclusive end is **132** inside the view's global end at **144**. A large invalid count must fail through the `(remaining-element_size)/stride` inequality before multiplying.
+
+**Limits:** The OBJ parser is an educational bounded subset: ASCII `v`, `vt`, `vn`, `f` triangles and strictly convex planar quads, with recognized metadata (`o,g,s,usemtl,mtllib`) recorded but **ignored**. No external MTL resources are followed. General N-gons, colors, homogeneous coordinates, scene nodes, animations, skinning, materials, normal/tangent regeneration, geometric welding and topological repair are not claimed. The file size limit of the terminal tool is 5 MiB; the parser also caps lines, line characters, positions and face counts. The glTF checker is an overflow-safe **layout kernel**, not a full format loader.
+
+**Testing:** CMake now declares **ten cumulative C++23 labs and eleven CTests**, including `book03_obj_corner_domains_and_gltf_bounds_contracts`. The Book03 GitHub Actions source runs native compilation and CTest, then creates a real local seam OBJ fixture, checks four-versus-six vertex identity, parses source SVG and GPU CSV exports, verifies the separate attribute indices, exercises the REPL and checks the known glTF byte witness. **Do not report these tests as green before an actual CMake/CTest/GitHub Actions execution is observed.**
+
+**Publication:** Final PDF/EPUB compilation is deferred until all 32 Book03 chapters and original-source reconciliations are finished. The original continuous notes, derived chapter editions, legacy LaTeX stage and already published Books 01–02 remain read-only.
