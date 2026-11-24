@@ -224,6 +224,16 @@ target_link_libraries(book03_clip PRIVATE book03_primitive_clipping book03_verte
 add_executable(book03_clip_tests tests/primitive_clipping_tests.cpp)
 target_link_libraries(book03_clip_tests PRIVATE book03_primitive_clipping book03_vertex_pipeline)
 
+# Chapter 18: bounded exact integer coverage on a snapped sample grid.
+add_library(book03_raster_coverage INTERFACE)
+target_include_directories(book03_raster_coverage INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_raster_coverage INTERFACE cxx_std_23)
+add_executable(book03_raster src/raster_studio.cpp)
+target_link_libraries(book03_raster PRIVATE book03_raster_coverage book03_primitive_clipping)
+add_executable(book03_raster_tests tests/raster_coverage_tests.cpp)
+target_link_libraries(book03_raster_tests PRIVATE book03_raster_coverage)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -242,7 +252,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_projection book03_projection_tests
                    book03_stereo book03_stereo_tests
                    book03_vertex book03_vertex_tests
-                   book03_clip book03_clip_tests)
+                   book03_clip book03_clip_tests
+                   book03_raster book03_raster_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -267,4 +278,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_calibrated_stereo_contracts COMMAND book03_stereo_tests)
     add_test(NAME book03_indexed_vertex_and_varying_contracts COMMAND book03_vertex_tests)
     add_test(NAME book03_primitive_clipping_contracts COMMAND book03_clip_tests)
+    add_test(NAME book03_integer_raster_coverage_contracts COMMAND book03_raster_tests)
 endif()
