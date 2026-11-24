@@ -732,3 +732,16 @@ book03_color color.csv
 ~~~
 
 Native C++23/UBSan passed 10,000 seeded triplets; the independently derived primary matrices and transfer oracle verified all 729 exported rows. See PASS25_EVIDENCE.md. This is not an ICC engine or calibrated display. Cumulative build and CI remain pending.
+
+
+---
+
+## P26 — Spatial Camera Calibration
+
+Read `include/book03/calibration.hpp`, `tests/calibration_tests.cpp` and `src/calibration_studio.cpp`. Estimate a finite ideal optical camera from known noncoplanar landmarks using similarity-normalized DLT and a one-sided Jacobi SVD. Inspect the rank/gap gate before decomposing P.
+
+~~~text
+book03_calibration calibration.csv
+~~~
+
+Standalone GCC C++23/UBSan passed exact recovery, 100 noisy rotated-camera tests and planar rejection. The studio exports 100 additional trial summaries and evaluates 20 held-out points per fit. Independent NumPy verifies the noiseless fixture and Python checks all summary rows. See PASS26_EVIDENCE.md. No full checkerboard or nonlinear calibration implementation; cumulative build and CI remain pending.
