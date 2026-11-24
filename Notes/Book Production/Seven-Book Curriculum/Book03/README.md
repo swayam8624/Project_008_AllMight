@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–26; twenty-six substantial narrative chapters, twenty-six cumulative C++23 laboratories, twenty-eight source-authored CTests and one hundred sixteen original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–27; twenty-seven substantial narrative chapters, twenty-seven cumulative C++23 laboratories, twenty-nine source-authored CTests and one hundred twenty original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -187,7 +187,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 24 | Exposure, photon statistics, dark and read noise, full well, gain and ADC | Authored; standalone native tests and studio passed |
 | 25 | Relative XYZ, linear RGB, Display P3, transfer curves, white balance and HDR | Authored; standalone native tests and studio passed |
 | 26 | Spatial camera DLT, decomposition, planar constraints, reprojection and noise | Authored; standalone native tests and studio passed |
-| 27+ | Epipolar geometry through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 27 | Essential/fundamental geometry, normalized eight-point estimation, Sampson residual, degeneracy and scale | Authored; standalone native tests and studio passed |
+| 28+ | Feature matching through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
 
 
@@ -204,3 +205,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 26
 
 [Chapter 26 — Teaching a Camera About Itself](Chapters/26%20-%20Teaching%20a%20Camera%20About%20Itself.md) derives normalized spatial DLT, camera decomposition, planar calibration constraints, distortion refinement principles and held-out verification. Four SVG figures and a native C++23 spatial calibration lab accompany the reader. [Evidence](PASS26_EVIDENCE.md) and [source custody](PASS26_LEGACY_AUDIT.md) record actual results and limits. Next: Chapter 27 — Two Photographs, One Hidden Point.
+
+
+## Pass 27
+
+[Chapter 27 — Two Photographs, One Hidden Point](Chapters/27%20-%20Two%20Photographs%2C%20One%20Hidden%20Point.md) derives E/F, Sampson residual, normalized eight-point estimation, cheirality and scale gauge. Four SVG figures and a native C++23 epipolar laboratory accompany the reader. [Evidence](PASS27_EVIDENCE.md) and [source custody](PASS27_LEGACY_AUDIT.md) record exact results and limits. Next: Chapter 28 — Finding the Same Corner Twice.
