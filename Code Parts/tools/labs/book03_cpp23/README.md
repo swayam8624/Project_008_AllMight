@@ -772,3 +772,17 @@ book03_matching matching.csv
 ~~~
 
 Standalone GCC C++23/UBSan: 107 correct translated feature pairs and 50 successful synthetic RANSAC fits, 2500 held-out correspondences, 50 independently checked CSV summaries. This does not constitute end-to-end real-photo reconstruction; random outliers are not coherent false correspondences. See PASS28_EVIDENCE.md. Cumulative build and CI pending.
+
+
+---
+
+## P29 — Sparse Reconstruction
+
+Read `include/book03/sfm.hpp`, `tests/sfm_tests.cpp` and `src/sfm_studio.cpp`. Reuse P27 for F estimation, resolve the four essential pose hypotheses, triangulate known-pose tracks and refine individual points in pixel space.
+
+~~~text
+book03_sfm_tests
+book03_sfm reconstruction.csv
+~~~
+
+Native GCC C++23/UBSan passed exact pose recovery, 80 noisy point refinements, and the 100-trial/10,000-point sweep. Pixel objective improved in every trial; 3D RMS improved in 63. See PASS29_EVIDENCE.md. Joint bundle adjustment and PnP are chapter derivations/context, not implemented. Cumulative build pending.
