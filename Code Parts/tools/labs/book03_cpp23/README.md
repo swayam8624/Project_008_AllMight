@@ -634,3 +634,22 @@ book03_raster ppm clipped-coverage.ppm clipped
 ~~~
 
 The default rectangle must cover 391 samples once and none twice. The standalone exact-hash-matched C++23 coverage test passed with GCC 14.2.0 and UBSan. The integrated studio and cumulative CMake/CTest remain unverified. See Book03 PASS18_EVIDENCE.md.
+
+
+---
+
+## P19 — Opaque Visibility Workshop
+
+Read `include/book03/visibility.hpp` after raster_coverage.hpp. Follow VisibilityPolicy, stored_depth, VisibilityBuffer::submit and draw. Inputs are already clipped screen vertices and NDC depths in [0,1]. Compare represented depth using the selected order; explicit occupancy and equal-depth policy are separate. The standalone studio draws intersecting depth fields, not a shaded 3D scene.
+
+~~~text
+book03_visibility inspect
+book03_visibility inspect reverse
+book03_visibility csv forward.csv
+book03_visibility csv swapped.csv swapped
+book03_visibility csv reverse.csv reverse
+book03_visibility csv reverse-swapped.csv reverse swapped
+book03_visibility ppm winners.ppm
+~~~
+
+Both exact-hash-matched standalone test and studio sources passed GCC 14.2.0 with UBSan. All four modes produced 288 surface-1, 96 surface-2 and 384 empty samples. All 3,072 CSV rows passed an independent analytic oracle; forward and reversed/swapped images were byte-identical. Cumulative integration and CI remain unverified. See PASS19_EVIDENCE.md in the reader.
