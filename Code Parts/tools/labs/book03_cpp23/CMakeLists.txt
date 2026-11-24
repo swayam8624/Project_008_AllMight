@@ -339,6 +339,17 @@ target_link_libraries(book03_matching PRIVATE book03_features_lib)
 add_executable(book03_feature_tests tests/feature_tests.cpp)
 target_link_libraries(book03_feature_tests PRIVATE book03_features_lib)
 
+# Chapter 29: calibrated pose recovery and multiview point reconstruction.
+add_library(book03_sfm_lib INTERFACE)
+target_include_directories(book03_sfm_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_sfm_lib INTERFACE cxx_std_23)
+target_link_libraries(book03_sfm_lib INTERFACE book03_epipolar_lib)
+add_executable(book03_sfm src/sfm_studio.cpp)
+target_link_libraries(book03_sfm PRIVATE book03_sfm_lib)
+add_executable(book03_sfm_tests tests/sfm_tests.cpp)
+target_link_libraries(book03_sfm_tests PRIVATE book03_sfm_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -369,7 +380,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_color book03_color_tests
                    book03_calibration book03_calibration_tests
                    book03_epipolar book03_epipolar_tests
-                   book03_matching book03_feature_tests)
+                   book03_matching book03_feature_tests
+                   book03_sfm book03_sfm_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -406,4 +418,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_calibration_contracts COMMAND book03_calibration_tests)
     add_test(NAME book03_epipolar_contracts COMMAND book03_epipolar_tests)
     add_test(NAME book03_feature_contracts COMMAND book03_feature_tests)
+    add_test(NAME book03_sfm_contracts COMMAND book03_sfm_tests)
 endif()
