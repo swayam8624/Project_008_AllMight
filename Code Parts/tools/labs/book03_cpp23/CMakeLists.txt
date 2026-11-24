@@ -308,6 +308,16 @@ target_link_libraries(book03_color PRIVATE book03_color_lib)
 add_executable(book03_color_tests tests/color_tests.cpp)
 target_link_libraries(book03_color_tests PRIVATE book03_color_lib)
 
+# Chapter 26: normalized spatial camera DLT and intrinsic decomposition.
+add_library(book03_calibration_lib INTERFACE)
+target_include_directories(book03_calibration_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_calibration_lib INTERFACE cxx_std_23)
+add_executable(book03_calibration src/calibration_studio.cpp)
+target_link_libraries(book03_calibration PRIVATE book03_calibration_lib)
+add_executable(book03_calibration_tests tests/calibration_tests.cpp)
+target_link_libraries(book03_calibration_tests PRIVATE book03_calibration_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -335,7 +345,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_lens book03_lens_tests
                    book03_distortion book03_distortion_tests
                    book03_sensor book03_sensor_tests
-                   book03_color book03_color_tests)
+                   book03_color book03_color_tests
+                   book03_calibration book03_calibration_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -369,4 +380,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_distortion_contracts COMMAND book03_distortion_tests)
     add_test(NAME book03_sensor_contracts COMMAND book03_sensor_tests)
     add_test(NAME book03_color_contracts COMMAND book03_color_tests)
+    add_test(NAME book03_calibration_contracts COMMAND book03_calibration_tests)
 endif()
