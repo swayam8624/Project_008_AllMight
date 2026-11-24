@@ -510,3 +510,21 @@ book03_scene repl
 ~~~
 
 REPL commands: `move 0 2 0 0`, `parent 3 1 world`, `parent 0 2 local` (cycle rejected), `inspect`, `svg FILE`, `csv FILE`, `quit`. The SVG is an oblique diagnostic projection, without a camera, visibility or material implementation. The CSV records origins, bounds and determinant. The independent twelfth CTest exercises numeric witnesses, shared identity, parent order, 5000-node chain, singular inverse and failed-edit rollback. No native test pass is asserted yet.
+
+
+---
+
+## P12 — Orientation Debugger
+
+Read `include/book03/rotation3.hpp` from Rotation3 normalization through axis_angle, Hamilton multiplication, vector application, fixed_xyz and SLERP, then the independent Rodrigues formula, principal Euler extraction and RigidPose. The convention is right-handed active column-vector rotation, radians, quaternion order wxyz; the rightmost product acts first. Compare the independent `tests/rotation3_tests.cpp` and inspect `src/rotation_studio.cpp` for degrees-to-radians conversion and actual output generation.
+
+After the eventual cumulative CMake build:
+
+~~~text
+book03_rotation inspect
+book03_rotation svg orientations.svg
+book03_rotation csv orientations.csv
+book03_rotation repl
+~~~
+
+REPL: `axis 0 0 1 120`, `sample 0.5`, `euler 30 90 20`, `inspect`, `start`, `axis 1 1 1 120`, `csv FILE`, `svg FILE`, `quit`. The default 61 samples follow a 120-degree Z rotation. The near-lock Euler flag is diagnostic; the quaternion stays authoritative. The near-coincidence branch uses NLERP, not exact constant angular speed. The thirteenth authored CTest checks analytic rotations, 3,000 seeded cases and 10,000 accumulated updates. No successful native test run is asserted yet. No PDF or EPUB is generated in this pass.
