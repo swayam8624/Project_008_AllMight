@@ -184,6 +184,16 @@ target_link_libraries(book03_camera PRIVATE book03_pinhole book03_rotation3)
 add_executable(book03_camera_tests tests/pinhole_camera_tests.cpp)
 target_link_libraries(book03_camera_tests PRIVATE book03_pinhole book03_rotation3)
 
+# Chapter 14: homogeneous clip projection and depth storage reference.
+add_library(book03_projection_pipeline INTERFACE)
+target_include_directories(book03_projection_pipeline INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_projection_pipeline INTERFACE cxx_std_23)
+add_executable(book03_projection src/projection_studio.cpp)
+target_link_libraries(book03_projection PRIVATE book03_projection_pipeline book03_pinhole)
+add_executable(book03_projection_tests tests/projection_pipeline_tests.cpp)
+target_link_libraries(book03_projection_tests PRIVATE book03_projection_pipeline book03_pinhole)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -198,7 +208,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_assets book03_asset_tests
                    book03_scene book03_scene_tests
                    book03_rotation book03_rotation_tests
-                   book03_camera book03_camera_tests)
+                   book03_camera book03_camera_tests
+                   book03_projection book03_projection_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -219,4 +230,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_affine_scene_forest_contracts COMMAND book03_scene_tests)
     add_test(NAME book03_rotation_and_rigid_pose_contracts COMMAND book03_rotation_tests)
     add_test(NAME book03_calibrated_pinhole_contracts COMMAND book03_camera_tests)
+    add_test(NAME book03_projection_and_depth_contracts COMMAND book03_projection_tests)
 endif()
