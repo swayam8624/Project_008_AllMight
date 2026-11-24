@@ -68,7 +68,7 @@ void svg(std::ostream& out,const RectifiedStereo& rig){
                <<"\" y=\""<<y+s*p[i].v-8<<"\" font-size=\"12\">"<<i<<"</text>";
         }
     }
-    out<<"<text x=\"25\" y=\"535\" font-family=\"sans-serif\" font-size=\"13\">Known correspondences, not a stereo matching result. Default baseline 0.2 m.</text></svg>\n";
+    out<<"<text x=\"25\" y=\"535\" font-family=\"sans-serif\" font-size=\"13\">Known correspondences, not a stereo matching result. Baseline "<<rig.baseline<<" m.</text></svg>\n";
 }
 void save(const RectifiedStereo& rig,const std::string& path,bool image){
     std::ofstream out(path);if(!out)throw std::runtime_error("cannot open output");
