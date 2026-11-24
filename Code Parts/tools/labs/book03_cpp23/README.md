@@ -706,3 +706,16 @@ book03_distortion distortion.csv
 ~~~
 
 The exact committed C++23 sources passed GCC 14.2.0 with UBSan. Four thousand seeded point round trips and finite-difference Jacobian checks, 505 angular round trips and 265 independently checked grid exports passed. Point mapping is not full image undistortion or physical lens calibration. See PASS23_EVIDENCE.md. Cumulative build and CI remain unverified.
+
+
+---
+
+## P24 — Camera Sensor Emulator
+
+Read `include/book03/sensor.hpp`, `tests/sensor_tests.cpp`, and `src/sensor_studio.cpp`. Track SI irradiance, expected photons, electron-domain moments, stored charge, analog read noise and digital numbers separately.
+
+~~~text
+book03_sensor sensor.csv
+~~~
+
+Exact committed source hashes match the native GCC/UBSan runs. A 100,000-sample moment test and a 170,000-exposure sweep passed; 17 aggregate rows were independently checked. This is an independent-pixel synthetic model, not real sensor calibration. See PASS24_EVIDENCE.md. Cumulative build and CI remain pending.
