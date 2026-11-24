@@ -278,6 +278,16 @@ target_link_libraries(book03_lens PRIVATE book03_thin_lens)
 add_executable(book03_lens_tests tests/lens_tests.cpp)
 target_link_libraries(book03_lens_tests PRIVATE book03_thin_lens)
 
+# Chapter 23: normalized lens distortion and bounded numerical inversion.
+add_library(book03_distortion_lib INTERFACE)
+target_include_directories(book03_distortion_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_distortion_lib INTERFACE cxx_std_23)
+add_executable(book03_distortion src/distortion_studio.cpp)
+target_link_libraries(book03_distortion PRIVATE book03_distortion_lib)
+add_executable(book03_distortion_tests tests/distortion_tests.cpp)
+target_link_libraries(book03_distortion_tests PRIVATE book03_distortion_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -302,7 +312,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_sampling book03_sampling_tests
                    book03_renderer_gallery book03_renderer_tests
                    book03_renderer book03_renderer_frontend_tests
-                   book03_lens book03_lens_tests)
+                   book03_lens book03_lens_tests
+                   book03_distortion book03_distortion_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -333,4 +344,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_renderer_backend_contracts COMMAND book03_renderer_tests)
     add_test(NAME book03_renderer_frontend_contracts COMMAND book03_renderer_frontend_tests)
     add_test(NAME book03_thin_lens_contracts COMMAND book03_lens_tests)
+    add_test(NAME book03_distortion_contracts COMMAND book03_distortion_tests)
 endif()
