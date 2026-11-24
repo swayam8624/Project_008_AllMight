@@ -666,3 +666,17 @@ book03_sampling csv samples.csv
 ~~~
 
 The exact committed three source files compiled and ran under GCC 14.2.0 with UBSan. Two thousand seeded trials passed; all 960 exported measurements were independently verified. The experiment is one-dimensional, not an MSAA or temporal renderer. See PASS20_EVIDENCE.md. Cumulative integration is pending.
+
+
+---
+
+## P21 — Software Renderer
+
+Read `include/book03/software_renderer.hpp`, `tests/renderer_tests.cpp` and `src/renderer_gallery.cpp` first. The backend reuses P18 coverage, P19 represented depth and P20 sRGB encoding; it applies perspective-correct UV and screen-linear depth. Then read `renderer_frontend.hpp`, `src/renderer_obj.cpp` and `tests/renderer_frontend_tests.cpp` for the actual OBJ/model/view/projection/clipping adapter.
+
+~~~text
+book03_renderer_gallery gallery.ppm
+book03_renderer obj INPUT.obj OUTPUT.ppm
+~~~
+
+The exact backend suite and gallery passed C++23/UBSan locally. The native 320x240 gallery's full image was checked by an independent rational oracle: 76531 exact colors and 269 exact checker-boundary samples checked for permitted colors. The OBJ adapter is committed with its 40000-pixel rectangle test but is not native-validated; local GitHub DNS resolution blocked full dependency retrieval. See PASS21_EVIDENCE.md. No full cumulative build or CI pass is asserted.
