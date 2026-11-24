@@ -225,3 +225,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 18 — deterministic integer sample ownership
 
 [Chapter 18](Chapters/18%20-%20Who%20Owns%20the%20Edge.md) derives the edge function, Y-down top-left convention, subpixel snapping, overflow bound, candidate bounds, incremental evaluation and unbiased barycentrics. [PASS18_LEGACY_AUDIT.md](PASS18_LEGACY_AUDIT.md) records inspected legacy 33/34 passages. Five figures bring the cumulative count to 82. The standalone P18 coverage suite was compiled and passed with GCC 14.2.0 and undefined-behavior sanitization after exact Git blob verification; [PASS18_EVIDENCE.md](PASS18_EVIDENCE.md) records the observed run. Cumulative CMake/CTest, integrated studio and publication remain unverified.
+
+
+## Pass 19 — opaque visibility and depth storage
+
+[Chapter 19](Chapters/19%20-%20Which%20Surface%20Gets%20Seen.md) derives per-sample opaque visibility, depth quantization and tie policies. [PASS19_LEGACY_AUDIT.md](PASS19_LEGACY_AUDIT.md) maps inspected original sources. [PASS19_EVIDENCE.md](PASS19_EVIDENCE.md) records hash-verified standalone C++23/UBSan test and studio passes, 18,000 seeded submissions, 3,072 independently checked CSV rows and byte-identical winner images. Five figures bring the total to 87. The twentieth cumulative CTest is registered; cumulative build and CI remain unobserved. Originals and release paths are preserved.
