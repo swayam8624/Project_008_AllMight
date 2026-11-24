@@ -214,6 +214,16 @@ target_link_libraries(book03_vertex PRIVATE book03_vertex_pipeline book03_projec
 add_executable(book03_vertex_tests tests/vertex_pipeline_tests.cpp)
 target_link_libraries(book03_vertex_tests PRIVATE book03_vertex_pipeline book03_projection_pipeline)
 
+# Chapter 17: rectangular and homogeneous primitive clipping.
+add_library(book03_primitive_clipping INTERFACE)
+target_include_directories(book03_primitive_clipping INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_primitive_clipping INTERFACE cxx_std_23)
+add_executable(book03_clip src/clipping_studio.cpp)
+target_link_libraries(book03_clip PRIVATE book03_primitive_clipping book03_vertex_pipeline)
+add_executable(book03_clip_tests tests/primitive_clipping_tests.cpp)
+target_link_libraries(book03_clip_tests PRIVATE book03_primitive_clipping book03_vertex_pipeline)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -231,7 +241,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_camera book03_camera_tests
                    book03_projection book03_projection_tests
                    book03_stereo book03_stereo_tests
-                   book03_vertex book03_vertex_tests)
+                   book03_vertex book03_vertex_tests
+                   book03_clip book03_clip_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -255,4 +266,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_projection_and_depth_contracts COMMAND book03_projection_tests)
     add_test(NAME book03_calibrated_stereo_contracts COMMAND book03_stereo_tests)
     add_test(NAME book03_indexed_vertex_and_varying_contracts COMMAND book03_vertex_tests)
+    add_test(NAME book03_primitive_clipping_contracts COMMAND book03_clip_tests)
 endif()
