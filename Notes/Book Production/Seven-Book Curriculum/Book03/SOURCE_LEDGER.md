@@ -260,3 +260,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 25 — color and display response
 
 [Chapter 25](Chapters/25%20-%20Colors%20That%20Tell%20the%20Truth.md) derives spectral ambiguity, XYZ/xyY and primary matrices, linear-light encoding contracts, RAW neutral gains and a relative HDR operator. [PASS25_LEGACY_AUDIT.md](PASS25_LEGACY_AUDIT.md) maps targeted source custody and W3C references. [PASS25_EVIDENCE.md](PASS25_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan passes, 10,000 triplets and 729 independent CSV checks. Four figures bring the total to 112, and the twenty-seventh CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 26 — camera calibration
+
+[Chapter 26](Chapters/26%20-%20Teaching%20a%20Camera%20About%20Itself.md) develops normalized spatial DLT, singular directions, row decomposition, planar homography constraints and geometric refinement principles. [PASS26_LEGACY_AUDIT.md](PASS26_LEGACY_AUDIT.md) records targeted camera source custody and primary references. [PASS26_EVIDENCE.md](PASS26_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan passes, 100 noisy tests, 100 separate studio trials and independent noiseless SVD verification. Four figures bring the total to 116, and the twenty-eighth CTest is registered. Cumulative integration and publication remain pending.
