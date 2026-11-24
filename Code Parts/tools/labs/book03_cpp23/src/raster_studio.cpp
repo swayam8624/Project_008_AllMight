@@ -40,7 +40,7 @@ void ppm(std::ostream& out,const Result& r){
     Canvas c(W,H);
     for(int y=0;y<H;++y)for(int x=0;x<W;++x){
         int n=r.hits[y*W+x];
-        c.set({static_cast<std::size_t>(x),static_cast<std::size_t>(y)},
+        c.set({x,y},
             n>1?Rgb8{186,79,62}:n==1?Rgb8{49,133,107}:Rgb8{242,240,231});
     }
     c.write_ppm(out);
