@@ -195,3 +195,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 12 — proper rotations, quaternion interpolation and rigid poses
 
 [Chapter 12](Chapters/12%20-%20Rotations%20Without%20Headaches.md) derives SO(3), Rodrigues' formula, fixed XYZ Euler angles and their lock singularity, Hamilton multiplication, unit quaternion double cover, SLERP/NLERP and SE(3) poses. The actual legacy 41 and 37 reading-copy blobs and targeted passages on quaternion interpolation, animation validation and camera-pose conventions are recorded in [PASS12_LEGACY_AUDIT.md](PASS12_LEGACY_AUDIT.md). The new orientation debugger reuses P11 affine types, exports actual rotation samples and supplies a thirteenth independent CTest. Five original figures bring the total to 49. Full legacy reconciliation, native execution and publication remain unverified; original notes and published files are unchanged.
+
+
+## Pass 13 — calibrated pinhole, optical coordinate frames and inverse rays
+
+[Chapter 13](Chapters/13%20-%20The%20Tiny%20Hole%20That%20Makes%20a%20Picture.md) derives the forward camera model, calibration, FOV, pixel-center and image-edge conventions, crop/resize, axial versus ray-range depth, world rays and optical-space Jacobian. The actual inspected legacy 32 and 37 source identities and remaining specialized material are recorded in [PASS13_LEGACY_AUDIT.md](PASS13_LEGACY_AUDIT.md). The C++23 pinhole simulator reuses P12 rigid poses and P06 rays, exports real projected landmark source coordinates, and adds the fourteenth authored CTest. Five original figures bring the cumulative count to 54. Native runtime, complete legacy reconciliation and publication are unverified. All original and published source paths remain preserved.
