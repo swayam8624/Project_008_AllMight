@@ -154,6 +154,16 @@ add_executable(book03_asset_tests tests/asset_import_tests.cpp)
 target_link_libraries(book03_asset_tests PRIVATE
     book03_asset_import book03_mesh_topology)
 
+# Chapter 11: shared mesh instances and affine scene forest.
+add_library(book03_scene_forest INTERFACE)
+target_include_directories(book03_scene_forest INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_scene_forest INTERFACE cxx_std_23)
+add_executable(book03_scene src/scene_studio.cpp)
+target_link_libraries(book03_scene PRIVATE book03_scene_forest book03_mesh_topology)
+add_executable(book03_scene_tests tests/scene_forest_tests.cpp)
+target_link_libraries(book03_scene_tests PRIVATE book03_scene_forest book03_mesh_topology)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -165,7 +175,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_halfedge_tests
                    book03_curves book03_curves_tests
                    book03_world book03_world_tests
-                   book03_assets book03_asset_tests)
+                   book03_assets book03_asset_tests
+                   book03_scene book03_scene_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -183,4 +194,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_curve_spline_tessellation_and_patch_contracts COMMAND book03_curves_tests)
     add_test(NAME book03_procedural_heightfield_sphere_cylinder_isosurface_contracts COMMAND book03_world_tests)
     add_test(NAME book03_obj_corner_domains_and_gltf_bounds_contracts COMMAND book03_asset_tests)
+    add_test(NAME book03_affine_scene_forest_contracts COMMAND book03_scene_tests)
 endif()
