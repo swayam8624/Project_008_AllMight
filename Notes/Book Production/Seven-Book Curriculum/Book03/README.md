@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–27; twenty-seven substantial narrative chapters, twenty-seven cumulative C++23 laboratories, twenty-nine source-authored CTests and one hundred twenty original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–28; twenty-eight substantial narrative chapters, twenty-eight cumulative C++23 laboratories, thirty source-authored CTests and one hundred twenty-four original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -188,7 +188,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 25 | Relative XYZ, linear RGB, Display P3, transfer curves, white balance and HDR | Authored; standalone native tests and studio passed |
 | 26 | Spatial camera DLT, decomposition, planar constraints, reprojection and noise | Authored; standalone native tests and studio passed |
 | 27 | Essential/fundamental geometry, normalized eight-point estimation, Sampson residual, degeneracy and scale | Authored; standalone native tests and studio passed |
-| 28+ | Feature matching through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 28 | Harris, normalized descriptors, ratio/mutual matching and RANSAC verification | Authored; standalone native tests and studio passed |
+| 29+ | Structure from Motion through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
 
 
@@ -210,3 +211,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 27
 
 [Chapter 27 — Two Photographs, One Hidden Point](Chapters/27%20-%20Two%20Photographs%2C%20One%20Hidden%20Point.md) derives E/F, Sampson residual, normalized eight-point estimation, cheirality and scale gauge. Four SVG figures and a native C++23 epipolar laboratory accompany the reader. [Evidence](PASS27_EVIDENCE.md) and [source custody](PASS27_LEGACY_AUDIT.md) record exact results and limits. Next: Chapter 28 — Finding the Same Corner Twice.
+
+
+## Pass 28
+
+[Chapter 28 — Finding the Same Corner Twice](Chapters/28%20-%20Finding%20the%20Same%20Corner%20Twice.md) develops the structure tensor, Harris, normalized descriptors, scale-space and binary feature context, ratio/mutual matching, RANSAC probability and precision/recall. Four SVG figures and a native C++23 feature/verification laboratory accompany the reader. [Evidence](PASS28_EVIDENCE.md) and [source custody](PASS28_LEGACY_AUDIT.md) record actual results and limits. Next: Chapter 29 — Building a Scene from Pictures.
