@@ -745,3 +745,16 @@ book03_calibration calibration.csv
 ~~~
 
 Standalone GCC C++23/UBSan passed exact recovery, 100 noisy rotated-camera tests and planar rejection. The studio exports 100 additional trial summaries and evaluates 20 held-out points per fit. Independent NumPy verifies the noiseless fixture and Python checks all summary rows. See PASS26_EVIDENCE.md. No full checkerboard or nonlinear calibration implementation; cumulative build and CI remain pending.
+
+
+---
+
+## P27 — Epipolar Geometry Laboratory
+
+Read `include/book03/epipolar.hpp`, `tests/epipolar_tests.cpp` and `src/epipolar_studio.cpp`. Construct E and F from known relative optical pose, evaluate Sampson squared distance, estimate F from RMS-normalized correspondences and remove its smallest singular component. P15 retains closest-ray triangulation.
+
+~~~text
+book03_epipolar epipolar.csv
+~~~
+
+Native GCC C++23/UBSan passed exact F recovery, planar rejection and scale-invariant residual tests; 100 noise-sweep fits with 5,000 held-out correspondences completed. Independent NumPy geometry fixture and Python CSV checks are documented in PASS27_EVIDENCE.md. No robust matching or essential-pose recovery yet. Cumulative build and CI remain pending.
