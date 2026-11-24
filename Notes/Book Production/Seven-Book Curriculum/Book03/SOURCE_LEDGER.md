@@ -220,3 +220,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 17 — continuous and homogeneous primitive clipping
 
 [Chapter 17](Chapters/17%20-%20Shapes%20That%20Refuse%20to%20Leave%20the%20Window.md) derives Cohen–Sutherland, Liang–Barsky, Sutherland–Hodgman, six homogeneous planes, generated raw varying payloads, provenance and fan assembly. [PASS17_LEGACY_AUDIT.md](PASS17_LEGACY_AUDIT.md) records inspected legacy 33/34 passages and actual P14/P16 dependencies. Five original figures bring the source count to 77, and the eighteenth authored CTest is registered. The bounded floating clipper does not claim certified watertightness. Native execution and complete legacy reconciliation remain pending. Original and published files are unchanged.
+
+
+## Pass 18 — deterministic integer sample ownership
+
+[Chapter 18](Chapters/18%20-%20Who%20Owns%20the%20Edge.md) derives the edge function, Y-down top-left convention, subpixel snapping, overflow bound, candidate bounds, incremental evaluation and unbiased barycentrics. [PASS18_LEGACY_AUDIT.md](PASS18_LEGACY_AUDIT.md) records inspected legacy 33/34 passages. Five figures bring the cumulative count to 82. The standalone P18 coverage suite was compiled and passed with GCC 14.2.0 and undefined-behavior sanitization after exact Git blob verification; [PASS18_EVIDENCE.md](PASS18_EVIDENCE.md) records the observed run. Cumulative CMake/CTest, integrated studio and publication remain unverified.
