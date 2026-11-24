@@ -204,6 +204,16 @@ target_link_libraries(book03_stereo PRIVATE book03_stereo_geometry book03_pinhol
 add_executable(book03_stereo_tests tests/stereo_geometry_tests.cpp)
 target_link_libraries(book03_stereo_tests PRIVATE book03_stereo_geometry book03_pinhole)
 
+# Chapter 16: indexed vertex processing and perspective interpolation.
+add_library(book03_vertex_pipeline INTERFACE)
+target_include_directories(book03_vertex_pipeline INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_vertex_pipeline INTERFACE cxx_std_23)
+add_executable(book03_vertex src/vertex_studio.cpp)
+target_link_libraries(book03_vertex PRIVATE book03_vertex_pipeline book03_projection_pipeline)
+add_executable(book03_vertex_tests tests/vertex_pipeline_tests.cpp)
+target_link_libraries(book03_vertex_tests PRIVATE book03_vertex_pipeline book03_projection_pipeline)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -220,7 +230,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_rotation book03_rotation_tests
                    book03_camera book03_camera_tests
                    book03_projection book03_projection_tests
-                   book03_stereo book03_stereo_tests)
+                   book03_stereo book03_stereo_tests
+                   book03_vertex book03_vertex_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -243,4 +254,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_calibrated_pinhole_contracts COMMAND book03_camera_tests)
     add_test(NAME book03_projection_and_depth_contracts COMMAND book03_projection_tests)
     add_test(NAME book03_calibrated_stereo_contracts COMMAND book03_stereo_tests)
+    add_test(NAME book03_indexed_vertex_and_varying_contracts COMMAND book03_vertex_tests)
 endif()
