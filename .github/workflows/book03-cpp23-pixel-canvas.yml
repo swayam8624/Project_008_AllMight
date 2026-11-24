@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 fourteen cumulative geometry laboratories (Ubuntu)
+    name: C++23 fifteen cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute fifteen CTests across fourteen C++23 geometry laboratories
+      - name: Execute sixteen CTests across fifteen C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -596,6 +596,44 @@ jobs:
           assert root.find(ns+"title") is not None
           assert len(root.findall(ns+"polyline"))==2
           print("P14: analytic clip trace, depth orders, storage quantization and inverse-depth witnesses")
+          PY
+      - name: Verify P15 stereo disparity, reconstruction and uncertainty
+        run: |
+          build/book03-p01/book03_stereo inspect > build/book03-p01/stereo-report.txt
+          build/book03-p01/book03_stereo csv build/book03-p01/stereo-depth.csv
+          build/book03-p01/book03_stereo svg build/book03-p01/stereo.svg
+          printf 'noise -20\ninspect\nnoise 0\nbaseline 0.05\ninspect\ncsv build/book03-p01/stereo-small-baseline.csv\nquit\n' | build/book03-p01/book03_stereo repl > build/book03-p01/stereo-repl.txt
+          python3 - <<'PY'
+          import csv
+          import math
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          def estimates(report):
+              return [tuple(map(float,line.split(" gap=")[0].removeprefix("estimate ").split(",")))
+                      for line in report.splitlines() if line.startswith("estimate ")]
+          def close(a,b):
+              assert len(a)==len(b)
+              assert all(math.isclose(x,y,rel_tol=1e-9,abs_tol=1e-9) for x,y in zip(a,b))
+          close(estimates((base/"stereo-report.txt").read_text())[0],(1,1,-4))
+          false,nominal=estimates((base/"stereo-repl.txt").read_text())
+          close(false,(0.5,0.5,-2))
+          close(nominal,(1,1,-4))
+          for file,baseline in (("stereo-depth.csv",0.2),("stereo-small-baseline.csv",0.05)):
+              with (base/file).open(newline="") as f:
+                  rows=list(csv.DictReader(f))
+              assert len(rows)==101
+              for i,r in enumerate(rows):
+                  z=1+0.19*i
+                  delta=400*baseline/z
+                  close(tuple(float(r[k]) for k in ("depth","disparity","sigma_depth","low_depth","high_depth")),
+                        (z,delta,z*z*0.25/(400*baseline),400*baseline/(delta+0.25),400*baseline/(delta-0.25)))
+          ns="{http://www.w3.org/2000/svg}"
+          root=ET.parse(base/"stereo.svg").getroot()
+          assert root.find(ns+"title") is not None
+          assert len(root.findall(ns+"circle"))==10
+          assert len(root.findall(ns+"line"))==12
+          print("P15: exact and false-match reconstruction, baseline change, uncertainty and stereo export contracts")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
