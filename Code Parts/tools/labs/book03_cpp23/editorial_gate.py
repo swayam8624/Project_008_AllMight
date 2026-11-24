@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-only checks for Book 03 / Passes 01–21.
+"""Source-only checks for Book 03 / Passes 01–22.
 
 This validates names, manuscript location, original figures and references.
 It deliberately does not compile LaTeX, rewrite the manuscript, build an EPUB
@@ -38,6 +38,7 @@ CHAPTER_18 = BOOK / "Chapters/18 - Who Owns the Edge.md"
 CHAPTER_19 = BOOK / "Chapters/19 - Which Surface Gets Seen.md"
 CHAPTER_20 = BOOK / "Chapters/20 - A Pixel Is Not a Tiny Square of Reality.md"
 CHAPTER_21 = BOOK / "Chapters/21 - A Whole Rasterizer We Can Explain.md"
+CHAPTER_22 = BOOK / "Chapters/22 - A Lens Bends the Story.md"
 SVG = "{http://www.w3.org/2000/svg}"
 
 
@@ -77,6 +78,7 @@ def main() -> int:
         CHAPTER_19,
         CHAPTER_20,
         CHAPTER_21,
+        CHAPTER_22,
         LAB / "CMakeLists.txt",
         LAB / "include/book03/pixel_canvas.hpp",
         LAB / "src/main.cpp",
@@ -146,6 +148,9 @@ def main() -> int:
         LAB / "src/renderer_obj.cpp",
         LAB / "tests/renderer_tests.cpp",
         LAB / "tests/renderer_frontend_tests.cpp",
+        LAB / "include/book03/thin_lens.hpp",
+        LAB / "src/lens_studio.cpp",
+        LAB / "tests/lens_tests.cpp",
     ]:
         check(path.exists(), f"missing required source: {path}")
 
@@ -382,6 +387,16 @@ def main() -> int:
         check(phrase.lower() in chapter21.lower(),
               f"twenty-first chapter missing essential concept: {phrase}")
 
+    chapter22 = CHAPTER_22.read_text(encoding="utf-8")
+    check(len(chapter22) > 16_000, "twenty-second chapter unexpectedly truncated")
+    for phrase in [
+        "A Lens Bends the Story", "thin-lens", "refraction", "magnification",
+        "aperture", "circle-of-confusion", "hyperfocal", "diffraction",
+        "pupil", "depth of field", "Reconstruct", "Falsify", "Implement", "Chapter 23",
+    ]:
+        check(phrase.lower() in chapter22.lower(),
+              f"twenty-second chapter missing essential concept: {phrase}")
+
     figure_owners = {
         "01-pixel-addresses.svg": chapter,
         "02-lines-and-discrete-pixels.svg": chapter,
@@ -478,6 +493,11 @@ def main() -> int:
         "93-rasterizer-pipeline.svg": chapter21,
         "94-rasterizer-fragment-contract.svg": chapter21,
         "95-native-rasterizer-gallery.svg": chapter21,
+        "96-thin-lens-principal-rays.svg": chapter22,
+        "97-defocus-cones.svg": chapter22,
+        "98-pupil-to-sensor.svg": chapter22,
+        "99-native-defocus-curves.svg": chapter22,
+        "100-aperture-diffraction-tradeoff.svg": chapter22,
     }
     for filename, owning_chapter in figure_owners.items():
         figure = BOOK / "Assets" / filename
@@ -508,7 +528,7 @@ def main() -> int:
     check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
           "RGB8 PPM serialization contract missing")
 
-    print("Book03/P01–P21: twenty-one narrative chapters, source location and ninety-five original SVG figure contracts checked.")
+    print("Book03/P01–P22: twenty-two narrative chapters, source location and one hundred original SVG figure contracts checked.")
     print("No LaTeX/PDF/EPUB builds were requested or performed.")
     return 0
 
@@ -517,5 +537,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (AssertionError, ET.ParseError) as exc:
-        print(f"Book03/P01–P21 editorial gate FAILED: {exc}", file=sys.stderr)
+        print(f"Book03/P01–P22 editorial gate FAILED: {exc}", file=sys.stderr)
         sys.exit(1)
