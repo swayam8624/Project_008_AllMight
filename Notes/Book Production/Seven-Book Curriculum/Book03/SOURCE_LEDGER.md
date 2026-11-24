@@ -265,3 +265,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 26 — camera calibration
 
 [Chapter 26](Chapters/26%20-%20Teaching%20a%20Camera%20About%20Itself.md) develops normalized spatial DLT, singular directions, row decomposition, planar homography constraints and geometric refinement principles. [PASS26_LEGACY_AUDIT.md](PASS26_LEGACY_AUDIT.md) records targeted camera source custody and primary references. [PASS26_EVIDENCE.md](PASS26_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan passes, 100 noisy tests, 100 separate studio trials and independent noiseless SVD verification. Four figures bring the total to 116, and the twenty-eighth CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 27 — epipolar estimation
+
+[Chapter 27](Chapters/27%20-%20Two%20Photographs%2C%20One%20Hidden%20Point.md) expands P15 stereo geometry into normalized eight-point estimation, rank-two correction, Sampson residual, essential-pose hypotheses and scale ambiguity. [PASS27_LEGACY_AUDIT.md](PASS27_LEGACY_AUDIT.md) records inspected reader/code identities and the Hartley reference. [PASS27_EVIDENCE.md](PASS27_EVIDENCE.md) records exact-hash-matched GCC/UBSan runs, 100 studio fits and 5,000 held-out correspondences, plus separate NumPy geometry verification. Four figures bring the count to 120; the twenty-ninth CTest is registered. Cumulative integration and publication remain pending.
