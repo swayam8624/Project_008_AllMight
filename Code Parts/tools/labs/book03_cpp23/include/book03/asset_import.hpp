@@ -313,7 +313,8 @@ inline void obj_check_convex_quad(const ObjAsset& a,
                 throw ObjInputError(line_num,
                     "supported OBJ faces must be triangles or quads");
             const std::size_t additional=words.size()==5?2:1;
-            if(a.faces.size()>limits.max_faces-additional)
+            if(additional>limits.max_faces ||
+               a.faces.size()>limits.max_faces-additional)
                 throw ObjInputError(line_num,"too many OBJ triangles");
             std::array<ObjCornerKey,4> q{};
             for(std::size_t i=1;i<words.size();++i)
