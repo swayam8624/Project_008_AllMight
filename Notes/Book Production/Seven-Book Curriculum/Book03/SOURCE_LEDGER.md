@@ -240,3 +240,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 21 — assembled software renderer
 
 [Chapter 21](Chapters/21%20-%20A%20Whole%20Rasterizer%20We%20Can%20Explain.md) connects the previous additive libraries, with a native-tested opaque screen-space backend and separately gated OBJ/model/clip adapter. [PASS21_LEGACY_AUDIT.md](PASS21_LEGACY_AUDIT.md) records actual inspected API identities. [PASS21_EVIDENCE.md](PASS21_EVIDENCE.md) records GCC/UBSan execution, exact source hashes, 76800 checked pixels (76531 exact color matches and 269 permitted checker-boundary colors), and an explicit DNS blocker for full integration. Three new figures bring the total to 95. Two new CTests bring the authored count to 23. No native full-front-end success or publication is asserted.
+
+
+## Pass 22 — thin-lens optical image formation
+
+[Chapter 22](Chapters/22%20-%20A%20Lens%20Bends%20the%20Story.md) derives image distance, signed magnification, geometric blur, pupil-ray intersections, acceptable focus limits and hyperfocal distance, with separate diffraction and aberration context. [PASS22_LEGACY_AUDIT.md](PASS22_LEGACY_AUDIT.md) maps original Graphics Vision and XR 03 lines 18–126. [PASS22_EVIDENCE.md](PASS22_EVIDENCE.md) records exact-hash-matched native GCC/UBSan passes, 3,000 configurations and 404 independently checked CSV rows. Five new figures bring the count to 100; twenty-four CTests are registered. Full cumulative integration and publication remain pending.
