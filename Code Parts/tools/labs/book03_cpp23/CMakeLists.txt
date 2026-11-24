@@ -318,6 +318,16 @@ target_link_libraries(book03_calibration PRIVATE book03_calibration_lib)
 add_executable(book03_calibration_tests tests/calibration_tests.cpp)
 target_link_libraries(book03_calibration_tests PRIVATE book03_calibration_lib)
 
+# Chapter 27: two-view epipolar geometry and normalized eight-point estimation.
+add_library(book03_epipolar_lib INTERFACE)
+target_include_directories(book03_epipolar_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_epipolar_lib INTERFACE cxx_std_23)
+add_executable(book03_epipolar src/epipolar_studio.cpp)
+target_link_libraries(book03_epipolar PRIVATE book03_epipolar_lib)
+add_executable(book03_epipolar_tests tests/epipolar_tests.cpp)
+target_link_libraries(book03_epipolar_tests PRIVATE book03_epipolar_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -346,7 +356,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_distortion book03_distortion_tests
                    book03_sensor book03_sensor_tests
                    book03_color book03_color_tests
-                   book03_calibration book03_calibration_tests)
+                   book03_calibration book03_calibration_tests
+                   book03_epipolar book03_epipolar_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -381,4 +392,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_sensor_contracts COMMAND book03_sensor_tests)
     add_test(NAME book03_color_contracts COMMAND book03_color_tests)
     add_test(NAME book03_calibration_contracts COMMAND book03_calibration_tests)
+    add_test(NAME book03_epipolar_contracts COMMAND book03_epipolar_tests)
 endif()
