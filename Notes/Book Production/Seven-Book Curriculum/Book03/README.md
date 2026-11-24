@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–23; twenty-three substantial narrative chapters, twenty-three cumulative C++23 laboratories, twenty-five source-authored CTests and one hundred five original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–24; twenty-four substantial narrative chapters, twenty-four cumulative C++23 laboratories, twenty-six source-authored CTests and one hundred eight original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -184,5 +184,11 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 21 | Integrated software renderer and native gallery | Backend validated; complete OBJ front-end acceptance pending |
 | 22 | Thin-lens optics, focus tolerance and geometric defocus | Authored; standalone native tests and studio passed |
 | 23 | Distortion, Jacobians, numerical inversion and angular camera families | Authored; standalone native tests and studio passed |
-| 24+ | Radiometry and sensor measurements through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 24 | Exposure, photon statistics, dark and read noise, full well, gain and ADC | Authored; standalone native tests and studio passed |
+| 25+ | Color through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
+
+
+## Pass 24
+
+[Chapter 24 — Light Becomes a Measurement](Chapters/24%20-%20Light%20Becomes%20a%20Measurement.md) continues the narrative into photon counts, Poisson shot noise, dark current, Gaussian read noise, gain and ADC saturation. P24 includes three analytical SVG figures and the C++23 sensor emulator. [Evidence](PASS24_EVIDENCE.md) and [source custody](PASS24_LEGACY_AUDIT.md) record the exact native results and limits. Next: Chapter 25 — Colors That Tell the Truth.
