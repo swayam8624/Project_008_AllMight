@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 eighteen cumulative geometry laboratories (Ubuntu)
+    name: C++23 nineteen cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute nineteen CTests across eighteen C++23 geometry laboratories
+      - name: Execute twenty CTests across nineteen C++23 geometry laboratories
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -733,6 +733,46 @@ jobs:
           assert len(payload)==32*24*3
           assert sum(payload[i:i+3]==bytes((49,133,107)) for i in range(0,len(payload),3))==391
           print("P18: rectangle and clipped fan analytic ownership masks and P6 bytes")
+          PY
+      - name: Verify P19 crossing-depth visibility in four configurations
+        run: |
+          build/book03-p01/book03_visibility inspect > build/book03-p01/visibility-report.txt
+          build/book03-p01/book03_visibility csv build/book03-p01/visibility-forward.csv
+          build/book03-p01/book03_visibility csv build/book03-p01/visibility-swapped.csv swapped
+          build/book03-p01/book03_visibility csv build/book03-p01/visibility-reverse.csv reverse
+          build/book03-p01/book03_visibility csv build/book03-p01/visibility-reverse-swapped.csv reverse swapped
+          build/book03-p01/book03_visibility ppm build/book03-p01/visibility-forward.ppm
+          build/book03-p01/book03_visibility ppm build/book03-p01/visibility-reverse.ppm reverse swapped
+          python3 - <<'PY'
+          import csv
+          from collections import Counter
+          from pathlib import Path
+          base=Path("build/book03-p01")
+          assert "surface1=288 surface2=96 empty=384" in (base/"visibility-report.txt").read_text()
+          for mode in ("forward","swapped","reverse","reverse-swapped"):
+              with (base/f"visibility-{mode}.csv").open(newline="") as f:
+                  rows=list(csv.DictReader(f))
+              assert len(rows)==768
+              counts=Counter()
+              for i,row in enumerate(rows):
+                  x,y=i%32,i//32
+                  assert (int(row["x"]),int(row["y"]))==(x,y)
+                  u,v=x+0.5,y+0.5
+                  inside=3*u+4*v<96
+                  assert int(row["occupied"])==inside
+                  if inside:
+                      depth=min(0.125+0.5*u/32,0.375)
+                      if "reverse" in mode: depth=1-depth
+                      assert float(row["depth"])==depth
+                      assert int(row["id"])==(1 if u<16 else 2)
+                      counts[row["id"]]+=1
+                  else: counts["empty"]+=1
+              assert counts=={"1":288,"2":96,"empty":384}
+          a=(base/"visibility-forward.ppm").read_bytes()
+          assert a==(base/"visibility-reverse.ppm").read_bytes()
+          assert a.startswith(b"P6\n32 24\n255\n")
+          assert len(a)==len(b"P6\n32 24\n255\n")+32*24*3
+          print("P19: 3072 sample rows, four depth/draw configurations and identical winner images")
           PY
       - name: Confirm P6 header and exact payload sizes
         run: |
