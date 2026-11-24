@@ -68,8 +68,12 @@ void shared_assets_and_bounds() {
     same(e.world[3].point({0,0,0}),{-1,0,0});
     same(e.world[4].point({0,0,0}),{3,0,0});
     same(e.world[5].point({0,2.5,0}),{5,3.25,0});
-    same(e.instances[0].bounds.min,{-3.8,0,0});
-    same(e.instances[0].bounds.max,{-2.2,2.5,0});
+    // Instances are emitted in topological order, not in node ID order.
+    const auto a=std::find_if(e.instances.begin(),e.instances.end(),
+        [](const SceneInstance& i){return i.node==2;});
+    require(a!=e.instances.end(),"tree A exists");
+    same(a->bounds.min,{-3.8,0,0});
+    same(a->bounds.max,{-2.2,2.5,0});
     // Parent may occur AFTER its child in the input array.
     SceneForest reversed;
     reversed.nodes={{"child",1,{},scene_translate({2,0,0})},
