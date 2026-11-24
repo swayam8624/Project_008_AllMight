@@ -561,9 +561,14 @@ jobs:
           from pathlib import Path
           base=Path("build/book03-p01")
           report=(base/"projection-report.txt").read_text()
-          assert "screen 420,140 depth=0.84375" in report
+          def check_screen(report, expected):
+              line=next(line for line in report.splitlines() if line.startswith("screen "))
+              xy,depth=line.removeprefix("screen ").split(" depth=")
+              values=[*map(float,xy.split(",")),float(depth)]
+              assert all(abs(a-b)<1e-10 for a,b in zip(values,expected))
+          check_screen(report,(420,140,0.84375))
           repl=(base/"projection-repl.txt").read_text()
-          assert "screen 420,140 depth=0.15625" in repl
+          check_screen(repl,(420,140,0.15625))
           assert "Rejected by clip membership" in repl
           assert "orthographic needs finite far" in repl
           with (base/"depth-storage.csv").open(newline="") as f:
