@@ -564,3 +564,21 @@ book03_projection repl
 ~~~
 
 REPL commands: `point 1 1 -4`, `reverse`, `forward`, `depth 0.1 0` (infinite), `depth 1 9`, `ortho`, `perspective`, `inspect`, `csv FILE`, `svg FILE`, `quit`. The CSV and SVG always use the fixed infinite-far near-0.1 reference experiment, not the current REPL policy. CSV contains 964 data rows for IEEE binary32 and uniform 24-bit storage in both depth orders. It isolates storage quantization, not actual GPU errors. No observed native build/CTest success is asserted.
+
+
+---
+
+## P15 — Stereo Reconstruction Laboratory
+
+Read `include/book03/stereo_geometry.hpp`: RectifiedStereo, corrected disparity and row residual, axial depth, depth_sigma, triangulate_rays, triangulate_samples, epipolar_coplanarity. Then read `tests/stereo_geometry_tests.cpp` and `src/stereo_studio.cpp`. The aligned rig uses equal focal scales, zero skew, possibly different principal points, and a positive metric baseline along left camera-local X. General reconstruction uses actual P13 rays and arbitrary valid poses. A midpoint is a metric geometric estimate, not a pixel-space optimizer.
+
+After the eventual native build:
+
+~~~text
+book03_stereo inspect
+book03_stereo csv stereo-depth.csv
+book03_stereo svg two-house-views.svg
+book03_stereo repl
+~~~
+
+REPL: `noise -20`, `inspect`, `noise 0`, `baseline 0.05`, `point 1 1 -16`, `csv FILE`, `svg FILE`, `quit`. Default focal scale 400 px and baseline 0.2 m reconstruct the generating point (1,1,-4). The deliberately wrong horizontal match reconstructs (0.5,0.5,-2), illustrating the insufficiency of reprojection consistency. CSV contains 101 synthetic depth samples with sigma disparity 0.25 pixels and mapped interval endpoints. SVG draws actual synthetic corresponding house points. No automatic image matching, calibration or native test pass is asserted.
