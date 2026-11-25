@@ -350,6 +350,16 @@ target_link_libraries(book03_sfm PRIVATE book03_sfm_lib)
 add_executable(book03_sfm_tests tests/sfm_tests.cpp)
 target_link_libraries(book03_sfm_tests PRIVATE book03_sfm_lib)
 
+# Chapter 30: local plane normals and aligned-depth TSDF.
+add_library(book03_surface_lib INTERFACE)
+target_include_directories(book03_surface_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_surface_lib INTERFACE cxx_std_23)
+add_executable(book03_surface src/surface_studio.cpp)
+target_link_libraries(book03_surface PRIVATE book03_surface_lib)
+add_executable(book03_surface_tests tests/surface_tests.cpp)
+target_link_libraries(book03_surface_tests PRIVATE book03_surface_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -381,7 +391,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_calibration book03_calibration_tests
                    book03_epipolar book03_epipolar_tests
                    book03_matching book03_feature_tests
-                   book03_sfm book03_sfm_tests)
+                   book03_sfm book03_sfm_tests
+                   book03_surface book03_surface_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -419,4 +430,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_epipolar_contracts COMMAND book03_epipolar_tests)
     add_test(NAME book03_feature_contracts COMMAND book03_feature_tests)
     add_test(NAME book03_sfm_contracts COMMAND book03_sfm_tests)
+    add_test(NAME book03_surface_contracts COMMAND book03_surface_tests)
 endif()
