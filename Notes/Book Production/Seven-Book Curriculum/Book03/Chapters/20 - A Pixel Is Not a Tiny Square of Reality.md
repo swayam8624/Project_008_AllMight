@@ -282,7 +282,7 @@ Try adding a frequency near 4 cycles per pixel, changing the phase, or changing 
 
 At frequency two, \(M=8\pi^2\), so the 16-point midpoint bound is \(8\pi^2/(24\cdot256)\), about 0.01285. It is conservative: this particular integer-cycle pattern can cancel exactly.
 
-For the edge at 0.3, exact coverage is 0.7. The midpoint positions are 0.125,0.375,0.625,0.875, so three of four are white and the estimate is 0.75. The error is 0.05.
+For the edge at 0.3, exact coverage is 0.7. The midpoint positions are 0.125, 0.375, 0.625, 0.875, so three of four are white and the estimate is 0.75. The error is 0.05.
 
 The encoded average of zero and one is 0.5, but the correctly encoded linear-light average is approximately 0.73536.
 
