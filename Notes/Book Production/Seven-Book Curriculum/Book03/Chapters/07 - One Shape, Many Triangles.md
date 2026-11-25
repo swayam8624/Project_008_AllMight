@@ -485,6 +485,34 @@ This compact representation is the same general idea used in sparse matrices and
 
 Our P07 module includes \`build_vertex_csr()\` and a very small \`VertexCSR::laplacian()\`. The tests independently check the quad's neighbor IDs, total degree \(2E=10\), constant-field behavior and the fact that the seam's unused stored vertex has no neighbors. These are not claims about GPU performance or a production smoothing algorithm: they are precise, reproducible links between topology and mathematics.
 
+### Let the distances and angles influence the neighbours
+
+The uniform graph operator treats a tiny triangle and a giant triangle as equivalent if their indexed neighbourhoods match. For a surface field, the actual shapes of the triangles matter. Imagine two pieces of cloth with identical connectivity, but one is stretched in one direction: diffusion along their surface should not necessarily have the same physical rate.
+
+For a nondegenerate triangle, the cotangent of an interior angle between edge vectors a and b is
+
+\[
+\cot\theta=\frac{a\cdot b}{\|a\times b\|}.
+\]
+
+For an interior mesh edge ij, let alpha and beta be the angles opposite it in its two incident triangles. Define w_ij=(cot alpha+cot beta)/2. For a boundary edge, include only its single incident triangle's term. With positive lumped vertex areas A_i (for instance, one third of the area of each incident triangle), a commonly used discrete surface Laplacian is
+
+\[
+(\Delta f)_i=\frac{1}{A_i}\sum_j w_{ij}(f_j-f_i).
+\]
+
+This sign is opposite to the positive-semidefinite graph convention in equation 7.L1. Call the symmetric stiffness matrix K, with K_ij=-w_ij for i!=j and K_ii=sum_j w_ij. Then Delta=-M^{-1}K, where M is the diagonal matrix of vertex areas. The mass factor restores inverse-length-squared units when the positions are in metres. It also explains why simply using K as a time-evolution matrix changes the physical meaning.
+
+On a unit square divided by diagonal (0,0) to (1,1), both angles opposite that diagonal are right angles, so its cotangent weight is zero. Along a boundary edge the opposite angle is 45 degrees, giving weight 0.5. This differs from the uniform adjacency operator even though every indexed edge remains present. The diagonal is still a topological edge; a zero operator coefficient does not delete its connectivity.
+
+An obtuse triangle can contribute a negative cotangent; not every triangulation yields nonnegative edge weights. The assembled stiffness is nonnegative in its quadratic energy for nondegenerate piecewise-linear finite elements, but individual weights need not be positive. Do not blindly clamp negative weights while claiming the same mathematical operator. Degenerate faces, nonmanifold neighbourhoods and unspecified boundary conditions require explicit policies.
+
+For diffusion df/dt=kappa Delta f, forward Euler gives f_next=f+dt kappa Delta f. For the symmetric mass-scaled stiffness M^{-1/2}KM^{-1/2}, a nonnegative eigenvalue lambda evolves with factor 1-dt kappa lambda. Stability of this linear step in the mass norm requires dt kappa lambda_max<=2. This is not a monotonicity guarantee for every mesh. Smaller triangles can force smaller time steps. Boundary constraints, especially fixed boundary values versus natural zero-flux conditions, define different problems. Applying this operator to each position coordinate can smooth a surface but may shrink it, erase edges or damage volume. Preserve a reference and measure the change rather than calling every smoothing pass a repair.
+
+The native P07 lab remains the uniform CSR graph operator; this extension derives a surface-aware operator, not an implementation of a complete mesh-diffusion solver.
+
+*Source route: Graphics Vision and XR/41, derived lines 1424–1505; /30, lines 108–179 and 214–295. Further source sections concern discretization and boundary conditions, which are routed to Book 02 and the surface-processing extensions.*
+
 ## The C++23 model: geometry and identity in their proper places
 
 We are not going to create a second incompatible engine. Our cumulative companion already knows \`Point3\`, \`Vector3\`, \`Triangle3\` and basic geometry from Chapter 06.
