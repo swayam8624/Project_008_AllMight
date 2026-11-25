@@ -46,8 +46,8 @@ A triangle arrives at sample (i,j). It proposes a depth value q and an identifie
 For ordinary forward depth, smaller is nearer. The update is
 
 \[
-(q_{\rm old},I_{\rm old})\leftarrow
-(q_{\rm new},I_{\rm new})\quad\text{if }q_{\rm new}<q_{\rm old}.
+(q_\mathrm{old},I_\mathrm{old})\leftarrow
+(q_\mathrm{new},I_\mathrm{new})\quad\text{if }q_\mathrm{new}<q_\mathrm{old}.
 \tag{19.1}
 \]
 
@@ -119,7 +119,7 @@ After the first proposal, the buffer stores its depth. Assume that after j propo
 Induction gives
 
 \[
-q_{\rm final}=\min_{i=1}^{k}q_i.
+q_\mathrm{final}=\min_{i=1}^{k}q_i.
 \tag{19.5}
 \]
 
@@ -259,7 +259,7 @@ A transparent window complicates the word visible. The dragon behind it can cont
 For simple alpha compositing in linear colour units,
 
 \[
-C_{\rm out}=\alpha C_{\rm foreground}+(1-\alpha)C_{\rm background}.
+C_\mathrm{out}=\alpha C_\mathrm{foreground}+(1-\alpha)C_\mathrm{background}.
 \tag{19.9}
 \]
 
