@@ -250,6 +250,24 @@ A final report should include the exact repository revision and environment, the
 
 **Check your intuition.** A method may reduce average reprojection error while worsening absolute geometry, accelerate a rasterizer while changing its edge ownership, or reduce reconstruction error by deleting difficult points. In each case a second measurement prevents a misleading conclusion. This is the essential lesson of the volume: geometry, images, measurements and evidence are connected, but none is automatically a substitute for another.
 
+### Guided workshop: write a mini research paper with a result you can defend
+
+Select one of the earlier extension hypotheses. A good first example is the conservative tile classifier from Chapter 18: it should preserve exact coverage while saving edge tests in workloads containing large triangles. Write down that claim before running a timing experiment. It does not say that every scene is faster, that the code outperforms hardware rasterization, or that a result on one CPU transfers to every device.
+
+Choose three scene families: large projected triangles, small triangles occupying only a few samples, and near-degenerate triangles that cross tile boundaries. For each family generate a development set and a disjoint held-out set. Keep the image size, subpixel policy, vertex representation and output format identical for both methods. The reference evaluates per-sample edges; the alternative classifies tiles and falls back to those exact tests in uncertain regions.
+
+The correctness gate comes first. For every scene, compare the complete per-triangle masks, combined coverage counts and, if used, interpolated attributes. Keep the first counterexample if any mask differs. A successful test requires zero mismatches in the declared exact discrete domain. An image-level difference alone may hide two compensating ownership errors. Do not time an alternative that changes the mathematical question and then compare it against the exact reference as if both were equivalent.
+
+Once correctness is established, measure the number of edge evaluations, tile classifications, full and empty tiles, output writes and time. Run matched pairs of reference and alternative on the same scene, with multiple repetitions and comparable warm-up. Record CPU, compiler, flags, image dimensions and seed. Store timing at the individual-run level rather than only printing an average.
+
+Consider a hypothetical small result table containing scene times in milliseconds: reference (8,20,200), alternative (7,25,130). The three ratios are about 1.143, 0.8 and 1.538. The ratio of sums is 228/162, about 1.407. The geometric mean is the cube root of their product, approximately 1.120. The alternative is slower on the second scene but faster in total for this particular mixture. These numbers are deliberately invented for the exercise, not measured performance. A paper must identify which aggregation answers its claim and retain the losing case.
+
+Write a methods paragraph that a stranger could reproduce without seeing your code. State exactly what a tile classifier is allowed to do, what an uncertain tile means, and how equal-edge ownership is represented. Then write a results paragraph based on the actual collected evidence. Include a figure of the scene-level ratios with separate markers for workload families. Finally write a limitations paragraph that explains why small triangles, output traffic, branch behavior and another hardware architecture may change the performance relationship.
+
+Use the same paper structure for a reconstruction project: start with a precise accuracy or uncertainty hypothesis, compare against independent known geometry, include failed and unsupported observations, and report the metric quantities rather than only image residuals. Retain the exact command, generated input and output for at least one fixture. The native Book03 capstone demonstrates the existing scale and Jacobian checks; this research project asks you to build the next layer on their established contracts.
+
+A successful capstone does not require that your preferred method wins. It requires that another person can understand what was tested, why the result followed, which failures remained, and how to reproduce the conclusion. That is how an exercise becomes a contribution rather than an attractive demonstration.
+
 ## Exercises — finish the book by trying to prove it wrong
 
 **Reconstruct 32A.** Derive the scale invariance in equation 32.1. Construct two camera-and-scene configurations that produce the same image but have different metric dimensions.

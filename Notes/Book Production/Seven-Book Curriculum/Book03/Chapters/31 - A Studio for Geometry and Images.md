@@ -251,6 +251,22 @@ Then add a reproducible scene manifest with the camera and mesh identities, imag
 
 **Research exercise.** Build an extension around the P31 native studio with a small command-driven scene editor. Implement immutable snapshots and a dependency cache, then compare every incremental output against the full reference rebuild. Add deliberate stale-task and invalid-input cases. Export evidence containing the input revision, output hashes, numerical residuals and stage timing. The existing P31 fixture remains a controlled CPU studio with known topology and cameras; a full interactive GUI and asynchronous renderer are future engineering work. The book's contract tells us how to approach them without weakening the mathematics.
 
+### Guided workshop: prove that an incremental build is the same calculation
+
+Start with the exact P31 house, not an imported complex model. Record the three known camera poses, the fixed intrinsics and the source mesh identity. Run the native studio once and preserve its reference image, reconstructed image, mesh and metrics. The experiment is easier to understand when the independent projections and disparity relations from the chapter can explain the scene.
+
+Design a dependency table for geometry, camera, projected vertices, coverage/depth, linear color and encoded image. Each derived item has a key made from the identities of the inputs that actually affect its calculation. Use an immutable camera revision and a stable geometry revision, rather than a mutable name such as the current camera. A changed file at the same path must produce a different content identity.
+
+Perform four edits in isolation, restoring the original scene between edits. First, change only the display transfer. Projection, coverage, depth and linear color should stay unchanged. Second, change the flat wall color. The depth and surface-ID arrays should stay unchanged while the winning wall color and encoded image change. Third, move one camera without moving the world. All camera-dependent projection and visibility records must be invalidated. Fourth, edit the mesh's vertex positions. Every dependent camera projection and reconstruction comparison may need recomputation, according to which inputs actually reference that mesh.
+
+For each edit run a full rebuild as the independent baseline for the incremental path. A comparison table should show which keys changed, which stages were rerun, which outputs were reused, and whether the numerical arrays agreed. For a deterministic fixture, compare exact ID and encoded image arrays where the contract promises equality. For floating-point projection and reconstruction quantities, use the existing declared tolerance. An image hash can establish exact byte equality, but a mismatch should lead to a stage-specific numerical comparison rather than automatic failure diagnosis.
+
+Now simulate a delayed task. Create snapshot A, begin a computation and deliberately delay its publication. Change the camera to create snapshot B, compute B's result and publish it. Then let A arrive. The UI state must not be silently replaced by an old result labeled as B. Check frame identity and input revision before accepting a result. A stale result may still be useful as a comparison if clearly stored as A.
+
+Test invalid input as well. Supply a camera with a nonpositive focal scale or a mesh containing an invalid index, depending on the actual native adapter's supported validation. The previously accepted scene and its output files should remain available. A failed edit should not leave the studio in a partly updated state. This is why the transaction boundary matters as much as the numerical algorithm.
+
+Use the native P31 fixture as a known working reference for the existing render/reconstruct path. The incremental scheduler, caching and stale-result experiment are separate extensions, with no performance result claimed yet. The outcome of this workshop should be a small, inspectable scene-processing system whose correctness can be tested independently of its visual interface.
+
 ## Exercises — extend the studio without breaking its promises
 
 **Reconstruct 31A.** Calculate the generating wall and window positions with equation 31.1. Verify the disparity witness in equation 31.2.

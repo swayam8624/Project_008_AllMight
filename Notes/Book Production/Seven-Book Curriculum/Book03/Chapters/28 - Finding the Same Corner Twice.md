@@ -312,6 +312,20 @@ A near-perfect geometric inlier ratio can be achieved by rejecting almost everyt
 
 **Research exercise.** Build an analytic image family containing isolated blobs, corners, repeated windows and a textureless region. Vary scale, rotation, exposure, blur and noise separately before combining them. Evaluate fixed-scale Harris and normalized patches against a new scale-normalized detector or binary descriptor. Record repeatability, candidate retrieval, robust verification and reconstructed point error as separate stages. This is an extension project, not an observed comparison between full SIFT, ORB and the native P28 reference.
 
+### Guided workshop: find the first stage at which matching fails
+
+Create a synthetic 128 by 128 linear-intensity image containing a distinct L-shaped corner, two repeated square windows and two Gaussian blobs of different widths. Save the analytic construction parameters. Generate a second image by translating the original continuous signal by (3.25,-2.5) pixels and sampling it on the same grid. Do not translate the already sampled image with an unrecorded interpolation rule if the goal is an exact analytic reference.
+
+For every reference feature away from the image boundary, its expected transformed position is the original position plus the declared translation. Detect features in both images and associate each detection with its nearest known reference position, within a stated tolerance. This association is used for evaluation, not fed into the actual descriptor matcher. Exclude features which moved outside the valid image domain from the jointly visible denominator.
+
+Suppose a controlled fixture has 20 jointly visible reference features. The detector rediscovers 16 in both views, the descriptor retrieves the correct partner for 12 of those, and geometric verification retains 11 of those correct matches plus two false matches. Detector repeatability under this definition is 16/20=0.8. Conditional descriptor retrieval is 12/16=0.75. Final precision is 11/13, about 84.62 percent, while final recall relative to jointly visible features is 11/20=55 percent. The high precision alone does not show that the complete matching task was solved.
+
+Now change the translation to a rotation around the image center. A fixed patch descriptor may lose retrieval performance even when the detector finds the same structures. Repeat at scale factors 0.5, 1 and 2 using analytic resampling. For Gaussian blobs of widths two and four pixels, the scale-normalized Laplacian should attain its ideal continuous maximum near those widths respectively. A discrete implementation may shift the measured peak due to the finite scale sampling and image grid. Report the scale error as a measured quantity rather than enforcing exact equality with the continuous result.
+
+Add a brightness transformation with positive scale and offset. Verify that normalized patches remain consistent in the ideal affine-intensity model and that binary intensity-order comparisons do not flip unless the signal is tied or rounding changes it. Then introduce clipping. The clipped patches are no longer related by an invertible affine intensity transform. Keep clipping fraction beside the descriptor error to explain why the invariance has broken.
+
+Use the existing P28 native experiment for the measured fixed-scale detector and robust match behavior. Add the scale-space and binary-descriptor experiments as separate modules. Keep the exact feature identities in evaluation files, and record accepted, rejected and missing matches at every stage. Finally feed verified matches to Chapter 29's point-estimation experiment and measure their geometric consequence. The result is a complete diagnostic chain rather than a contest between two unexplained final match counts.
+
 ## Exercises — make the corner prove who it is
 
 **Reconstruct 28A.** Derive the tensor in equation 28.2 and evaluate Harris response for eigenvalues (0,0), (4,0) and (4,4). Explain the aperture problem.

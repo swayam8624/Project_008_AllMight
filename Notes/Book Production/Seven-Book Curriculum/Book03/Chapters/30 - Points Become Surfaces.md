@@ -263,6 +263,22 @@ For a tiny example, suppose the reference has points at 0, 1 and 2 on a line, an
 
 **Research exercise.** Build a perspective-depth simulator for two perpendicular walls, a thin object and an unobserved region. Fuse known registered views, then introduce depth bias, pose errors and missing observations separately. Compare dense and sparse storage using the same voxel and update policy. Verify matching field values where both are supported, extraction consistency across block boundaries, accuracy and completeness, memory and total runtime. P30's measured native results concern the aligned orthographic TSDF and plane normals; this larger perspective/sparse system is a proposed extension, not an existing benchmark result.
 
+### Guided workshop: follow a surface through fusion and extraction
+
+Use an axial grid of samples at depths 0.9, 1.0, 1.1 and 1.2 metres. Two registered ideal observations report depths 1.02 and 1.06 metres, with weights one and three respectively, and truncation distance mu=0.1 m. Calculate each observation's field separately before fusing.
+
+At 0.9 m both signed differences exceed the positive truncation limit, so both normalized observations are +1 and the fused value is +1. At 1.0 m the individual values are +0.2 and +0.6, giving weighted mean +0.5. At 1.1 m the individual values are -0.8 and -0.4, giving weighted mean -0.5. At 1.2 m both measurements lie more than 0.1 m in front of the voxel, so under the declared skip-behind policy neither contributes; the cell is unknown with weight zero.
+
+The supported sign change is between 1.0 and 1.1 m. Linear edge interpolation places it at 1.05 m, agreeing with the weighted observed depth (1.02+3*1.06)/4. The unknown 1.2 m sample is not a second measured zero. If a naive implementation initializes its field to zero and ignores its weight, an extractor may invent a surface in the unobserved region. This is a useful regression test because the visible output might otherwise look plausible.
+
+Next repeat the update with the order of the observations reversed. The weighted mean in the common linear band is the same in exact arithmetic. Compare weights as well as values. If a finite weight cap is applied, state exactly when the old weight is clipped and how the update uses it. For instance, repeatedly integrating new values after a capped history no longer corresponds to the same uncapped arithmetic mean. A change in estimator semantics must be visible in the evidence.
+
+Extend the grid to two adjacent 8-voxel blocks. Put a sign change between the last local sample of one block and the first local sample of the next. Extract the crossing once using a global edge identity. If each block owns a separate copy of that crossing, the positions may coincide yet the indexed mesh may be disconnected. Chapter 07's topology tests become directly relevant. Verify the shared edge, the supported weights, the crossing coordinate and the mesh's connectedness separately.
+
+For a perspective extension, generate depth observations from a fronto-parallel plane at a known optical depth. Project voxel centers to image addresses using the correct camera frame and reject invalid rays. Compare the projective TSDF zero against the analytic plane, not merely against another implementation using the same potentially wrong depth conversion. Repeat with a tilted plane and with an oblique camera. Report the difference between projective axial distance and perpendicular Euclidean distance away from the zero.
+
+Finally remove one region of depth observations and introduce a fixed positive bias in another. Measure supported surface accuracy, completeness and unknown volume fraction. A renderer that fills holes can produce an attractive image while inventing geometry. Use the P30 aligned-depth reference to verify the core arithmetic; the perspective, sparse and mesh-extraction experiments require their own implementation and acceptance evidence.
+
 ## Exercises — measure the gaps as well as the surface
 
 **Reconstruct 30A.** Derive the least-squares plane objective and its eigenvector solution. Explain the two-dimensional normal ambiguity of a collinear cloud.
