@@ -1,0 +1,3 @@
+# Pass 31 — Source custody
+
+Read CHAPTER_PLAN.md (77937aecee267f9772c742da0a979c030385af4c), Book03 README and cumulative CMake entrypoint. Directly inspected seven dependency headers identified and exact-hash verified in PASS31_EVIDENCE.md. The studio connects P18 coverage, P19 visibility, P20 transfer encoding, P21 opaque renderer, P27 optical math, P29 fixed-pose triangulation and P30 normal fitting. P13 camera convention and P14 depth mapping are explicit adapter contracts; P17 general clipping remains outside this bounded path. P30 orthographic TSDF is not applied to perspective tracks. No original source is overwritten; this is integration custody, not a full legacy-source reconciliation. Next: Chapter 32 — If It Looks Right, Is It Right?
