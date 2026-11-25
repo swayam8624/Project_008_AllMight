@@ -232,7 +232,7 @@ Full nonlinear joint calibration, robust corner extraction and uncertainty estim
 Reprojection RMS is
 
 \[
-e_{\rm RMS}=\sqrt{\frac1N\sum_i[(\hat u_i-u_i)^2+(\hat v_i-v_i)^2]}.
+e_\mathrm{RMS}=\sqrt{\frac1N\sum_i[(\hat u_i-u_i)^2+(\hat v_i-v_i)^2]}.
 \tag{26.14}
 \]
 
