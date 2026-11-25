@@ -245,8 +245,13 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 
 - [x] All 32 chapter paths and numbered headings individually verified.
 - [x] P32 standalone native C++23 tests and paired sweep executed.
-- [ ] Full companion build and all registered CTests, including P21 frontend, executed together and failures resolved.
+- [x] Full companion build, all 34 CTests (including P21 frontend), and all native workshop/export checks passed on Ubuntu at revision `a54c4a1`; [CI run](https://github.com/swayam8624/Project_008_AllMight/actions/runs/45562690493). Later prose edits require final source-gate confirmation.
 - [ ] Complete original-source reconciliation, mathematical and pedagogical review, internal cross-reference and figure checks.
 - [ ] Release builder and PDF/EPUB production in the existing repository layout.
 - [ ] Visual PDF review and EPUB validation/navigation; cross-format content comparison.
 - [ ] Final release acceptance before promotion. Books 01 and 02 and their published assets remain untouched.
+
+
+## Pass 34 — cumulative engineering acceptance
+
+[Pass 34 evidence](PASS34_EVIDENCE.md) records the P10 fixture correction and successful full CI run. [Foundations source map](PASS34_FOUNDATIONS_SOURCE_MAP.md) routes 18,928 body lines and 627 headings from seven original derived chapters. Three selected reader additions in Chapters 14, 17 and 31 address pixel-center conventions, frustum culling and camera-relative arithmetic. Source reconciliation and publication acceptance remain open.
