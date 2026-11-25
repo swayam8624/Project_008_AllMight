@@ -786,3 +786,17 @@ book03_sfm reconstruction.csv
 ~~~
 
 Native GCC C++23/UBSan passed exact pose recovery, 80 noisy point refinements, and the 100-trial/10,000-point sweep. Pixel objective improved in every trial; 3D RMS improved in 63. See PASS29_EVIDENCE.md. Joint bundle adjustment and PnP are chapter derivations/context, not implemented. Cumulative build pending.
+
+
+---
+
+## P30 — Surface Workshop
+
+Read `include/book03/surface.hpp`, `tests/surface_tests.cpp` and `src/surface_studio.cpp`. Fit local PCA planes; distinguish zero weight from observed zero; integrate aligned orthographic depth with weighted normalized truncated differences; interpolate supported column crossings.
+
+~~~text
+book03_surface_tests
+book03_surface fusion.csv
+~~~
+
+Standalone GCC C++23/UBSan passed plane, degeneracy, weighted fusion and missing-depth witnesses. The 100-trial sweep extracted 21,900 observed crossings; sixteen-frame mean RMSE 3.766 mm. See PASS30_EVIDENCE.md. Moving-camera projection, mesh extraction and sparse volume storage are not implemented. Cumulative build pending.
