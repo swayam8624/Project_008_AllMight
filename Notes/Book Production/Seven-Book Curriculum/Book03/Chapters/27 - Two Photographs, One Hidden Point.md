@@ -215,6 +215,17 @@ At sigma=1 pixel the mean training Sampson RMS was 0.97449 pixels and the noisel
 
 **Explain 27H.** Design a report that distinguishes epipolar residual, reprojection error, depth uncertainty, cheirality and ground-truth 3D error. State which measurements require known 3D reference data.
 
+### Selected answers and experiment criteria
+
+**27A–B.** From x2 proportional to R x1 times depth plus t, x2 is coplanar with t and R x1. Its scalar triple product with them vanishes, yielding x2^T [t]_x R x1=0. For row-major flattening, a DLT row is (u2*u1,u2*v1,u2,v2*u1,v2*v1,v2,u1,v1,1). If normalized points are T1 x1 and T2 x2, then F=T2^T F_n T1. The zero equation is invariant under any nonzero common factor of F.
+
+**27C–D.** On a plane, x2 is proportional to H x1. Then x2^T [e]_x H x1 is proportional to x2^T [e]_x x2=0 because a cross-product matrix is skew-symmetric. In rectified stereo, any wrong match at the same image row and positive corrected disparity also satisfies the epipolar constraint and may triangulate in front of both cameras. It is not necessarily the same physical feature.
+
+**27E–F.** Include the zero-baseline case as an explicitly degenerate control. Since F is defined only up to scale, compare normalized matrices with the sign ambiguity handled, and report residuals and fit failures. A tiny baseline can preserve an apparently plausible epipolar fit while severely weakening depth.
+
+**27G–H.** Scaling t and every point by the same positive factor multiplies the camera-frame homogeneous direction by that factor and leaves perspective division unchanged. Pixel-space constraints can be measured without metric 3D ground truth; absolute depth error cannot. Report cheirality, uncertainty and residual as separate evidence.
+
+
 ## Further reading
 
 Richard Hartley, [In Defense of the Eight-Point Algorithm](https://www.computer.org/csdl/journal/tp/1997/06/i0580/13rRUyYjKbj), IEEE TPAMI 19(6), 1997, DOI 10.1109/34.601246, motivates normalized linear estimation. Hartley and Zisserman, *Multiple View Geometry in Computer Vision*, second edition, Chapters 9, 11 and 12, develop two-view geometry, estimation and reconstruction. The native implementation is an independent bounded teaching reference, not a replacement for a mature vision library.
