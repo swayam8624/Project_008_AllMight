@@ -150,7 +150,7 @@ with reversed endpoints. The equations are not mystical. They are promises about
 
 ![Two triangle face loops with next and previous links, and the opposite directed half-edges along their common diagonal joined as twins.](../Assets/21-halfedge-twins-and-cycles.svg)
 
-*Figure 7.5 — A half-edge is a face-owned directed use of an indexed edge. Each triangle has a three-link face cycle. A legitimate pair of opposite uses across an interior edge may be joined by a symmetric twin relationship.*
+*Figure 7.2 — A half-edge is a face-owned directed use of an indexed edge. Each triangle has a three-link face cycle. A legitimate pair of opposite uses across an interior edge may be joined by a symmetric twin relationship.*
 
 ### What if there is no neighboring face?
 
@@ -206,7 +206,7 @@ The surface might look like an hourglass pinched to one point. The two halves to
 
 ![An edge with three incident triangles and a different defect: two face fans that touch at only one vertex.](../Assets/19-nonmanifold-edge-and-bowtie.svg)
 
-*Figure 7.2 — These are two distinct faults. The left panel violates the two-face maximum at an edge. The right panel has a vertex whose incident faces are disconnected through their shared-edge neighborhoods. Checking only edge incidence misses the second case.*
+*Figure 7.3 — These are two distinct faults. The left panel violates the two-face maximum at an edge. The right panel has a vertex whose incident faces are disconnected through their shared-edge neighborhoods. Checking only edge incidence misses the second case.*
 
 ### What we are deliberately not certifying
 
@@ -279,7 +279,7 @@ For our classroom model, this is a terrific benchmark. A small human can reconst
 
 ![A closed three-dimensional house displayed with its indexed triangular faces and a separate incidence-count ledger.](../Assets/20-closed-indexed-house.svg)
 
-*Figure 7.3 — The house has ten indexed positions, twenty-four edges and sixteen triangular faces. The picture is an oblique diagram of true 3D coordinates, not a perspective camera view. Combinatorial counts and edge-incidence requirements are separate pieces of evidence.*
+*Figure 7.4 — The house has ten indexed positions, twenty-four edges and sixteen triangular faces. The picture is an oblique diagram of true 3D coordinates, not a perspective camera view. Combinatorial counts and edge-incidence requirements are separate pieces of evidence.*
 
 ## How one invisible seam becomes two disconnected islands
 
@@ -305,7 +305,7 @@ So we must not implement “fix all duplicated positions” by automatically wel
 
 ![Two identical-looking triangulated squares, one with shared vertex IDs and one with duplicated coincident indices that make disconnected components.](../Assets/18-coincident-positions-separate-vertices.svg)
 
-*Figure 7.4 — Geometry on the page can be identical while the indexed connectivity differs. Identical coordinate values are evidence to inspect, not automatic permission to weld.*
+*Figure 7.5 — Geometry on the page can be identical while the indexed connectivity differs. Identical coordinate values are evidence to inspect, not automatic permission to weld.*
 
 ## A vertex and a corner are not always the same attribute container
 
