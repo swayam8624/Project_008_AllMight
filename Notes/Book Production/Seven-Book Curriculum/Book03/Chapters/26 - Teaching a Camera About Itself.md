@@ -284,6 +284,17 @@ If you want an uncertainty statement, repeated experiments or a justified statis
 
 **Explain 26H.** Design a calibration report for a robot or XR camera. Include pixel conventions, image resolution, units, supported optical domain, training and held-out residuals, parameter uncertainty and failure cases.
 
+### Selected answers and experiment criteria
+
+**26A.** With X_h=(1,2,3,1), the two homogeneous rows may be written (1,2,3,1,0,0,0,0,-400,-800,-1200,-400) and (0,0,0,0,1,2,3,1,-300,-600,-900,-300). Multiplying both rows by -1 is equivalent. The unknown is a twelve-component flattened P, with one homogeneous scale gauge.
+
+**26B–D.** Recover the rotation and intrinsic factors using the chapter's sign and normalization conventions, then verify M=KR and C=-R^T t. For Z=0, P's third column is multiplied by zero. Replacing that column by itself plus any nonzero vector leaves the training projections unchanged, but can alter the projection at Z=1. A low training RMS is therefore not a proof of identifiability.
+
+**26E–F.** Hold the random draws and test geometry fixed when varying training depth extent. For distortion mismatch, use a vector residual plot against normalized radius: a radially structured residual field is evidence of a systematic model error. Report both fitted and held-out errors, not just the best fit.
+
+**26G–H.** The two planar constraints are h1^T B h2=0 and h1^T B h1=h2^T B h2 for B=K^{-T}K^{-1}. Repeated views at the same board orientation may repeat these constraints instead of adding independent information. A calibration report must include the valid domain, units, observation support and uncertainty rather than merely the intrinsic matrix.
+
+
 ## Reading beyond the laboratory
 
 Zhengyou Zhang, [A Flexible New Technique for Camera Calibration](https://www.microsoft.com/en-us/research/publication/a-flexible-new-technique-for-camera-calibration/), IEEE TPAMI 22(11), 2000, presents the planar multi-view method. Hartley and Zisserman, *Multiple View Geometry in Computer Vision*, second edition, Chapter 7, develops camera-matrix estimation, normalization and geometric refinement. Our bounded RMS-normalized DLT implementation and synthetic evidence are independent teaching work.
