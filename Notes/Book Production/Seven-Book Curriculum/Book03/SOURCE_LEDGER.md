@@ -305,3 +305,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 35 — graphics, vision and XR source-unit inventory
 
 [PASS35_GRAPHICS_SOURCE_MAP.md](PASS35_GRAPHICS_SOURCE_MAP.md) records the fourteen primary derived source files, exact blobs, declared master spans, 28,118 routed body lines and 502 mechanically extracted headings. P34 and P35 together map the ledger's 21 primary derived files. Selected original passages have been developed additively in Chapters 06, 07, 20 and 29; [PASS35_EVIDENCE.md](PASS35_EVIDENCE.md) records exact ranges, four numerical witnesses and limitations. Routes do not certify that every original passage, equation, figure or code listing is present in the reader. Next: continuous-master span reconciliation, remaining specialized source gaps and systematic notation/figure/exercise review. Original source and published editions remain unchanged.
+
+
+## Pass 37 — original-byte custody and manifest distinction
+
+[SOURCE_CUSTODY_BASELINE.json](SOURCE_CUSTODY_BASELINE.json) pins the original masters, 21 derived source files and the historical manifest from main. Actual CI verified all 25 identities; the legacy text-hash audit still reports 39 discrepancies, so full historical reconciliation remains open. [PASS37_EVIDENCE.md](PASS37_EVIDENCE.md) records the corrected hashing convention, observed CI, Chapter 08 surface metric reconciliation (Graphics Vision and XR/02, lines 195–234), and targeted figure repairs. Do not substitute the raw-byte receipt for proof of complete original-source integration.
