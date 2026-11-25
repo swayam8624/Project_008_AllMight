@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–30; thirty substantial narrative chapters, thirty cumulative C++23 laboratories, thirty-two source-authored CTests and one hundred thirty-four original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–31; thirty-one substantial narrative chapters, thirty-one cumulative C++23 laboratories, thirty-three source-authored CTests and one hundred thirty-eight original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -191,7 +191,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 28 | Harris, normalized descriptors, ratio/mutual matching and RANSAC verification | Authored; standalone native tests and studio passed |
 | 29 | Essential pose recovery, multi-ray triangulation, point refinement and bundle adjustment derivation | Authored; standalone native tests and studio passed |
 | 30 | PCA normals, implicit fields, aligned depth TSDF and supported zero crossings | Authored; standalone native tests and studio passed |
-| 31+ | Studio integration and capstone, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 31 | Integrated optical fixture, sparse reconstruction, PCA check, render adapter and exports | Authored; standalone native integrated tests and independent export verifier passed |
+| 32+ | Capstone, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
 
 
@@ -228,3 +229,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 30
 
 [Chapter 30 — Points Become Surfaces](Chapters/30%20-%20Points%20Become%20Surfaces.md) develops local PCA normals, explicit and implicit representations, projective TSDF fusion, unknown-state semantics, interpolation and sparse-volume design. Five figures and a C++23 aligned-depth surface workshop accompany the reader. [Evidence](PASS30_EVIDENCE.md) and [source custody](PASS30_LEGACY_AUDIT.md) record actual results and limits. Next: Chapter 31 — A Studio for Geometry and Images.
+
+
+## Pass 31
+
+[Chapter 31 — A Studio for Geometry and Images](Chapters/31%20-%20A%20Studio%20for%20Geometry%20and%20Images.md) connects prior optical projection, sparse reconstruction, surface normal estimation, opaque visibility and image encoding into one controlled C++23 studio. Four figures, five exported artifacts and a repeatable independent verifier accompany the reader. [Evidence](PASS31_EVIDENCE.md) and [source custody](PASS31_LEGACY_AUDIT.md) record the 230,400 pixel-pass checks, exact hashes and limitations. Next: Chapter 32 — If It Looks Right, Is It Right?
