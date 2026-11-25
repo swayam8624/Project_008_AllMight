@@ -34,7 +34,7 @@ def norm_code(s):
     return s.replace("\r\n","\n").rstrip("\n")
 
 
-def verify_epub(path, ast, receipt):
+def verify_epub(path, ast, receipt, approved_cover_sha256=None):
     with zipfile.ZipFile(path) as z:
         require(z.testzip() is None, "EPUB ZIP checksum")
         names = set(z.namelist())
@@ -48,6 +48,7 @@ def verify_epub(path, ast, receipt):
         opf = ET.fromstring(z.read(opf_name))
         directory = posixpath.dirname(opf_name)
         manifest = {e.attrib["id"]: e.attrib for e in opf.iter(OPF+"item")}
+        cover_items = [a for a in manifest.values() if "cover-image" in a.get("properties","").split()]
         nav = [a for a in manifest.values() if "nav" in a.get("properties","").split()]
         require(len(nav)==1, "exactly one navigation document required")
 
@@ -59,6 +60,10 @@ def verify_epub(path, ast, receipt):
 
         for item in manifest.values():
             require(location(item) in names, f"missing OPF resource: {item}")
+        if approved_cover_sha256:
+            require(len(cover_items)==1,"approved cover-image missing or ambiguous")
+            require(sha(z.read(location(cover_items[0])))==approved_cover_sha256,
+                    "EPUB approved cover bytes differ from staged image")
         spine = [manifest[e.attrib["idref"]] for e in opf.iter(OPF+"itemref")]
         bodies = [(location(a), ET.fromstring(z.read(location(a)))) for a in spine]
         docs = {name: ET.fromstring(z.read(name)) for name in names if name.endswith((".xhtml",".html"))}
@@ -113,7 +118,7 @@ def verify_epub(path, ast, receipt):
                 "figure_hashes_matched":len(expected_images),"spine_documents":len(spine)}
 
 
-def verify_pdf(path, ast, out):
+def verify_pdf(path, ast, out, has_cover=False):
     from PIL import Image, ImageDraw
     def command(args):
         return subprocess.run(args,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True).stdout
@@ -122,6 +127,9 @@ def verify_pdf(path, ast, out):
     pages = int(re.search(r"(?m)^Pages:\s+(\d+)",info)[1])
     size = re.search(r"(?m)^Page size:\s+([\d.]+) x ([\d.]+) pts",info)
     require(size and abs(float(size[1])-576)<.1 and abs(float(size[2])-720)<.1,"unexpected print page dimensions")
+    if has_cover:
+        images = command(["pdfimages","-f","1","-l","1","-list",str(path)])
+        require(re.search(r"(?m)^\s*1\s+\d+\s+image\s+",images),"approved print cover missing on first page")
     raw = command(["pdftotext","-layout",str(path),"-"])
     # Normalize whitespace in each page; search for exact chapter titles,
     # distinguishing the chapter-opening text from the TOC where possible.
@@ -179,8 +187,11 @@ def main():
     receipt=json.loads((out/"source-proof.json").read_text())
     print_ast=json.loads((out/"reader-print.json").read_text())
     ebook_ast=json.loads((out/"reader-epub.json").read_text())
-    result={"epub":verify_epub(out/"Book03-From-Geometry-to-Images-PROOF.epub",ebook_ast,receipt),
-            "pdf":verify_pdf(out/"Book03-From-Geometry-to-Images-PROOF.pdf",print_ast,out),
+    build=json.loads((out/"build-proof.json").read_text())
+    cover=build.get("approved_cover_sha256")
+    require(build.get("epubcheck_version")=="5.4.0", "formal validator receipt absent")
+    result={"epub":verify_epub(out/"Book03-From-Geometry-to-Images-PROOF.epub",ebook_ast,receipt,cover),
+            "pdf":verify_pdf(out/"Book03-From-Geometry-to-Images-PROOF.pdf",print_ast,out,bool(cover)),
             "accepted":False,
             "visual_review":"pending human review of samples and all publication pages"}
     (out/"format-audit.json").write_text(json.dumps(result,indent=2)+"\n")

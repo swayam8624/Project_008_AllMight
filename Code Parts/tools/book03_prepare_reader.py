@@ -372,15 +372,42 @@ def build(out, cover, author):
     require(check, "EPUBCheck 5.4.0 is required for a complete proof; use the official distribution")
     version = run([check,"--version"],out,out/"epubcheck-version.log")
     require(re.search(r"\b5\.4\.0\b",version.stdout+"\n"+version.stderr), "EPUBCheck version must be 5.4.0")
+    cover_args = []
+    cover_sha256 = None
+    if cover:
+        from PIL import Image
+        cover = cover.resolve()
+        require(cover.is_file(),"approved cover file not found")
+        with Image.open(cover) as image:
+            suffix = {"PNG":".png","JPEG":".jpg"}.get(image.format)
+            require(suffix and image.height>image.width,
+                    "approved cover must be a portrait PNG or JPEG")
+            image.verify()
+        staged_cover = out / ("approved-cover"+suffix)
+        shutil.copyfile(cover,staged_cover)
+        cover_sha256 = digest(staged_cover)
+        cover_tex = r"""
+\AtBeginDocument{%
+  \hypersetup{pageanchor=false}%
+  \begin{titlepage}\thispagestyle{empty}\centering\vspace*{\fill}%
+  \includegraphics[width=\textwidth,height=.92\textheight,keepaspectratio]{COVERFILE}\par\vspace*{\fill}%
+  \end{titlepage}%
+  \hypersetup{pageanchor=true}%
+}
+""".replace("COVERFILE",staged_cover.name)
+        (out/"approved-cover.tex").write_text(cover_tex,encoding="utf-8")
+        cover_args = ["--include-in-header=approved-cover.tex"]
     epub = ["pandoc","-f","json","-t","epub3","--mathml","--toc","--toc-depth=2",
             "--css=reader.css","--metadata","author="+author,
             "reader-epub.json","-o","Book03-From-Geometry-to-Images-PROOF.epub"]
     if cover:
-        epub.extend(["--epub-cover-image",str(cover.resolve())])
+        epub.extend(["--epub-cover-image",str(staged_cover)])
     e = run(epub,out,out/"epub-build.log")
+    file = out/"Book03-From-Geometry-to-Images-PROOF.epub"
+    run([check,str(file)],out,out/"epubcheck.log")
     conversion = run(["pandoc","-f","json","-t","latex","--standalone","--top-level-division=chapter",
                "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex",
-               "--lua-filter=print-breaks.lua",
+               "--lua-filter=print-breaks.lua",*cover_args,
                "-V","documentclass=book","-V","classoption=openany","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
                "-V","mainfont=TeX Gyre Pagella","-V","mathfont=TeX Gyre Pagella Math",
@@ -412,11 +439,10 @@ def build(out, cover, author):
             tree = ET.fromstring(z.read(name))
             ids.update(el.attrib.get("id") for el in tree.iter())
         require(all(f"chapter-{n:02d}" in ids for n in range(1,33)), "EPUB chapter IDs incomplete")
-    run([check,str(file)],out,out/"epubcheck.log")
     print("Proof PDF and EPUB built. No promotion; formal EPUBCheck:",bool(check))
     proof = {"epub_sha256":digest(file),"pdf_sha256":digest(out/"Book03-From-Geometry-to-Images-PROOF.pdf"),
              "epubcheck_ran":True,"epubcheck_version":"5.4.0","epub_warnings":e.stderr.splitlines(),
-             "pdf_warnings":conversion.stderr.splitlines(),"final_layout_issues":issues,"latex_passes":len(passes),"cover_epub_only":bool(cover),
+             "pdf_warnings":conversion.stderr.splitlines(),"final_layout_issues":issues,"latex_passes":len(passes),"cover_in_both_formats":bool(cover),"approved_cover_sha256":cover_sha256,
              "accepted":False}
     (out/"build-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
 
@@ -426,7 +452,7 @@ def main():
     parser.add_argument("--root",type=Path,default=ROOT)
     parser.add_argument("--output",type=Path,help="new directory beneath Code Parts/build")
     parser.add_argument("--build",action="store_true",help="compile proof PDF and EPUB; never promote")
-    parser.add_argument("--cover",type=Path,help="optional approved EPUB cover, not a PDF cover")
+    parser.add_argument("--cover",type=Path,help="optional explicitly approved portrait PNG/JPEG for both formats")
     parser.add_argument("--author",default="Swayam Singal")
     a = parser.parse_args()
     root = a.root.resolve()
