@@ -214,6 +214,17 @@ Finally, prepare a short evidence dossier: claim, domain, algorithm, experiment,
 
 **Capstone 32H.** Deliver the evidence dossier above, including an example where a convincing image hides an incorrect physical quantity. Explain the discrepancy to a child first and then to a reviewer who can inspect the source.
 
+### Selected answers and experiment criteria
+
+**32A–B.** Replace X and every world-to-camera translation t by sX and st, keeping rotations and intrinsics fixed for positive s. The camera-frame point scales by s, which cancels in perspective division. From Z=fB/d, the derivative is -fB/d^2=-Z^2/(fB). Independent equal horizontal noise gives disparity standard deviation sqrt(2)*sigma, yielding equation 32.4. For the ideal rectified pair, the vertical residuals after fitting their mean are plus and minus half their difference; the population RMS per observation is sigma/sqrt(2).
+
+**32C–D.** Scaling only one translation generally breaks the shared similarity, except in special or uninformative configurations. Centered finite differences have an O(h^2) truncation term for sufficiently smooth functions; rounding cancellation typically grows as h decreases. Plot error against step size, not only the minimum observed value.
+
+**32E–F.** Use the same paired random inputs when comparing baselines or implementations. Predeclare rejection policy; keep counts and residual quantiles for successful cases and separately report all failed cases. Verify output equivalence before timing, exclude compilation and setup consistently, and record the hardware/compiler, warmup, repeats, elapsed sums and per-workload ratios.
+
+**32G–H.** The finished evidence dossier is judged by reproducibility, not a visually pleasing result. A passing report identifies the figure's domain, axes, units, source and limits; it supplies executable checks for at least one exact fixture, one metamorphic invariant and one deliberate failure. An image preserved under global scale is the minimal example of a persuasive picture concealing a physically incorrect quantity.
+
+
 ## Where we go from here
 
 Thirty-two chapters ago, a pixel was just a little colored window. Now we can explain why a triangle appears at a particular address, why some of its edges must be included and others excluded, why a camera bends a ray, why depth is difficult to infer, and why a beautiful surface can be unsupported by measurements.
