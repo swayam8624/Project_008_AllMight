@@ -1,0 +1,13 @@
+# Pass 34 — Cumulative native acceptance and first source reconciliation
+
+## Full engineering run
+
+The P33 run [45559822429](https://github.com/swayam8624/Project_008_AllMight/actions/runs/45559822429), revision be9ec32800846e597610e8a6c87690052d49065f, passed the full editorial gate and compilation, then reported 33/34 CTests. P10's out-of-buffer fixture used GltfAccessor{} (count zero), so check_gltf_layout correctly threw invalid_argument before the expected out_of_range. P34 corrects the fixture to use a valid VEC3 FLOAT count of one and tests count zero independently. The validator itself is unchanged.
+
+The corrected [CI run 45562690493](https://github.com/swayam8624/Project_008_AllMight/actions/runs/45562690493), exact revision a54c4a1cf9041b9bca505a78fce6208ac711b305, job 139029942559, finished with conclusion success. All 34 CTests, full P01–P32 editorial gate, CMake configuration and release compilation, P01–P23 generated demonstration checks, P24–P32 native workshops and independent CSV/export witnesses, and final P6 payload check succeeded. This includes the P21 renderer frontend, previously unverified cumulatively. This is an observed Ubuntu CI result, not a macOS build or a claim of warning-free -Werror compilation of the entire project (the cumulative workflow enables warnings, not -Werror).
+
+## Source integration
+
+PASS34_FOUNDATIONS_SOURCE_MAP.md records 18,928 routed body lines and 627 heading entries from seven primary Computing Foundations derived chapters 32–38. Full files were retrieved; heading extraction is mechanical and routes provisional. The declared master hashes are not independently recomputed. Detailed inspection of selected old passages led to three additive reader sections: Chapter 14 pixel/texel centers, Chapter 17 frustum planes and conservative bounding-shape rejection, and Chapter 31 camera-relative arithmetic. A separate small C++23 numeric witness compiled with GCC 14.2.0, -O2 -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all, and passed the large-world binary32 spacing, lost/preserved displacement (0 vs .125 m), 5-pixel projection shift, texture-center and plane-support arithmetic examples. It is a targeted witness, not an additional registered test or a production implementation.
+
+The successful CI revision predates the additive prose edits. Later revisions need their own source-gate confirmation. No native algorithm changes after the P10 fixture fix. Original source and published Books 01–02 remain untouched. Full source reconciliation, mathematical review, figure visual review, typesetting, PDF/EPUB construction and reader acceptance remain open.
