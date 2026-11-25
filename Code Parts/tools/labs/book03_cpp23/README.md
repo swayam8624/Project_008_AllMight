@@ -829,3 +829,8 @@ book03_capstone capstone.csv
 ~~~
 
 Standalone GCC C++23/UBSan passed the capstone and 20,000-reconstruction sweep. See PASS32_EVIDENCE.md in the manuscript directory. The test is not an end-to-end real-data benchmark and no performance timing was performed. Full cumulative CMake/CTest and publication gates remain separate.
+
+
+## P35 — selected source reconciliation witnesses
+
+Run `python3 scripts/verify_source_reconciliation.py` (requires NumPy). This independent teaching verifier checks the new ray–triangle, cotangent stiffness, texture-address and proper rigid-alignment derivations, including 500 conditioned linear-system comparisons. It is not a full implementation of those algorithms in the native companion or an extra registered CTest. See the reader's PASS35_EVIDENCE.md.
