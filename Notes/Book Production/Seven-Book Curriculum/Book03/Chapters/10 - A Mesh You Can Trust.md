@@ -40,7 +40,7 @@ load succeeded = true
 
 That single answer compresses four different questions.
 
-**Syntactic validity** asks whether the bytes follow the grammar the importer claims to support. Is \`v 1 2 3\` a correctly shaped position declaration? Is \`f 1 2 3\` a correctly formed face? Are the numeric tokens finite?
+**Syntactic validity** asks whether the bytes follow the grammar the importer claims to support. Is `v 1 2 3` a correctly shaped position declaration? Is `f 1 2 3` a correctly formed face? Are the numeric tokens finite?
 
 **Referential validity** asks whether the named indices point to real data in the right index stream. Does the face's third texture coordinate exist? Does a glTF accessor describe bytes contained within its buffer view? Is a node's referenced child index in range?
 
@@ -70,9 +70,9 @@ v 0 2 0
 f 1 2 3
 ~~~
 
-The first three lines beginning with \`v\` define three positions. The line beginning with \`f\` creates a face referring to those positions.
+The first three lines beginning with `v` define three positions. The line beginning with `f` creates a face referring to those positions.
 
-But the file labels its positions **1, 2 and 3**, while our C++23 \`std::vector\` indices begin at **0, 1 and 2**.
+But the file labels its positions **1, 2 and 3**, while our C++23 `std::vector` indices begin at **0, 1 and 2**.
 
 Therefore, for an OBJ positive index \(k\),
 
@@ -81,14 +81,14 @@ Therefore, for an OBJ positive index \(k\),
 \tag{10.1}
 \]
 
-In this tiny example, the face \`f 1 2 3\` becomes the internal triangle
+In this tiny example, the face `f 1 2 3` becomes the internal triangle
 
 \[
 (0,1,2).
 \tag{10.2}
 \]
 
-If our importer forgets the subtraction, it may attempt to read past the end of the positions array. If it subtracts one from a zero index, an unsigned underflow can turn the mistake into an enormous integer. A robust parser must reject \`0\` **before** converting or indexing.
+If our importer forgets the subtraction, it may attempt to read past the end of the positions array. If it subtracts one from a zero index, an unsigned underflow can turn the mistake into an enormous integer. A robust parser must reject `0` **before** converting or indexing.
 
 The C++23 implementation does exactly that.
 
@@ -103,7 +103,7 @@ v 0 2 0
 f -3 -2 -1
 ~~~
 
-Here \`-1\` means the **most recently declared position at that moment in the file**, \`-2\` means the one before it, and so on.
+Here `-1` means the **most recently declared position at that moment in the file**, `-2` means the one before it, and so on.
 
 If \(N\) positions have been declared when the face is read, negative index \(k\) becomes
 
@@ -120,7 +120,7 @@ First, negative indices must be resolved against the **current** stream length a
 
 Second, we should not cast the negative integer into an unsigned index before doing the signed arithmetic. The formula must be evaluated in a signed type wide enough for the bounded count, checked for negativity and upper bounds, and only then converted to the final array index.
 
-Our importer uses checked signed arithmetic followed by a checked \`std::uint32_t\` conversion. It rejects \`0\`, references outside the current stream, malformed integers and unsupported forward references.
+Our importer uses checked signed arithmetic followed by a checked `std::uint32_t` conversion. It rejects `0`, references outside the current stream, malformed integers and unsupported forward references.
 
 ### Text needs memory limits too
 
@@ -140,9 +140,9 @@ Consider this deliberately malicious-looking position:
 v 1.2garbage 0 0
 ~~~
 
-A careless conversion function might accept the leading \`1.2\` and ignore the remaining text. But the file does not contain a valid standalone numeric field.
+A careless conversion function might accept the leading `1.2` and ignore the remaining text. But the file does not contain a valid standalone numeric field.
 
-Our C++23 implementation uses \`std::from_chars\` and checks that the parser consumed the **entire** token. It also rejects nonfinite numeric values, such as infinity and NaN.
+Our C++23 implementation uses `std::from_chars` and checks that the parser consumed the **entire** token. It also rejects nonfinite numeric values, such as infinity and NaN.
 
 This matters because NaN has awkward comparison behavior: it is not greater than, less than or equal to ordinary finite values in the expected way. A single nonfinite coordinate can corrupt a bounding box, a normal, a geometric predicate or a rasterization calculation much later.
 
@@ -176,11 +176,11 @@ f 1/5/2 2/8/2 3/6/1
 
 The three integers in a corner **are not** three coordinates of one vector. They are separate references into the position, texture-coordinate and normal arrays.
 
-The corner \`1/5/2\` means position number 1, texture coordinate number 5 and normal number 2.
+The corner `1/5/2` means position number 1, texture coordinate number 5 and normal number 2.
 
 We must resolve each value against its **own stream's count**. A valid position index does not imply the corresponding UV or normal index exists.
 
-OBJ also allows \`1\`, \`1/5\` and \`1//2\`. The double slash in \`1//2\` means “position 1, no texture coordinate, normal 2.” That empty middle field is meaningful. It is not an instruction to use UV zero.
+OBJ also allows `1`, `1/5` and `1//2`. The double slash in `1//2` means “position 1, no texture coordinate, normal 2.” That empty middle field is meaningful. It is not an instruction to use UV zero.
 
 Our source type makes this explicit:
 
@@ -375,7 +375,7 @@ D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1.
 
 When \(D=0\), the UV map is locally degenerate and this inverse cannot be computed in the ordinary way. When it is extremely small, the tangent estimate may be ill-conditioned.
 
-Even when it is not zero, tangent construction involves decisions about interpolation, orthogonalization, handedness and mirrored UV charts. glTF typically carries a tangent with a \`w\` sign specifying handedness for the bitangent reconstruction.
+Even when it is not zero, tangent construction involves decisions about interpolation, orthogonalization, handedness and mirrored UV charts. glTF typically carries a tangent with a `w` sign specifying handedness for the bitangent reconstruction.
 
 This explains why a real mesh importer needs to preserve per-corner attributes and not simply report “I calculated a normal, therefore the material is ready.”
 
@@ -548,7 +548,7 @@ A **bufferView** selects a subrange of a buffer. It names the source buffer and 
 
 An **accessor** gives a type and count to part of that range: for example, “there are five 3-component floating-point vectors here.” It may provide its own offset relative to the buffer view.
 
-A **mesh primitive attribute** associates an accessor with a semantic name such as \`POSITION\`, \`NORMAL\`, or \`TEXCOORD_0\`.
+A **mesh primitive attribute** associates an accessor with a semantic name such as `POSITION`, `NORMAL`, or `TEXCOORD_0`.
 
 The format makes a powerful separation: **physical byte storage** is not the same as **logical geometric meaning**.
 
@@ -556,9 +556,9 @@ The format makes a powerful separation: **physical byte storage** is not the sam
 
 Suppose a glTF binary buffer has 256 bytes. A buffer view begins at byte offset 16 and has length 128. Its byte stride is 24.
 
-An accessor into that view has a *relative* offset of 8 and describes five \`VEC3 FLOAT\` values.
+An accessor into that view has a *relative* offset of 8 and describes five `VEC3 FLOAT` values.
 
-A \`FLOAT\` component occupies four bytes. Three components occupy
+A `FLOAT` component occupies four bytes. Three components occupy
 
 \[
 \boxed{3\cdot4=12\text{ bytes per element}.}
@@ -658,11 +658,11 @@ The right side is an ordinary integer division. If that inequality fails, the ac
 
 Because the arithmetic is bounded before the expensive multiplication, the implementation avoids using a potentially overflowed end address as evidence of safety.
 
-The P10 C++23 helper \`check_gltf_layout()\` implements this style of check in a **restricted** subset: scalar and 2/3/4-component unsigned byte, unsigned short, unsigned int or float records. It also checks component-sized alignment, legal stride relationships and rejected sparse-accessor usage in the subset. The standalone helper does not yet know whether a specific accessor is a vertex attribute, an index stream or an animation input, so it cannot prove every semantic alignment and component-type rule from the complete glTF specification.
+The P10 C++23 helper `check_gltf_layout()` implements this style of check in a **restricted** subset: scalar and 2/3/4-component unsigned byte, unsigned short, unsigned int or float records. It also checks component-sized alignment, legal stride relationships and rejected sparse-accessor usage in the subset. The standalone helper does not yet know whether a specific accessor is a vertex attribute, an index stream or an animation input, so it cannot prove every semantic alignment and component-type rule from the complete glTF specification.
 
 ### Some glTF rules are contextual
 
-The official glTF 2.0 specification requires more than mathematical bounds. For example, vertex attribute alignment imposes four-byte constraints, defined \`byteStride\` values are limited to 4–252 bytes and must be multiples of four, and accessors with \`FLOAT\` or \`UNSIGNED_INT\` components must not be marked normalized.
+The official glTF 2.0 specification requires more than mathematical bounds. For example, vertex attribute alignment imposes four-byte constraints, defined `byteStride` values are limited to 4–252 bytes and must be multiples of four, and accessors with `FLOAT` or `UNSIGNED_INT` components must not be marked normalized.
 
 Index accessors also have their own valid unsigned scalar component types. A primitive's indices must be less than its vertex count. Accessor dimensions and counts must match their intended semantics.
 
@@ -720,7 +720,7 @@ The order matters. Rotating a translated object is not the same as translating a
 
 A library may store matrix entries in row-major memory while using column vectors mathematically. glTF's column-major serialization does **not** mean the importer should apply an arbitrary geometric transpose to every matrix.
 
-Suppose the serialized column-major array represents a \(4\times4\) transform \(M\). If our internal \`Matrix4\` type stores entries in row-major memory while still multiplying column vectors, we should place
+Suppose the serialized column-major array represents a \(4\times4\) transform \(M\). If our internal `Matrix4` type stores entries in row-major memory while still multiplying column vectors, we should place
 
 \[
 \boxed{
@@ -760,7 +760,7 @@ It imposes caps on positions, UVs, normals, input lines and resulting triangle f
 
 It checks each numeric and integer token for full consumption and valid range.
 
-It does not follow external \`mtllib\` references. It records that material metadata was seen and ignored; it does not silently load or execute anything from the named path.
+It does not follow external `mtllib` references. It records that material metadata was seen and ignored; it does not silently load or execute anything from the named path.
 
 It rejects unsupported OBJ directives and nonconvex or excessively warped quadrilaterals rather than guessing their meaning.
 
@@ -774,11 +774,11 @@ An important habit in engineering is to distinguish “we did not implement this
 
 This chapter adds three genuine source files to the same cumulative C++23 laboratory tree.
 
-The first is \`include/book03/asset_import.hpp\`, which defines a bounded OBJ subset parser, independent corner keys, topological mesh conversion, tuple-based rendering conversion, asset diagnostics and an overflow-aware glTF accessor layout checker.
+The first is `include/book03/asset_import.hpp`, which defines a bounded OBJ subset parser, independent corner keys, topological mesh conversion, tuple-based rendering conversion, asset diagnostics and an overflow-aware glTF accessor layout checker.
 
-The second is \`tests/asset_import_tests.cpp\`, with adversarial and hand-countable tests. It verifies positive and negative OBJ indices, separate index streams, the exact geometric-versus-rendering vertex count on a seam, the distinct role of absent UV/normal values, convex quad triangulation, explicit rejection of concave/warped polygons, bounded input reading, malformed numeric tokens, and the byte offset/stride/count conditions for glTF.
+The second is `tests/asset_import_tests.cpp`, with adversarial and hand-countable tests. It verifies positive and negative OBJ indices, separate index streams, the exact geometric-versus-rendering vertex count on a seam, the distinct role of absent UV/normal values, convex quad triangulation, explicit rejection of concave/warped polygons, bounded input reading, malformed numeric tokens, and the byte offset/stride/count conditions for glTF.
 
-The third is \`src/asset_studio.cpp\`, a small terminal asset-trust workbench. It can inspect an actual OBJ file from disk, print numeric topology diagnostics, generate a source-derived SVG and export a CSV of the unified GPU rendering vertex tuples.
+The third is `src/asset_studio.cpp`, a small terminal asset-trust workbench. It can inspect an actual OBJ file from disk, print numeric topology diagnostics, generate a source-derived SVG and export a CSV of the unified GPU rendering vertex tuples.
 
 Its built-in examples include a seam-preserving square, a convex quad, a deliberately reversed face and a repeated-index triangle. They allow a reader to see different failure categories without needing to download a large model.
 
@@ -797,7 +797,7 @@ book03_assets layout
 book03_assets repl
 ~~~
 
-The \`layout\` command prints the worked glTF byte calculation we just derived: a buffer of 256 bytes, a view beginning at 16, an accessor offset of 8, five \`VEC3 FLOAT\` records, a stride of 24 and an exclusive final byte address of 132.
+The `layout` command prints the worked glTF byte calculation we just derived: a buffer of 256 bytes, a view beginning at 16, an accessor offset of 8, five `VEC3 FLOAT` records, a stride of 24 and an exclusive final byte address of 132.
 
 It does **not** open or parse a real glTF file. That is a deliberate boundary, not a missing detail we have hidden.
 
@@ -865,7 +865,7 @@ Our native laboratory tests are intended to catch mistakes that look small in a 
 
 They assert that the one-based OBJ positive index becomes the correct zero-based position ID, and that negative indices are resolved at the moment each face is read.
 
-They construct streams with different lengths so a normal's \`-1\` cannot accidentally resolve against the position count.
+They construct streams with different lengths so a normal's `-1` cannot accidentally resolve against the position count.
 
 They build a square whose positions are shared while UVs and normals are not, then independently verify **four geometric vertices versus six rendering tuples**.
 
@@ -881,15 +881,15 @@ The laboratory is registered as the **eleventh** independent CTest in the cumula
 
 ## Your turn: interrogate a mesh
 
-**Reconstruct — the triangle's first three indices.** Given \`v\` positions declared in order and the OBJ face \`f 1 2 3\`, write the zero-based C++ index triplet. Why must index zero be rejected before converting to an unsigned type?
+**Reconstruct — the triangle's first three indices.** Given `v` positions declared in order and the OBJ face `f 1 2 3`, write the zero-based C++ index triplet. Why must index zero be rejected before converting to an unsigned type?
 
-**Reconstruct — negative indices belong to a moment in time.** After five position declarations, a face says \`f -5 -3 -1\`. Resolve all three indices. Then imagine the file declares two more positions afterward. Does the earlier face change?
+**Reconstruct — negative indices belong to a moment in time.** After five position declarations, a face says `f -5 -3 -1`. Resolve all three indices. Then imagine the file declares two more positions afterward. Does the earlier face change?
 
-**Reconstruct — three independent namespaces.** An OBJ has four positions, six UVs and two normals. Its corner token is \`3/6/2\`. Write the three zero-based indices. Explain why there is no reason for the counts of the three streams to be equal.
+**Reconstruct — three independent namespaces.** An OBJ has four positions, six UVs and two normals. Its corner token is `3/6/2`. Write the three zero-based indices. Explain why there is no reason for the counts of the three streams to be equal.
 
 **Falsify — the innocent-looking seam.** Draw a square from four geometric vertices and two triangles. Give each face unique UV and normal tuples along the shared diagonal. The topological mesh should have \(V=4,E=5,F=2\); the rendering tuple stream can have six vertices. Explain why neither count is a mistake.
 
-**Falsify — a legal face with zero area.** Parse \`f 1 2 2\` from three valid positions. Which validation layer accepts it, and which layer must report a problem? Explain why silently discarding it would conceal useful information about the source.
+**Falsify — a legal face with zero area.** Parse `f 1 2 2` from three valid positions. Which validation layer accepts it, and which layer must report a problem? Explain why silently discarding it would conceal useful information about the source.
 
 **Falsify — the opposite-direction rule.** For two faces \((0,1,2)\) and \((0,3,2)\), list the directed uses of the common edge \(\{0,2\}\). Why is the shared-edge winding inconsistent?
 
@@ -901,11 +901,11 @@ The laboratory is registered as the **eleventh** independent CTest in the cumula
 
 **Implement — convex is not the same as arbitrary.** Give a planar convex quad and a concave quad. Explain why a fixed diagonal fan works for the first but need not work for the second. Outline the additional predicates and geometric assumptions that a robust general ear-clipping implementation would require.
 
-**Implement — bounded text.** An attacker supplies a single input line of 100 million characters. Why is rejecting it *after* an unbounded \`std::getline\` insufficient as an allocation defense? What does a bounded reader need to do instead?
+**Implement — bounded text.** An attacker supplies a single input line of 100 million characters. Why is rejecting it *after* an unbounded `std::getline` insufficient as an allocation defense? What does a bounded reader need to do instead?
 
-**Reconstruct — the glTF byte witness.** Given a buffer of 256 bytes, view offset 16, view length 128, view stride 24, accessor relative offset 8, five \`VEC3 FLOAT\` entries, calculate the first element address, element size, all five start addresses and the exclusive final byte address.
+**Reconstruct — the glTF byte witness.** Given a buffer of 256 bytes, view offset 16, view length 128, view stride 24, accessor relative offset 8, five `VEC3 FLOAT` entries, calculate the first element address, element size, all five start addresses and the exclusive final byte address.
 
-**Falsify — overflow before checking.** Suppose \`count\` is extremely large and an unsigned multiplication \`count*stride\` wraps. Write a bounds check using the *remaining available bytes divided by stride* that avoids depending on the wrapped result.
+**Falsify — overflow before checking.** Suppose `count` is extremely large and an unsigned multiplication `count*stride` wraps. Write a bounds check using the *remaining available bytes divided by stride* that avoids depending on the wrapped result.
 
 **Implement — refuse what you do not understand.** Design an error message for a file containing a concave five-sided OBJ face, a sparse glTF accessor and a material library reference. Which can our teaching lab handle, which can it report as ignored, and which should it refuse? Why is that preferable to silently pretending all three were interpreted?
 
@@ -913,9 +913,9 @@ The laboratory is registered as the **eleventh** independent CTest in the cumula
 
 ### Selected answers
 
-Positive OBJ \`1 2 3\` becomes zero-based \((0,1,2)\). With five current positions, negative \(-5,-3,-1\) resolves to \((0,2,4)\); declarations afterward do not alter that already parsed face.
+Positive OBJ `1 2 3` becomes zero-based \((0,1,2)\). With five current positions, negative \(-5,-3,-1\) resolves to \((0,2,4)\); declarations afterward do not alter that already parsed face.
 
-OBJ corner \`3/6/2\` becomes position index 2, UV index 5, normal index 1, each resolved against its own stream. Four geometric square vertices and six distinct rendering corner tuples can legitimately represent the same two-triangle textured mesh.
+OBJ corner `3/6/2` becomes position index 2, UV index 5, normal index 1, each resolved against its own stream. Four geometric square vertices and six distinct rendering corner tuples can legitimately represent the same two-triangle textured mesh.
 
 The triangle \((0,1,2)\) has the shared edge \(2\to0\); the intentionally reversed second triangle \((0,3,2)\) also traverses \(2\to0\), so their directed uses conflict. A repeated-index triangle such as \((0,1,1)\) passes the limited grammatical check but fails as a meaningful triangular face.
 
@@ -995,10 +995,10 @@ We just make it show its papers first.
 
 ## Source custody and further study
 
-This is an additive chapter. The original comprehensive manuscript must remain available, especially \`Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md\` (combinatorial identity, half-edges, manifoldness and repair) and \`41 - Per-Vertex and Per-Corner Mesh Attributes.md\` (flat, smooth, area- and angle-weighted normals, UV/tangent bases, OBJ indexing and polygon triangulation, glTF buffers, accessors, nodes, materials, skins, animation, and Maveb/Kairo engine integration). Those legacy source paths, inspected Git blob IDs and their still-unreconciled specialized sections are recorded in \`PASS10_LEGACY_AUDIT.md\`. A chapter link is **not** proof that every original source unit was merged into a finished reader.
+This is an additive chapter. The original comprehensive manuscript must remain available, especially `Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md` (combinatorial identity, half-edges, manifoldness and repair) and `41 - Per-Vertex and Per-Corner Mesh Attributes.md` (flat, smooth, area- and angle-weighted normals, UV/tangent bases, OBJ indexing and polygon triangulation, glTF buffers, accessors, nodes, materials, skins, animation, and Maveb/Kairo engine integration). Those legacy source paths, inspected Git blob IDs and their still-unreconciled specialized sections are recorded in `PASS10_LEGACY_AUDIT.md`. A chapter link is **not** proof that every original source unit was merged into a finished reader.
 
 External authoritative references: [Khronos glTF 2.0 specification](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html); [Khronos glTF tutorial: Buffers, Buffer Views and Accessors](https://github.com/KhronosGroup/glTF-Tutorials/blob/main/gltfTutorial/gltfTutorial_005_BuffersBufferViewsAccessors.md); [Library of Congress Wavefront OBJ format description](https://www.loc.gov/preservation/digital/formats/fdd/fdd000507.shtml); and the original source atlas's geometry-processing and Kairo/Maveb-specific reading notes. The P10 C++23 reader and original SVGs contain newly authored teaching material, not copied case tables or third-party artwork.
 
-**Companion:** \`Code Parts/tools/labs/book03_cpp23/include/book03/asset_import.hpp\`, \`tests/asset_import_tests.cpp\`, \`src/asset_studio.cpp\`.
+**Companion:** `Code Parts/tools/labs/book03_cpp23/include/book03/asset_import.hpp`, `tests/asset_import_tests.cpp`, `src/asset_studio.cpp`.
 
-**Read next:** Chapter 11 — The Same Tree in Five Worlds (planned).
+**Read next:** Chapter 11 — The Same Tree in Five Worlds.
