@@ -371,6 +371,17 @@ target_link_libraries(book03_studio PRIVATE book03_studio_lib)
 add_executable(book03_studio_tests tests/studio_tests.cpp)
 target_link_libraries(book03_studio_tests PRIVATE book03_studio_lib)
 
+# Chapter 32: final reproducible numerical and reconstruction capstone.
+add_library(book03_capstone_lib INTERFACE)
+target_include_directories(book03_capstone_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_capstone_lib INTERFACE cxx_std_23)
+target_link_libraries(book03_capstone_lib INTERFACE book03_studio_lib)
+add_executable(book03_capstone src/capstone_main.cpp)
+target_link_libraries(book03_capstone PRIVATE book03_capstone_lib)
+add_executable(book03_capstone_tests tests/capstone_tests.cpp)
+target_link_libraries(book03_capstone_tests PRIVATE book03_capstone_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -404,7 +415,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_matching book03_feature_tests
                    book03_sfm book03_sfm_tests
                    book03_surface book03_surface_tests
-                   book03_studio book03_studio_tests)
+                   book03_studio book03_studio_tests
+                   book03_capstone book03_capstone_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -444,4 +456,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_sfm_contracts COMMAND book03_sfm_tests)
     add_test(NAME book03_surface_contracts COMMAND book03_surface_tests)
     add_test(NAME book03_studio_contracts COMMAND book03_studio_tests)
+    add_test(NAME book03_capstone_contracts COMMAND book03_capstone_tests)
 endif()
