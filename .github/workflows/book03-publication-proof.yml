@@ -7,6 +7,7 @@ on:
     paths:
       - "Notes/Book Production/Seven-Book Curriculum/Book03/**"
       - "Code Parts/tools/book03_prepare_reader.py"
+      - "Code Parts/tools/book03_proof_qa.py"
       - ".github/workflows/book03-publication-proof.yml"
   workflow_dispatch:
     inputs:
@@ -41,6 +42,9 @@ jobs:
             args+=(--build)
           fi
           /usr/bin/python3 "Code Parts/tools/book03_prepare_reader.py" "${args[@]}"
+      - name: Audit actual print and ebook files, render chapter-opening samples
+        if: github.event_name == 'push' || inputs.compile_proof
+        run: /usr/bin/python3 "Code Parts/tools/book03_proof_qa.py" "Code Parts/build/book03-reader-proof"
       - name: Retain source proof and contact sheets
         if: always()
         uses: actions/upload-artifact@v4
