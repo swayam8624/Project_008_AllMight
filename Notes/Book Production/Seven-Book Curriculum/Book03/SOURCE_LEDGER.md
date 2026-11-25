@@ -285,3 +285,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 30 — point clouds and surface fusion
 
 [Chapter 30](Chapters/30%20-%20Points%20Become%20Surfaces.md) derives covariance normals, implicit geometry, weighted projective TSDF and support-aware zero crossings; discusses isosurface extraction and sparse storage. [PASS30_LEGACY_AUDIT.md](PASS30_LEGACY_AUDIT.md) records prior reader routes and primary references. [PASS30_EVIDENCE.md](PASS30_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution, 100 trials, 21,900 observed crossings and independent CSV checks. Five figures bring the count to 134; the thirty-second CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 31 — integrated studio
+
+[Chapter 31](Chapters/31%20-%20A%20Studio%20for%20Geometry%20and%20Images.md) connects prior geometry/reconstruction and rendering modules with a controlled synthetic fixture and checked coordinate adapter. [PASS31_LEGACY_AUDIT.md](PASS31_LEGACY_AUDIT.md) records dependency custody. [PASS31_EVIDENCE.md](PASS31_EVIDENCE.md) records actual exact-hash-matched GCC/UBSan execution, 230,400 pixel-pass checks and independent Python export verification. Four figures bring the count to 138; the thirty-third CTest is registered. Full cumulative integration and publication remain pending.
