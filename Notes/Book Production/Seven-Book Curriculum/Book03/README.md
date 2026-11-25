@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–31; thirty-one substantial narrative chapters, thirty-one cumulative C++23 laboratories, thirty-three source-authored CTests and one hundred thirty-eight original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–32; all thirty-two planned narrative chapters, thirty-two cumulative C++23 laboratories, thirty-four source-authored CTests and one hundred forty-two original SVG teaching figures are committed. All 32 chapter paths and numbered headings have been verified. Publication acceptance remains open. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -192,7 +192,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 29 | Essential pose recovery, multi-ray triangulation, point refinement and bundle adjustment derivation | Authored; standalone native tests and studio passed |
 | 30 | PCA normals, implicit fields, aligned depth TSDF and supported zero crossings | Authored; standalone native tests and studio passed |
 | 31 | Integrated optical fixture, sparse reconstruction, PCA check, render adapter and exports | Authored; standalone native integrated tests and independent export verifier passed |
-| 32+ | Capstone, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 32 | Verification, scale ambiguity, independent derivative checks, paired baseline experiment and final evidence capstone | Authored; standalone native tests and sweep passed |
+| Release gates | Full cumulative build/CTest, source-unit reconciliation, math and figure audit, print/EPUB composition and acceptance | Open |
 
 
 
@@ -234,3 +235,18 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 31
 
 [Chapter 31 — A Studio for Geometry and Images](Chapters/31%20-%20A%20Studio%20for%20Geometry%20and%20Images.md) connects prior optical projection, sparse reconstruction, surface normal estimation, opaque visibility and image encoding into one controlled C++23 studio. Four figures, five exported artifacts and a repeatable independent verifier accompany the reader. [Evidence](PASS31_EVIDENCE.md) and [source custody](PASS31_LEGACY_AUDIT.md) record the 230,400 pixel-pass checks, exact hashes and limitations. Next: Chapter 32 — If It Looks Right, Is It Right?
+
+
+## Pass 32 — narrative completion
+
+[Chapter 32 — If It Looks Right, Is It Right?](Chapters/32%20-%20If%20It%20Looks%20Right%2C%20Is%20It%20Right.md) concludes the reader with independent oracles, metamorphic tests, numerical tolerances, geometric sensitivity, reproducibility and a capstone evidence dossier. The C++23 workshop verifies scale ambiguity and runs a 20,000-point paired baseline sweep. [Evidence](PASS32_EVIDENCE.md) and [source custody](PASS32_LEGACY_AUDIT.md) document the actual results and limitations. The chapter inventory is complete; cumulative verification and publication production are not.
+
+## Release acceptance checklist
+
+- [x] All 32 chapter paths and numbered headings individually verified.
+- [x] P32 standalone native C++23 tests and paired sweep executed.
+- [ ] Full companion build and all registered CTests, including P21 frontend, executed together and failures resolved.
+- [ ] Complete original-source reconciliation, mathematical and pedagogical review, internal cross-reference and figure checks.
+- [ ] Release builder and PDF/EPUB production in the existing repository layout.
+- [ ] Visual PDF review and EPUB validation/navigation; cross-format content comparison.
+- [ ] Final release acceptance before promotion. Books 01 and 02 and their published assets remain untouched.
