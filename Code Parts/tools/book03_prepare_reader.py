@@ -177,6 +177,7 @@ def rewrite_chapter(doc, n, figures):
             ids[old] = new
             attr[0] = new
     used = []
+    captions = []
     for item in nodes(blocks):
         if item["t"] == "Image":
             target = item["c"][2][0]
@@ -202,11 +203,16 @@ def rewrite_chapter(doc, n, figures):
         if block["t"] == "Figure" and i+1 < len(blocks):
             follow = blocks[i+1]
             if follow["t"] in ("Para", "Plain") and plain(follow["c"]).startswith("Figure "):
+                captions.append(plain(follow["c"]))
                 block["c"][1] = [None, [{"t": "Plain", "c": follow["c"]}]]
                 i += 1
         result.append(block)
         i += 1
     doc["blocks"] = result
+    require(len(captions)==len(used), f"chapter {n}: authored captions not attached to all figures")
+    for index, caption in enumerate(captions,1):
+        require(re.match(rf"Figure {n}\.{index}\s*[—–:-]",caption),
+                f"chapter {n}: caption out of reader order: {caption}")
     return used
 
 
@@ -249,6 +255,17 @@ def prepare(root, out):
         api = api or doc["pandoc-api-version"]
         require(doc["pandoc-api-version"] == api, "mixed Pandoc APIs")
         counts = Counter(v["t"] for v in nodes(doc["blocks"]))
+        # Check the actual parsed equations, not merely the Markdown delimiters.
+        labels = [label for v in nodes(doc["blocks"]) if v["t"]=="Math"
+                  for label in TAG.findall(v["c"][1])]
+        require(len(labels)==len(set(labels)), f"chapter {n}: duplicate equation labels")
+        # Match explicit prose references in the parsed paragraph text only;
+        # code and displayed mathematics have no Str nodes.
+        refs = re.findall(r"\b(?:[Ee]quation|eq\.)\s*\(?(\d{1,2}\.[A-Za-z]?\d+)\)?",
+                          plain(doc["blocks"]))
+        for ref in refs:
+            if int(ref.split(".")[0])==n:
+                require(ref in labels, f"chapter {n}: unresolved equation {ref}")
         require(counts["Math"] and counts["Image"], f"chapter lacks parsed math/figures: {chapter}")
         codes = [v["c"][1] for v in nodes(doc["blocks"]) if v["t"]=="CodeBlock"]
         used = rewrite_chapter(doc, n, figures)
@@ -257,7 +274,7 @@ def prepare(root, out):
         require(len(used)==counts["Image"], f"image count changed: {chapter}")
         all_used.extend(used)
         report["chapters"].append({"number":n,"file":chapter.name,"sha256":digest(chapter),
-                                   "math":counts["Math"],"code":counts["CodeBlock"],
+                                   "math":counts["Math"],"equation_labels":labels,"code":counts["CodeBlock"],
                                    "images":used,"blocks":len(doc["blocks"])})
         combined.extend(doc["blocks"])
     require(set(all_used)==set(figures), "unreferenced source illustrations")
@@ -293,6 +310,8 @@ def prepare(root, out):
              "--css=reader.css","reader-epub.json","-o","reader-preview.html"],
             out,out/"html-preview.log")
     report["html_warnings"] = p.stderr.splitlines()
+    require(not re.search(r"Could not convert TeX math|Could not render math",p.stderr,re.I),
+            "HTML MathML writer reported conversion failures; see html-preview.log")
     (out/"source-proof.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     print(f"Prepared {len(chapters)} chapters, {len(figures)} rendered figures, "
           f"{sum(x['math'] for x in report['chapters'])} parsed math nodes, "
