@@ -199,6 +199,17 @@ This is an integration milestone, not a claim that all earlier CTests have been 
 
 **Challenge 31H.** Implement a new GUI or PLY importer without changing the core numerical algorithms. Define failure states, resource ownership, and separate the measurement, reconstruction and presentation stages.
 
+### Selected answers and experiment criteria
+
+**31A–B.** The wall's top-left point is (-2,-0.5,4) m; the window's top-left point is (-0.7125,0.35625,3.8) m. The respective disparities are 16 and about 16.842105 pixels. With q=a+b/Z, q(1)=0 and q(10)=1 give a=10/9 and b=-10/9. The wall's q=5/6; the window's q=140/171 (approximately 0.818713) wins in forward depth.
+
+**31C–D.** A sign-flipped baseline is inconsistent with the original disparity under the positive-depth model; do not silently accept negative-depth triangulations. An out-of-frustum point is rejected by the adapter. A swap of two valid indices is not necessarily detected: index bounds are not a winding or topology certificate.
+
+**31E–F.** Keep the original noiseless geometry and camera parameters as the reference. Report geometric errors and pixel residuals together; exact image hashes are appropriate for the noiseless fixture, not a complete metric for noisy experiments. Include a schema version, unit and frame declarations in a camera manifest and verify independently projected sample positions after round-tripping.
+
+**31G–H.** Derived images depend on camera, geometry, shading, visibility and encoding. A changed camera invalidates projections; changing display encoding alone does not move reconstructed points. A GUI or importer should call the core and surface its errors without acquiring numerical authority over it.
+
+
 ## One final question
 
 We have brought together an entire journey from geometry to images and back again. The temptation is to look at the picture of the house, smile, and declare success.
