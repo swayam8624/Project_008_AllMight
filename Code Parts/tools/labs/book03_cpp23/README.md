@@ -800,3 +800,18 @@ book03_surface fusion.csv
 ~~~
 
 Standalone GCC C++23/UBSan passed plane, degeneracy, weighted fusion and missing-depth witnesses. The 100-trial sweep extracted 21,900 observed crossings; sixteen-frame mean RMSE 3.766 mm. See PASS30_EVIDENCE.md. Moving-camera projection, mesh extraction and sparse volume storage are not implemented. Cumulative build pending.
+
+
+---
+
+## P31 — Geometry-to-Image Studio
+
+Read `include/book03/studio.hpp`, `tests/studio_tests.cpp`, `src/studio_main.cpp` and `scripts/verify_studio.py`. Known optical camera poses synthesize exact tracks; P29 reconstructs vertices; P30 fits the wall plane in tests; P21 renders the supplied topology through the checked depth/screen adapter.
+
+~~~text
+book03_studio_tests
+book03_studio new-output-directory
+python3 scripts/verify_studio.py new-output-directory
+~~~
+
+Standalone native GCC C++23/UBSan passed 230,400 pixel-pass checks; independent Python checked all exported pixels, OBJ, tracks and metrics. See PASS31_EVIDENCE.md. Controlled fixture, not automatic photo-to-mesh or a generic renderer frontend. Cumulative build pending.
