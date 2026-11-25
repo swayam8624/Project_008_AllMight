@@ -261,6 +261,20 @@ def prepare(root, out):
                                    "images":used,"blocks":len(doc["blocks"])})
         combined.extend(doc["blocks"])
     require(set(all_used)==set(figures), "unreferenced source illustrations")
+    # Both formats share the same front/back matter and stable chapter anchors.
+    matter = []
+    for name in ("FRONT_MATTER.md", "BACK_MATTER.md"):
+        file = book / name
+        doc = json.loads(run(["pandoc","-f",READER,"-t","json"],out,
+                             input_text=file.read_text(encoding="utf-8")).stdout)
+        matter.append(doc["blocks"])
+        report.setdefault("matter", {})[name] = digest(file)
+    combined = matter[0] + combined + matter[1]
+    ids = [v["c"][1][0] for v in nodes(combined) if v["t"]=="Header"]
+    require(len(ids)==len(set(ids)), "duplicate combined reader header IDs")
+    for v in nodes(combined):
+        if v["t"]=="Link" and v["c"][2][0].startswith("#"):
+            require(v["c"][2][0][1:] in ids, f"broken reader link: {v['c'][2][0]}")
     meta = {"title":{"t":"MetaString","c":TITLE},
             "subtitle":{"t":"MetaString","c":SUBTITLE},
             "lang":{"t":"MetaString","c":"en"}}
@@ -269,7 +283,7 @@ def prepare(root, out):
     ebook = copy.deepcopy(doc)
     ebook["blocks"] = epub_equations(ebook["blocks"])
     require(sum(1 for v in nodes(ebook["blocks"]) if v["t"]=="Math") ==
-            sum(x["math"] for x in report["chapters"]), "math count changed for EPUB")
+            sum(1 for v in nodes(doc["blocks"]) if v["t"]=="Math"), "math count changed for EPUB")
     (out/"reader-epub.json").write_text(json.dumps(ebook,ensure_ascii=False),encoding="utf-8")
     (out/"reader.css").write_text(CSS,encoding="utf-8")
     (out/"reader.tex").write_text(TEX,encoding="utf-8")
