@@ -1,0 +1,3 @@
+# Pass 32 — Source custody
+
+Read CHAPTER_PLAN.md blob 77937aecee267f9772c742da0a979c030385af4c, P31 README, CMake and P29/P31 headers. Capstone extends the explicit geometric and numerical contracts from P05, P15, P18, P27, P29 and P31; reuses exact committed P29/P31 implementations rather than duplicating them. All 32 reader paths and headings verified individually; Chapter 32 blob a68e19b4efb026d191083dd325102989b8daeeeb. The final chapter is new teaching content; no original notes edited. This is chapter inventory and integration custody, not full original-source reconciliation. Original passages and their existing source routes must be audited before publication.
