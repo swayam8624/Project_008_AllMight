@@ -252,7 +252,7 @@ In our world frame, positions and displacements are measured in metres. In our i
 
 Consider a world displacement \(\Delta x=2\ \mathrm m\). If we display the world at 40 pixels per metre, it spans 80 pixels horizontally. If we zoom to 100 pixels per metre, the same world displacement spans 200 pixels. The house has not grown; the mapping from the world to the image has changed.
 
-A code variable simply named \`scale\` hides this relationship. A field named \`pixels_per_metre\` tells the reader what they are allowed to multiply.
+A code variable simply named `scale` hides this relationship. A field named `pixels_per_metre` tells the reader what they are allowed to multiply.
 
 ### A doorway into dimensional reasoning
 
@@ -421,10 +421,10 @@ In the existing Book 03 companion directory, **Code Parts/tools/labs/book03_cpp2
 
 The design is intentionally small:
 
-* \`Point2\` describes a place measured in world metres.
-* \`Vector2\` describes a displacement or basis direction, with units stated by the operation.
-* \`Frame2\` owns an origin and two basis vectors. It can map local points to world points, transform vectors without translation and invert a nondegenerate mapping.
-* \`ImageMap2\` converts world metres into continuous image pixel positions, then explicitly tests whether a position belongs to a stored sample cell.
+* `Point2` describes a place measured in world metres.
+* `Vector2` describes a displacement or basis direction, with units stated by the operation.
+* `Frame2` owns an origin and two basis vectors. It can map local points to world points, transform vectors without translation and invert a nondegenerate mapping.
+* `ImageMap2` converts world metres into continuous image pixel positions, then explicitly tests whether a position belongs to a stored sample cell.
 * A CLI visualization draws the world axes, local axes, the house-like triangle, and the transformed vertices into an SVG diagram that can be inspected alongside exact numeric output.
 
 Why SVG? Because this chapter is about coordinate transformations, and a vector figure can use the same world-space points that the C++ program computes. The application is interactive through its command-line commands: change the frame origin or angle, ask where a local point lands, and generate a new diagram. A browser viewer or future native editor can sit on top of the same mathematics, but it should not secretly introduce a second, inconsistent transform implementation.
@@ -463,7 +463,7 @@ Finally it tests the difficult cases on purpose: a collapsed basis with no inver
 
 ### A friendly warning about precision
 
-With a quarter-turn, the computer's \`cos\` and \`sin\` functions may not produce exact 0 and 1 in binary floating-point. A test should compare within a meaningful tolerance for that operation; it should not demand bit-identical answers from approximate trigonometry. By contrast, integer pixel indices and explicitly serialized file bytes should be checked exactly.
+With a quarter-turn, the computer's `cos` and `sin` functions may not produce exact 0 and 1 in binary floating-point. A test should compare within a meaningful tolerance for that operation; it should not demand bit-identical answers from approximate trigonometry. By contrast, integer pixel indices and explicitly serialized file bytes should be checked exactly.
 
 The test suite therefore uses two kinds of evidence. **Exact checks** assert discrete identities and contract behavior. **Tolerance checks** assert bounded floating-point numerical behavior, with the meaning of the tolerance documented. That is the habit we carry forward into cameras, projection and reconstruction.
 
@@ -553,9 +553,9 @@ The world did not become more complicated because we introduced coordinates. We 
 
 ## Source custody and further reading
 
-The original long-form AllMight chapter **“Geometry Becomes an Image and an Inverse Problem”** in \`Notes/Chapter Edition/01 - Computing Foundations/32 - Geometry Becomes an Image and an Inverse Problem.md\` and its continuation **“Projection, Clipping, and Raster Sampling”** are preserved as source-derived reading copies. They establish the later 3D camera convention (right-handed world, view down local \(-Z\), column vectors, explicit origin and image conventions). The pre-existing **“Camera Extrinsics and Projection Geometry”** further distinguishes camera center from world-to-camera extrinsic translation. This chapter is an *additive, narrative first-principles bridge* and deliberately stays in 2D affine space until those full 3D concepts have a proper beginning.
+The original long-form AllMight chapter **“Geometry Becomes an Image and an Inverse Problem”** in `Notes/Chapter Edition/01 - Computing Foundations/32 - Geometry Becomes an Image and an Inverse Problem.md` and its continuation **“Projection, Clipping, and Raster Sampling”** are preserved as source-derived reading copies. They establish the later 3D camera convention (right-handed world, view down local \(-Z\), column vectors, explicit origin and image conventions). The pre-existing **“Camera Extrinsics and Projection Geometry”** further distinguishes camera center from world-to-camera extrinsic translation. This chapter is an *additive, narrative first-principles bridge* and deliberately stays in 2D affine space until those full 3D concepts have a proper beginning.
 
 Suggested source families to verify and connect during the technical bibliography pass: the official C++ reference for numeric types and overflow; Scratchapixel's frames and camera explanations; conventional linear algebra texts for affine spaces and basis change; Berkeley CS184 transform lectures; the real KairoMath/KairoGeometry transformation implementations at a pinned revision. No specific borrowed result is certified solely from naming a source here.
 
-**Read next:** Chapter 03 — Shapes That Know Their Borders (planned).  
-**Lab:** \`Code Parts/tools/labs/book03_cpp23/\` (P02 frame playground).
+**Read next:** Chapter 03 — Shapes That Know Their Borders.  
+**Lab:** `Code Parts/tools/labs/book03_cpp23/` (P02 frame playground).
