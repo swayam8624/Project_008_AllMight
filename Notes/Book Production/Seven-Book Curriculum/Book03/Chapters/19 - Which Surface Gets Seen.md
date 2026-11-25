@@ -350,6 +350,20 @@ Depth testing remains useful for rejecting transparent fragments behind known op
 
 **Research exercise.** Render two crossing semitransparent triangles with distinct colors, using three policies: submission order, primitive-center sorting, and per-sample depth sorting. Use an exact ordered reference for the simplified source-over model. Record per-sample error, fragment count and memory. Repeat with alpha one to recover the opaque case. This experiment belongs to a new transparent extension, not the original native opaque renderer.
 
+### Guided workshop: the conservative depth pyramid
+
+Build a four-by-four forward-depth array with four 2 by 2 tiles. Let the upper-left tile store values 0.20, 0.25, 0.30, 0.35; the upper-right tile store 0.40, 0.45, 0.50, 0.55; the lower-left tile store 0.60, 0.65, 0.70, 0.75; and the lower-right tile store 0.80, 0.85, 0.90, 1.00. Interpret 1.00 as the untouched far clear value.
+
+The first level of a conservative forward hierarchy is (0.35,0.55,0.75,1.00). The root is 1.00. A new triangle with constant candidate depth 0.58 cannot be rejected at the root, nor in the lower tiles. It can be rejected in the two upper tiles, because their largest stored values are below 0.58. At each remaining tile inspect coverage and exact depth samples. If the triangle covers the entire image, eight samples accept the candidate and eight retain the previous winner.
+
+Now replace the clear value with 0.92. The root becomes 0.92 after a complete refresh. A candidate with depth 0.95 can be rejected everywhere. Suppose we update the leaf but leave the old root value 1.00 for the rest of the frame. The stale maximum is still an upper bound, so it may cause extra work but will not falsely reject that candidate. The opposite stale error, keeping a smaller bound after a depth clear or an operation that can increase the stored value, would be unsafe. A conservative cache is allowed to be imprecise in a specific direction.
+
+Construct a separate reversed-depth array by complementing each valid normalized depth and complementing the clear value. The hierarchy now stores minima, and all comparisons reverse. Use the same physical candidate depths transformed to the reversed representation. For this exact fixture the physical winner mask should match the forward result. If the numeric storage differs, compare the physically represented depths under the declared quantization policy, not an assumed equality of binary encodings.
+
+Test a candidate that is exactly equal to a stored value. Strict forward depth rejects equality, while a stable-ID tie policy may accept it if the new ID has priority. A hierarchy using nonstrict rejection under a tie policy could silently skip the candidate that should have won. Change the test to strict separation for that policy, then compare against the per-sample reference. This one case can reveal a subtle error in an apparently correct implementation.
+
+The useful output of this exercise is a table with the initial leaf bounds, parent bounds, candidate bounds, per-tile rejection decisions and final winner mask. Record both false-rejection count and the amount of work saved. Do not optimize a false rejection away by altering the reference image. The per-sample P19 implementation remains the known baseline for a future hierarchy; the new hierarchy is a proposed extension with an exact answer key.
+
 ## Your turn: choose the visible surface
 
 **Reconstruct.** Three opaque fragments arrive at one sample with forward depths 0.7,0.2,0.4. Which wins? Reverse their submission order. What changes?

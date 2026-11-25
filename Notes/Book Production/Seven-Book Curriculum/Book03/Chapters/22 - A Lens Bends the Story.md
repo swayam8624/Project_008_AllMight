@@ -334,6 +334,20 @@ Use the same target and sensor sampling for each comparison. Keep the exposure w
 
 **Research exercise.** Compare the ideal geometric defocus model with a measured center-field edge response at three apertures. Fit a blur parameter using one target, then test a different target at the same distance. Repeat near an image corner. Record when the simple shift-invariant model becomes inadequate. P22's native simulator implements the geometric thin-lens reference, not a calibrated diffraction or aberration solver; this experiment establishes what a more complete model would need to explain.
 
+### Guided workshop: build a focus sweep with measurable units
+
+Create a table with object distances 500, 1000 and 2000 mm, a 50 mm ideal focal length, a sensor fixed at the image distance for 1000 mm and aperture diameter 12.5 mm. First derive the sensor position by hand: 50*1000/(1000-50), approximately 52.631579 mm. Then independently derive each object's ideal image distance. The expected values are approximately 55.555556, 52.631579 and 51.282051 mm.
+
+Use the geometric cone relation for each object. At 500 mm, the normalized difference is |1-52.631579/55.555556|, approximately 0.05263158; multiplying by 12.5 yields 0.6578947 mm. At 1000 mm it is zero in the ideal model. At 2000 mm, the normalized difference is about 0.02631579, so the diameter is 0.3289474 mm. With a 5 micrometre pixel pitch these are about 131.58, zero and 65.79 pixels. The same change in object distance on the near and far sides does not give symmetric blur.
+
+Repeat with aperture diameter 6.25 mm, corresponding to f-number eight. In the simple geometric model the two nonzero diameters halve. Now compare the diffraction scale from the earlier chapter using a representative wavelength of 550 nm. The distant-focus Airy diameter estimate 2.44 lambda N is approximately 5.37 micrometres at f-number four and 10.74 micrometres at f-number eight. At exact ideal focus, the geometric blur term vanishes but diffraction does not. This comparison is only a scale comparison: adding the two diameters does not produce a physically derived combined point-spread function.
+
+Use the existing P22 thin-lens simulator for its actual supported ray geometry and units. If you implement a separate aperture integration, generate a deterministic radial sequence with r=R sqrt((i+0.5)/N) and distribute azimuths using a declared pattern. Record the squared-radius moment and compare it to R²/2. The check addresses the area sampling distribution; it does not establish a physically correct diffraction response.
+
+For a synthetic image of a narrow line, compare an in-focus reference, a geometric defocus image and a separately filtered diffraction approximation if you implement one. Label the models clearly. Measure the line profile in physical sensor units or convert using the pixel pitch. Do not present a width measured in pixels as a physical optical dimension without that conversion.
+
+A real-camera version of this study needs a known physical target, a stable mount, recorded focus setting, aperture and exposure, and repeated observations. Test both the center and corners of the image. A deviation from the thin-lens model could arise from lens design, focus motion, processing, calibration or measurement noise. The right conclusion is to report what the controlled model explains and where it ceases to predict the measured data.
+
 ## Your turn
 
 **Reconstruct.** Derive the image distance and signed magnification of a 50 mm lens observing an object 150 mm away.

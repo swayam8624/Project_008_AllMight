@@ -327,6 +327,22 @@ Increasing frame rate changes the displacement per frame for a fixed physical sp
 
 **Research exercise.** Generate an analytic moving stripe field, compare point samples, box-integrated samples, and a motion-compensated average using an exact displacement. Vary spatial frequency and speed independently. Record absolute error against a space-time integral, not merely the smoothness of a GIF. Introduce an occluding rectangle and measure the trail left by a history buffer that lacks rejection. This is a new controlled extension of P20; it is not an implemented temporal antialiasing system.
 
+### Guided workshop: predict the filter output before rendering
+
+Construct a periodic one-dimensional texture with eight linear-light texels alternating 0 and 1. Under repeat addressing, a nearest sample at texel centers returns exactly the alternating sequence. Consider a new grid that places one sample every two original texels. Depending on its phase, nearest sampling returns an array of all zeros or all ones. Neither result represents the average light over the full texture. This is aliasing: the original high-frequency variation becomes an erroneous constant.
+
+An exact two-texel box average returns 0.5 in every destination texel, independent of whether the two-texel group begins at a zero or a one. The separable three-tap filter from the previous section also returns 0.5 at all original sample centers under periodic addressing. Its clamp implementation differs at the first and last center: the boundary values are 0.25 and 0.75. That is expected from the declared extension policy and should not be confused with an incorrect interior filter.
+
+Encode a linear average of 0.5 using the standard sRGB transfer. The encoded result is about 0.73536. If the endpoints were first encoded and the encoded numbers then averaged, the result would be 0.5, which decodes to approximately 0.21404 in linear light. The difference is visible but the more important fact is quantitative: the second pipeline represents less than half the intended average light.
+
+Now extend the source into a two-dimensional 64 by 64 checkerboard. Its average linear color is (0.5,0.5,0.5) if black and white occupy equal area. Build a lower-resolution image by exact block integration, then construct a mip pyramid. For this particular periodic even-sized source, every level after the first contains a uniform 0.5. A block integration reference can be written directly from the formula, independently of the mip builder. For a less symmetric texture, use the actual number of contributing texels and record the boundary rule.
+
+Next apply the texture to the foreshortened triangle in Chapter 21. Compute the perspective-correct UV at the center and at small positive and negative horizontal and vertical offsets. Estimate both derivative columns by central differences and compare them to the quotient-rule derivative. The finite-difference offset must be small relative to the region where the same triangle and interpolation field apply. Do not cross an ownership boundary and interpret a discontinuous neighbor's value as the derivative of the original surface.
+
+For a known local Jacobian diag(8,1), synthesize a signal alternating along the major axis but varying slowly along the minor axis. Compare original point samples, an isotropic level-three sample and an explicitly integrated rectangular footprint. The isotropic method suppresses aliasing but also averages the slow axis over eight texels. A directional integration should preserve more of that slow variation. The conclusion is conditional on the synthetic footprint; a real perspective footprint may change orientation and scale across a pixel.
+
+Keep the analysis in linear values. Produce an error plot against reference integration and compare the encoded preview only at the end. Record sample counts per destination pixel, errors near boundaries, and runtime including mip construction if it belongs to the workload. These are new experiments built on the native P20 sampling reference, not measured results that the book has already obtained.
+
 ## Your turn
 
 **Reconstruct.** Explain why a point sample and a unit-box measurement differ for a narrow bright stripe.

@@ -357,6 +357,22 @@ The corresponding y derivative follows by exchanging x and y. This expression wi
 
 **Research exercise.** Construct a family of projected triangles with the same UV endpoints and decreasing screen height. Record the coverage count, maximum UV gradient and output from a simple point sampler. Then compare the image against an independently integrated reference. A triangle can have perfect coverage and still produce an aliased image. Do not present reduced raster work as improved image quality unless the sampling evidence supports that claim.
 
+### Guided workshop: compare an accelerated mask with an exact mask
+
+Start with a 16 by 16 image and use S=256 snapped units per pixel. A rectangular fixture consists of corners (0,0), (16,0), (16,16), (0,16), expressed in continuous pixel coordinates before snapping. Split it into A=(0,0), B=(16,0), C=(16,16) and a second triangle A,C,D=(0,16). Both have positive area in our Y-down convention. A sample center has coordinates (i+0.5,j+0.5), so exactly sixteen samples lie on the common diagonal.
+
+For the first triangle, the diagonal edge is C to A, which goes upward and therefore owns equality. Its interior consists of j<=i. For the second triangle the diagonal goes downward, excluding equality, so its interior is j>i. Count the first triangle row by row: row zero has sixteen samples, row one has fifteen, and row fifteen has one. The first mask therefore has 136 samples, the second 120. Their intersection is empty and their union has exactly 256 samples. This fixture catches an equality bug even when the final color image would look like a solid rectangle.
+
+Build two coverage paths. The reference iterates over the entire 16 by 16 grid and tests each of the three raw integer edge functions. The optimized teaching extension first classifies each 4 by 4 tile using the extrema derived above. It writes an all-zero mask for a guaranteed empty tile, an all-one mask for a full tile, and evaluates individual samples only in an uncertain tile. Compare the masks separately for each triangle before combining them. Testing only the combined rectangle could hide a wrong ownership convention.
+
+Use a second rectangle translated by half a pixel in both directions. The diagonal samples still share equality, but the external rectangle boundary now passes directly through some sample centers. The top-left policy includes samples on the top and left edges and excludes samples on the bottom and right. If the viewport clips any candidate indices, apply that clipping to the iteration bounds, not to the edge values themselves. A viewport boundary and a triangle edge are different constraints.
+
+For a third scene use a very thin triangle whose vertices snap onto a horizontal line. Its area determinant is zero after quantization, so the correct triangle mask is empty. The classifier derived earlier assumes valid triangle half-spaces; call it only after the winding and degeneracy checks. An accidental full-tile classification for a collapsed primitive would be a failure of the pipeline contract, not of the extrema identity.
+
+The accompanying checkout-side verification script tests 10,000 randomly generated small affine half-space tiles against exhaustive sample enumeration. That is deliberately a mathematical classifier test; it is broader than physically valid triangular half-spaces and does not measure renderer timing. Run the existing native P18 coverage executable for the original rasterization evidence. Combine the two only after you understand their separate claims.
+
+In your own implementation, keep an unsigned mask or a vector of byte values as the primary output. Compare all entries and print the first differing sample, including edge thresholds and raw values. Only after every mask agrees should you start recording work counters and elapsed time. A reasonable performance hypothesis is that the classifier saves work when projected triangle interiors cover many tiles; the small-triangle case is the counterexample to test rather than hide.
+
 ## Your turn: give the pixels an owner
 
 **Reconstruct.** Evaluate the edge from (2,2) to (6,2) at (4,3), (4,1) and (4,2). Explain the signs in Y-down coordinates.
