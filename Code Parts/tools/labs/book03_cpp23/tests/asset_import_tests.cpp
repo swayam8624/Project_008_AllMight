@@ -284,8 +284,14 @@ void gltf_bounds_stride_alignment_and_overflow_tests() {
             "index scalar UINT32 fits exact byte extent");
     rejects<std::out_of_range>(
         [&]{(void)check_gltf_layout(32,
-            GltfBufferView{16,32,0},GltfAccessor{});},
-        "view outside physical buffer rejected");
+            GltfBufferView{16,32,0},
+            GltfAccessor{GltfComponent::Float,GltfType::Vec3,0,1});},
+        "view outside physical buffer rejected with otherwise valid accessor");
+    // An independent invalid-count witness must not mask the bounds witness.
+    rejects<std::invalid_argument>(
+        [&]{(void)check_gltf_layout(64,
+            GltfBufferView{0,64,0},GltfAccessor{});},
+        "zero accessor count rejected even in a valid buffer view");
     rejects<std::out_of_range>(
         [&]{(void)check_gltf_layout(16,
             GltfBufferView{0,16,0},
