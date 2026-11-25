@@ -80,7 +80,12 @@ TEX = r"""
 \makeatletter
 \def\fps@figure{H}
 \makeatother
+\usepackage{adjustbox}
+\providecommand{\maxwidth}{\linewidth}
 \setkeys{Gin}{width=\maxwidth,height=.42\textheight,keepaspectratio}
+% Newer Pandoc templates additionally wrap figures in pandocbounded.
+\providecommand{\pandocbounded}[1]{#1}
+\renewcommand{\pandocbounded}[1]{\adjustbox{max width=\linewidth,max totalheight=.42\textheight}{#1}}
 \raggedbottom
 \setlength{\emergencystretch}{4em}
 """
@@ -367,14 +372,28 @@ def build(out, cover, author):
     if cover:
         epub.extend(["--epub-cover-image",str(cover.resolve())])
     e = run(epub,out,out/"epub-build.log")
-    pdf = run(["pandoc","-f","json","--pdf-engine=lualatex","--top-level-division=chapter",
-               "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex","--lua-filter=print-breaks.lua",
+    conversion = run(["pandoc","-f","json","-t","latex","--standalone","--top-level-division=chapter",
+               "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex",
+               "--lua-filter=print-breaks.lua",
                "-V","documentclass=book","-V","classoption=openany","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
                "-V","mainfont=TeX Gyre Pagella","-V","mathfont=TeX Gyre Pagella Math",
                "-V","monofont=DejaVu Sans Mono","--metadata","author="+author,
-               "reader-print.json","-o","Book03-From-Geometry-to-Images-PROOF.pdf"],
-              out,out/"pdf-build.log")
+               "reader-print.json","-o","reader-proof.tex"],
+              out,out/"pdf-conversion.log")
+    # Keep the real compiler logs; Pandoc's temporary PDF engine directory
+    # otherwise disappears before the output can be inspected.
+    passes = []
+    for number in range(1,4):
+        run(["lualatex","-interaction=nonstopmode","-halt-on-error","-file-line-error",
+             "reader-proof.tex"],out,out/f"pdf-pass-{number}.log")
+        log = (out/"reader-proof.log").read_text(encoding="utf-8",errors="replace")
+        passes.append(log)
+    final_log = passes[-1]
+    issues = [line for line in final_log.splitlines()
+              if re.search(r"Overfull \\[hv]box|Missing character:|undefined references",line,re.I)]
+    require(not issues,"Print preflight: unresolved layout/glyph/reference issues:\n"+"\n".join(issues[:30]))
+    (out/"reader-proof.pdf").rename(out/"Book03-From-Geometry-to-Images-PROOF.pdf")
     file = out/"Book03-From-Geometry-to-Images-PROOF.epub"
     with zipfile.ZipFile(file) as z:
         require(z.testzip() is None, "EPUB ZIP integrity")
@@ -393,7 +412,7 @@ def build(out, cover, author):
     print("Proof PDF and EPUB built. No promotion; formal EPUBCheck:",bool(check))
     proof = {"epub_sha256":digest(file),"pdf_sha256":digest(out/"Book03-From-Geometry-to-Images-PROOF.pdf"),
              "epubcheck_ran":bool(check),"epub_warnings":e.stderr.splitlines(),
-             "pdf_warnings":pdf.stderr.splitlines(),"cover_epub_only":bool(cover),
+             "pdf_warnings":conversion.stderr.splitlines(),"final_layout_issues":issues,"latex_passes":len(passes),"cover_epub_only":bool(cover),
              "accepted":False}
     (out/"build-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
 
