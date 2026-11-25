@@ -256,6 +256,77 @@ book03_sampling csv samples.csv
 
 Try adding a frequency near 4 cycles per pixel, changing the phase, or changing the number of midpoint locations. Compare against the analytic box, not only the previous approximate output.
 
+## Design a reconstruction filter instead of hoping for one
+
+A box average is a convenient start, not the unique answer. We would like a filter to preserve constants, attenuate frequencies that the target grid cannot represent, and avoid unnecessary artifacts at sharp edges. These goals compete: a narrow filter preserves more detail but may pass aliases; a broad filter suppresses aliases but blurs legitimate variation.
+
+For a one-dimensional signal f and a normalized kernel h, the reconstructed sample is the convolution
+
+\[
+g(x)=\int f(x-s)h(s)\,ds,\qquad \int h(s)\,ds=1.
+\]
+
+The second condition preserves a constant input exactly. A discrete filter replaces the integral by a weighted sum. A separable two-dimensional kernel has the form h(x,y)=h_x(x)h_y(y), so horizontal and vertical passes can replace a full rectangular two-dimensional convolution. This identity requires separability; an oriented ellipse generally cannot be represented by independent axis-aligned passes without additional transformations or approximation.
+
+The unit-width box has transform sinc(pi f) under cycles-per-unit frequency. Convolving the box with itself yields the triangle kernel h(x)=max(0,1-|x|), supported on [-1,1]. Its transform is the square of the box transform, because convolution in space becomes multiplication in frequency. It has a stronger roll-off away from zero but still does not implement an ideal cutoff. The ideal low-pass filter would have an infinitely supported oscillatory kernel. A finite implementation must make a compromise about support and ringing.
+
+**Worked example.** Let discrete samples be [0,0,1,0,0] and let the filter coefficients be [1/4,1/2,1/4]. With zero outside the array the resulting sequence is [0,1/4,1/2,1/4,0]. Its total remains one. Apply the same filter to a constant sequence of ones: the interior remains one, but the two ends become 0.75 under zero extension. Clamp or repeat would preserve the constant at the boundary. A boundary rule is part of the filter definition, not an incidental implementation detail.
+
+### A small C++23 separable filter
+
+The following example deliberately filters a one-dimensional linear signal. The two-dimensional separable case reuses it along rows and columns, with a temporary image between the two passes. Clamp-to-edge is explicit, and no encoded color conversion takes place inside this numerical function.
+
+~~~cpp
+#include <algorithm>
+#include <cstddef>
+#include <span>
+#include <vector>
+
+std::vector<double> smooth_linear(std::span<const double> src) {
+    std::vector<double> dst(src.size());
+    if (src.empty()) return dst;
+    for (std::size_t i = 0; i < src.size(); ++i) {
+        const auto left = i == 0 ? i : i - 1;
+        const auto right = std::min(i + 1, src.size() - 1);
+        // Normalized coefficients preserve constant linear signals.
+        dst[i] = .25 * src[left] + .50 * src[i] + .25 * src[right];
+    }
+    return dst;
+}
+~~~
+
+Test a constant, impulse, ramp and alternating zero-one sequence. The interior ramp should remain unchanged because the weights are symmetric. An alternating signal has frequency one-half cycle per sample and should become 0.5 at interior points. At the boundary, compare the actual values to the stated extension policy rather than asserting that the interior proof holds unchanged.
+
+## Choose a texture level from a projected footprint
+
+In Chapter 18 we derived the screen derivatives of a perspective-correct scalar f=N/H. Apply that calculation twice, once for u and once for v, and multiply the rows by the texture width and height to obtain a Jacobian in texels per screen pixel:
+
+\[
+J=\begin{bmatrix}W u_x&W u_y\\H_t v_x&H_t v_y\end{bmatrix}.
+\]
+
+Here H_t denotes the texture height, not the perspective interpolation denominator. The first column says how far the texture address moves for a one-pixel horizontal displacement; the second describes a vertical displacement. The largest singular value is the maximum local stretch of a unit direction. If that value is eight, one screen pixel can span roughly eight texels in some direction, so sampling the original texture at only its center risks aliasing.
+
+A simple isotropic mip policy uses L=log2(max(1,rho)), with rho an estimate of the largest stretch. Clamp the resulting level to the available pyramid. This policy is based on a local linear approximation and a nominal texel-footprint scale. Hardware or application-specific conventions may choose a different estimate or apply a bias.
+
+For a 1024-by-512 image with u_x=1/128, v_y=1/512 and the other derivatives zero, J=diag(8,1). The major stretch is 8, the minor 1, and the nominal isotropic level is 3. A level-3 texture has one sample for roughly eight original texels in each dimension. That matches the long direction but unnecessarily blurs the short one. A directional filter can instead integrate along the major axis while using a narrower scale in the minor direction. A fixed number of taps caps the achievable anisotropy; it does not make the exact footprint disappear.
+
+### Pyramid construction and odd dimensions
+
+A mip pyramid is a sequence of lower-resolution signals. For even dimensions, a simple 2-by-2 box filter followed by decimation halves each dimension. The number of stored texels across an ideal square pyramid approaches 4/3 of the base level: the infinite sum is 1+1/4+1/16 and so on. A 1024² image has 1,398,101 texels including all eleven levels down to 1². At four bytes per texel that is about 5.33 MiB before alignment or compression.
+
+Odd dimensions need care. If a three-sample signal [0,0,1] is reduced to a single sample by averaging only its first two samples, the final result is zero. The mean over the original domain is one third. A resampling policy that represents the full domain should account for the third sample; another policy may intentionally discard or extend a boundary, but it must say so.
+
+For color, calculate these averages in an appropriate linear-light representation. For normal maps, a weighted average of vectors need not be unit length and may even be near zero; renormalization and variance-aware shading are separate modeling decisions. For integer IDs, a mean is not a meaningful identity. Choosing a mip representation is a question about what the stored signal means.
+
+## The image changes over time too
+
+The fence that looked static can flicker when the camera moves by a fraction of a pixel. This is temporal sampling. If a periodic texture has spatial frequency f cycles per pixel and moves at v pixels per frame, the apparent temporal frequency at a fixed sample is f v cycles per frame. A 0.4-cycle-per-pixel pattern moving two pixels per frame produces 0.8 cycles per frame, which sampled at one frame per interval aliases to -0.2 cycles per frame. The pattern appears to move in the opposite direction.
+
+Increasing frame rate changes the displacement per frame for a fixed physical speed. Spatial prefiltering can reduce the troublesome frequencies before temporal sampling. A temporal accumulation scheme may use several jittered spatial samples and a motion estimate to combine frames, but moving occluders can invalidate old observations. The old color at a reprojected address may belong to a different surface. Good temporal filtering therefore needs a visibility and confidence policy, not just an average.
+
+**Research exercise.** Generate an analytic moving stripe field, compare point samples, box-integrated samples, and a motion-compensated average using an exact displacement. Vary spatial frequency and speed independently. Record absolute error against a space-time integral, not merely the smoothness of a GIF. Introduce an occluding rectangle and measure the trail left by a history buffer that lacks rejection. This is a new controlled extension of P20; it is not an implemented temporal antialiasing system.
+
 ## Your turn
 
 **Reconstruct.** Explain why a point sample and a unit-box measurement differ for a narrow bright stripe.

@@ -183,6 +183,68 @@ The first command and the backend suite passed local GCC 14.2.0 C++23 execution 
 
 A useful next experiment is to reverse draw submission order for non-tied surfaces, compare full images, introduce an outside triangle and check its surviving clipped mask, and compare different model poses. Each test should state exactly which stage it exercises.
 
+## Trace one triangle through the entire machine
+
+The most useful debugging tool for a first renderer is a single triangle with a complete answer key. Before testing a house or a large asset, construct a fixture whose intermediate values can be calculated by hand. For clarity, choose the calibrated optical frame with +Z forward and a 200 by 100 image. Set f_x=f_y=100 pixels, c_x=100, c_y=50, and let the world and camera frames coincide. The three world vertices are A=(-1,-0.5,2), B=(1,-0.5,2) and C=(0,1,4), with UV coordinates (0,0), (1,0) and (0.5,1).
+
+The optical projection gives screen coordinates A=(50,25), B=(150,25), C=(100,75). These are continuous image-edge coordinates, not integer pixel indices. A reference sample center at (100.5,50.5) has barycentric weights 0.24, 0.25, 0.51. To obtain them, the vertical position determines the weight of C: (50.5-25)/50=0.51. The horizontal displacement from x=100 is 0.5, so the weight of B exceeds that of A by 0.01. Their sum must be 0.49.
+
+Using clip w proportional to axial depth, the reciprocal denominator is 0.24/2+0.25/2+0.51/4=0.3725. The perspective-correct u numerator is 0.25/2+0.51*0.5/4=0.18875. The v numerator is 0.51/4=0.1275. The actual UV is therefore about (0.506711,0.342282). Ordinary screen interpolation would yield (0.505,0.51). The large error in v is not a sampling problem; it happens before the texture is even accessed.
+
+Take n=1 and f=10 in forward depth. The depth values at A and B are 5/9 and at C are 5/6. The screen-linear sample depth is
+
+\[
+q=0.49(5/9)+0.51(5/6)=0.697222\ldots.
+\]
+
+Inverting the depth map gives d=1/0.3725, approximately 2.68456 metres. It agrees with the perspective-correct axial depth. If an implementation divides interpolated NDC depth by reciprocal w a second time, this invariant will fail immediately.
+
+We can now put a known opaque red sample at q=0.65 and a green sample at q=0.75. The red wins against the test triangle, and the green loses. Repeat the experiment with reversed q, remembering to reverse the comparison and clear policy. Finally, use the encoder to predict the actual byte for a linear value 0.25: under sRGB transfer it is about 0.5371, or 137 with nearest 8-bit rounding. The final pixel can be checked without running the renderer at all.
+
+### Make the witness a trace rather than a screenshot
+
+For a single sample, emit a row containing the triangle ID, clipped primitive ID, screen sample center, raw edge values, area, three barycentric coordinates, reciprocal-w sum, UV, candidate depth, previous stored depth, comparison result, linear color and encoded bytes. Such a record may be too large to retain for an entire scene, but it is excellent for a controlled fixture. A discrepancy can be localized to its first wrong stage.
+
+In an actual implementation, give each stage a small, explicit type. One possible teaching interface is:
+
+~~~cpp
+struct PixelTrace {
+    unsigned surface_id;
+    int column, row;
+    double weight_a, weight_b, weight_c;
+    double reciprocal_w;
+    double u, v;
+    double candidate_depth, previous_depth;
+    bool accepted;
+};
+~~~
+
+This is a proposed diagnostic record rather than a new API promised by P21. A production trace would also carry numeric mode, frame identity, input asset identity and error status. Record the trace only for selected samples; otherwise the debugging instrumentation may dominate the entire render. Never compare an instrumented slow build against an uninstrumented optimized build and call the difference an algorithmic speedup.
+
+## A small scene is a better specification than a large screenshot
+
+Build a renderer verification suite out of scenes that each isolate one failure. A rectangle split into two triangles checks shared-edge ownership. A triangle crossing the near plane checks clipping and newly generated varying values. Two sloping, intersecting triangles check per-sample visibility. A texture projected onto a foreshortened plane checks perspective interpolation. A constant linear-gray image checks the encoder. A repeated asset with two transforms checks instance identity. A rejected malformed mesh checks input validation.
+
+Each scene needs more than a visual expected result. The rectangle can have exact sample counts. The near-plane case can check that every emitted vertex satisfies every clipping constraint and that generated attributes agree along the shared segment. The texture case can compare selected UVs against a rational hand calculation. The visibility case can check a per-pixel surface-ID image. The malformed mesh can check a specific diagnostic and confirm that the old scene remains intact.
+
+A comparison image is most useful when its residual has units. Pixel channel differences can be measured in linear light or encoded bytes, but those errors are not equivalent. An ID image should compare integer ownership rather than RGB colors. A depth image should compare the stored representation and, where valid, the inverse axial depth separately. Report the number of compared pixels, invalid pixels and maximum discrepancy, not only a single mean.
+
+### Scale the experiment without changing the question
+
+After all small witnesses pass, build a workload matrix. Vary image size, triangle count, fraction clipped, mean projected area, overdraw, material complexity and the locality of asset access independently where feasible. A renderer that handles millions of tiny triangles efficiently may behave differently when a few triangles cover the entire screen. A higher-resolution image may increase sample work without increasing vertex work.
+
+Suppose workload A has 10,000 triangles each covering roughly four samples, while workload B has 100 triangles each covering 40,000 samples. Before overlap or clipping, A has about 40,000 candidate samples and B about four million. Triangle count predicts the wrong ordering of pixel work. Conversely, scene B might have expensive memory traffic despite its small vertex count. Record submitted primitives, surviving primitives, candidate samples, accepted samples, rejected fragments and output bytes. Then use the measurements to explain the runtime rather than trying to explain everything with one count.
+
+A simple timing harness should separate asset loading, frame preparation, rendering and file output. Decide which boundary is relevant to the claim. Repeat several frames after a warm-up; preserve individual timings. Report both the median and the distribution. If the optimized implementation is permitted to reuse prepared assets across frames, the reference implementation should have the same opportunity unless preparation cost is exactly what the study intends to measure.
+
+## What changes when this becomes a GPU renderer?
+
+The sequence of contracts survives: indexed vertex data, vertex processing, primitive clipping, coverage, interpolation, depth and color. The mechanism changes. A GPU can schedule many independent shader invocations, may process work in hardware-specific groups, and can use dedicated fixed-function operations. The order of individual operations need not match the CPU's traversal.
+
+The CPU renderer is valuable precisely because its small, controlled cases provide an independent reference. To compare a GPU port, define the same coordinate conventions, depth range, sample locations, winding policy, interpolation and color encoding. Where the API specifies a different raster precision or sample pattern, account for that explicitly. Require exact agreement for cases where the contracts coincide, and a declared tolerance or region-based comparison where they do not.
+
+**Research exercise.** Pick the single triangle above and a second scene with a shared edge. Implement a future graphics-API adapter that exports linear color, depth and surface IDs. Compare its outputs to the software reference. Report which discrepancies are due to different declared API conventions and which reveal implementation bugs. Do not expand a tolerance simply until the images pass. Chapter 21's validated native renderer is a CPU reference; the hardware adapter and timing study remain extension work for a later volume.
+
 ## Your turn: connect the contracts
 
 **Reconstruct.** List the vertex, clip, coverage, interpolation and depth stages in order. Which of them must retain w?

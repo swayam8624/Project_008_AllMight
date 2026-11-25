@@ -291,6 +291,65 @@ book03_visibility ppm winners.ppm
 
 Both the standalone test executable and studio compiled and ran under GCC 14.2.0 with undefined-behavior sanitization. The exact Git blob identities of the coverage dependency and three new sources were verified. The full cumulative CMake build and integration with earlier clipping and projection stages remain separate acceptance gates.
 
+## The depth notebook can answer questions about a whole region
+
+A depth buffer is normally described as one value per sample. But imagine dividing the image into squares and summarizing each square by its farthest stored opaque depth. In forward depth, smaller means nearer. If a new object is guaranteed farther than every stored winner in a region, we can reject its contribution to that region without testing individual pixels.
+
+Let the stored depths in a tile be z_i and the candidate depths at its covered samples be c_i. For strict less-than acceptance, a sufficient rejection condition is
+
+\[
+\min_i c_i \ge \max_i z_i.
+\]
+
+The candidate lower bound can be computed over an enclosing tile or screen rectangle, even if the candidate covers only a portion of it. A lower bound may be looser than the actual minimum; that only makes the test more conservative. An upper bound on the maximum stored depth is also safe. If an uncovered location still contains the far clear value, that value participates in the maximum, so it prevents an unjustified rejection.
+
+Under reversed depth, larger means nearer. A sufficient rejection condition becomes max candidate depth <= min stored depth. Both statements presume strict comparison. If an equal-depth candidate may win using a stable ID, use a strict separation for an ID-independent rejection.
+
+**Worked example.** A forward-depth tile contains 0.2, 0.3, 0.4 and 0.7. A candidate has a lower bound 0.8. Every sample is already nearer, so the candidate cannot win. With lower bound 0.5, the tile is inconclusive: it may win against the 0.7 sample. Averaging the stored values gives 0.4 and would falsely reject the second candidate. An average is not a conservative depth bound.
+
+A hierarchy can combine each group of four child summaries with the same max or min operation. It is important to define whether the hierarchy summarizes all samples, only opaque samples, or a separate conservative representation. An optimization that treats an unknown tile as covered is unsafe. When a write changes a child, the parent can be recomputed, or updated using a bound that remains conservative until a later refresh. In a parallel renderer the update must also respect the lifetime of the frame and the synchronization contract.
+
+The P19 implementation remains the per-sample reference. A hierarchical Z-buffer is an extension exercise, and is not measured by the original visibility benchmark.
+
+### Clip-space interpolation makes the bound possible
+
+A triangle's divided depth is affine on the screen inside the projected triangle. Its gradient can be recovered using Chapter 18's edge functions. If we evaluate the affine field at the four corners of a rectangular tile, we obtain extrema over that rectangle. The triangle need not cover all four corners. The extrema may lie outside the actual covered portion, but they enclose every value inside it. Use outward rounding or a documented numerical error bound before using such extrema as a rejection oracle.
+
+For example, let q=0.4+0.02x-0.01y for pixel coordinates in a tile covering x=0 through 7 and y=0 through 7. Its range is [0.33,0.54]. If a forward tile's maximum stored depth is 0.32, this triangle cannot win. If the maximum is 0.35, it may win. A rounded lower bound of 0.34 would be unsafe if the true minimum were 0.33 and the stored bound were 0.335. The guarantee concerns numerical values, not just the ideal formula.
+
+## Why depth precision changes across the picture
+
+A depth buffer does not normally store metres. With near n and far f, forward perspective depth can be written as
+
+\[
+q(d)=\frac{f}{f-n}-\frac{fn}{(f-n)d}.
+\]
+
+Write B=fn/(f-n). Its derivative is B/d², so a small representable depth interval of size delta_q corresponds approximately to a physical axial interval delta_d=d² delta_q/B. This first-order estimate applies locally, away from the singularity and within the valid depth interval. It explains why the same integer depth-buffer step becomes a larger physical distance at the far end.
+
+Consider n=0.1 m and f=1000 m, with a 24-bit uniformly quantized depth. The step is approximately 1/(2^24-1). At d=1 m the local interval is about 0.000000596 m; at d=100 m it is about 0.00596 m. A factor of one hundred in distance has produced about ten thousand times the interval. These are local estimates, not measurements of the precise neighboring representable depths. Two surfaces closer than that interval can occasionally quantize differently, and two surfaces sufficiently close can quantize identically depending on their position relative to the rounding boundary.
+
+Changing near to 1 m makes B about ten times larger, increasing depth discrimination at a given distance still inside the new frustum. It also clips everything between the camera and the new near plane. A numerical improvement changes the scene contract if it removes valid geometry.
+
+Reversed depth with an integer-uniform format has the same spacing in q as forward depth under complementary exact values. Its principal practical precision advantage comes when floating-point depth spacing is nonuniform. With an infinite far plane and reversed depth q=n/d, the relative spacing of ordinary normalized binary floats is approximately constant within each exponent bin. Differentiating d=n/q gives a physical interval approximately proportional to d instead of d² in the region where floating-point relative spacing applies. Subnormal values, the far clear value, arithmetic rounding and actual API conventions still need separate consideration.
+
+**Try it.** Use the two depth functions for the same d and measure the neighboring representable binary32 value using the standard library's nextafter operation. Invert each stored depth to axial distance. Report the absolute and relative spacing at several logarithmically spaced distances. Do not compare raw spacing in q between two conventions and conclude that the physical depths are more accurate. That would compare the notebook's handwriting rather than the world.
+
+## Opaque visibility is different from transparency
+
+An opaque record stores a single winner; a transparent sample may contain light from more than one surface. In the simplest linear-light source-over model, premultiplied color C and opacity alpha compose as
+
+\[
+C_o=C_s+(1-\alpha_s)C_d,\qquad
+\alpha_o=\alpha_s+(1-\alpha_s)\alpha_d.
+\]
+
+For an opaque black background, red with alpha 0.5 in front of blue with alpha 0.5 yields (0.5,0,0.25). Reverse their order and the result becomes (0.25,0,0.5). Both orders have the same combined opacity if the background is transparent, but the color changes. Consequently ordinary opaque order-independence cannot be transferred to alpha blending.
+
+Depth testing remains useful for rejecting transparent fragments behind known opaque surfaces. Writing every transparent fragment into the opaque depth buffer, however, can incorrectly hide another transparent layer. Sorting entire triangles by a single depth also fails for crossing polygons. Per-pixel sorting, depth peeling and approximate order-independent methods have different memory, latency and accuracy trade-offs. The important lesson here is the contract, rather than a promise that a particular blending algorithm solves all light transport.
+
+**Research exercise.** Render two crossing semitransparent triangles with distinct colors, using three policies: submission order, primitive-center sorting, and per-sample depth sorting. Use an exact ordered reference for the simplified source-over model. Record per-sample error, fragment count and memory. Repeat with alpha one to recover the opaque case. This experiment belongs to a new transparent extension, not the original native opaque renderer.
+
 ## Your turn: choose the visible surface
 
 **Reconstruct.** Three opaque fragments arrive at one sample with forward depths 0.7,0.2,0.4. Which wins? Reverse their submission order. What changes?

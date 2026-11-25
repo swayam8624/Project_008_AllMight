@@ -274,6 +274,89 @@ The standalone coverage suite includes three analytic rectangle masks (both diag
 
 The exact committed coverage header and test source were reproduced byte-for-byte in a local compiler environment; their Git blob hashes were checked before a C++23 run with undefined-behavior sanitization. That isolated suite passed. This does not establish a passing cumulative build or execution of the studio, which also depends on earlier libraries.
 
+## From individual samples to blocks of the image
+
+Imagine our dragon is now enormous. Its wing covers half the window, while its little claws cover only a few pixels. The rules we already derived tell us which samples belong to each triangle, but they do not tell us how to avoid testing the same kind of thing thousands of times. The next improvement is to notice that an edge equation is affine in screen coordinates.
+
+For an edge with snapped endpoints A and B, write its coefficients as a=A_y-B_y, b=B_x-A_x and c=A_x B_y-B_x A_y. Then E(x,y)=ax+by+c. A tile is a rectangle of **sample centers**, rather than a rectangle of continuous pixel borders. In a tile of W by H pixels, the last sample is displaced from the first by S(W-1), S(H-1), where S is the subpixel scale.
+
+At the first sample let the raw edge value be e. Define dx=a S(W-1) and dy=b S(H-1). The exact extrema over this rectangular sample set are
+
+\[
+E_{\min}=e+\min(0,dx)+\min(0,dy),\qquad
+E_{\max}=e+\max(0,dx)+\max(0,dy).
+\]
+
+The proof is simply that x and y vary independently, so a linear function of x is minimized at one endpoint and a linear function of y at another. A constant term does not change the location of either extremum. This is the same support-function idea we used for frustum tests, applied to a discrete image region.
+
+For an edge that excludes equality, the smallest allowed integer edge value is one; otherwise it is zero. Call this threshold t. A triangle is guaranteed to miss the entire tile if any edge has maximum below its own threshold. A tile is guaranteed fully covered if every edge has minimum at or above its own threshold. Everything else must be inspected more carefully. Notice the asymmetry: different edges could exclude different subsets of samples and together leave no covered samples, even though no single edge rejects the complete tile. The inconclusive result is a conservative classification, not a promise of partial coverage.
+
+**Worked example.** Use one unit of subpixel scale for a small illustrative grid. Let an edge be E=3x-2y+4 on sample coordinates x=2,3,4 and y=1,2,3. The initial value is 8. The two extents are 6 and -4. The minimum is 4 and the maximum is 14. All nine samples satisfy either equality policy. Now subtract 15 from the constant: the maximum becomes -1, so every sample fails. Subtract only 8 instead: the range becomes [-4,6], which requires further classification.
+
+This is how the first level of a hierarchical rasterizer can make a decision without shading anything. It also makes rectangular rejection amenable to SIMD and parallel scheduling. Neither speed nor accuracy is established merely by reducing the number of edge evaluations; we have to compare actual coverage masks and work.
+
+### A conservative tile classifier you can implement
+
+This C++23 fragment is a bounded extension exercise, separate from the existing P18 native implementation. Its inputs are integer raw edge values, increments in one-pixel steps, the dimensions of a nonempty tile and the threshold. The caller must first certify that every intermediate product and sum fits signed 64-bit arithmetic. An easy way to do that is to constrain both geometry and tile size much more tightly than the general rasterizer.
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <cstdint>
+
+enum class TileClass { empty, full, uncertain };
+
+struct EdgeTile {
+    std::int64_t first;  // Raw E at the first sample centre.
+    std::int64_t step_x;
+    std::int64_t step_y;
+    std::int64_t threshold; // 0 for inclusive, 1 for exclusive.
+};
+
+TileClass classify(std::array<EdgeTile, 3> edges,
+                   int width, int height) {
+    if (width <= 0 || height <= 0) return TileClass::empty;
+    bool all_inside = true;
+    for (const auto& edge : edges) {
+        const auto dx = edge.step_x * (width - 1);
+        const auto dy = edge.step_y * (height - 1);
+        const auto lo = edge.first + std::min(dx, std::int64_t{0})
+                                  + std::min(dy, std::int64_t{0});
+        const auto hi = edge.first + std::max(dx, std::int64_t{0})
+                                  + std::max(dy, std::int64_t{0});
+        if (hi < edge.threshold) return TileClass::empty;
+        all_inside &= lo >= edge.threshold;
+    }
+    return all_inside ? TileClass::full : TileClass::uncertain;
+}
+~~~
+
+The code deliberately keeps the threshold separate from the raw equation. If we subtract one from the edge for coverage and accidentally use the biased value for interpolation, the attribute field changes near an excluded boundary. The full-tile shortcut may skip some coverage tests, but interpolation must still use the genuine raw edge values.
+
+### Test the shortcut against the original definition
+
+Build a reference routine which enumerates every sample and returns a bit mask for each tile. Compare it with a hierarchical version at tile widths 1, 2, 4, 8 and 16. Generate triangles that are entirely outside the screen, very large, thin, snapped to a segment, and crossing a tile corner. Include triangles sharing the same diagonal and vary their submission order.
+
+For every triangle, report false full and false empty counts separately. Both must be zero. An uncertain tile may contain any number of covered samples, including none. The mask generated by evaluating uncertain tiles must match the reference exactly. A speed comparison should report the number of edge tests, the number of full and empty tiles and total runtime, including tile setup. A small triangle may make a hierarchical implementation slower, because it pays a setup cost to save almost no work.
+
+## A small triangle can have a large attribute gradient
+
+Barycentric coordinates are affine functions of screen position before perspective correction. For example, the weight of A is E_BC/D, where D is the positive snapped area determinant. Therefore the derivative in the horizontal direction is a_BC/D in subpixel coordinates, and S a_BC/D per pixel. The vertical derivative follows similarly.
+
+For a screen-linear scalar f, the gradient is the weighted sum of the gradients of the three barycentric coordinates. Take a triangle at (0,0), (4,0), (0,2) in pixel units, with f values 0, 8 and 6. Then the affine field is f=2x+3y. At (1,0.5), f=3.5. Moving one pixel right changes f by 2 regardless of the starting point. The raw edge values and the plane coefficients encode the same information.
+
+If we shrink the triangle's height to 0.02 while leaving the endpoint attributes unchanged, the vertical derivative becomes 300. A small image-space movement can produce a large attribute change. This is one reason narrow triangles, high-frequency textures and minification deserve care even when coverage is correct.
+
+For a perspective-correct attribute, form two screen-linear fields N and H for the numerator and denominator, with f=N/H. The derivative is
+
+\[
+\frac{\partial f}{\partial x}=\frac{H N_x-N H_x}{H^2}.
+\]
+
+The corresponding y derivative follows by exchanging x and y. This expression will return in Chapter 20 when we calculate a texture footprint. It also explains why taking derivatives of raw UVs while using perspective-correct shading leads to inconsistent filter choices.
+
+**Research exercise.** Construct a family of projected triangles with the same UV endpoints and decreasing screen height. Record the coverage count, maximum UV gradient and output from a simple point sampler. Then compare the image against an independently integrated reference. A triangle can have perfect coverage and still produce an aliased image. Do not present reduced raster work as improved image quality unless the sampling evidence supports that claim.
+
 ## Your turn: give the pixels an owner
 
 **Reconstruct.** Evaluate the edge from (2,2) to (6,2) at (4,3), (4,1) and (4,2). Explain the signs in Y-down coordinates.

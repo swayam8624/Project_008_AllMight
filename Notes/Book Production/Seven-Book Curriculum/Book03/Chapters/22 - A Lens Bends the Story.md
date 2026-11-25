@@ -259,6 +259,81 @@ book03_lens csv lens.csv
 
 The CSV columns give aperture, object distance, geometric blur, ray-measured diameter, pixel-interval diameter at 4 micrometre pitch and the diffraction comparison scale. It is a controlled mathematical experiment, not optical bench data, a photographed image or a full spectral ray tracer.
 
+## A lens has a useful geometric approximation and a physical limit
+
+When we turn the focus ring, it can be tempting to imagine that a different camera matrix has simply made the picture sharp. In the thin-lens model, however, the point at which the ray bundle converges moves relative to the sensor. Focus is a relationship among the focal length, the object distance and the sensor position. The intrinsics used to describe image coordinates must agree with the actual imaging configuration.
+
+Let an ideal positive lens of focal length f image an object plane at distance s>f, with sensor distance v=f s/(s-f). The magnitude of lateral magnification is m=v/s=f/(s-f). For f=50 mm and s=1000 mm, v is about 52.6316 mm and m about 0.0526316. A 100 mm wide object in that plane occupies about 5.263 mm on the sensor. With a 5 micrometre pixel pitch, that width is approximately 1053 pixels.
+
+A focal length of 50 mm does not mean the sensor is always exactly 50 mm behind the lens. At infinity the ideal image distance tends to f; at close range it grows. In a physical lens with moving groups, effective focal length and principal-plane locations may also change with focus. A thin-lens model is a useful local approximation, not a complete mechanical description.
+
+### How a small focus error becomes blur
+
+Differentiate the lens relation with respect to object distance:
+
+\[
+\frac{dv}{ds}=-\frac{f^2}{(s-f)^2}.
+\]
+
+At s=1000 mm with f=50 mm, the derivative is about -0.00277008. Moving the object farther by 10 mm shifts the ideal image plane toward the lens by approximately 0.0277 mm. The exact finite difference is a little smaller because the derivative changes along the interval. At s=200 mm, the derivative magnitude is 0.1111, approximately forty times greater. Close-range focus becomes more sensitive to object distance.
+
+Take a lens aperture diameter A=f/N, with N=4 giving A=12.5 mm. If the sensor remains at the former image distance v_0 while a new object distance produces image distance v, a geometric cone gives blur diameter
+
+\[
+c=A\left|1-\frac{v_0}{v}\right|.
+\]
+
+This assumes a circular aperture in the lens plane and a paraxial thin lens. Using the example with s=1000 mm initially and s=1010 mm after motion gives v_0=52.6316 mm and v about 52.6042 mm. The blur diameter is roughly 0.00651 mm, or 1.30 pixels at a 5 micrometre pitch. It is the diameter of the ideal geometric circle on the sensor, not the RMS of a Gaussian and not an Airy-disk radius.
+
+Now choose an acceptable blur diameter of 0.010 mm. The aperture fraction is c/A=0.0008. From the above equation, allowable image distances lie in the interval v_0/(1+c/A) to v_0/(1-c/A) if the upper denominator is positive. Invert each boundary with s=fv/(v-f), keeping only physical image distances v>f for finite real objects. For the numerical fixture the acceptable object range is roughly 985 mm to 1015 mm. The near and far intervals need not be symmetric in object space. A fixed blur threshold defines an engineering tolerance, not an absolute boundary of human perception.
+
+## A camera records a spread, not a perfect point
+
+A point-spread function describes the spatial distribution produced by an idealized point source. In a linear, shift-invariant imaging model, an extended scene image is the convolution of its ideal irradiance field with this response. Normalizing the response preserves total collected energy in the modeled region, provided the boundary does not discard energy. Shift invariance is an approximation: real lenses can have different blur near the image corners, different wavelengths, and different depth planes.
+
+For a simplified one-dimensional blur model, use two equal rays that arrive at offsets -a and +a from the ideal image location. A sinusoidal irradiance input cos(2 pi f_s x) becomes
+
+\[
+\frac12\cos(2\pi f_s(x-a))+\frac12\cos(2\pi f_s(x+a))
+=\cos(2\pi f_s x)\cos(2\pi f_s a).
+\]
+
+The spatial frequency is unchanged but its contrast is multiplied by the cosine factor. At f_s a=1/4, the response is zero. Our two-ray model has invented a filter with complete cancellation at that frequency. A uniform disk or diffraction response has a different transfer function; the example teaches the idea rather than predicting a real lens.
+
+The modulation transfer function is the magnitude of the normalized frequency response. Two lenses with the same geometric circle of confusion need not have the same MTF because aberrations and diffraction can distribute energy differently. The sensor pixel aperture and reconstruction also filter the signal. If each stage is approximately linear and shift-invariant, their transfer functions multiply. A zero in any one stage cannot be recovered merely by sharpening later, without extra prior information.
+
+### Aperture samples should represent area
+
+Suppose we build a simple defocus renderer by sampling locations in a circular lens aperture of radius R. Choose independent uniform numbers U and V in [0,1). If we set r=RU and theta=2 pi V, the radial density is uniform in r, not in aperture area. The central region receives too many samples. The area enclosed within radius r is pi r², so the uniform-area cumulative distribution is r²/R². Inverting it gives r=R sqrt(U).
+
+In the paraxial model, we first identify the image point that would be in focus at the chosen focus plane, then construct a ray from the sampled aperture location toward the corresponding object-side point. More generally, each sample needs to be transported through the actual optical model. The ray weights depend on the sampling density, radiometry and lens transmission. In the simplest uniform-aperture average, constant input is preserved; to estimate collected flux we also account for aperture area.
+
+A useful standalone sampling fixture is:
+
+~~~cpp
+#include <cmath>
+#include <numbers>
+#include <utility>
+
+// u and v must lie in [0,1); radius is a physical lens radius.
+std::pair<double, double> aperture_point(
+    double radius, double u, double v) {
+    const double r = radius * std::sqrt(u);
+    const double theta = 2.0 * std::numbers::pi_v<double> * v;
+    return {r * std::cos(theta), r * std::sin(theta)};
+}
+~~~
+
+For a uniform disk, the expected squared radius is R²/2, derived by integrating r² against radial density 2r/R². The incorrect r=RU policy gives R²/3. Test that moment, that all points lie in the disk, and that the mean horizontal and vertical coordinates approach zero. These are distribution checks, not a complete optical validation. Use fixed seeds and increasing sample counts to separate deterministic geometry errors from Monte Carlo variation.
+
+## Measure a real lens without confusing the measurement with the model
+
+A practical optical experiment might photograph a known high-contrast edge or a fine target at several focus distances, apertures and positions in the field. Work with a linear image if possible, and record the raw exposure settings and processing pipeline. A slanted edge gives different subpixel phases along the edge; averaging these profiles can estimate an edge-spread function. Differentiation gives a line-spread response, from which a frequency response can be estimated. Differentiation amplifies noise, so smoothing and finite-window policies must be disclosed.
+
+Use the same target and sensor sampling for each comparison. Keep the exposure within the linear unsaturated range; changing aperture may require a compensating exposure time, which can change motion blur. Repeat measurements, report their variation, and separate the effect of digital sharpening from the lens itself.
+
+**Research exercise.** Compare the ideal geometric defocus model with a measured center-field edge response at three apertures. Fit a blur parameter using one target, then test a different target at the same distance. Repeat near an image corner. Record when the simple shift-invariant model becomes inadequate. P22's native simulator implements the geometric thin-lens reference, not a calibrated diffraction or aberration solver; this experiment establishes what a more complete model would need to explain.
+
 ## Your turn
 
 **Reconstruct.** Derive the image distance and signed magnification of a 50 mm lens observing an object 150 mm away.
