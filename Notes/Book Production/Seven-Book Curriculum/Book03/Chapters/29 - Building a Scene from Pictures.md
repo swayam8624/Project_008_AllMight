@@ -234,6 +234,75 @@ book03_sfm reconstruction.csv
 
 The CSV records noise level, trial, initial and refined pixel RMS per observation and initial and refined 3D RMS per landmark. Report their units separately. The native code assumes finite, proper rigid poses and common valid upper-triangular intrinsics from the caller. Its bounded numerical solvers are not general arbitrary-input geometry libraries.
 
+## A landmark is a parameterization choice
+
+So far we have represented each landmark by a world point X. That is natural when a point is well constrained in a common metric frame. But a feature near the horizon may have almost no reliable depth. Storing an enormous Euclidean coordinate can be inconvenient and can amplify numerical differences in an optimizer.
+
+Consider anchoring a landmark to its first observing camera, with center C and unit world direction d. Define inverse ray range rho=1/r. The world point is X=C+d/rho for positive rho. In another calibrated camera, write the optical coordinate as R(X-C_j), where C_j is that camera's center. Substitute the parameterization and multiply the homogeneous optical direction by rho:
+
+\[
+\widetilde Y=R[d+\rho(C-C_j)].
+\]
+
+As rho approaches zero, the projection tends to that of the direction R d. A point at infinity is represented as a limiting direction without constructing an enormous Euclidean position. This projective expression is useful for bearing-only observations, although physical cheirality and the zero-inverse-depth limit need an explicit interpretation. If a landmark's anchor direction is also uncertain, optimize suitable direction parameters rather than pretending it was measured perfectly.
+
+**Worked example.** In rectified stereo with focal length 800 and baseline 0.1 m, inverse axial depth eta=1/Z gives disparity d=80 eta. A disparity observation of 0.5 pixels corresponds to eta=0.00625 inverse metres and nominal Z=160 m. An independent disparity standard deviation of 0.25 pixels corresponds to eta standard deviation 0.003125 inverse metres. The linear inverse-depth interval extends toward zero much more naturally than a symmetric Euclidean depth interval. Converting to Z still creates a skewed and potentially unbounded uncertainty range. Inverse depth improves the parameterization; it does not add information to a small-baseline observation.
+
+## Derive the weighted triangulation system
+
+The point-only ray-intersection method minimizes squared perpendicular distances to viewing rays. For unit directions d_i and camera centers C_i, define Q_i=I-d_i d_i^T. If each ray carries a positive scalar confidence w_i, consider
+
+\[
+E(X)=\sum_i w_i\|Q_i(X-C_i)\|^2.
+\]
+
+Because Q_i is symmetric and idempotent, differentiating gives
+
+\[
+\left(\sum_i w_i Q_i\right)X=\sum_i w_i Q_i C_i.
+\]
+
+The normal matrix has a clear geometric meaning: a displacement along a ray contributes no perpendicular error for that ray. If all rays are parallel, their common direction remains a null direction regardless of how large their weights are. If the directions are almost parallel, the smallest eigenvalue is small.
+
+Let two unit rays make an angle theta. With equal weights, the eigenvalues of Q_1+Q_2 are 2, 1+cos(theta) and 1-cos(theta) for theta between zero and pi/2. One eigenvector is perpendicular to the plane spanned by the rays, and the others are proportional to their sum and difference. The weak eigenvalue 1-cos(theta) behaves like theta²/2 near zero. This makes the ill-conditioning of small parallax visible in a simple exact matrix.
+
+This weighted distance objective is not generally maximum-likelihood under equal independent pixel noise, because perpendicular world-distance errors and pixel errors scale differently with depth. It is useful for initialization and geometric reasoning. If the goal is a calibrated reprojection objective, refine with the actual image Jacobian and observation covariance.
+
+### An optimizer must distinguish gauge from a weak measurement
+
+In calibrated monocular SfM, a common positive similarity transformation can preserve all projected image observations. A global translation and rotation of the entire world can be absorbed into the camera poses, and a common scale can multiply point coordinates and camera translations. These seven similarity degrees of freedom are gauges unless constrained by external measurements.
+
+Fixing the first camera pose removes six coordinate freedoms. Fixing the norm of a nonzero baseline, or another independent scale constraint, removes the scale gauge. Choosing the baseline norm to equal one is a convention, not a metre measurement. A separate metric baseline, known object length or suitable external sensor constraint can establish scale.
+
+A disconnected camera-landmark graph can have separate gauges for its components. A single fixed camera in one component does not constrain a disconnected reconstruction elsewhere. Before solving a large joint problem, inspect graph connectivity and the support of each landmark. A camera with too few independent observations may be weakly constrained even when the graph is connected.
+
+## Make the Schur complement tangible
+
+Let a toy least-squares model have one camera scalar c and two landmark scalars p and q. Suppose the linearized residuals are
+
+\[
+r_1=c+p-3,\quad r_2=p-1,\quad
+r_3=c+q-5,\quad r_4=q-2.
+\]
+
+The Jacobian rows are (1,1,0), (0,1,0), (1,0,1) and (0,0,1). The normal matrix has camera block A=2, coupling B=(1,1), and landmark block C=diag(2,2). The normal-equation right-hand side J^T b is (8,4,7), where b=(3,1,5,2).
+
+Eliminate the landmark variables. The reduced camera coefficient is 2-(1/2+1/2)=1. The reduced right-hand side is 8-(4/2+7/2)=2.5. Thus c=2.5, p=(4-2.5)/2=0.75 and q=(7-2.5)/2=2.25. Substituting gives residuals 0.25, -0.25, -0.25 and 0.25. Their signed combinations cancel in each normal equation, although no solution makes all four observations exact.
+
+In a real bundle-adjustment step each landmark block is typically a small matrix, and each camera block may contain six or more local parameters. The block structure follows the observation graph, not the order of features in an input file. Elimination can connect two cameras that observed the same landmark, even if their original direct camera-to-camera coupling was zero. Sparse storage must account for these induced connections.
+
+A stable implementation does not need to explicitly form a matrix inverse for every point block. It can solve the required small systems with a suitable factorization. When a block is singular or poorly conditioned, decide whether to damp it, reject that landmark, or use a different parameterization. A mathematical formula with an inverse symbol is not permission to invert a rank-deficient matrix.
+
+## Growing a reconstruction is a sequence of hypotheses
+
+A two-view seed supplies an initial coordinate system. Additional views require a pose hypothesis from observed landmarks. Once accepted, new features can be triangulated, tracks extended and old estimates refined. The difficult part is deciding whether each new hypothesis is sufficiently supported.
+
+Consider a new camera with fifty proposed 3D-to-2D correspondences. Forty may agree with a candidate pose, but if all forty lie on a small wall patch, other pose or calibration explanations can be difficult to distinguish. Record the distribution of observations across the image, their spatial spread in the world, their residuals and the sensitivity of the pose estimator. Count support after geometric verification, not merely after appearance matching.
+
+A later loop closure can correct accumulated drift, but a false connection can move an entire map. Build a controlled graph with known camera poses and add one deliberately false high-confidence correspondence group. Compare ordinary least squares with a declared robust loss and a policy that verifies the proposed closure independently. A robust loss may reduce the influence of individual outliers without guaranteeing rejection of a coherent wrong model.
+
+**Research exercise.** Extend the controlled P29 three-view fixture using ten known cameras and a mixture of near and distant landmarks. Compare Euclidean and inverse-depth parameterizations, vary parallax, inspect the gauge-fixed singular spectrum, and verify a small Schur-eliminated system against a dense solve. Evaluate held-out image residuals, point error after a declared similarity alignment, metric-scale error and failure counts. The existing native P29 code implements fixed-pose point refinement and a bounded two-view seed, not a full incremental SfM or joint bundle-adjustment solver. This experiment defines the next independently checkable step.
+
 ## Exercises — rebuild without inventing evidence
 
 **Reconstruct 29A.** Draw a three-camera observation graph with one missing observation and one conflicting feature edge. Explain why blindly merging graph components can corrupt a track.

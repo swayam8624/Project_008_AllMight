@@ -219,6 +219,99 @@ The studio writes fifty CSV rows with fit status, label counts, precision, recal
 
 To make the lab more realistic, take a set of verified images with known geometric reference data. Preserve all detected features, proposed matches and rejected hypotheses in a diagnostic record. Compare detector repeatability, descriptor accuracy, verification precision and recall, and eventual pose/3D error. Include repeated texture, blur, scale, rotation, exposure changes and partial overlap. Do not call a sparse set of correct matches a dense reconstruction.
 
+## A corner has a useful size as well as a position
+
+The earlier Harris example examines a fixed image neighbourhood. It can distinguish a flat region, an edge and a corner at that chosen scale. But move the camera farther away and a large feature occupies fewer pixels. The same neighbourhood may now cover several unrelated details. Move closer and it may contain only a tiny piece of one edge. A fixed window has implicitly made a statement about the scale of the world.
+
+Consider a smoothed image L(x,y,sigma) obtained by convolution with a Gaussian of standard deviation sigma pixels. A larger sigma suppresses smaller features. If we measure derivatives of L at different scales, their raw magnitudes change partly because of the smoothing scale itself. A normalized second-derivative response uses
+
+\[
+R(x,y,\sigma)=\sigma^2(L_{xx}+L_{yy}).
+\]
+
+Why the squared factor? Under a coordinate dilation by a positive factor a, a corresponding image structure is described by new coordinates x'=ax, y'=ay and smoothing scale sigma'=a sigma. Each spatial derivative contributes a factor 1/a, so the second derivative contributes 1/a². Multiplying by sigma'² cancels that factor. This is an ideal continuous covariance statement; discrete image sampling, limited support, borders and interpolation still change the observed response.
+
+A difference between Gaussian-smoothed images at nearby scales can approximate the scale-normalized Laplacian up to a factor depending on their scale spacing. It gives a practical way to search for extrema in both image position and scale. The original P28 laboratory deliberately uses fixed-scale Harris and normalized patches; the following scale-space discussion is an extension rather than a promise that it already implements SIFT.
+
+**Worked example.** For an ideal isolated two-dimensional Gaussian blob of amplitude one and width s, Gaussian smoothing at sigma produces another Gaussian with central amplitude s²/(s²+sigma²) and variance s²+sigma². Its Laplacian at the center is -2s²/(s²+sigma²)². Multiplying by sigma² gives a negative response of magnitude
+
+\[
+A(\sigma)=\frac{2s^2\sigma^2}{(s^2+\sigma^2)^2}.
+\]
+
+Set x=sigma²/s². Then A=2x/(1+x)², and its derivative with respect to x is 2(1-x)/(1+x)³. The maximum occurs at x=1, so the preferred scale is sigma=s. The peak magnitude is 0.5, independent of the blob width. The result provides an analytic scale-selection fixture without needing an arbitrary photograph.
+
+### Localize a feature between samples
+
+A detector may find that the largest response lies at a particular integer pixel, although the true maximum is between samples. Approximate the response near that sample by a quadratic
+
+\[
+R(p+\delta)\approx R(p)+g^T\delta+\tfrac12\delta^TH\delta.
+\]
+
+A stationary displacement satisfies H delta=-g. In one dimension, let the three adjacent response values be l,c,r. Using central differences, g=(r-l)/2 and H=l-2c+r. Therefore the estimated subpixel displacement from the central sample is (l-r)/(2H).
+
+For l=7, c=10, r=9, H=-4 and g=1, so the displacement is +0.25 pixels. The response is increasing at the center, and the quadratic is concave down, which explains the positive move. The estimated position is not a new sensor sample; it is a local fitted maximum. A flat or nearly singular curvature gives unreliable localization, and a large step may mean that the selected sample is not in the appropriate neighbourhood.
+
+~~~cpp
+#include <cmath>
+#include <optional>
+
+// Fit a concave quadratic to three evenly spaced responses.
+// Return only a displacement belonging to the central sample's cell.
+std::optional<double> refine_peak(double left, double centre,
+                                  double right) {
+    if (!std::isfinite(left) || !std::isfinite(centre)
+        || !std::isfinite(right)) return std::nullopt;
+    const double curvature = left - 2.0 * centre + right;
+    if (!(curvature < 0.0) || !std::isfinite(curvature))
+        return std::nullopt;
+    const double dx = (left - right) / (2.0 * curvature);
+    if (!std::isfinite(dx) || std::abs(dx) > .5)
+        return std::nullopt;
+    return dx;
+}
+~~~
+
+This deliberately small function requires a bounded, well-scaled response domain. A practical two-dimensional or scale-space implementation also checks the eigenvalues of the fitted Hessian, the residual and feature contrast. The test suite should include the exact quadratic case, a flat response, a convex response, and an asymmetric case whose optimum leaves the central cell.
+
+## A descriptor is a choice about what to forget
+
+The ideal descriptor would return the same representation for the same surface under every permitted observation change and different representations for distinct surfaces. These two wishes conflict. A descriptor that forgets everything is perfectly invariant but useless for matching. A descriptor that retains every raw pixel is highly discriminative under exact repetition but may fail under a small viewpoint or exposure change.
+
+An orientation-normalized gradient descriptor estimates a dominant direction and expresses local gradient orientations relative to it. Histograms can reduce sensitivity to small displacements, while spatial subdivision preserves some arrangement information. A binary descriptor instead compares intensities at selected pairs of sample positions; a bit records which is larger. Positive affine intensity changes preserve exact comparison order before clipping and quantization. Near-equal intensity comparisons are unstable under noise.
+
+For two binary strings, Hamming distance counts differing bits. Consider descriptors 10110010 and 10100011: their exclusive-or is 00010001, with two set bits. The distance is two. An implementation can use the population count of the exclusive-or of machine words, but a fast distance function does not itself establish useful invariance.
+
+~~~cpp
+#include <bit>
+#include <cstdint>
+#include <span>
+#include <stdexcept>
+
+std::size_t hamming_words(std::span<const std::uint64_t> a,
+                          std::span<const std::uint64_t> b) {
+    if (a.size() != b.size())
+        throw std::invalid_argument("descriptor length mismatch");
+    std::size_t count = 0;
+    for (std::size_t i=0; i<a.size(); ++i)
+        count += std::popcount(a[i] ^ b[i]);
+    return count;
+}
+~~~
+
+The representation here uses all bits in each word. If the logical descriptor has a nonmultiple-of-64 length, its unused bits must be masked or canonicalized. Otherwise padding can contribute a fictional feature difference. Test identical strings, complementary strings and a single flipped bit. Then ask whether the descriptor itself is stable, independently of the correctness of this distance routine.
+
+## Separate four sources of matching failure
+
+A detected feature can disappear under viewpoint change. A repeatable detection may be described incorrectly. A correct descriptor may retrieve a wrong candidate in a repeated texture. A wrong correspondence may survive geometric verification because it lies near an epipolar line. The final match count does not identify which stage failed.
+
+Design a controlled experiment with known image transformations and visible correspondence masks. Detector repeatability asks whether the transformed feature is redetected within a declared position and scale tolerance. Descriptor matching evaluates retrieval among the features that were detected in both images. Geometric verification evaluates accepted and rejected candidate labels. Finally, reconstruction evaluates the metric consequence of the survivors. Keep denominators explicit: recall among all physical features and recall among jointly detected features are not the same statistic.
+
+A near-perfect geometric inlier ratio can be achieved by rejecting almost everything. Report both precision and recall, the total number of valid correspondences, and the distribution of residuals. A useful model should generalize to held-out matches. If the same data chose the model and its threshold, a small training residual is optimistic.
+
+**Research exercise.** Build an analytic image family containing isolated blobs, corners, repeated windows and a textureless region. Vary scale, rotation, exposure, blur and noise separately before combining them. Evaluate fixed-scale Harris and normalized patches against a new scale-normalized detector or binary descriptor. Record repeatability, candidate retrieval, robust verification and reconstructed point error as separate stages. This is an extension project, not an observed comparison between full SIFT, ORB and the native P28 reference.
+
 ## Exercises — make the corner prove who it is
 
 **Reconstruct 28A.** Derive the tensor in equation 28.2 and evaluate Harris response for eigenvalues (0,0), (4,0) and (4,4). Explain the aperture problem.

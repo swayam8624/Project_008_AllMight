@@ -179,6 +179,90 @@ book03_surface fusion.csv
 
 The studio reports separate observed and missing column counts, not a fabricated error of zero for the missing regions. A separate Python check confirms the counts, finite errors, grouped means and one-frame equality. It does not independently reproduce the random measurements. Real-sensor validation, moving perspective fusion and mesh extraction remain future extensions.
 
+## A depth value must pass through a camera before entering a volume
+
+Our aligned-depth teaching experiment uses rays parallel to the volume axis. That makes the fusion geometry easy to inspect. To use a perspective camera, we must make the coordinate transformation explicit for every voxel or ray sample. A depth image is not a world-space array.
+
+Let a voxel center be X in the world. Convert it to optical coordinates Y=RX+t=(x,y,z). Reject nonpositive z and project the remaining point with the calibrated camera. A measured axial depth D(u,v) describes the positive optical Z coordinate of the observed surface at that image address. In a simple projective TSDF, the signed axial difference is
+
+\[
+s=D(u,v)-z,\qquad \phi=\operatorname{clamp}(s/\mu,-1,1),
+\]
+
+where mu is a positive axial truncation distance. Positive s means the voxel is in front of the measured surface; negative s means it lies behind it. A common policy skips voxels sufficiently far behind the observation rather than treating them as measured free space. Interpolation of D across an occlusion boundary needs care, because averaging foreground and background depths can create a surface that was never observed.
+
+**Worked example.** Suppose f_x=f_y=100 pixels and the principal point is (50,50). A voxel at optical coordinate (0.4,0.2,2) metres projects to (70,60). At that address an axial depth image reports 2.05 m. With mu=0.1 m, the normalized projective value is +0.5. Another voxel along the same ray at z=2.15 m is behind the measured depth by 0.10 m, giving -1 at the truncation boundary. The actual Euclidean distance along this oblique ray is larger than the axial difference by a factor sqrt(1+0.2²+0.1²), approximately 1.0247. Mixing ray range and axial depth without conversion would give a systematic geometric error.
+
+A projective TSDF is also not generally a Euclidean signed distance to the nearest surface. At a grazing incidence the axial difference can be much larger than the perpendicular distance to the surface. The zero crossing can still represent the measured surface under the chosen model, but the numerical field away from the zero has a specific meaning.
+
+### A bounded projective update
+
+Here is a standalone scalar update for an already projected voxel. It assumes a valid depth observation, compatible axial units, a positive finite truncation distance and bounded weights. It avoids manufacturing observations behind the truncation band and represents unobserved cells with weight zero.
+
+~~~cpp
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
+struct FusionCell {
+    double phi = 0.0;
+    double weight = 0.0; // Zero means no observation.
+};
+
+bool integrate(FusionCell& cell, double depth, double z,
+               double mu, double observation_weight) {
+    if (!std::isfinite(depth) || !std::isfinite(z)
+        || !std::isfinite(mu) || !std::isfinite(observation_weight)
+        || depth <= 0 || z <= 0 || mu <= 0
+        || observation_weight <= 0)
+        return false;
+    if (!std::isfinite(cell.weight) || cell.weight < 0
+        || !std::isfinite(cell.phi)
+        || std::abs(cell.phi) > 1)
+        throw std::invalid_argument("invalid fusion cell");
+    const double s = depth - z;
+    if (s < -mu) return false;
+    const double observed = std::clamp(s / mu, -1.0, 1.0);
+    const double total = cell.weight + observation_weight;
+    if (!std::isfinite(total)) return false;
+    // Convex combination avoids large weight-times-field products.
+    cell.phi += (observation_weight / total)
+              * (observed - cell.phi);
+    cell.weight = total;
+    return true;
+}
+~~~
+
+This does not select voxels, sample a depth image, calibrate a camera or synchronize threads. The existing P30 aligned-depth implementation remains the native reference. The fragment shows the per-cell arithmetic an extended perspective adapter could reuse with a carefully specified domain.
+
+If two valid observations have normalized values +0.4 and -0.2 with weights one and three, the accumulated value is -0.05 and total weight four. Reversing the order gives the same result in exact arithmetic. Repeated floating-point updates need not be bitwise identical. Introducing a maximum stored weight or temporal decay changes the estimator and can make order matter even in exact arithmetic. Do not claim ordinary weighted-average equivalence after adding a policy that deliberately forgets old observations.
+
+## A sparse volume saves memory only by changing its representation
+
+A dense 512³ grid contains 134,217,728 cells. Two four-byte fields per cell require exactly one GiB before padding, additional attributes or indexing. Much of a large scene may contain no observed surface. A block-sparse structure allocates small dense bricks only where needed, associating each brick with an integer block coordinate.
+
+For an 8³ brick, each block has 512 cells, or 4096 bytes at eight bytes per cell. Ten thousand allocated bricks require about 39.1 MiB for cell payload, plus hash-table, metadata, alignment and allocator overhead. This is a storage calculation, not a measured memory benchmark. A sparse structure can lose its advantage if nearly every block is allocated or if its metadata and random access dominate.
+
+Negative voxel coordinates require floor division rather than truncating signed division. A global voxel index of -1 in a block width of eight belongs to block -1 with local index 7, not block zero with local index -1. The identity global=block*8+local, with local between zero and seven, is an excellent test of the indexing policy. Use it on both sides of zero and near the supported integer limits.
+
+Trilinear interpolation at a block boundary can access eight cells belonging to several different blocks. An unallocated block is unknown unless a separate free-space representation establishes otherwise. Treating an absent block as zero can create false surfaces. A normal estimated from central differences requires neighbouring support too. Sparse allocation and extraction share a boundary contract.
+
+## Extracting a mesh is a second inference
+
+An isosurface algorithm examines field values at cell corners and locates edge crossings. Along an edge with values phi_0 and phi_1 of opposite sign, linear interpolation places the zero at fraction phi_0/(phi_0-phi_1) measured from the first endpoint. If phi_0=0.3 and phi_1=-0.1, the fraction is 0.75. The interpolation gives a position within the edge, but it does not supply a complete triangulation policy.
+
+A square face with alternating positive and negative corner signs admits two possible pairings of its four crossings. If adjacent cubes independently choose different pairings on their shared face, a crack or inconsistent connectivity can result. The chosen interpolation model and tie-breaking rule must agree across cells. Similar ambiguity exists inside three-dimensional cells. A lookup table is a representation of a topology decision, not proof that every sampled field has been reconstructed correctly.
+
+Normals can be estimated from the gradient of the scalar field. Near a regular zero surface, the gradient is perpendicular to the level set. Its magnitude is not necessarily one in a projective or truncated field, so normalize only when a finite nonzero gradient is supported. The orientation depends on the sign convention; our positive-in-front policy makes the gradient point toward increasing field values.
+
+## Evaluate supported surfaces and missing surfaces separately
+
+A reconstructed mesh may have a small nearest-neighbour error simply because it omitted difficult regions. Use a known reference surface sampled by a declared area distribution. Measure accuracy from reconstructed samples to reference, and completeness from reference samples to reconstruction. A symmetric average is helpful but can hide asymmetry; report both directions and a threshold-dependent fraction.
+
+For a tiny example, suppose the reference has points at 0, 1 and 2 on a line, and the reconstruction has 0 and 1. The mean nearest-reference distance from reconstruction is zero. The reverse mean is one third. A claim of perfect reconstruction from the first score alone would be wrong. In three dimensions, compare sampled surface geometry rather than relying solely on mesh vertex density, which can bias the result toward heavily tessellated regions.
+
+**Research exercise.** Build a perspective-depth simulator for two perpendicular walls, a thin object and an unobserved region. Fuse known registered views, then introduce depth bias, pose errors and missing observations separately. Compare dense and sparse storage using the same voxel and update policy. Verify matching field values where both are supported, extraction consistency across block boundaries, accuracy and completeness, memory and total runtime. P30's measured native results concern the aligned orthographic TSDF and plane normals; this larger perspective/sparse system is a proposed extension, not an existing benchmark result.
+
 ## Exercises — measure the gaps as well as the surface
 
 **Reconstruct 30A.** Derive the least-squares plane objective and its eigenvector solution. Explain the two-dimensional normal ambiguity of a collinear cloud.

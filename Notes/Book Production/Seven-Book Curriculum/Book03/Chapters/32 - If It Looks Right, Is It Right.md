@@ -196,6 +196,60 @@ Next, create an independently computed oracle for a restricted case. Construct m
 
 Finally, prepare a short evidence dossier: claim, domain, algorithm, experiment, raw data, aggregate, failure cases, reproduction command and limitations. A useful dossier can say that a method failed. It is not a sales brochure. Its success is that a second reader can understand and challenge the conclusion.
 
+## Turn a research claim into a measurement plan
+
+The most dangerous conclusion is often the one we were hoping to find. Suppose we invent a tiled rasterizer and want to show that it is faster than the reference. Before running the experiment, write down exactly what claim the evidence is allowed to support. For example: under a stated image size, triangle distribution, compiler and CPU, the tiled variant reduces rendering time while producing exactly the same coverage and surface-ID arrays. That is narrower and more useful than claiming it is universally better.
+
+Choose the unit of analysis. A frame repeated one hundred times measures within-workload timing variation. One hundred different scenes measure variation across scenes. Neither can replace the other. If repeated frames share geometry, treating them as one hundred independent scene samples exaggerates the apparent evidence. Distinguish workload seeds, scene identities and repeated measurements.
+
+Design a paired experiment: for every generated scene, run both algorithms on exactly the same input. Alternate or randomize execution order to reduce systematic warm-cache, temperature and background-load effects. Use the same compiler flags and comparable instrumentation. Define whether preprocessing and output serialization are included. Reject an invalid output only according to a predetermined failure policy, and retain the failure counts. Do not silently remove slow or incorrect cases from one algorithm.
+
+### Which speedup are we reporting?
+
+Let the reference time on scene i be a_i and the alternative time be b_i, both positive. The per-scene speedup is a_i/b_i. If we care about the total elapsed time across the measured collection, the ratio of sums is sum(a_i)/sum(b_i). If we want a multiplicatively symmetric summary of scene-level ratios, the geometric mean is exp(mean(log(a_i/b_i))). These statistics weight the workloads differently.
+
+**Worked example.** Consider two workloads. On the first the reference takes 10 ms and the alternative takes 5 ms. On the second they take 1000 ms and 1100 ms. The individual speedups are 2 and about 0.909. Their geometric mean is about 1.348; the total-time ratio is 1010/1105, about 0.914. The first says that the typical multiplicative scene ratio favors the alternative; the second says that processing the complete workload collection costs more time. Neither number is inherently wrong. Choosing only the favorable one after examining the results is misleading.
+
+Report individual ratios, the aggregation rule, workload support and uncertainty. For paired resampling, sample scene pairs together rather than breaking the pairing between reference and alternative. If scenes have a natural grouping such as a shared source geometry, a group-aware resampling scheme may be more appropriate. A confidence interval describes variation under its sampling assumptions; it does not establish that untested workload families will behave similarly.
+
+## A numerical claim needs an error budget
+
+Consider the full route from a calibrated image to a reconstructed point and then to a new projected image. Error can enter at several places: camera calibration, image-coordinate localization, correspondence ambiguity, numerical triangulation, world-frame alignment, storage precision and rendering. A single final pixel residual mixes these effects.
+
+Start with a controlled fixture where all inputs are known exactly within the chosen representation. Change one source of error while holding the others fixed. Vary observation noise with exact cameras, then camera uncertainty with exact correspondences, then incorrect matches, then storage precision. The resulting error curves establish which mechanisms dominate under particular conditions. When two errors interact, a factorial experiment can reveal the interaction rather than assuming their separate effects add linearly.
+
+For a differentiable transformation y=f(x), local perturbation obeys delta_y approximately J delta_x. With independent zero-mean input errors and covariance Sigma_x, the output covariance is approximately J Sigma_x J^T. If two input errors are correlated, their covariance matters. Consider y=x_1-x_2. Both inputs have variance one and covariance rho, so Var(y)=2-2rho. At rho=0 the variance is two; at rho=1 it is zero under this ideal model; at rho=-1 it is four. Assuming independence can understate or overstate the predicted uncertainty.
+
+The first-order model itself needs validation. Draw repeated synthetic perturbations, calculate the nonlinear output and compare empirical mean and covariance with the linear prediction. Increase noise until the discrepancy becomes significant. Near singular projections or inverse-depth boundaries, the nonlinear distribution may become asymmetric, multimodal or unbounded. A mathematically convenient covariance matrix is not always an adequate description.
+
+## Metamorphic tests are useful when the answer is expensive
+
+A metamorphic test compares results from related inputs whose outputs must obey a known relation. It can detect errors without constructing an exact answer for every possible scene.
+
+For an opaque renderer with distinct depths and fixed sample positions, reversing submission order should preserve the final surface-ID image. For calibrated projection, moving both the scene and camera by the same rigid world transform should preserve image coordinates when poses are updated consistently. For the monocular similarity gauge, scaling all geometry and translations by the same positive factor should preserve the ideal image. For a linear-light normalized filter, a constant image should remain constant under a boundary extension that preserves constants.
+
+Each invariant has assumptions. An equal-depth tie can intentionally depend on submission order. A world transformation may change floating-point rounding, requiring a representation-aware tolerance. Scaling geometry without scaling the near and far clip planes can change visibility. Filtering an encoded image does not satisfy the intended linear-light contract. A metamorphic test should therefore state its domain and include counterexamples in which the relation is not expected to hold.
+
+A failure should retain enough information to reconstruct the case. Preserve the random seed, generated coordinates, input configuration, compiler mode, expected relation and actual output. Then minimize the failing case. A single tiny triangle that reproduces a coverage discrepancy is much more useful to an engineer than a million-triangle scene whose final image differs in one unknown pixel.
+
+## An ablation needs a meaningful comparison
+
+Suppose a reconstruction method contains a robust match filter, weighted triangulation and nonlinear point refinement. We want to know which component contributes to accuracy. An ablation removes or replaces one component while holding the remaining protocol constant. However, removing a component can change the number of surviving observations, runtime or downstream input distribution. A simple comparison of final RMS values may then be ambiguous.
+
+Use a common input set and measure each stage's output support. If a robust filter rejects twenty percent of observations, compare the final error both on the common accepted subset and with the missing or rejected fraction reported separately. For a point-refinement ablation, start both versions from the same triangulated points. If one implementation fails on difficult tracks, report that explicitly. An improvement in the subset that survived does not imply an improvement on the original task.
+
+Include a no-change control. Run the same method twice under the same declared deterministic configuration, or use paired stochastic seeds where appropriate. If the result varies unexpectedly, investigate that variation before interpreting a small claimed difference between methods. The control is a diagnostic for the experimental apparatus, not an argument that all systems must be deterministic.
+
+## The final research project: a geometry-to-image stress suite
+
+Build a controlled scene generator that combines known meshes, calibrated cameras, synthetic image measurements and independently generated references. Use at least four distinct scene families: simple exact fixtures, narrow or nearly degenerate primitives, repetitive-texture scenes with uncertain correspondences, and scenes with weak parallax or missing surface support. Split seeds and configurations into development and held-out groups before tuning thresholds.
+
+Run the existing Book03 native laboratories as individual contract checks. Build proposed extensions from the previous chapters separately: tile classification, depth hierarchy, texture filtering, camera sensitivity, feature matching, weighted triangulation and perspective fusion. Do not treat those proposed implementations as already delivered. Give each experiment a narrow question and a reference. The complete study can combine them only after their interfaces and validity domains are explicit.
+
+A final report should include the exact repository revision and environment, the data generator and its parameters, the evaluation protocol, the reference outputs, error and timing distributions, failure categories, the limits of the method, and enough artifacts to reproduce at least one experiment from scratch. If a new method loses, the experiment is still valuable when it explains why. If it wins, retain the counterexamples that bound the claim.
+
+**Check your intuition.** A method may reduce average reprojection error while worsening absolute geometry, accelerate a rasterizer while changing its edge ownership, or reduce reconstruction error by deleting difficult points. In each case a second measurement prevents a misleading conclusion. This is the essential lesson of the volume: geometry, images, measurements and evidence are connected, but none is automatically a substitute for another.
+
 ## Exercises — finish the book by trying to prove it wrong
 
 **Reconstruct 32A.** Derive the scale invariance in equation 32.1. Construct two camera-and-scene configurations that produce the same image but have different metric dimensions.

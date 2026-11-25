@@ -181,6 +181,76 @@ A separate Python verifier read the exported PPM, OBJ and CSV. It predicted all 
 
 This is an integration milestone, not a claim that all earlier CTests have been executed together. The full cumulative project still needs a complete build, test and publication audit. A true end-to-end photograph-to-mesh pipeline would need feature extraction, robust matching, view registration, inferred topology, camera uncertainty and real-data evaluation.
 
+## A studio needs a coordinate contract that survives file boundaries
+
+Our small house fixture works because every module knows what its numbers mean. A larger studio accepts imported geometry, camera records, images and reconstruction results from different tools. Each file may have its own unit, frame, coordinate origin and axis convention. A beautiful interface cannot repair an ambiguous data model.
+
+For each asset, record a stable asset identity, revision, local frame, unit scale, vertex layout and topology policy. For each instance, record its world transform and the asset revision it references. For each camera, record the world-to-optical transform, intrinsics, image dimensions, continuous pixel-coordinate convention, distortion model, depth definition, valid domain and time if the scene is moving. An image should identify its color encoding and its parent camera/frame. A reconstructed cloud should name the observations, calibration revision, coordinate gauge and units used by the solver.
+
+A format may store a camera-to-world transform instead of world-to-camera. The inverse of a proper rigid transform Y=RX+t is X=R^T Y-R^T t. The camera center is -R^T t. A camera with R=I and t=(-0.4,0,0) has center (0.4,0,0), not (-0.4,0,0). The scene fixture uses exactly this sort of distinction to derive disparity. A serializer that switches the convention without changing the stored numbers can make the rendered view look plausible while moving the reconstructed point to the wrong side of the world.
+
+**Worked example.** An imported mesh describes a vertex at (1000,0,0) in millimetres. Its local-to-world transform in a metre-based scene translates by (2,0,0) metres. Convert the local coordinates first, obtaining (1,0,0) metres, then apply the transform to obtain (3,0,0). Translating before unit conversion would give 1.002 metres if the translation's numeric value two were mistakenly interpreted as millimetres. The error is not caused by matrix multiplication; the operands were never in a compatible unit system.
+
+### Give a snapshot a stable meaning
+
+A small API can distinguish assets, camera calibration and results by typed identities. The following example describes a possible interface, not the P31 native header. It illustrates how a result can name the exact inputs it consumed.
+
+~~~cpp
+#include <cstdint>
+#include <string>
+
+struct AssetRevision {
+    std::string content_sha256;
+};
+struct CameraRevision {
+    std::string calibration_sha256;
+};
+struct FrameKey {
+    std::uint64_t frame_id;
+    AssetRevision geometry;
+    CameraRevision camera;
+    std::string renderer_policy_sha256;
+};
+struct OutputRecord {
+    FrameKey inputs;
+    std::string image_sha256;
+    std::string depth_sha256;
+    std::string ids_sha256;
+};
+~~~
+
+A content hash is useful for integrity and reproducibility, but it is not a proof of correctness. Two wrong implementations can generate identical bytes; a change in compression or metadata may alter the hash without changing the decoded image. Use semantic tests and hashes for different questions. A result must be associated with a completed immutable snapshot, not with whichever scene happens to be visible when an asynchronous task finishes.
+
+## Let dependencies decide which work needs rebuilding
+
+Consider four derived records: projected vertices, raster coverage, shaded linear color and encoded output. Projected vertices depend on geometry, world transforms and camera. Coverage depends on projection and raster policy. Shading and visibility depend on covered geometry, attributes, depth and material policy. Encoding depends on the winning linear colors and display transfer.
+
+Change only the output transfer curve. Geometry and coverage should remain valid; the encoded image needs rebuilding. Move the camera. Projection, coverage, depth and image become stale. Change a mesh's UVs without changing positions or topology. Coverage may remain valid, but interpolation and shading must be recomputed. A dependency graph clarifies these cases, and enables independent verification of incremental caching.
+
+A safe cache key includes every dependency affecting the result. A camera identity alone is insufficient if the camera calibration can change while retaining the same name. A path alone is insufficient if the file contents change. If a render depends on sample pattern or color transfer, those choices must be included too. A cache hit is a claim that the previous computation answers the same question; a missing key component makes that claim false.
+
+Test incremental rebuilds against a full rebuild after each edit. For a controlled deterministic scene, compare the actual arrays, not just whether an image was generated. Record which stages reran, which were reused and whether the dependency graph predicted that reuse. The cost of invalidating too much is additional computation. The cost of invalidating too little is a stale result that may be difficult to notice.
+
+## Separate interaction from numerical computation
+
+A user can drag a camera while reconstruction runs. The interface wants a responsive preview; the solver wants a stable set of inputs. If it reads mutable camera parameters while iterating, different residuals may correspond to different camera states. The resulting objective no longer describes a single mathematical problem.
+
+Use immutable snapshots for numerical work, even if the user interface is mutable. A task receives the geometry, calibration, configuration and frame identity. A completed task publishes its result only with that same identity. If the current view has moved on, the interface may show an explicitly stale preview, discard the result, or store it for later comparison. It should never silently label the old computation as the new camera's measurement.
+
+A cancel request is a scheduling instruction, not proof that an operation has completed. A worker can check a stop flag at safe boundaries. Files should be written to a temporary output and validated before publication; a half-written image or point cloud should not replace the last complete result. Keep the original input intact when an operation fails.
+
+For a single-machine teaching studio, an event log can record an edit, the revision it created, the job that consumed it, and the output that was accepted. This is often more informative than a screenshot of the final UI. To test asynchronous behaviour, deliberately delay an old computation, submit a newer snapshot and force the old result to arrive last. Verify that it cannot overwrite the new result without being explicitly identified as stale.
+
+## Build a complete diagnostic view
+
+A geometry-to-image studio is especially useful when it can display the information that a normal renderer hides. Show the world mesh, camera frusta, projected landmarks, sample coverage, surface IDs, depth values, reprojection vectors and reconstructed points. Every view should identify its coordinate frame and units. An overlay of two cameras should not silently transform one cloud into the other's frame just because it looks better.
+
+Use a known synthetic house first. Make one deliberately wrong adapter at a time: transpose the world-to-camera rotation, use range as axial depth, change the principal point by half a pixel, flip the Y axis, or encode linear colors incorrectly. Predict which diagnostic view changes first. Restore the correct adapter and confirm that the independent fixture agrees again.
+
+Then add a reproducible scene manifest with the camera and mesh identities, image dimensions, near/far convention and output hashes. An importer should validate a manifest before executing numerical work, and an exporter should record enough information to reproduce the result. Version the schema so that a future change does not silently reinterpret an old file.
+
+**Research exercise.** Build an extension around the P31 native studio with a small command-driven scene editor. Implement immutable snapshots and a dependency cache, then compare every incremental output against the full reference rebuild. Add deliberate stale-task and invalid-input cases. Export evidence containing the input revision, output hashes, numerical residuals and stage timing. The existing P31 fixture remains a controlled CPU studio with known topology and cameras; a full interactive GUI and asynchronous renderer are future engineering work. The book's contract tells us how to approach them without weakening the mathematics.
+
 ## Exercises — extend the studio without breaking its promises
 
 **Reconstruct 31A.** Calculate the generating wall and window positions with equation 31.1. Verify the disparity witness in equation 31.2.
