@@ -295,3 +295,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 32 — final evidence capstone
 
 [Chapter 32](Chapters/32%20-%20If%20It%20Looks%20Right%2C%20Is%20It%20Right.md) integrates numerical oracles, projective ambiguity, derivative checks and paired experiment design. [PASS32_EVIDENCE.md](PASS32_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution and 20,000 point reconstructions; [PASS32_LEGACY_AUDIT.md](PASS32_LEGACY_AUDIT.md) records dependency and chapter inventory custody. Four original figures bring the authoring count to 142; CMake registers the thirty-fourth contract test. All 32 planned chapter headings were fetched and verified individually. Original-source reconciliation and publication acceptance remain open, and no release artifacts have been generated.
+
+
+## Pass 34 — foundations source-unit inventory and selected reconciliation
+
+[PASS34_FOUNDATIONS_SOURCE_MAP.md](PASS34_FOUNDATIONS_SOURCE_MAP.md) records full-file retrieval, exact blob identities, 18,928 routed body lines, 627 headings, and declared master spans for seven Computing Foundations derived sources (32–38). Routes remain proposals until reviewed against the full destination content. Selected passages were read in detail and incorporated additively into Chapters 14, 17 and 31. [PASS34_EVIDENCE.md](PASS34_EVIDENCE.md) records the independent arithmetic witness and successful cumulative CI at the exact engineering revision. Next: Graphics Vision and XR source inventory and targeted gap reconciliation, followed by final source/notation/figure review. No original source or release artifacts changed.
