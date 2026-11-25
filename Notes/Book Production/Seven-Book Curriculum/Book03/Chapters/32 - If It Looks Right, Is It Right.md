@@ -7,7 +7,7 @@
 
 ## The house that lied without telling a lie
 
-Our little paper house is back on the desk. The studio from Chapter 31 has projected its vertices into three cameras, recovered their positions and drawn the same image as the original scene. We could print the image, write a triumphant caption underneath and call the job finished.
+Begin with the actual studio result from Chapter 31: three calibrated views, reconstructed vertices and a rendered image that agrees with the reference. It is tempting to declare the reconstruction correct. Before doing so, ask what that image comparison can detect, and what changes to the underlying world it cannot detect.
 
 Now imagine that someone has secretly changed the camera calibration. The second and third cameras are reported as twice as far from the first camera as they really were. The photographs are unchanged. The reconstruction algorithm trusts the reported translations.
 

@@ -7,7 +7,7 @@
 
 ## The house has disappeared
 
-Imagine that we take a dozen photographs of our little paper house and then someone removes the house from the table. We still have its photographs. Can we rebuild the house? Can we discover where each camera stood, where the roof ended, and how the windows were arranged?
+Take a dozen photographs of a small static scene from different positions, then set the scene aside. Each image supplies a new set of bearings to its visible features. Some landmarks appear in several views; others are occluded. The reconstruction problem is to recover both the camera poses and the shared three-dimensional structure from those overlapping observations.
 
 A picture taken with a known camera tells us a direction but not a distance. Chapter 27 showed that a pair of corresponding directions can recover relative geometry, subject to ambiguity and scale. Chapter 28 showed how appearance proposes those correspondences and geometric verification rejects many of the incorrect ones. Now the pieces belong to one larger puzzle: **Structure from Motion**, or SfM.
 

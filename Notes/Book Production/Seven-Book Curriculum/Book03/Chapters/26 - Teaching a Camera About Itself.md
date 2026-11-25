@@ -7,7 +7,7 @@
 
 ## The detective has a new job
 
-Put our little paper house on a table. Place a wooden ruler beside it and take a picture. The ruler is twenty centimetres long, but its length on the photograph may be a hundred pixels, fifty pixels or something else entirely. Without more information, a hundred pixels cannot tell us how many centimetres a different object measures.
+A ruler of known length appears 100 pixels long in one photograph and 50 pixels long in another. Did the focal length change? Did the camera move? Did the ruler rotate? The two image measurements alone cannot distinguish those explanations. Calibration begins by supplying enough independent constraints to make such questions answerable.
 
 In the preceding chapters, we gave the computer a camera and asked where a point would appear. The computer knew the focal scale, principal point, optical center and orientation because we supplied them. The photograph was the answer.
 

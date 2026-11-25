@@ -9,9 +9,7 @@
 
 At the beginning of this book we could put a coloured dot into a little image. We learned how numbers describe points, how three points form a triangle, how meshes share corners, how a camera sees the world, how clipping changes a primitive, and how two triangles decide which one owns a sample.
 
-Now imagine standing in the garden with a camera and looking down at a painted tile floor. A bright orange paper dragon passes between the camera and the tiles. The tiles shrink toward the distance. The dragon hides the part of the floor behind it.
-
-We want to make this image with our own code, not by calling a black-box Draw function.
+Our first integration test is a scene with a tiled floor receding into the distance and an orange foreground triangle. It is small enough to calculate by hand, yet it forces the renderer to solve perspective, clipping, interpolation and occlusion together. We will build the image from the stage contracts already established, rather than delegating those decisions to a black-box draw call.
 
 The challenge is no longer to derive another isolated equation. The challenge is to ensure that every stage agrees with the next one. A wonderful clipper and a wonderful rasterizer cannot cooperate if they disagree about the meaning of an image coordinate. A depth comparison can be mathematically correct and still choose the wrong object if its input uses the opposite convention.
 

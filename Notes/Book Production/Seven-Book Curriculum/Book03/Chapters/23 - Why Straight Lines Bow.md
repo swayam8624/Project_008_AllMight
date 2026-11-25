@@ -7,9 +7,7 @@
 
 ## The house has become a balloon
 
-Imagine photographing our garden with a wide-angle camera. The house is rigid, the window frames are straight, and the fence was built with a ruler. Yet the walls in the photograph seem to bow outward near the corners.
-
-Do not start editing the mesh. First ask whether the camera is doing something that our ideal pinhole equation cannot describe.
+Photograph a sheet of graph paper with a wide-angle camera, keeping it approximately flat. Inspect the lines near the image boundary. If they curve even though the paper is flat, a perfect pinhole projection cannot explain the observation. This is a useful calibration diagnostic: before modifying geometry, examine the camera model. The same fault can make a reconstructed wall appear bent.
 
 In Chapter 22, a thin lens changed the spread of a point on the sensor. Now we will study a different effect: the location of the point's image can move systematically. A sharp image can still be distorted. Conversely, an image with correct geometric positions can be blurred.
 

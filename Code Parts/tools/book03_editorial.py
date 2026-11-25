@@ -199,7 +199,7 @@ def edit_chapter(blocks, n):
             result.append(b); continue
         if t=="Para":
             original=text_of(b)
-            if original.startswith("From Geometry to Images Part ") and re.search(r"draft|additive|manuscript|Reader edition",original,re.I):
+            if original.startswith("From Geometry to Images") and re.search(r"draft|additive|manuscript|Reader edition",original,re.I):
                 history.append({"reason":"internal draft banner","original":b})
                 continue
             match=next(((prefix,new) for prefix,new in NOTES.get(n,[]) if original.startswith(prefix)),None)

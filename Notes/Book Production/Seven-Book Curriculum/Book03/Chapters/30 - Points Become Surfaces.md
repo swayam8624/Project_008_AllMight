@@ -7,7 +7,7 @@
 
 ## The house made of stars
 
-Imagine the paper house from Chapter 29 has become a constellation. There is a point at the roof tip, another at a window corner, and several scattered along the walls. We can rotate this little cloud and recognize the house. But if we send it to a triangle renderer, there are no walls to draw. We have positions, not connections.
+Open a sparse reconstruction in a point-cloud viewer. You may recognize the roof and windows immediately, even though the file contains no wall polygons. Rotate the view and the distinction becomes obvious: a cloud can suggest a surface without defining its connectivity. Turning those measurements into triangles is a separate inference problem.
 
 A point cloud is a collection of measurements, potentially with colors, normals, uncertainties and observation identifiers. Its order usually tells us nothing about adjacency. Connecting every point to its nearest neighbour may bridge two sheets of paper separated by a tiny gap. Connecting points that happened to arrive consecutively may join opposite sides of the house.
 
