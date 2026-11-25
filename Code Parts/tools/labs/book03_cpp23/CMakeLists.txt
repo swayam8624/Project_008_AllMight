@@ -360,6 +360,17 @@ target_link_libraries(book03_surface PRIVATE book03_surface_lib)
 add_executable(book03_surface_tests tests/surface_tests.cpp)
 target_link_libraries(book03_surface_tests PRIVATE book03_surface_lib)
 
+# Chapter 31: controlled integrated geometry-to-image studio.
+add_library(book03_studio_lib INTERFACE)
+target_include_directories(book03_studio_lib INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(book03_studio_lib INTERFACE cxx_std_23)
+target_link_libraries(book03_studio_lib INTERFACE book03_sfm_lib book03_surface_lib)
+add_executable(book03_studio src/studio_main.cpp)
+target_link_libraries(book03_studio PRIVATE book03_studio_lib)
+add_executable(book03_studio_tests tests/studio_tests.cpp)
+target_link_libraries(book03_studio_tests PRIVATE book03_studio_lib)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     foreach(target book03_canvas book03_canvas_tests
                    book03_frames book03_frame_tests
@@ -392,7 +403,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                    book03_epipolar book03_epipolar_tests
                    book03_matching book03_feature_tests
                    book03_sfm book03_sfm_tests
-                   book03_surface book03_surface_tests)
+                   book03_surface book03_surface_tests
+                   book03_studio book03_studio_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -431,4 +443,5 @@ if(BUILD_TESTING)
     add_test(NAME book03_feature_contracts COMMAND book03_feature_tests)
     add_test(NAME book03_sfm_contracts COMMAND book03_sfm_tests)
     add_test(NAME book03_surface_contracts COMMAND book03_surface_tests)
+    add_test(NAME book03_studio_contracts COMMAND book03_studio_tests)
 endif()
