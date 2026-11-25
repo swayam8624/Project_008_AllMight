@@ -197,6 +197,17 @@ The studio reports separate observed and missing column counts, not a fabricated
 
 **Explain 30H.** Describe the difference between a measured point cloud, a fused field, a derived mesh and a filled hole to a child and then to a research reviewer.
 
+### Selected answers and experiment criteria
+
+**30A–B.** Squared plane distance for unit n is n^T C n; constrain n^T n=1 to obtain the minimum eigenvector. A collinear set has two unconstrained normal directions in its perpendicular plane. Scaling coordinates by 100 multiplies every covariance eigenvalue by 10,000, leaving the variation ratio unchanged.
+
+**30C–E.** Two nearby sheets can create a fitted midplane with little evidence of an actual surface there. The weighted crossing in the linear common band is (1.01+3*1.03)/4=1.025 metres. As a counterexample, with mu=0.1 and depths 1 and 1.4 at equal weights, the latter contributes a saturated positive value near the first surface, while the former is skipped sufficiently far behind it. A single global weighted-depth average is no longer the field's zero. An unknown endpoint must not participate merely because its stored value happens to be zero.
+
+**30F.** A common 0.010 m bias is not removed by averaging independent noise. Under the simple unclipped linear model the expected squared error is 0.010^2+0.015^2/N square metres. At sixteen frames the population RMS is about 10.68 mm, not the unbiased 3.75 mm.
+
+**30G–H.** The adapter must transform each world voxel into a positive-depth optical frame, project it within the declared sensor bounds and use a valid, compatible depth measurement. Track confidence separately from the field value. A derived mesh interpolates the field; filling unsupported holes introduces a further modeling assumption.
+
+
 ## Further reading
 
 Brian Curless and Marc Levoy, [A Volumetric Method for Building Complex Models from Range Images](https://visionsystems.stanford.edu/papers/volrange/), SIGGRAPH 1996, develops volumetric range integration. William Lorensen and Harvey Cline, *Marching Cubes: A High Resolution 3D Surface Construction Algorithm*, SIGGRAPH 1987, DOI 10.1145/37402.37422, develops grid isosurface extraction. The native aligned-depth experiment is independently authored and is deliberately narrower than either complete system.
