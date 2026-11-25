@@ -318,7 +318,7 @@ We are going to build a real C++23 triangle inspector from the same companion as
 
 The project has three main jobs.
 
-First, it reports signed twice-area, winding and barycentric weights for known numerical inputs. A good output is readable: \`triangle CCW; twice-area=24; point=(1.5,1); weights=(0.5,0.25,0.25); classification=interior\`. The values are a witness you can check by hand.
+First, it reports signed twice-area, winding and barycentric weights for known numerical inputs. A good output is readable: `triangle CCW; twice-area=24; point=(1.5,1); weights=(0.5,0.25,0.25); classification=interior`. The values are a witness you can check by hand.
 
 Second, it produces a barycentric color-map image by visiting pixel **centers**. Each pixel corresponds to a point in the image coordinate system. The triangle query determines whether it is inside. If so, we blend three chosen vertex colors with the barycentric weights and write that color through our existing Canvas. At the edges, uncertainty is indicated rather than silently hidden by a magic epsilon.
 
@@ -377,7 +377,7 @@ We can teach exactness without pretending to implement a complete arbitrary-prec
 
 For grid-like **integer** points, our C++23 companion provides a separate exact predicate over a documented input domain: each coordinate must lie between \(-1{,}000{,}000\) and \(+1{,}000{,}000\), inclusive. It converts these to 64-bit integers and forms the determinant after checking the range.
 
-Why this particular limit? Differences are at most two million. Each product in the determinant is at most four trillion. Subtracting them yields at most eight trillion in magnitude, far below the range of signed 64-bit integers. No overflow occurs for any accepted input. That is a **mathematical proof for a bounded domain**, not a hand-wavy claim that \`int64_t\` is always sufficient.
+Why this particular limit? Differences are at most two million. Each product in the determinant is at most four trillion. Subtracting them yields at most eight trillion in magnitude, far below the range of signed 64-bit integers. No overflow occurs for any accepted input. That is a **mathematical proof for a bounded domain**, not a hand-wavy claim that `int64_t` is always sufficient.
 
 For \((0,0)\), \((6,0)\), \((0,4)\), the exact predicate returns positive with twice-area 24. For \((0,0)\), \((2,2)\), \((4,4)\), it returns zero. Reversing the first two points flips the sign. When a sample lies on an integer edge, the exact predicate tells us *on edge* without a floating epsilon.
 
@@ -385,7 +385,7 @@ In Chapter 05, we will study adaptive predicates and their error bounds in much 
 
 ## A floating-point border can be uncertain
 
-For arbitrary \`double\` input positions, the triangle API uses the familiar area method and provides barycentric weights. Its practical interface distinguishes a confident **interior**, a confident **exterior**, a **boundary-uncertain** result and a **degenerate-or-uncertified** triangle.
+For arbitrary `double` input positions, the triangle API uses the familiar area method and provides barycentric weights. Its practical interface distinguishes a confident **interior**, a confident **exterior**, a **boundary-uncertain** result and a **degenerate-or-uncertified** triangle.
 
 An explicitly documented conservative numerical filter checks whether the computed signed area is large relative to the scale of the products used to obtain it. It also refuses to call a point confidently interior if one of its barycentric weights lies too close to zero for a naive floating decision.
 
@@ -520,8 +520,8 @@ We are not collecting formulas for a shelf. We are teaching a house how to live 
 
 ## Source custody and further reading
 
-The original AllMight **Robust Predicates and Camera Sensitivity** chapter in \`Notes/Chapter Edition/01 - Computing Foundations/34 - Robust Predicates and Camera Sensitivity.md\` already teaches signed determinants, numerical filtering and geometry decision errors with deeper analysis. Its source-derived span, figures, proofs and code remain intact; this reader introduction is additive and must not substitute for the original advanced material in Chapter 05. The existing **Mesh Topology and Connectivity** material in \`Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md\` belongs to Chapter 07 and will be reconciled at the source-unit level.
+The original AllMight **Robust Predicates and Camera Sensitivity** chapter in `Notes/Chapter Edition/01 - Computing Foundations/34 - Robust Predicates and Camera Sensitivity.md` already teaches signed determinants, numerical filtering and geometry decision errors with deeper analysis. Its source-derived span, figures, proofs and code remain intact; this reader introduction is additive and must not substitute for the original advanced material in Chapter 05. The existing **Mesh Topology and Connectivity** material in `Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md` belongs to Chapter 07 and will be reconciled at the source-unit level.
 
-The companion implementation is under \`Code Parts/tools/labs/book03_cpp23/\`, with P01 image storage, P02 frame algebra and P03 triangle geometry. Future source inspection and bibliography work must verify the relevant foundational papers (including Shewchuk's adaptive-precision predicates), official numeric/format specifications and any KairoGeometry implementation claims at exact repository revisions. The integer oracle in this pass is exact only for the *explicit bounded integer domain*; it is not a licensed or completed general adaptive-exact implementation.
+The companion implementation is under `Code Parts/tools/labs/book03_cpp23/`, with P01 image storage, P02 frame algebra and P03 triangle geometry. Future source inspection and bibliography work must verify the relevant foundational papers (including Shewchuk's adaptive-precision predicates), official numeric/format specifications and any KairoGeometry implementation claims at exact repository revisions. The integer oracle in this pass is exact only for the *explicit bounded integer domain*; it is not a licensed or completed general adaptive-exact implementation.
 
-**Read next:** Chapter 04 — Move the World Without Losing It (planned).
+**Read next:** Chapter 04 — Move the World Without Losing It.
