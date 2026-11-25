@@ -197,6 +197,60 @@ book03_epipolar epipolar.csv
 
 At sigma=1 pixel the mean training Sampson RMS was 0.97449 pixels and the noiseless held-out RMS was 0.29699 pixels. These are measurements from this synthetic distribution, not a universal expected camera error. The export also records the pre-rank-correction singular-gap ratio. Keep the data association assumption in mind: every provided match was generated from the same physical point. The estimator has no outlier rejection.
 
+## Rectification chooses convenient images, not new observations
+
+The epipolar constraint says that the corresponding feature must lie on a particular line. In a general pair of images these lines can have different orientations. Searching along an arbitrary sloping line is possible, but it is convenient to transform the two images into a pair whose corresponding epipolar lines are horizontal.
+
+For two calibrated cameras with centers C_1 and C_2, form the unit baseline direction b=(C_2-C_1)/||C_2-C_1||. Choose a forward reference direction that is not parallel to b. Project it into the plane perpendicular to b and normalize to obtain a common forward axis z_r. With the optical +X right, +Y down, +Z forward convention, choose x_r=b and y_r=z_r cross x_r. The rows x_r^T,y_r^T,z_r^T form a proper world-to-rectified rotation R_r. The construction fails when the baseline vanishes or the chosen reference is parallel to it, so a practical implementation needs an alternative reference policy.
+
+Let R_i be the original world-to-camera rotation and K_i its intrinsic matrix. If the cameras are ideal pinholes, a homogeneous image ray can be mapped into the rectified view using
+
+\[
+H_i=K_r R_r R_i^T K_i^{-1}.
+\]
+
+This is a rotation of ray directions around each original camera center; it does not move either center. A distorted input image must be converted to an ideal ray first. The new virtual intrinsics K_r determine the output field of view and sampling. Rectification can discard regions, enlarge others and introduce resampling errors, so valid masks and interpolation policies are part of the result.
+
+In the shared rectified coordinate frame, the center difference lies along the X axis. A physical point therefore has identical Y and Z coordinates relative to the two cameras, and its ideal vertical projected coordinate is the same. The horizontal coordinates differ by fB/Z if the virtual cameras share focal scale f and principal point. A different principal-point convention adds an offset. Rectification makes the correspondence search easier; it does not invent a correspondence or recover the missing depth by itself.
+
+## Disparity is a measurement with its own uncertainty
+
+For rectified cameras, a horizontal match with corrected disparity d gives Z=fB/d. The derivative with respect to disparity is -fB/d². The sensitivity grows rapidly when d approaches zero.
+
+**Worked example.** Let f=800 pixels, baseline B=0.1 m, and disparity d=20 pixels. Then Z=4 m. If each horizontal coordinate has independent standard deviation 0.25 pixels, disparity has standard deviation sqrt(2)*0.25, approximately 0.3536 pixels. The first-order depth standard deviation is about 0.07071 m. At d=2 pixels the depth becomes 40 m and the same image uncertainty predicts about 7.071 m of depth uncertainty. The pixel noise has not changed; the geometry has.
+
+The derivative approximation treats the mapping as locally linear. A symmetric disparity interval does not map to a symmetric depth interval. With d=2 and uncertainty interval plus or minus 0.5 pixels, the endpoint depths are 32 m and about 53.33 m. The central prediction is 40 m, so the lower and upper deviations differ substantially. If the interval reaches zero, the positive-depth bound becomes unbounded. Reporting a symmetric Gaussian depth error in that regime may hide the most important limitation.
+
+Uncertainty in focal scale and baseline also matters. For independent small errors in f, B and d, the first-order relative variance is approximately the sum of their relative variances. If the quantities were jointly calibrated, the cross-covariances must be retained. A metric baseline measured incorrectly can create systematic depth error even when matching is exact.
+
+## A plane can explain the data surprisingly well
+
+Suppose all features are on a wall. They can be related by a homography rather than requiring independent depth for every point. Let a plane in the first camera frame satisfy n^T X=h, with h nonzero. For a normalized first-view direction x, the intersection is X=h x/(n^T x) when the denominator is nonzero and the intersection is physically valid. Under relative motion X_2=RX+t,
+
+\[
+x_2\sim (R+t n^T/h)x.
+\]
+
+The matrix in parentheses maps plane rays; with intrinsics it becomes a pixel homography. The sign depends on how the plane equation was written. A formulation n^T X+d=0 would have a different-looking sign. Derive from the actual equation rather than memorizing the symbol.
+
+For pure camera rotation, t=0 and the direction map R applies to every scene depth. The images can align extremely well without revealing translation or metric structure. Similarly, a plane can dominate an image pair and obscure the information needed for general reconstruction. Comparing a homography fit and an epipolar fit is a useful diagnostic, but the raw residuals have different definitions and degrees of freedom. A reliable model-selection procedure needs comparable observation errors and held-out evidence.
+
+### Why rectified matching can fail even in a perfect camera
+
+Imagine a wall of repeated vertical windows. All corresponding candidates lie on the correct epipolar row. A wrong repeated window can have exactly the same appearance and produce a positive depth. The epipolar relation does not identify which physical window was observed. Constraints from texture, multiple views, ordering, visibility or prior knowledge may help, but none is an unconditional certificate.
+
+A dense stereo matcher commonly constructs a cost for each pixel and disparity hypothesis. A naive cost volume for a 1280 by 720 image with 128 disparities contains 117,964,800 entries. At four bytes per entry that is 450 MiB before intermediate storage. A streaming or tiled implementation may reduce memory, but changing the cost or support window changes the estimator. A large matching window improves robustness in a uniform region yet can mix observations across a depth discontinuity.
+
+For a simplified local cost, compare patches with sums of squared differences in linear intensity. Normalize or otherwise model photometric changes where appropriate. Use left-right consistency: if a left feature maps to a right address and the reverse estimate maps elsewhere, mark the observation as unreliable rather than silently filling it with zero disparity. Occluded pixels may legitimately have no matching point.
+
+## A complete evaluation separates geometric and matching errors
+
+Construct a synthetic rectified pair of a fronto-parallel textured plane at known depth and a nearer rectangle that occludes part of it. The projection model supplies exact disparities and visibility masks. First evaluate with the known correspondences to establish the geometric baseline. Then run a matcher and evaluate only valid comparable pixels, reporting the missing-match and false-match rates separately. Finally, reconstruct depths and report both the disparity errors in pixels and the depth errors in metres.
+
+Repeat at several baselines and texture frequencies. A wider baseline improves ideal triangulation sensitivity but may increase occlusion and appearance variation. The best baseline for a complete pipeline depends on both geometry and correspondence quality.
+
+**Research exercise.** Implement the rectified homography construction with two known camera poses, check that corresponding projected points have matching vertical coordinates, then compare the simple dense matching procedure on a unique texture and a repeated pattern. Include a pure-rotation control and a plane-only control. The P27 native lab estimates and verifies two-view epipolar geometry; the image-warping and dense stereo experiment is a proposed extension, and its results must not be confused with the existing sparse native acceptance.
+
 ## Exercises — challenge the relationship
 
 **Reconstruct 27A.** Derive E=[t]_x R from equation 27.2 and verify the aligned-camera numerical witness. Repeat with unequal principal points.

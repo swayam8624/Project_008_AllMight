@@ -225,6 +225,87 @@ It exports the 9×9×9 grid of 729 linear sRGB triplets, their XYZ coordinates, 
 
 The studio is a numerical inspector, not an ICC color-management system or a display profiler. The illustrations use ordinary display colors as aids; their screen appearance cannot prove the colorimetry. A calibrated monitor and instrument would be required for claims about a physical display.
 
+## A camera's three measurements need a calibration model
+
+Our three-channel toy sensor demonstrated that different spectra can give the same response. A real camera's red, green and blue filters do not in general match the standard observer's color-matching functions. A matrix fitted to a calibration chart approximates a mapping from camera RGB to a reference space over the sampled illuminants and surfaces. It cannot manufacture spectral information that the sensor did not measure.
+
+Write each linear black-subtracted camera observation as a three-vector c_i and its reference tristimulus target as x_i. Stack the camera observations as rows in a matrix C and the reference rows in X. Find a matrix A minimizing the squared Frobenius norm
+
+\[
+\|CA-X\|_F^2.
+\]
+
+This is three least-squares problems sharing the same design matrix. When C has full column rank, one can express the normal-equation solution as A=(C^TC)^{-1}C^TX, although a QR or SVD solve is preferable when conditioning matters. With row vectors, the prediction is c_i^T A; a column-vector convention would use A^T. Confusing those two forms can generate a plausible-looking but systematically wrong color transform.
+
+If every calibration patch is neutral, its camera response may be close to a scalar multiple of one common vector. Then C is nearly rank one. A matrix that maps that vector correctly can behave arbitrarily in the other two directions. More gray patches do not resolve the missing color information. Include colored patches with distinct responses, and evaluate on withheld surfaces.
+
+**Worked example.** Consider a deliberately artificial sensor whose response is twice the reference red, equal to green, and half the reference blue. With three linearly independent calibration patches, the inverse transform is diagonal with entries 0.5, 1 and 2. A response (0.8,0.3,0.2) maps to (0.4,0.3,0.4). If all training patches are proportional to (2,1,0.5), this diagonal solution is one of infinitely many matrices agreeing with the training data. The solution looks simple only because we assumed the sensor model.
+
+## White adaptation is a change of viewing condition, not a universal correction
+
+A neutral object photographed under warm illumination may produce unequal camera channel responses. White balance compensates for an estimated neutral under a chosen model. But the spectrum of a light source can change the relationship between camera responses and standard-observer tristimulus coordinates. Two lights with the same apparent chromaticity can have very different spectra. No three-channel gain rule guarantees identical colors for every surface under both lights.
+
+A common mathematical approach to chromatic adaptation transforms tristimulus coordinates into an approximate cone-response space, scales the three components to map a source white to a destination white, then transforms back. Let M be the chosen cone-space matrix and let w_s and w_d be source and destination tristimulus white vectors. Define
+
+\[
+D=\operatorname{diag}((Mw_d)_1/(Mw_s)_1,
+ (Mw_d)_2/(Mw_s)_2,(Mw_d)_3/(Mw_s)_3),\qquad
+x_d=M^{-1}DMx_s.
+\]
+
+The construction maps w_s exactly to w_d if the denominators are nonzero and M is invertible. It does not prove that every surface's appearance is predicted perfectly. Different adaptation models choose different M and adaptation assumptions. This is a modeling boundary rather than a second color-space conversion disguised as a physical law.
+
+A useful verification fixture checks white mapping, identity when the two whites coincide, round-trip behavior before clipping and sensitivity near small cone components. Apply the transforms in floating point and retain signed intermediate values. If a subsequent display gamut clips them, the inverse cannot generally reconstruct the original value. Keep adaptation error and clipping error separate.
+
+## What is a color difference measuring?
+
+The ordinary Euclidean distance between two RGB coordinate vectors is easy to calculate but depends on the chosen primaries and transfer encoding. The same physical colors may have very different numerical distances in different coordinate systems. For a more perceptually motivated comparison one can transform a reference XYZ and its white to CIELAB.
+
+Let f(t)=t^(1/3) for t above delta³, and f(t)=t/(3delta²)+4/29 otherwise, with delta=6/29. The piecewise function joins continuously with matching derivative. For a specified positive reference white (X_n,Y_n,Z_n), the coordinates are
+
+\[
+L^*=116 f(Y/Y_n)-16,\quad
+a^*=500[f(X/X_n)-f(Y/Y_n)],\quad
+b^*=200[f(Y/Y_n)-f(Z/Z_n)].
+\]
+
+For the reference white itself, all normalized coordinates equal one, so the result is (100,0,0). For a neutral at half relative tristimulus intensity, the coordinates are approximately (76.07,0,0). Half the physical intensity is not half the lightness coordinate. The simplest CIE76 difference is Euclidean distance in Lab; it is not perfectly perceptually uniform. More elaborate differences exist, but all require explicit viewing and reference conditions.
+
+~~~cpp
+#include <array>
+#include <cmath>
+#include <stdexcept>
+
+std::array<double,3> lab_from_xyz(
+    std::array<double,3> xyz, std::array<double,3> white) {
+    constexpr double d = 6.0 / 29.0;
+    auto f = [=](double t) {
+        return t > d*d*d ? std::cbrt(t)
+                         : t / (3*d*d) + 4.0/29.0;
+    };
+    std::array<double,3> r{};
+    for (int i=0; i<3; ++i) {
+        if (!std::isfinite(xyz[i]) || !std::isfinite(white[i])
+            || white[i] <= 0)
+            throw std::invalid_argument("invalid XYZ or white");
+        r[i] = f(xyz[i] / white[i]);
+    }
+    return {116*r[1]-16, 500*(r[0]-r[1]), 200*(r[1]-r[2])};
+}
+~~~
+
+This teaching implementation permits signed XYZ inputs mathematically; a physically interpreted stimulus or a particular color-management pipeline may impose additional domain constraints. The reference white is explicit because the same XYZ triple can produce different Lab coordinates relative to different whites. Test the neutral axis, continuity near delta³, and known reference-white mapping. Do not present this standalone function as a complete ICC color-management system.
+
+## The pipeline must say where information disappears
+
+Draw a data-flow diagram for a camera that records a color image: photons through filters, electron counts, analog gain and black level, digitization, raw correction, demosaicing if required, white balance, camera-to-working-space mapping, tone mapping, gamut mapping and output transfer. A display then has its own electro-optical behavior and viewing environment. Some operations are invertible over a restricted domain; others lose information.
+
+For example, an ideal diagonal white-balance gain with nonzero gains is algebraically invertible before clipping. A rank-deficient color transform is not. Mapping a range of bright linear values to the same output value loses highlight differences. Averaging encoded channels introduces a nonlinear photometric error. Saving an eight-bit output introduces quantization that may erase small differences even if every prior transform was invertible.
+
+Use two comparisons in an experiment: error relative to the linear reference before display processing, and error after the declared display mapping. A tone mapper can make large radiometric errors look small in the displayed image; a correct wide-gamut signal may look wrong if interpreted using the wrong primaries. These are different failures.
+
+**Research exercise.** Generate a synthetic set of linear camera responses under two illuminants. Fit one color matrix using only the first group and evaluate both groups using a declared reference white. Compare rank, held-out linear XYZ error, Lab difference and gamut clipping fraction. Add a chart containing only neutral patches and inspect the singular spectrum. The P25 native lab covers relative linear color spaces and transfer functions; this calibration and appearance experiment is an extension, not a validated physical camera profile.
+
 ## Exercises — don't let the numbers fool you
 
 **Reconstruct 25A.** Use the four-bin toy instrument to find a third distinct nonnegative spectrum with responses (2,2,2). State the entire family.

@@ -276,6 +276,76 @@ book03_distortion distortion.csv
 
 These results are mathematical synthetic-camera measurements. They are not a calibration of a physical lens. At focal scale 800 pixels, a normalized residual of \(10^{-12}\) corresponds to a sub-nanopixel model residual; that numerical fact says nothing about the accuracy of a real measurement. Real calibration uncertainty, feature localization, model choice and acquisition geometry dominate long before this tolerance becomes useful.
 
+## Different lenses can produce similar pictures for different reasons
+
+Suppose two photographs of our house both show the straight roofline bending. We might explain the bend by a polynomial radial distortion around a pinhole, or by a camera whose basic mapping from angle to radius is not rectilinear at all. A fitted coefficient cannot tell us which physical explanation is right without a declared camera model and measurements across an adequate field of view.
+
+Consider a unit viewing direction d=(d_x,d_y,d_z) and define a polar angle theta=atan2(sqrt(d_x²+d_y²),d_z). The azimuth identifies the direction in the image plane. A rotationally symmetric camera uses a radius r(theta) and a unit radial image direction. In normalized coordinates several common idealized mappings are:
+
+| Model | Radius divided by focal scale | Angular interpretation |
+|---|---:|---|
+| Rectilinear | tan(theta) | Perspective projection onto a plane |
+| Equidistant | theta | Equal radial increment per angular increment |
+| Equisolid-angle | 2 sin(theta/2) | Equal image area per solid angle |
+| Orthographic | sin(theta) | Projection of a unit sphere onto a plane |
+| Stereographic | 2 tan(theta/2) | Conformal spherical projection |
+
+These expressions are ideal laws with restricted angular domains. The orthographic radius stops increasing at theta=pi/2 and is ambiguous if we extend the same law to directions on both sides of that angle. The rectilinear mapping diverges at pi/2. The stereographic mapping diverges at pi. The optical-axis case should be handled by continuity: the normalized radial direction is undefined when both transverse components vanish, but the forward axis maps to the image center.
+
+Why call one of these equisolid-angle? A small spherical strip at polar angle theta has solid angle dOmega=sin(theta)dtheta dphi. A ring on the sensor has area dA=r dr dphi. If r=2f sin(theta/2), then dr/dtheta=f cos(theta/2), so r dr/dtheta=f² sin(theta). Therefore dA=f² dOmega. The local area scale with respect to solid angle is constant. In contrast, an equidistant law r=f theta gives dA/dOmega=f² theta/sin(theta), which increases toward the periphery.
+
+**Worked example.** At theta=60 degrees, the five normalized radii are approximately 1.73205, 1.04720, 1.00000, 0.86603 and 1.15470 respectively. All five have derivative one at the forward axis when normalized by f. A narrow central calibration may therefore fit several models almost equally well, but the predictions diverge toward the edge. This is a model-selection problem, not merely a matter of adding more radial coefficients.
+
+## Inverse angular projection returns a ray, not a point
+
+For the equidistant law, divide the image radius by focal scale to recover theta. The world point is somewhere along the corresponding optical ray:
+
+\[
+d=(\sin\theta\cos\phi,\sin\theta\sin\phi,\cos\theta).
+\]
+
+For a normalized image coordinate p=(x,y), set r=sqrt(x²+y²). The transverse components can be computed as sin(r) times p/r. Near r=0, the factor sin(r)/r tends to one, so a stable implementation uses the limiting value or a short series. Do not normalize (x,y,1) and call it the inverse of an equidistant lens: that is the pinhole inverse and returns the wrong viewing direction away from the center.
+
+The corresponding forward projection obtains theta from the direction and multiplies by its azimuth. The following bounded standalone C++23 function returns a unit ray for a normalized equidistant image address within the declared forward hemisphere. It intentionally does not handle intrinsics, principal-point offsets or a learned distortion polynomial.
+
+~~~cpp
+#include <array>
+#include <cmath>
+#include <numbers>
+#include <optional>
+
+std::optional<std::array<double, 3>>
+equidistant_ray(double x, double y) {
+    const double r = std::hypot(x, y);
+    if (!std::isfinite(r) ||
+        r > std::numbers::pi_v<double> / 2) return std::nullopt;
+    // A continuous approximation at the forward optical axis.
+    const double a = r < 1e-6
+        ? 1.0 - r * r / 6.0 : std::sin(r) / r;
+    return std::array<double, 3>{
+        a * x, a * y, std::cos(r)
+    };
+}
+~~~
+
+Test the origin, horizontal and vertical axes, and a radius of pi/3. The last must give axial component 0.5 and transverse magnitude sqrt(3)/2. A radius just beyond pi/2 is rejected under this declared policy even though a physical fisheye might support it. A different domain needs a different contract, including the treatment of the backward axis.
+
+## Pixel uncertainty changes when we undistort a picture
+
+We have already derived the forward distortion Jacobian. To understand what it means physically, return to a simple radial map with k_1=-0.2 and other coefficients zero. At radius 0.5 its tangential stretch is L=0.95, while its radial stretch is L+2r²k_1=0.85. A small radial movement is compressed more strongly than a tangential movement.
+
+If the distorted measurement has isotropic standard deviation 0.5 pixels and both focal scales are 800 pixels, its normalized standard deviation is 0.000625. Locally inverting the map expands the uncertainty by 1/0.85 along the radial direction and 1/0.95 along the tangential direction. The resulting equivalent ideal-image standard deviations are about 0.588 and 0.526 pixels. Near a fold where the radial derivative tends to zero, the linear inverse uncertainty can grow dramatically. The first-order covariance becomes inadequate if noise spans a region with strongly changing derivatives or multiple inverse branches.
+
+The same mathematics tells us how to resample the distorted image. The inverse map for an output pixel determines the input address, and its Jacobian determines the local footprint in the input. A model can be accurate as a coordinate transform and still generate a bad image if its resampling is poor. Keep coordinate residuals and photometric resampling residuals separate.
+
+## Build a calibration residual field, not just one score
+
+Imagine estimating a radial coefficient from features confined to the center of a photograph. With k_1 the radial displacement is proportional to r³, and the derivative with respect to the coefficient grows as r³. Moving a sample from r=0.2 to r=0.8 increases that sensitivity by a factor of 64. The coefficient may be nearly unobservable in a central crop even if the fit there is excellent.
+
+Create three synthetic calibration groups: points only near the center, points distributed across the field, and points concentrated in an off-center patch. Hold the camera model and noise distribution fixed. Fit using one group and evaluate on a separately generated full-field grid. Plot residual vectors over position, and record radial and tangential components as functions of radius. A systematic radial residual may indicate an inadequate radial law; a directional pattern may arise from decentering, incorrect principal point or a different unmodeled effect. The pattern is a diagnostic clue, not a unique causal identification.
+
+**Research exercise.** Use an equidistant camera as a synthetic truth model and fit a pinhole-plus-radial polynomial on successively wider angular domains. Compare training error, held-out angular error and the derivative sign over the full declared domain. Add noise with a known covariance and compare the observed angular spread to the linear prediction. The exercise should reveal why a model with more coefficients can fit observed data while behaving poorly outside the observed domain. The existing P23 laboratory implements the bounded normalized distortion model and inversion; the angular calibration study above is new extension material, not a claim of an existing full fisheye estimator.
+
 ## Your turn
 
 **Reconstruct.** Convert a graphics-camera point (2,1,-4) to CV normalized coordinates.

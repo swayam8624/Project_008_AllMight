@@ -177,6 +177,77 @@ A dark series at multiple shutter durations can help separate electronic pedesta
 
 Our studio produces synthetic data, not a measurement of a real sensor. In Chapter 26 we will ask similar questions about camera geometry: what did we actually observe, what did we assume, and which parameter combinations can the observations identify?
 
+## A photon-transfer experiment separates two kinds of noise
+
+The little electron bucket is a mathematical model, but we can design an experiment that asks a camera whether it behaves approximately that way. The difficulty is that a real array contains both temporal randomness and stable differences among pixels. If we measure the spatial variance of a single photograph of a uniform target, those effects are mixed together.
+
+Suppose an unsaturated linear sensor reports a black-subtracted digital value Y=gN+e, where g is digital units per electron, N is a Poisson electron count with mean S, and e is a zero-mean independent read term in digital units. Let its variance be sigma_e². Then
+
+\[
+\operatorname{E}[Y]=gS,\qquad
+\operatorname{Var}(Y)=g^2S+\sigma_e^2.
+\]
+
+Eliminate S using the mean M=gS. The variance is g M+sigma_e². The slope of a variance-versus-mean plot is the gain in digital units per electron, not electrons per digital unit. The intercept is read variance in the reported units. If read noise is initially specified in electrons, convert its standard deviation by g first. Quantization, dark charge and other noise terms complicate this elementary model.
+
+To suppress fixed-pattern contributions, capture two independent frames of the same uniform target without moving the camera. Let D=Y_1-Y_2. A stable additive offset cancels. For independent identically distributed temporal fluctuations, Var(D)=2 Var(Y). Thus the variance of the difference divided by two estimates temporal variance under the model. A common illumination fluctuation, motion or correlated electronic noise violates the simple independence assumption; estimate those effects separately instead of treating the formula as universal.
+
+**Worked example.** Suppose two exposure settings have measured black-subtracted means 100 and 400 digital units and temporal variances 54 and 204 digital units squared. The slope is (204-54)/(400-100)=0.5 digital units per electron. The intercept is 4 digital units squared. Under the simple model, the read standard deviation is 2 digital units, or 4 electrons. The inferred mean electron counts are 200 and 800. A single saturated or aggressively processed exposure could destroy the linear relationship.
+
+### Build the experiment with a reproducible data layout
+
+The following standalone C++23 function estimates the sample temporal variance from paired frames of equal size. A real camera study must also decide whether pixels are sufficiently homogeneous to pool, handle defective and saturated pixels according to a declared policy, and verify that the frame differences are independent across repeated captures. This snippet is a minimal estimator, not a complete sensor characterization program.
+
+~~~cpp
+#include <cmath>
+#include <span>
+#include <stdexcept>
+
+double paired_variance(std::span<const double> a,
+                       std::span<const double> b) {
+    if (a.size() != b.size() || a.size() < 2)
+        throw std::invalid_argument("incompatible frames");
+    // Welford's update avoids subtracting two large raw moments.
+    double mean = 0.0, m2 = 0.0;
+    std::size_t count = 0;
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        const double d = a[i] - b[i];
+        if (!std::isfinite(d))
+            throw std::invalid_argument("invalid difference");
+        const double delta = d - mean;
+        mean += delta / double(++count);
+        m2 += delta * (d - mean);
+    }
+    return m2 / (2.0 * double(count - 1));
+}
+~~~
+
+For differences [-2,0,2], the unbiased sample variance of the differences is 4, so the function returns 2. A common offset added to both frames leaves the result unchanged. A common offset added to only one frame also disappears from the centered variance, which is why the mean difference should be recorded separately. The estimator is not a detector of every exposure mismatch.
+
+## A saturated value carries an inequality
+
+Let an ideal charge-well limit be Q_max. If the sensor returns the maximum value, the unknown preclipped charge may equal the limit or be greater. This is a censored observation. It cannot be treated as an ordinary precise measurement of Q_max.
+
+For example, two locations receive 10,000 and 40,000 electrons under a 20,000-electron well. Their stored charges become 10,000 and 20,000. The true ratio was four; the observed ratio is only two. Shortening exposure by a factor of four would ideally produce 2,500 and 10,000 electrons, now both inside the range. But the shorter exposure also reduces the number of detected photons and therefore changes shot-noise SNR.
+
+Exposure bracketing records the same scene at multiple exposure times. Under a linear stationary model, divide each unsaturated black-subtracted measurement by its exposure time to estimate an irradiance-proportional rate. Measurements from a very short exposure may be dominated by read noise; measurements from a long exposure may clip. A weighted estimator can combine them if the noise covariance and response model are understood.
+
+Take two unsaturated measurements in electron units, with exposure times t_1 and t_2. If the scene rate is rho electrons per second, the estimates N_i/t_i have variance approximately rho/t_i plus sigma_read²/t_i². With independent errors, inverse-variance weighting reduces variance relative to an unweighted mean when their uncertainties differ. The unknown rate in those weights may require an initial estimate. Saturated measurements must be excluded or modeled as inequalities, rather than assigned the same ordinary weight.
+
+## The sensor measures an area and a time interval
+
+A point sampler is an abstraction. A pixel collects light over its active area and integrates it during exposure. If irradiance at the sensor is E(x,y,t), the expected number of collected electrons is proportional to an integral of E over both the sensitive area and the shutter interval, with spectral response included as appropriate. This is the same space-time filtering problem that appeared in Chapter 20.
+
+For a one-dimensional moving edge travelling at v pixels per second, a rectangular exposure of duration T smears the edge over vT pixels under an ideal constant-velocity model. At v=120 pixels per second and T=1/60 second, the smear width is two pixels. Halving exposure halves this geometric motion-blur extent but also halves expected signal if illumination and aperture remain unchanged. A camera setting is a coupled trade-off between exposure, noise and blur.
+
+A rolling shutter adds another complication: rows can start exposure at different times. Let the start time for row j be t_0+j delta_t. A horizontally translating point is measured at different positions by different rows. If the effective sampling time is the exposure midpoint, its horizontal displacement relative to the first row is v j delta_t. A line that was vertical can appear slanted. This simple constant-velocity example is not a full rolling-shutter reconstruction model, but it shows why time belongs in the camera calibration record.
+
+## How to report a measurement rather than a polished photograph
+
+A defensible experimental report includes a dark series at several exposure settings, a stable uniform target, repeated frame pairs, saturation masks, a temporal variance plot and residuals from the proposed gain model. Record temperature if dark current is important. Keep automatic white balance, tone mapping and denoising disabled where raw access permits. If the camera cannot provide linear measurements, state the limitation instead of fitting a Poisson model directly to compressed display values.
+
+**Research exercise.** Extend the sensor simulator to create a stable per-pixel offset field in addition to independent temporal noise. Compare spatial variance, paired temporal variance and the known noise parameters at increasing signal. Introduce an exposure-dependent illumination fluctuation and observe how the paired estimate changes. Fit gain using only unsaturated data, hold out some exposure settings, and report the parameter uncertainty across repeated fits. The existing P24 laboratory supplies the bounded physical and stochastic sensor model; these characterization experiments are proposed extensions and not reported as completed camera measurements.
+
 ## Exercises: measure before you trust
 
 **Reconstruct 24A.** Derive the photon equation by tracking units. Compute the incident count for the numerical example at 450 nm instead of 550 nm. Explain why equal energy does not mean equal photon number.

@@ -266,6 +266,82 @@ Do not apply the calibration to resized or cropped images without transforming t
 
 If you want an uncertainty statement, repeated experiments or a justified statistical model must support it. Local covariance estimates based on a full-rank, correctly weighted Jacobian describe only the assumptions used to derive them; systematic model error and ambiguous parameters require separate treatment.
 
+## The calibration Jacobian tells us which knobs we can actually turn
+
+Our normalized DLT provides an initialization, but real calibration is usually judged by geometric residuals. To optimize those residuals we must know how a change in a parameter moves a predicted image point. We will derive the local sensitivity before talking about an optimizer.
+
+Let an optical point be Y=(X,Y_c,Z) with Z>0. To avoid confusing the vector name with its second coordinate, call the latter Y_c. For a camera with skew s,
+
+\[
+u=f_x X/Z+sY_c/Z+c_x,\qquad
+v=f_yY_c/Z+c_y.
+\]
+
+The Jacobian with respect to the optical coordinates is
+
+\[
+J_p=\begin{bmatrix}
+ f_x/Z&s/Z&-(f_xX+sY_c)/Z^2\\
+ 0&f_y/Z&-f_yY_c/Z^2
+\end{bmatrix}.
+\]
+
+The derivative of u with respect to f_x is X/Z; with respect to skew it is Y_c/Z; with respect to c_x it is one. The derivative of v with respect to f_y is Y_c/Z and with respect to c_y is one. These columns show exactly which observations constrain each intrinsic parameter.
+
+If every observed point lies near the optical axis, X/Z and Y_c/Z are small. Focal length and skew become difficult to estimate, even if principal-point translations remain visible. If every observed point is at approximately the same depth, changing focal length and moving the camera axially may produce nearly the same effect.
+
+**Worked example.** Set f_x=f_y=800, s=0 and Y=(0.5,0.25,2) metres. Then the optical-coordinate derivative rows are (400,0,-100) and (0,400,-50), in pixels per metre. A small axial displacement of +0.001 m changes u by about -0.1 pixels and v by about -0.05 pixels. Increasing f_x by 0.4 pixels changes u by +0.1 pixels for this point. These two changes can cancel horizontally. Observations at different depths help distinguish them.
+
+### A rigid pose update must preserve rotation
+
+Write the world-to-optical pose as Y=RX+t. For a small left perturbation of the camera transform, let translation be delta_t and rotation vector be delta_omega. First-order rotation acts by delta_omega cross Y, so
+
+\[
+\delta Y=\delta t-[Y]_\times\delta\omega.
+\]
+
+The 2-by-6 image Jacobian is J_p[I,-[Y]_x], using the translation-first convention. If we instead apply a right perturbation, or hold translation fixed while perturbing R, the formula changes. Derive the update and the Jacobian together. Never paste a Jacobian from a different pose convention without checking the implied perturbation.
+
+The negative cross-product sign follows from a cross b = -b cross a. For the optical point above, a small positive rotation about the optical Z axis changes the optical point by (-Y_c,X,0) times the angle. The image moves approximately (-100,200) pixels per radian. A finite-difference perturbation of 0.00001 rad should recover those derivatives up to the expected truncation and rounding errors.
+
+When applying a finite step, use a proper rotation exponential or a normalized quaternion construction with the corresponding pose update. Adding arbitrary entries to a rotation matrix will generally violate orthogonality. A Jacobian is a tangent-space derivative; the update maps that tangent displacement back to a valid state.
+
+## Why damping is not the same as observing more data
+
+For a residual vector r, linearize it as r+J delta. If the measurement errors have covariance Sigma, whitening transforms the residual by a matrix whose squared norm corresponds to Sigma inverse. In a simple independent equal-noise case this is just division by sigma. The weighted normal system is
+
+\[
+(J^TWJ+\lambda D)\delta=-J^TW r,
+\]
+
+where W is the inverse covariance or a local weight approximation, D is a positive scaling matrix, and lambda is a damping parameter. The damping term limits the step in weak directions. It does not add physical observations.
+
+Consider a two-parameter local problem with J=diag(1,0.001), r=(1,0.001). The undamped solution is (-1,-1), although the second residual changes only a thousandth for a unit change in the second parameter. If lambda=0.01 and D=I, the step becomes approximately (-0.990099,-0.00009999). The weak direction barely moves. This can protect an optimization from large unreliable steps, but it cannot tell us what the true second parameter is. The final estimate may depend strongly on the initialization or prior.
+
+A robust estimator can also reduce the weight of large residuals. For a scalar Huber loss, the quadratic region extends up to a threshold c in normalized residual units; outside it the loss grows linearly. In iteratively reweighted least squares the corresponding weight is one for absolute residual at most c, and c/|r| outside. For a two-dimensional image observation one may apply the weight to the Euclidean whitened residual as a block. Applying independent coordinate weights is a different loss. State which convention is used.
+
+## Uncertainty can be a matrix, not just a reprojection number
+
+Near a well-constrained optimum with independent known noise and a locally valid model, the approximate parameter covariance is the inverse of J^TWJ after removing any gauge freedoms. This is a local approximation. A rank-deficient matrix has no ordinary inverse; a pseudoinverse does not imply that the unobservable directions are known with zero uncertainty.
+
+Take two normalized sensitivity columns with unit norm and correlation rho. Their normal matrix is
+
+\[
+H=\begin{bmatrix}1&\rho\\\rho&1\end{bmatrix}.
+\]
+
+The eigenvalues are 1+rho and 1-rho. If rho=0.99, the weak eigenvalue is 0.01 and the strong one is 1.99. With unit residual variance the weak-direction variance is one hundred, compared with about 0.503 in the strong direction. A camera can have small residuals while some parameter combinations remain highly uncertain.
+
+Plot sensitivity singular values and parameter correlations along with held-out predictions. If parameters have different units, choose a meaningful scaling before comparing singular values: a rotation measured in radians and a translation measured in millimetres can otherwise create a misleading condition number.
+
+### A calibration workflow you can defend
+
+Begin with validated correspondences and a target of known dimensions. Initialize a physically plausible camera with the bounded DLT or a suitable planar method. Estimate the parameters under a declared observation model. Refine with a geometric residual and a consistent rotation update. Reject steps that leave the supported domain or produce invalid positive-depth conditions. Keep the raw observations and record the residual history, accepted steps and termination reason.
+
+Evaluate on withheld views, not merely withheld corners from the same board pose. Vary orientation, distance and image coverage. Record per-view residual vectors and parameter uncertainty. Compare a smaller distortion model with a larger one using the same training and validation protocol. Extra parameters should earn their place through predictive improvement rather than only a better training score.
+
+**Research exercise.** Use the P26 synthetic camera as the truth model and generate training sets with the same number of observations but different depth spread and field coverage. Compute the analytic pinhole Jacobian above, compare it to central differences, then study its singular spectrum under a fixed parameter scaling. Implement a damped refinement as a separate extension and evaluate on a held-out volume. The existing native P26 implementation is normalized spatial DLT and decomposition, not a completed nonlinear camera optimizer; the new material explains how to build and validate one.
+
 ## Exercises — make the camera explain its answer
 
 **Reconstruct 26A.** Derive the two DLT rows for a landmark at (1,2,3) observed at (400,300). Count the dimensions and explain why multiplying all twelve coefficients by two changes no image coordinates.
