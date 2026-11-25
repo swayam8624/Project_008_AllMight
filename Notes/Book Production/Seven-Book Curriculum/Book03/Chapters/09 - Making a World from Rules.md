@@ -962,7 +962,7 @@ d((1-t)A+tB)
 At the **linearly interpolated** zero crossing, the right-hand side is zero. Therefore, in exact arithmetic,
 
 \[
-\boxed{\|P_{\rm interpolated}\|\le r.}
+\boxed{\|P_\mathrm{interpolated}\|\le r.}
 \tag{9.65}
 \]
 
