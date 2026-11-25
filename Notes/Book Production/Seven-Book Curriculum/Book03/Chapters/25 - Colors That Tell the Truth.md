@@ -243,6 +243,17 @@ The studio is a numerical inspector, not an ICC color-management system or a dis
 
 **Explain 25H.** Write a pipeline contract from Chapter 24's raw ADC output to a displayed encoded RGB image. Label the units, black subtraction, white balance, color transform, exposure, tone mapping, gamut handling, transfer encoding and quantization. Name information lost at each stage.
 
+### Selected answers and experiment criteria
+
+**25A–B.** The toy instrument's three responses are p1+p4, p2+p4 and p3+p4. Every nonnegative spectrum (2-a,2-a,2-a,a), with 0<=a<=2, gives (2,2,2); for example a=0.5 yields (1.5,1.5,1.5,0.5). The white tristimulus values are x/y, 1 and (1-x-y)/y, or approximately (0.950456,1,1.089058). The sum of the scaled primary columns is exactly the XYZ prediction for linear RGB=(1,1,1).
+
+**25C–D.** The equal linear black-white average is 0.5, which encodes to about 0.735357. The average of their encoded endpoints is 0.5, which decodes to about 0.214041. In the P3 experiment, retain the signed linear-sRGB intermediate for the unclipped path; compare XYZ before and after clipping to distinguish gamut loss from conversion roundoff.
+
+**25E–F.** The gains (1.5,1,2) produce (0.6,0.6,0.6) for the card and (0.75,0.3,0.4) for the colored patch. The reference constrains a neutral balance, not an entire spectral model. With positive unit exposure, the luminance-based compression multiplies (8,4,2) by one common factor and preserves 4:2:1. Independent channel compression gives (8/9,4/5,2/3), whose ratio relative to blue is 4/3:6/5:1.
+
+**25G–H.** RGB specifies coordinates in a declared color space, not three universal light quantities. A satisfactory pipeline diagram names the sensor model, black level, raw gain, linear working space and display encoding; clipping, quantization and noninvertible gamut mapping must be marked as information-loss boundaries.
+
+
 ## References and boundaries
 
 - W3C, [CSS Color Module Level 4, 12 November 2026 candidate recommendation draft](https://www.w3.org/TR/2026/CRD-css-color-4-20261112/), predefined sRGB and Display P3 spaces and color-conversion examples. Used for primary/white conventions and transfer functions; our matrix derivation and code are independently written.
