@@ -1099,4 +1099,4 @@ Fundamental references: Gerald Farin, *Curves and Surfaces for CAGD: A Practical
 
 **Companion:** `Code Parts/tools/labs/book03_cpp23/include/book03/curves3d.hpp`, `src/curve_studio.cpp`, `tests/curves3d_tests.cpp`.
 
-**Read next:** Chapter 09 — Making a World from Rules (planned).
+**Read next:** Chapter 09 — Making a World from Rules.
