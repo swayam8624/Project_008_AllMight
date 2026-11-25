@@ -79,6 +79,8 @@ TEX = r"""
 \captionsetup[figure]{labelformat=empty,font=small}
 \makeatletter
 \def\fps@figure{H}
+\renewcommand{\@pnumwidth}{3em}
+\renewcommand{\@tocrmarg}{3.5em}
 \makeatother
 \usepackage{adjustbox}
 \providecommand{\maxwidth}{\linewidth}
