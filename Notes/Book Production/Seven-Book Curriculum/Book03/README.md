@@ -4,7 +4,7 @@
 **Series:** From Bits to Research  
 **Active branch:** curriculum/book03-geometry-images-pass01  
 **Author:** Swayam Singal  
-**State:** Authoring passes 01–29; twenty-nine substantial narrative chapters, twenty-nine cumulative C++23 laboratories, thirty-one source-authored CTests and one hundred twenty-nine original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
+**State:** Authoring passes 01–30; thirty substantial narrative chapters, thirty cumulative C++23 laboratories, thirty-two source-authored CTests and one hundred thirty-four original SVG teaching figures are committed. NO Book 03 PDF or EPUB has been generated or promoted.
 
 > A computer can draw a triangle. This book is about discovering what that deceptively simple sentence requires us to know, and then doing it ourselves.
 
@@ -190,7 +190,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 27 | Essential/fundamental geometry, normalized eight-point estimation, Sampson residual, degeneracy and scale | Authored; standalone native tests and studio passed |
 | 28 | Harris, normalized descriptors, ratio/mutual matching and RANSAC verification | Authored; standalone native tests and studio passed |
 | 29 | Essential pose recovery, multi-ray triangulation, point refinement and bundle adjustment derivation | Authored; standalone native tests and studio passed |
-| 30+ | Surface reconstruction through complete 32-chapter coverage, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
+| 30 | PCA normals, implicit fields, aligned depth TSDF and supported zero crossings | Authored; standalone native tests and studio passed |
+| 31+ | Studio integration and capstone, source-unit reconciliation, math and figure audits, print/EPUB composition and acceptance | Not started |
 
 
 
@@ -222,3 +223,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 29
 
 [Chapter 29 — Building a Scene from Pictures](Chapters/29%20-%20Building%20a%20Scene%20from%20Pictures.md) develops feature tracks, essential pose disambiguation, multiview triangulation, pixel-space point refinement, incremental registration and bundle adjustment with Schur elimination. Five original SVG figures and a C++23 reconstruction laboratory accompany the narrative. [Evidence](PASS29_EVIDENCE.md) and [source custody](PASS29_LEGACY_AUDIT.md) record observed results and limits. Next: Chapter 30 — Points Become Surfaces.
+
+
+## Pass 30
+
+[Chapter 30 — Points Become Surfaces](Chapters/30%20-%20Points%20Become%20Surfaces.md) develops local PCA normals, explicit and implicit representations, projective TSDF fusion, unknown-state semantics, interpolation and sparse-volume design. Five figures and a C++23 aligned-depth surface workshop accompany the reader. [Evidence](PASS30_EVIDENCE.md) and [source custody](PASS30_LEGACY_AUDIT.md) record actual results and limits. Next: Chapter 31 — A Studio for Geometry and Images.
