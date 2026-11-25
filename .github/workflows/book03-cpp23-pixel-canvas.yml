@@ -17,7 +17,7 @@ on:
 
 jobs:
   native-cpp23:
-    name: C++23 twenty-three cumulative geometry laboratories (Ubuntu)
+    name: C++23 thirty-two cumulative geometry laboratories (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
       - name: Compile with strict warnings
         run: cmake --build build/book03-p01 --parallel 2
-      - name: Execute twenty-five CTests across twenty-three C++23 geometry laboratories
+      - name: Execute all thirty-four registered CTests
         run: ctest --test-dir build/book03-p01 --output-on-failure
       - name: Generate both image demonstrations
         run: |
@@ -886,6 +886,19 @@ jobs:
               assert 0<=n<=40 and n==int(n)
           print("P23: all 265 independent distortion and inverse measurements verified")
           PY
+      - name: Execute P24–P32 native workshops and independent output checks
+        run: |
+          build/book03-p01/book03_sensor build/book03-p01/sensor.csv
+          build/book03-p01/book03_color build/book03-p01/color.csv
+          build/book03-p01/book03_calibration build/book03-p01/calibration.csv
+          build/book03-p01/book03_epipolar build/book03-p01/epipolar.csv
+          build/book03-p01/book03_matching build/book03-p01/matching.csv
+          build/book03-p01/book03_sfm build/book03-p01/reconstruction.csv
+          build/book03-p01/book03_surface build/book03-p01/fusion.csv
+          build/book03-p01/book03_studio build/book03-p01/integrated-studio
+          python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_studio.py" build/book03-p01/integrated-studio
+          build/book03-p01/book03_capstone build/book03-p01/capstone.csv
+          python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_late_workshops.py" build/book03-p01
       - name: Confirm P6 header and exact payload sizes
         run: |
           python3 - <<'PY'

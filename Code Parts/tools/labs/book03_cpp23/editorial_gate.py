@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-only checks for Book 03 / Passes 01–23.
+"""Source-only checks for Book 03 / Passes 01–32.
 
 This validates names, manuscript location, original figures and references.
 It deliberately does not compile LaTeX, rewrite the manuscript, build an EPUB
@@ -10,6 +10,8 @@ The C++23 compiler and CTest remain responsible for executable behavior.
 from __future__ import annotations
 
 import sys
+import re
+from urllib.parse import unquote
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -46,6 +48,69 @@ SVG = "{http://www.w3.org/2000/svg}"
 def check(condition: bool, explanation: str) -> None:
     if not condition:
         raise AssertionError(explanation)
+
+
+
+def complete_inventory() -> None:
+    """Full-reader source inventory; does not certify rendered pages or mathematics."""
+    chapters = sorted((BOOK / "Chapters").glob("*.md"))
+    check(len(chapters) == 32, f"expected 32 chapters, got {len(chapters)}")
+    owners: dict[str, set[str]] = {}
+    readme = (BOOK / "README.md").read_text(encoding="utf-8")
+    for number, path in enumerate(chapters, 1):
+        prose = path.read_text(encoding="utf-8")
+        check(path.name.startswith(f"{number:02d} - "), f"chapter path/order: {path.name}")
+        check(re.match(rf"^# Chapter {number:02d}\s*[—–-]", prose),
+              f"chapter heading/order: {path.name}")
+        check(path.name in unquote(readme), f"reader index missing {path.name}")
+        # Preserve the P01–23 detailed content checks below. P24–32
+        # receive explicit concept and teaching-structure checks too.
+        if number >= 24:
+            check(len(prose) > 12000, f"late chapter unexpectedly short: {path.name}")
+            for word in ("Reconstruct", "Falsify", "Transfer", "Explain"):
+                check(word.casefold() in prose.casefold(),
+                      f"{path.name}: missing exercise family {word}")
+        # Match asset references even when the author uses a non-image link.
+        names = set(re.findall(r"\.\./Assets/([A-Za-z0-9_-]+\.svg)", prose))
+        check(bool(names), f"{path.name}: no SVG references")
+        for name in names:
+            check((BOOK / "Assets" / name).is_file(),
+                  f"{path.name}: missing figure {name}")
+            owners.setdefault(name, set()).add(path.name)
+        if number >= 24:
+            for alt, filename in re.findall(
+                r"!\[([^\]\n]*)\]\(\.\./Assets/([A-Za-z0-9_-]+\.svg)\)", prose
+            ):
+                check(bool(alt.strip()), f"{path.name}: empty alt for {filename}")
+    figures = sorted((BOOK / "Assets").glob("*.svg"),
+                     key=lambda p: int(p.name.split("-", 1)[0]))
+    check(len(figures) == 142, f"expected 142 SVGs, got {len(figures)}")
+    for number, figure in enumerate(figures, 1):
+        check(int(figure.name.split("-", 1)[0]) == number,
+              f"figure numbering gap/duplicate: {figure.name}")
+        check(figure.name in owners, f"unreferenced figure: {figure.name}")
+        try:
+            root = ET.parse(figure).getroot()
+        except ET.ParseError as exc:
+            raise AssertionError(f"invalid SVG XML: {figure.name}: {exc}") from exc
+        check(root.tag == SVG + "svg", f"not an SVG: {figure.name}")
+        for tag in ("title", "desc"):
+            value = root.find(SVG + tag)
+            check(value is not None and len("".join(value.itertext()).strip()) >
+                  (70 if tag == "desc" else 0), f"{figure.name}: missing {tag}")
+        check(bool(root.attrib.get("viewBox")), f"{figure.name}: missing viewBox")
+    cmake = (LAB / "CMakeLists.txt").read_text(encoding="utf-8")
+    executables = dict(re.findall(
+        r"add_executable\(\s*(\w+)\s+((?:src|tests)/[^)\s]+)", cmake))
+    tests = re.findall(r"add_test\(\s*NAME\s+(\w+)\s+COMMAND\s+(\w+)", cmake)
+    check(len(tests) == 34 and len(set(name for name, _ in tests)) == 34,
+          "expected 34 unique CTest registrations")
+    for name, target in tests:
+        check(target in executables, f"CTest {name}: missing executable {target}")
+    for target, source in executables.items():
+        check((LAB / source).is_file(), f"missing executable source: {target}: {source}")
+    print(f"Full reader: {len(chapters)} numbered chapters, {len(figures)} "
+          f"referenced and parseable SVGs, {len(tests)} registered CTests.")
 
 
 def main() -> int:
@@ -525,7 +590,10 @@ def main() -> int:
         check(f"../Assets/{filename}" in owning_chapter,
               f"figure not included at point of teaching: {filename}")
 
-        root = ET.parse(figure).getroot()
+        try:
+            root = ET.parse(figure).getroot()
+        except ET.ParseError as exc:
+            raise AssertionError(f"invalid SVG XML: {filename}: {exc}") from exc
         check(root.tag == SVG + "svg", f"not an SVG document: {filename}")
         title = root.find(SVG + "title")
         description = root.find(SVG + "desc")
@@ -548,7 +616,8 @@ def main() -> int:
     check("P6" in (LAB / "include/book03/pixel_canvas.hpp").read_text(),
           "RGB8 PPM serialization contract missing")
 
-    print("Book03/P01–P23: twenty-three narrative chapters, source location and one hundred five original SVG figure contracts checked.")
+    complete_inventory()
+    print("Book03/P01–P32: source-only reader gate passed; native tests and publication validation are separate.")
     print("No LaTeX/PDF/EPUB builds were requested or performed.")
     return 0
 
@@ -557,5 +626,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (AssertionError, ET.ParseError) as exc:
-        print(f"Book03/P01–P23 editorial gate FAILED: {exc}", file=sys.stderr)
+        print(f"Book03/P01–P32 editorial gate FAILED: {exc}", file=sys.stderr)
         sys.exit(1)
