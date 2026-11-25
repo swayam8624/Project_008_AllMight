@@ -280,3 +280,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 29 — sparse reconstruction
 
 [Chapter 29](Chapters/29%20-%20Building%20a%20Scene%20from%20Pictures.md) implements calibrated essential-pose recovery, multi-ray triangulation and fixed-pose point refinement; derives joint bundle adjustment and describes incremental view registration. [PASS29_LEGACY_AUDIT.md](PASS29_LEGACY_AUDIT.md) records P27 dependency, chapter plan and primary references. [PASS29_EVIDENCE.md](PASS29_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution, 80 point refinements, 100 trials, 10,000 points and independent CSV/geometry checks. Five figures bring the count to 129; the thirty-first CTest is registered. Cumulative integration and publication remain pending.
+
+
+## Pass 30 — point clouds and surface fusion
+
+[Chapter 30](Chapters/30%20-%20Points%20Become%20Surfaces.md) derives covariance normals, implicit geometry, weighted projective TSDF and support-aware zero crossings; discusses isosurface extraction and sparse storage. [PASS30_LEGACY_AUDIT.md](PASS30_LEGACY_AUDIT.md) records prior reader routes and primary references. [PASS30_EVIDENCE.md](PASS30_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution, 100 trials, 21,900 observed crossings and independent CSV checks. Five figures bring the count to 134; the thirty-second CTest is registered. Cumulative integration and publication remain pending.
