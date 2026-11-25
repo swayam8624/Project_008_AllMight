@@ -344,7 +344,7 @@ Why not just use each triangle's normal? Because the finite triangle mesh is onl
 
 A renderer might interpolate vertex normals, compute them from a normal map, or use the analytic derivative in a shader. Those are different shading policies, and they belong to the later image-formation chapters.
 
-For now, the native C++23 \`TerrainField::normal(x,z)\` returns the normalized analytic vector. Its test compares the analytic slopes against an independently constructed finite-difference estimate at an ordinary nonsingular point.
+For now, the native C++23 `TerrainField::normal(x,z)` returns the normalized analytic vector. Its test compares the analytic slopes against an independently constructed finite-difference estimate at an ordinary nonsingular point.
 
 ### A useful numerical trap
 
@@ -674,7 +674,7 @@ At \((0,3,0)\), the gradient is \((0,1,0)\), pointing upward.
 
 At the exact sphere center, however, the Euclidean norm is not differentiable. There is no unique gradient direction. Any answer pretending to supply one would be a lie.
 
-That is why \`SphereDistance::gradient()\` rejects the origin instead of returning an arbitrary “up” normal.
+That is why `SphereDistance::gradient()` rejects the origin instead of returning an arbitrary “up” normal.
 
 This is a broader numerical and geometric lesson: a function can be perfectly well-defined at a point while its derivative is not.
 
@@ -1040,11 +1040,11 @@ Our source ledger deliberately retains the earlier original material on implicit
 
 ## The P09 C++23 world generator we can actually inspect
 
-We add \`include/book03/procedural_geometry.hpp\` to the same native lab used by Chapters 01–08. It depends on the shared \`Point3\`, \`Vector3\` and \`Mesh3\` types.
+We add `include/book03/procedural_geometry.hpp` to the same native lab used by Chapters 01–08. It depends on the shared `Point3`, `Vector3` and `Mesh3` types.
 
 Four real geometry families are implemented:
 
-A **terrain** sampled from \`TerrainField\`, returning a topological disk, with an independently evaluated analytic normal.
+A **terrain** sampled from `TerrainField`, returning a topological disk, with an independently evaluated analytic normal.
 
 A **capped cylinder** with modulo-wrapped angular rings, no duplicate meridian vertex, and correctly oppositely wound cap and side uses.
 
@@ -1054,7 +1054,7 @@ An **implicit sphere** extracted from a sampled signed distance field using six 
 
 These are genuinely different generation rules, but they all return the same indexed mesh type. That gives the next stage one consistent data contract.
 
-The new \`src/procedural_studio.cpp\` offers native terminal commands:
+The new `src/procedural_studio.cpp` offers native terminal commands:
 
 ~~~text
 book03_world inspect terrain
@@ -1094,7 +1094,7 @@ obj level-set-sphere.obj
 quit
 ~~~
 
-The exported OBJ stores actual indexed \`v\` positions and \`f\` triangle faces with one-based OBJ vertex IDs. The CSV contains indexed sample locations, not a vague screenshot. The SVG is constructed from the same three-dimensional positions and indexed edges, using a clearly documented **parallel oblique illustration**, not the camera model we will build later.
+The exported OBJ stores actual indexed `v` positions and `f` triangle faces with one-based OBJ vertex IDs. The CSV contains indexed sample locations, not a vague screenshot. The SVG is constructed from the same three-dimensional positions and indexed edges, using a clearly documented **parallel oblique illustration**, not the camera model we will build later.
 
 Changing the selected shape or parameters changes the actual generated geometry. An invalid radius or resolution is rejected before the editor updates the stored state. An invalid export does not silently replace the previous valid mesh with something pretending to be complete.
 
@@ -1102,7 +1102,7 @@ The source controls are deliberately bounded, keeping experiments small enough f
 
 ### Our independent C++23 tests
 
-The \`tests/procedural_geometry_tests.cpp\` suite does not simply compare a screenshot to another screenshot.
+The `tests/procedural_geometry_tests.cpp` suite does not simply compare a screenshot to another screenshot.
 
 It checks the terrain's analytic height and normal, independent finite-difference slope, upward-facing triangle winding, and algebraically derived indexed-grid counts.
 
@@ -1220,10 +1220,10 @@ We are writing the rules of a small universe—and learning how to test whether 
 
 ## Source custody and further study
 
-This is an **additive** reader chapter, not a replacement for the original extensive graphics/geometry/reconstruction notes. The older \`Notes/Chapter Edition/02 - Graphics Vision and XR/02 - Surfaces, Topology and Parameterization.md\` contains the original discussion of parametric versus implicit surfaces, manifoldness, Euler characteristic, patch normals, level sets, geometric operators and subdivision rules. The separate \`34 - Learned 3D Shapes and Scene Representations.md\` discusses point clouds, meshes, occupancy/SDFs, learned implicit fields and neural reconstruction. The old source atlas maintains provenance for the CMU geometry and surface lecture material. Exact accessible reading-copy identifiers and inspected ranges are preserved in \`PASS09_LEGACY_AUDIT.md\`.
+This is an **additive** reader chapter, not a replacement for the original extensive graphics/geometry/reconstruction notes. The older `Notes/Chapter Edition/02 - Graphics Vision and XR/02 - Surfaces, Topology and Parameterization.md` contains the original discussion of parametric versus implicit surfaces, manifoldness, Euler characteristic, patch normals, level sets, geometric operators and subdivision rules. The separate `34 - Learned 3D Shapes and Scene Representations.md` discusses point clouds, meshes, occupancy/SDFs, learned implicit fields and neural reconstruction. The old source atlas maintains provenance for the CMU geometry and surface lecture material. Exact accessible reading-copy identifiers and inspected ranges are preserved in `PASS09_LEGACY_AUDIT.md`.
 
 Important intellectual sources include Lorensen and Cline, *Marching Cubes: A High Resolution 3D Surface Construction Algorithm* (SIGGRAPH 1987), for the classical cube-case extraction family; the original marching-tetrahedra and tetrahedral-decomposition literature for ambiguity handling; and the differential and implicit-surface material in the existing source atlas. We implemented a deliberately restricted sphere extractor rather than copying third-party case tables or borrowing external meshes. The source contains explicit assumptions, testable numerical examples, and documented limitations.
 
-**Companion code:** \`Code Parts/tools/labs/book03_cpp23/include/book03/procedural_geometry.hpp\`, \`tests/procedural_geometry_tests.cpp\`, \`src/procedural_studio.cpp\`.
+**Companion code:** `Code Parts/tools/labs/book03_cpp23/include/book03/procedural_geometry.hpp`, `tests/procedural_geometry_tests.cpp`, `src/procedural_studio.cpp`.
 
-**Read next:** Chapter 10 — A Mesh You Can Trust (planned).
+**Read next:** Chapter 10 — A Mesh You Can Trust.
