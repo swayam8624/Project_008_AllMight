@@ -25,6 +25,8 @@ jobs:
         run: python3 "Code Parts/tools/labs/book03_cpp23/editorial_gate.py"
       - name: Verify pinned original source bytes and report historical manifest drift
         run: python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_source_custody.py" --report-historical-drift
+      - name: Compile expanded reader snippets and check analytic witnesses
+        run: python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_depth_expansion.py"
       - name: Configure pure C++23 laboratory
         run: |
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23

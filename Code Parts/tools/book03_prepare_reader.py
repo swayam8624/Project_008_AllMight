@@ -386,7 +386,7 @@ def prepare(root, out):
     meta = {"title":{"t":"MetaString","c":TITLE},
             "subtitle":{"t":"MetaString","c":SUBTITLE},
             "lang":{"t":"MetaString","c":"en"},
-            "date":{"t":"MetaString","c":"Digital reader edition · November 2026"}}
+            "date":{"t":"MetaString","c":"2026-11-25"}}
     doc = {"pandoc-api-version":api,"meta":meta,"blocks":combined}
     (out/"reader-print.json").write_text(json.dumps(doc,ensure_ascii=False),encoding="utf-8")
     ebook = copy.deepcopy(doc)

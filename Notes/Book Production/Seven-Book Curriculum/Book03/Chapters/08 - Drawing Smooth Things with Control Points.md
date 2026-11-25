@@ -124,7 +124,7 @@ The control polygon went all the way up to \(y=2\), but the curve's midpoint sit
 
 If our C++23 `CubicBezier3::at(0.5)` returns anything other than \((1,1.5,0)\) for these XY controls embedded at \(z=0\), something is wrong.
 
-<escape> </escape>
+
 
 ![A cubic Bézier curve formed by three levels of linear interpolation at parameter one half.](../Assets/22-de-casteljau-levels.svg)
 
