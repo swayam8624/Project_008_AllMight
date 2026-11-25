@@ -1,0 +1,5 @@
+# Pass 30 — Source custody
+
+Read current SOURCE_LEDGER.md (blob cffbe47542d85daf737ded4cd769353236460dc0) and CHAPTER_PLAN.md (blob 77937aecee267f9772c742da0a979c030385af4c). P07 covers indexed topology/manifold diagnostics; P08 covers parametrized surfaces; P09 covers procedural implicit extraction; P29 covers sparse points. P30 adds independently authored PCA local plane estimation, aligned-depth volumetric fusion and confidence/unknown-state contracts. Existing legacy Surfaces, Topology and Parameterization and Mesh Operators source routes retained; no full-body legacy inspection claimed in this pass.
+
+Primary reference identities checked: Curless and Levoy, A Volumetric Method for Building Complex Models from Range Images, SIGGRAPH 1996, https://visionsystems.stanford.edu/papers/volrange/ ; Lorensen and Cline, Marching Cubes, SIGGRAPH 1987, DOI 10.1145/37402.37422. New text distinguishes projective differences from Euclidean SDF and describes extraction without claiming a native mesh extractor. Original sources unmodified. Next: Chapter 31 — A Studio for Geometry and Images.
