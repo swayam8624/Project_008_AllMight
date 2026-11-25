@@ -252,6 +252,17 @@ The CSV records noise level, trial, initial and refined pixel RMS per observatio
 
 **Challenge 29H.** Design an incremental third-camera registration experiment using known intrinsics and robust PnP. Specify how you would detect a bad registration, handle absent tracks, fix scale and evaluate pose/point error after similarity alignment.
 
+### Selected answers and experiment criteria
+
+**29A–C.** A landmark track may contain at most one observation per camera. If merging two tracks gives two different feature IDs in a single view, the proposed association needs rejection or resolution. For unit d, Q^T=Q and Q^2=I-2dd^T+d(d^Td)d^T=Q. Differentiating sum ||Q_j(X-C_j)||^2 gives equation 29.4. If all rays have direction d, every Q_j annihilates d, so their sum is singular regardless of the number of views.
+
+**29D–E.** Changing translation sign changes which triangulations satisfy positive depth. At tiny parallax, depth sensitivity grows and hypothesis voting becomes less reliable. For a rotated camera, multiply the optical projection derivative by R on the right. Central differences should initially improve quadratically with the step size; at very small steps floating subtraction can dominate.
+
+**29F.** As an algebraic elimination witness, take A=3, B=(1,1), C=diag(2,2), g_c=1 and g_p=(2,0). The reduced coefficient is 2 and the reduced right-hand side is zero; delta_c=0, delta_p=(-1,0). Substitution satisfies all three full equations. This is a scalar block demonstration, not a physical bundle-adjustment dataset.
+
+**29G–H.** Filter the trial CSV for lower refined reprojection RMS and higher refined 3D RMS. Both observations can be true simultaneously. For the new camera experiment record accepted and failed registrations, retain all tracks with their IDs, and declare the gauge/alignment before evaluating pose and landmark errors.
+
+
 ## Further reading
 
 Johannes L. Schönberger and Jan-Michael Frahm, [Structure-from-Motion Revisited](https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html), CVPR 2016, describes incremental reconstruction in a practical vision system. Bill Triggs, Philip McLauchlan, Richard Hartley and Andrew Fitzgibbon, [Bundle Adjustment — A Modern Synthesis](https://thoth.inrialpes.fr/people/triggs/pubs/Triggs-hdr-papers.pdf), Vision Algorithms, LNCS 1883, 2000, develops joint estimation, sparsity and gauge freedom. Our small native lab is an independently authored teaching subset, not a reimplementation of either full system.
