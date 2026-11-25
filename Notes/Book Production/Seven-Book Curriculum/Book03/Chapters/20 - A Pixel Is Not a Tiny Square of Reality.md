@@ -184,6 +184,27 @@ This is a heuristic for level selection, not a full anisotropic integral. Trilin
 
 A similar issue appears in time. A moving thin line can pass between successive frames. Temporal antialiasing can combine jittered samples from multiple frames using motion-aware reprojection, but visibility changes, disocclusion and incorrect motion can invalidate history. A temporal resolve is not an unlimited accumulation of interchangeable measurements.
 
+### A texture's edge is a question about missing neighbours
+
+A texture of width W and height H has integer texel indices, but a surface supplies continuous normalized coordinates u,v. Under the center convention of Chapter 14, use x=uW-0.5 and y=vH-0.5, so integer x,y now identify texel centers. Set i=floor(x), j=floor(y), a=x-i and b=y-j. The four neighbouring samples contribute
+
+\[
+C=(1-a)(1-b)T_{i,j}+a(1-b)T_{i+1,j}
+ +(1-a)bT_{i,j+1}+abT_{i+1,j+1}.
+\]
+
+The weights are nonnegative and sum to one. This is separable bilinear reconstruction, not integration over the full projected pixel footprint. When a neighbor index is outside the texture, addressing policy must be applied to the individual sampled indices. Merely clamping the normalized coordinate to [0,1] does not by itself make the resulting integer filter indices safe.
+
+For repeat addressing, map an integer i to ((i mod W)+W) mod W, using a remainder operation that may return a negative result. For clamp-to-edge, map it to min(max(i,0),W-1). For mirrored repeat, let q be the nonnegative remainder modulo 2W, then use q if q<W and 2W-1-q otherwise. These formulas describe a simple conceptual CPU texture sampler for positive dimensions; specific GPU sampler rules and border colors need their own specification.
+
+Try a two-texel one-dimensional texture with linear values [0,1]. At u=0, x=-0.5, so the filter straddles indices -1 and 0 with equal weights. Repeat maps -1 to 1, yielding 0.5. Clamp-to-edge maps both to 0, yielding 0. Mirrored repeat also yields 0. At u=0.5 the two neighboring texels mix equally and produce 0.5 in all three modes. The difference at the seam is not a rounding bug; it follows from how the sampled signal is extended beyond its stored domain.
+
+The footprint of a screen pixel can be elongated. Form the 2-by-2 Jacobian J whose columns are the changes in texel coordinates for unit screen steps. Its singular values describe the principal stretches of an infinitesimal circular footprint. A 16-by-1 stretch has a 16:1 anisotropy. A single isotropic level chosen from the largest stretch filters away detail along the narrow direction too. An anisotropic filter approximates a more directional integration; its cost and accuracy depend on sampling policy. Mip construction should operate on the appropriate signal domain (linear light for color averaging), and normal or categorical textures need semantics beyond ordinary color averaging.
+
+The P20 native quadrature lab remains one-dimensional. The added addressing examples are separately checked scalar witnesses, not a claim of a complete mipmapped texture renderer.
+
+*Source route: Graphics Vision and XR/19, derived lines 14–330; /04, lines 76–114. The full texture sampling and implementation source remains available to Books 04 and 06.*
+
 ## Average light before encoding it
 
 If two linear-light measurements are zero and one, their equally weighted average is 0.5. Under standard sRGB encoding,
