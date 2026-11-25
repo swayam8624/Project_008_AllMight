@@ -1,0 +1,212 @@
+[
+  {
+    "n": 18,
+    "name": "143-tile-classification.svg",
+    "title": "A tile is a set of sample centres",
+    "desc": "A triangle crosses a four by four tile grid. Tiles wholly inside are teal, tiles outside remain pale, and inconclusive tiles are amber; the exact sample mask still determines the result.",
+    "marker": "## A small triangle can have a large attribute gradient"
+  },
+  {
+    "n": 18,
+    "name": "144-shared-diagonal-mask.svg",
+    "title": "Two masks, one complete square",
+    "desc": "An eight by eight miniature of the guided rectangle fixture displays one triangle owning every diagonal sample, with the other owning only the strict opposite half.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 19,
+    "name": "145-depth-pyramid.svg",
+    "title": "The depth hierarchy keeps a conservative bound",
+    "desc": "Four leaf maxima 0.35, 0.55, 0.75, and 1.00 feed a root maximum of 1.00. A candidate depth of 0.58 can reject only the first two leaves under strict forward depth.",
+    "marker": "## Why depth precision changes across the picture"
+  },
+  {
+    "n": 19,
+    "name": "146-depth-interval-scaling.svg",
+    "title": "Depth resolution grows quadratically",
+    "desc": "The plotted relative axial interval follows d squared for fixed uniformly spaced depth values. Distances of 1, 10 and 100 units give interval ratios of 1, 100 and 10000.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 20,
+    "name": "147-reconstruction-aliasing.svg",
+    "title": "Averaging restores the correct light",
+    "desc": "An alternating linear signal gives phase-dependent point samples of zero or one, while the exact two-texel average is one half for each output sample.",
+    "marker": "## Choose a texture level from a projected footprint"
+  },
+  {
+    "n": 20,
+    "name": "148-anisotropic-footprint.svg",
+    "title": "One screen pixel, unequal texel stretches",
+    "desc": "The eight by one ellipse spans eight texels horizontally and one vertically, while an isotropic footprint of equal major radius also averages across the short axis.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 21,
+    "name": "149-sample-pipeline.svg",
+    "title": "One sample, five independently testable stages",
+    "desc": "The single triangle witness is followed from optical coordinates through projected barycentrics, reciprocal-w, depth, and the final color encoding decision.",
+    "marker": "## A small scene is a better specification than a large screenshot"
+  },
+  {
+    "n": 21,
+    "name": "150-perspective-weight-witness.svg",
+    "title": "Screen weights are not surface weights",
+    "desc": "Paired horizontal bars contrast the screen barycentric weights with perspective-correct weights for the numerical triangle witness. The latter reconstruct the original viewing ray.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 22,
+    "name": "151-focus-sweep.svg",
+    "title": "Near and far focus blur are asymmetric",
+    "desc": "At the fixed sensor position for a 1000 mm object, a 50 mm thin lens and 12.5 mm aperture produce geometric blur diameters that vanish at focus and increase asymmetrically with object distance.",
+    "marker": "## A camera records a spread, not a perfect point"
+  },
+  {
+    "n": 22,
+    "name": "152-aperture-area-sampling.svg",
+    "title": "Uniform radius is not uniform area",
+    "desc": "Equal-width radial bands have areas proportional to 1, 3, 5 and 7. Equal probabilities per band overrepresent the central region; uniform-area sampling gives probabilities proportional to band area.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 23,
+    "name": "153-angular-projection-comparison.svg",
+    "title": "Different angular maps agree near the axis",
+    "desc": "Five normalized angular projection laws are plotted from zero to sixty degrees. Their common slope at zero hides important differences at the edge of the field.",
+    "marker": "## Inverse angular projection returns a ray, not a point"
+  },
+  {
+    "n": 23,
+    "name": "154-inverse-uncertainty.svg",
+    "title": "Undistortion stretches uncertainty unequally",
+    "desc": "An isotropic half-pixel input uncertainty becomes an ellipse whose radial standard deviation is approximately 0.588 pixels and tangential standard deviation 0.526 pixels in the given local model.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 24,
+    "name": "155-photon-transfer-fit.svg",
+    "title": "The slope measures conversion gain",
+    "desc": "The analytic unsaturated temporal variance line has slope 0.5 digital units per electron and intercept 4 digital units squared. The four plotted points are model values, not camera measurements.",
+    "marker": "## A saturated value carries an inequality"
+  },
+  {
+    "n": 24,
+    "name": "156-sensor-clipping-bound.svg",
+    "title": "A saturated code gives an inequality",
+    "desc": "For gain 0.5 and black offset 64, a maximum code of 255 is reached at 382 electrons. Larger signals map to the same output in this noiseless model.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 25,
+    "name": "157-color-calibration-rank.svg",
+    "title": "Independent color directions constrain a matrix",
+    "desc": "Three independent artificial sensor responses constrain a three-channel transform. Neutral observations remain on one line and cannot identify the other two directions.",
+    "marker": "## White adaptation is a change of viewing condition, not a universal correction"
+  },
+  {
+    "n": 25,
+    "name": "158-color-clipping-loss.svg",
+    "title": "Clipping destroys invertibility",
+    "desc": "With gain two, input red channels 0.6 and 0.8 both map to output one after clipping. The unclipped linear transform is invertible, but its clipped form is not.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 26,
+    "name": "159-calibration-sensitivity.svg",
+    "title": "Calibration spread separates focal scale",
+    "desc": "Two centered three-point designs have normalized coordinate spread differing by ten. Their focal parameter variance differs by a factor of one hundred for equal pixel noise.",
+    "marker": "## Why damping is not the same as observing more data"
+  },
+  {
+    "n": 26,
+    "name": "160-normal-matrix-eigenvalues.svg",
+    "title": "Correlation creates a weak parameter direction",
+    "desc": "The strong eigenvalue is 1 plus correlation, and the weak eigenvalue is 1 minus correlation. At correlation 0.99 the weak eigenvalue falls to 0.01.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 27,
+    "name": "161-rectification-rows.svg",
+    "title": "Rectification aligns epipolar rows",
+    "desc": "Two image planes show corresponding points on a common horizontal row after rectification. Their horizontal separation is disparity, not a proof that the correspondence is correct.",
+    "marker": "## Disparity is a measurement with its own uncertainty"
+  },
+  {
+    "n": 27,
+    "name": "162-disparity-nonlinearity.svg",
+    "title": "Small disparities create asymmetric depth intervals",
+    "desc": "Depth equals 80 divided by disparity for the stated focal scale and baseline. Near two pixels, a plus or minus half-pixel disparity interval maps to 32 through 53.33 metres.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 28,
+    "name": "163-scale-normalized-blob.svg",
+    "title": "A Gaussian blob has a characteristic scale",
+    "desc": "The scale-normalized Laplacian magnitude for ideal blobs of widths two and four peaks at their respective widths, with equal peak response one half.",
+    "marker": "## A descriptor is a choice about what to forget"
+  },
+  {
+    "n": 28,
+    "name": "164-matching-denominators.svg",
+    "title": "The matching stages use different denominators",
+    "desc": "The illustrative twenty-feature fixture retains sixteen repeated detections, twelve correct retrievals, and eleven verified true matches. Two false matches survive separately.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 29,
+    "name": "165-inverse-depth-response.svg",
+    "title": "Inverse depth linearizes rectified disparity",
+    "desc": "For focal scale 800 pixels and baseline 0.1 metres, disparity is linear in inverse axial depth. A zero inverse depth is a limiting direction rather than a finite metric point.",
+    "marker": "## Derive the weighted triangulation system"
+  },
+  {
+    "n": 29,
+    "name": "166-schur-blocks.svg",
+    "title": "Eliminate landmark variables, not their evidence",
+    "desc": "The toy normal matrix has a camera block of two, two landmark diagonal blocks of two, and camera-landmark coupling one. Eliminating the landmarks leaves a scalar camera coefficient of one.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 30,
+    "name": "167-sparse-block-boundaries.svg",
+    "title": "An edge can cross a sparse-block boundary",
+    "desc": "Two allocated voxel blocks share a global edge crossing while a third unallocated block remains unknown. Local cell indices and global edge identity must not be confused.",
+    "marker": "## Extracting a mesh is a second inference"
+  },
+  {
+    "n": 30,
+    "name": "168-weighted-crossing-support.svg",
+    "title": "The zero must be supported by observations",
+    "desc": "The guided axial fixture gives field values one, one half and minus one half at depths 0.9, 1.0 and 1.1 metres. The 1.2 metre sample has zero weight and no defined observation.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 31,
+    "name": "169-dependency-invalidation.svg",
+    "title": "An encoding edit need not invalidate geometry",
+    "desc": "A chain from geometry and camera to projection, coverage, linear color and encoding shows the dependencies. A transfer-only change invalidates only the final encoded output.",
+    "marker": "## Separate interaction from numerical computation"
+  },
+  {
+    "n": 31,
+    "name": "170-stale-snapshot-result.svg",
+    "title": "An old result must retain its own identity",
+    "desc": "Snapshot A starts first, snapshot B starts later and finishes first. The late A result cannot overwrite B as if it were the current camera state.",
+    "marker": "### Guided workshop"
+  },
+  {
+    "n": 32,
+    "name": "171-speedup-aggregation.svg",
+    "title": "Two valid summaries answer different questions",
+    "desc": "For the two hypothetical workloads, scene-level speedups are two and 0.909. The geometric mean is about 1.348 while the ratio of total elapsed times is about 0.914.",
+    "marker": "## A numerical claim needs an error budget"
+  },
+  {
+    "n": 32,
+    "name": "172-ablation-evidence.svg",
+    "title": "An ablation must preserve the question",
+    "desc": "A common input set feeds both baseline and modified pipelines. Their surviving support and numerical errors are compared before interpreting measured cost.",
+    "marker": "### Guided workshop"
+  }
+]
