@@ -189,8 +189,8 @@ Because z is positive,
 Solving produces the near and far limits:
 
 \[
-\boxed{z_{\rm near}=\frac{s}{1+k},\qquad
-z_{\rm far}=\frac{s}{1-k}\quad(k<1).}
+\boxed{z_\mathrm{near}=\frac{s}{1+k},\qquad
+z_\mathrm{far}=\frac{s}{1-k}\quad(k<1).}
 \tag{22.10}
 \]
 
@@ -227,7 +227,7 @@ Depth of field refers to object distances. Depth of focus is a related but diffe
 Even a perfectly corrected optical system spreads light because light has wave behaviour. A circular aperture produces an Airy diffraction pattern in the ideal scalar diffraction model. For distant focus, the central disc's diameter to the first dark ring is approximately
 
 \[
-d_{\rm Airy}=2.44\lambda N.
+d_\mathrm{Airy}=2.44\lambda N.
 \tag{22.12}
 \]
 
