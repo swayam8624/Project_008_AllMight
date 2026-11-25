@@ -43,7 +43,12 @@ table { width: 100%; border-collapse: collapse; font-size: .9em; }
 th,td { border-bottom: 1px solid #ccd5da; padding: .35em; vertical-align: top; }
 math[display="block"] { margin: .75em 0; }
 .eq-label { display: inline; font-size: .9em; }
-a { color: #335e78; }
+a { color: #087fa0; }
+h1,h2,h3 {color:#087fa0;}
+pre {background:#f0f7fa;border-left:0.19em solid #087fa0;}
+.book-callout {background:#eaf5f7;border-left:0.19em solid #087fa0;padding:.65em .8em;margin:.8em 0;}
+.book-callout.example {background:#f7f4e9;border-color:#9f7629;}
+.book-callout.warning {background:#f9eeee;border-color:#a13b3b;}
 """
 TEX = r"""
 \usepackage{fvextra}
@@ -52,26 +57,29 @@ TEX = r"""
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \definecolor{BookInk}{HTML}{252A32}
-\definecolor{BookAccent}{HTML}{335E78}
-\definecolor{BookWash}{HTML}{EEF4F7}
-\definecolor{BookNote}{HTML}{F2F6F4}
+\definecolor{BookAccent}{HTML}{087FA0}
+\definecolor{BookWash}{HTML}{F0F7FA}
+\definecolor{BookNote}{HTML}{EAF5F7}
 \setlength{\parindent}{1em}
 \setlength{\parskip}{0.15em}
 \setlength{\emergencystretch}{2em}
 \setlength{\headheight}{14pt}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[LE,RO]{\small\thepage}
-\fancyhead[LO,RE]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\footnotesize From Geometry to Images}
+\fancyhead[L]{\footnotesize\color{BookAccent} FROM BITS TO RESEARCH / BOOK THREE}
+\fancyfoot[R]{\footnotesize\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
 \titleformat{\chapter}[display]{\normalfont\bfseries\color{BookInk}}{}{0pt}{\raggedright\huge}[\vspace{.5ex}{\color{BookAccent}\titlerule[1.5pt]}]
 \titlespacing*{\chapter}{0pt}{-1ex}{2ex}
-\titleformat{\section}{\Large\bfseries\color{BookInk}}{}{0pt}{}
+\titleformat{\section}{\large\bfseries\color{BookAccent}}{}{0pt}{}
 \titleformat{\subsection}{\large\bfseries\color{BookAccent}}{}{0pt}{}
 \AtBeginDocument{%
   \fvset{fontsize=\fontsize{8.3}{10.5}\selectfont,breaklines=true,breakanywhere=true}%
   \RecustomVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\fontsize{8.3}{10.5}\selectfont,breaklines=true,breakanywhere=true}%
-  \ifcsdef{Shaded}{\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced,breakable,colback=BookWash,colframe=BookAccent,boxrule=.25pt,arc=1pt,left=5pt,right=5pt,top=3pt,bottom=3pt]}{\end{tcolorbox}}}{}%
+  \ifcsdef{Shaded}{\renewenvironment{Shaded}{}{}}{}%
+  \let\BookOriginalTexttt\texttt
+  \renewcommand{\texttt}[1]{{\small\BookOriginalTexttt{#1}}}%
 }
 \AtBeginEnvironment{quote}{\small\color{BookAccent}}
 \usepackage{caption}
@@ -90,6 +98,13 @@ TEX = r"""
 \renewcommand{\pandocbounded}[1]{\adjustbox{max width=\linewidth,max totalheight=.42\textheight}{#1}}
 \raggedbottom
 \setlength{\emergencystretch}{4em}
+\newtcolorbox{BookCode}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=BookWash,borderline west={1.4pt}{0pt}{BookAccent},left=6pt,right=5pt,top=4pt,bottom=4pt,before skip=5pt,after skip=5pt}
+\newtcolorbox{BookConcept}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=BookNote,borderline west={1.4pt}{0pt}{BookAccent},left=7pt,right=6pt,top=5pt,bottom=5pt}
+\definecolor{ExampleWash}{HTML}{F7F4E9}
+\definecolor{ExampleEdge}{HTML}{9F7629}
+\newtcolorbox{BookExample}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=ExampleWash,borderline west={1.4pt}{0pt}{ExampleEdge},left=7pt,right=6pt,top=5pt,bottom=5pt}
+\definecolor{WarningWash}{HTML}{F9EEEE}
+\newtcolorbox{BookWarning}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=WarningWash,borderline west={1.4pt}{0pt}{red!55!black},left=7pt,right=6pt,top=5pt,bottom=5pt}
 """
 
 PRINT_BREAKS = r"""
@@ -119,6 +134,18 @@ function Math(el)
   end
   el.text=table.concat(out)
   return el
+end
+function CodeBlock(el)
+  return {pandoc.RawBlock('latex','\\begin{BookCode}'), el, pandoc.RawBlock('latex','\\end{BookCode}')}
+end
+function Div(el)
+  if el.classes:includes('book-callout') then
+    local box = 'BookConcept'
+    if el.classes:includes('example') then box='BookExample' end
+    if el.classes:includes('warning') then box='BookWarning' end
+    local blocks = pandoc.List({pandoc.RawBlock('latex','\\begin{'..box..'}')})
+    blocks:extend(el.content); blocks:insert(pandoc.RawBlock('latex','\\end{'..box..'}')); return blocks
+  end
 end
 """
 
@@ -286,6 +313,23 @@ def epub_equations(value):
     return value
 
 
+def semantic_box(block):
+    # Wrap only explicit, short authored examples and notes. No text changes.
+    if block["t"] != "Para" or not block["c"] or block["c"][0]["t"] != "Strong":
+        return block
+    label = plain(block["c"][0])
+    role = None
+    if re.match(r"^(Example\b|Worked example\b|Try it\b|Check your intuition\b|Tiny test\b)",label,re.I):
+        role = "example"
+    elif re.match(r"^(Warning\b|Common mistake\b|Caution\b)",label,re.I):
+        role = "warning"
+    elif re.match(r"^(Note\b|Key idea\b|The important promise\b|Remember\b)",label,re.I):
+        role = "concept"
+    if role and len(plain(block)) < 1400:
+        return {"t":"Div","c":[["",["book-callout",role],[]],[block]]}
+    return block
+
+
 def prepare(root, out):
     book = root / BOOK
     chapters = sorted((book / "Chapters").glob("*.md"))
@@ -327,13 +371,13 @@ def prepare(root, out):
     require(set(all_used)==set(figures), "unreferenced source illustrations")
     # Both formats share the same front/back matter and stable chapter anchors.
     matter = []
-    for name in ("FRONT_MATTER.md", "BACK_MATTER.md"):
+    for name in ("COPYRIGHT.md", "FRONT_MATTER.md", "BACK_MATTER.md", "BIBLIOGRAPHY.md"):
         file = book / name
         doc = json.loads(run(["pandoc","-f",READER,"-t","json"],out,
                              input_text=file.read_text(encoding="utf-8")).stdout)
         matter.append(doc["blocks"])
         report.setdefault("matter", {})[name] = digest(file)
-    combined = matter[0] + combined + matter[1]
+    combined = matter[0] + matter[1] + [semantic_box(b) for b in combined] + matter[2] + matter[3]
     ids = [v["c"][1][0] for v in nodes(combined) if v["t"]=="Header"]
     require(len(ids)==len(set(ids)), "duplicate combined reader header IDs")
     for v in nodes(combined):
@@ -341,7 +385,8 @@ def prepare(root, out):
             require(v["c"][2][0][1:] in ids, f"broken reader link: {v['c'][2][0]}")
     meta = {"title":{"t":"MetaString","c":TITLE},
             "subtitle":{"t":"MetaString","c":SUBTITLE},
-            "lang":{"t":"MetaString","c":"en"}}
+            "lang":{"t":"MetaString","c":"en"},
+            "date":{"t":"MetaString","c":"Digital reader edition · November 2026"}}
     doc = {"pandoc-api-version":api,"meta":meta,"blocks":combined}
     (out/"reader-print.json").write_text(json.dumps(doc,ensure_ascii=False),encoding="utf-8")
     ebook = copy.deepcopy(doc)
@@ -371,7 +416,7 @@ def build(out, cover, author):
     check = shutil.which("epubcheck")
     require(check, "EPUBCheck 5.4.0 is required for a complete proof; use the official distribution")
     version = run([check,"--version"],out,out/"epubcheck-version.log")
-    require(re.search(r"\b5\.4\.0\b",version.stdout+"\n"+version.stderr), "EPUBCheck version must be 5.4.0")
+    require(re.search(r"(?<!\d)5\.4\.0(?!\d)",version.stdout+"\n"+version.stderr), "EPUBCheck version must be 5.4.0")
     cover_args = []
     cover_sha256 = None
     if cover:
@@ -386,13 +431,15 @@ def build(out, cover, author):
         staged_cover = out / ("approved-cover"+suffix)
         shutil.copyfile(cover,staged_cover)
         cover_sha256 = digest(staged_cover)
+        require(cover_sha256=="69d65d13f5b28695685b8ab42c580c17705d6021e1e05ac158c95e918313ce08", "cover differs from the approved Book03 JPEG")
         cover_tex = r"""
+\usepackage{eso-pic}
 \AtBeginDocument{%
   \hypersetup{pageanchor=false}%
-  \begin{titlepage}\thispagestyle{empty}\centering\vspace*{\fill}%
-  \includegraphics[width=\textwidth,height=.92\textheight,keepaspectratio]{COVERFILE}\par\vspace*{\fill}%
-  \end{titlepage}%
-  \hypersetup{pageanchor=true}%
+  \thispagestyle{empty}%
+  \AddToShipoutPictureBG*{\AtPageLowerLeft{\color[rgb]{.018,.040,.075}\rule{\paperwidth}{\paperheight}}}%
+  \AddToShipoutPictureFG*{\AtPageCenter{\makebox(0,0){\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{COVERFILE}}}}%
+  \null\clearpage\hypersetup{pageanchor=true}%
 }
 """.replace("COVERFILE",staged_cover.name)
         (out/"approved-cover.tex").write_text(cover_tex,encoding="utf-8")
@@ -408,12 +455,20 @@ def build(out, cover, author):
     conversion = run(["pandoc","-f","json","-t","latex","--standalone","--top-level-division=chapter",
                "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex",
                "--lua-filter=print-breaks.lua",*cover_args,
-               "-V","documentclass=book","-V","classoption=openany","-V","fontsize=10pt",
+               "-V","documentclass=book","-V","classoption=openany","-V","classoption=oneside","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
-               "-V","mainfont=TeX Gyre Pagella","-V","mathfont=TeX Gyre Pagella Math",
+               "-V","mainfont=STIX","-V","mathfont=DejaVu Math TeX Gyre",
                "-V","monofont=DejaVu Sans Mono","--metadata","author="+author,
                "reader-print.json","-o","reader-proof.tex"],
               out,out/"pdf-conversion.log")
+    # Make copyright/preface genuine front matter; TOC precedes Chapter 01.
+    tex_path = out/"reader-proof.tex"
+    tex = tex_path.read_text(encoding="utf-8")
+    marker = r"\chapter{Chapter 01"
+    require(marker in tex and tex.count(r"\tableofcontents")==1, "unexpected print template")
+    tex = tex.replace(r"\tableofcontents","",1).replace(r"\mainmatter","",1)
+    tex = tex.replace(marker, r"\clearpage"+"\n"+r"{\setcounter{tocdepth}{1}\tableofcontents}"+"\n"+r"\mainmatter"+"\n"+marker,1)
+    tex_path.write_text(tex,encoding="utf-8")
     # Keep the real compiler logs; Pandoc's temporary PDF engine directory
     # otherwise disappears before the output can be inspected.
     passes = []
