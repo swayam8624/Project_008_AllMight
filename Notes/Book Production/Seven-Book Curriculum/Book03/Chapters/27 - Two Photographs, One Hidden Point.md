@@ -251,6 +251,22 @@ Repeat at several baselines and texture frequencies. A wider baseline improves i
 
 **Research exercise.** Implement the rectified homography construction with two known camera poses, check that corresponding projected points have matching vertical coordinates, then compare the simple dense matching procedure on a unique texture and a repeated pattern. Include a pure-rotation control and a plane-only control. The P27 native lab estimates and verifies two-view epipolar geometry; the image-warping and dense stereo experiment is a proposed extension, and its results must not be confused with the existing sparse native acceptance.
 
+### Guided workshop: make the stereo answer key before matching
+
+Let two ideal optical cameras have identity rotations and centers (0,0,0) and (0.2,0,0) metres, with f=800 pixels and principal point (320,240). Take three world landmarks P=(0,0,2), Q=(0.2,0.1,4) and R=(-0.1,-0.2,8). Calculate both image coordinates directly from the optical frames.
+
+For P, the left projection is (320,240), and the right is (240,240). The disparity is 80 pixels and the recovered depth is 2 metres. For Q, the left is (360,260), the right is (320,260), and disparity is 40, yielding 4 metres. For R, the left is (310,220), the right is (290,220), and disparity is 20, yielding 8 metres. In all three cases the vertical coordinates agree exactly. A sign-flipped baseline or reversed disparity would produce a negative reconstructed depth in this convention.
+
+Apply the essential-matrix constraint with relative translation t=(-0.2,0,0), because the world-to-right transform subtracts the right camera center. In normalized coordinates the scalar incidence reduces to a multiple of the difference between corresponding vertical coordinates. This verifies the direction and sign convention independently of the disparity formula. An overall sign of E is projectively irrelevant; the sign of the actual physical translation used for triangulation still matters.
+
+Now perturb only the right horizontal coordinate by +0.5 pixels. The measured disparities become 79.5, 39.5 and 19.5. Their depth estimates are approximately 2.01258, 4.05063 and 8.20513 metres. The same image-space perturbation produces a much larger metric error for the more distant point. This is not an epipolar-line error: the vertical coordinates still match perfectly. It shows why a perfect epipolar residual does not certify correspondence accuracy along the line.
+
+Add a false match from a repeated feature on the same row, with horizontal disparity 10 pixels. It satisfies the ideal epipolar constraint and gives positive depth 16 metres. Unless the physical reference point really lies at that location, the estimated depth is wrong. Use the known synthetic feature identity to detect the error. In real images that identity is precisely the difficult unknown that the descriptor and additional observations must help resolve.
+
+To investigate rectification, rotate the original cameras differently while keeping their centers fixed. Project the same landmarks, apply the rectification homographies derived earlier, and compare with direct projection through the shared rectified frame. Use homogeneous coordinates and divide only after the transformation. Exclude invalid or out-of-domain rays. The correct mathematical result is agreement between the two routes up to numerical error; image rasterization can introduce additional interpolation differences.
+
+Finally generate an intensity image of a textured plane and an occluding foreground rectangle. Calculate the reference depth and visible feature masks analytically before attempting any matcher. Measure disparity error on jointly visible points, identify legitimate occlusions, and report the proportion of false correspondences. Start with the native P27 sparse geometry laboratory and build the dense matching extension independently. A useful result is not just a colorful depth map; it is a depth map whose errors, unsupported regions and physical scale can all be explained.
+
 ## Exercises — challenge the relationship
 
 **Reconstruct 27A.** Derive E=[t]_x R from equation 27.2 and verify the aligned-camera numerical witness. Repeat with unequal principal points.

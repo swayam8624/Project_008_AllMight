@@ -248,6 +248,20 @@ A defensible experimental report includes a dark series at several exposure sett
 
 **Research exercise.** Extend the sensor simulator to create a stable per-pixel offset field in addition to independent temporal noise. Compare spatial variance, paired temporal variance and the known noise parameters at increasing signal. Introduce an exposure-dependent illumination fluctuation and observe how the paired estimate changes. Fit gain using only unsaturated data, hold out some exposure settings, and report the parameter uncertainty across repeated fits. The existing P24 laboratory supplies the bounded physical and stochastic sensor model; these characterization experiments are proposed extensions and not reported as completed camera measurements.
 
+### Guided workshop: separate bias, temporal noise and saturation
+
+Construct a synthetic sensor with an expected signal of 100 electrons, read noise of standard deviation 4 electrons, gain 0.5 DN per electron and black offset 64 DN. Ignore dark noise and quantization initially so the elementary model can be checked. The expected reported mean is 114 DN. Its temporal variance is 0.25 times (100+16), or 29 DN squared. If we subtract the known black level, the mean is 50 but the temporal variance is unchanged. Offsets shift means; stable offsets do not add temporal variance at a single pixel.
+
+Now give each pixel a stable random offset with variance 25 DN squared and zero population mean. A spatial variance estimate over a sufficiently large homogeneous array has expected contributions from temporal variation and the offset field, approximately 54 DN squared in this model. A paired-frame difference removes the stable offset and yields a temporal variance estimate near 29 after division by two. Finite realizations will fluctuate. The two measurements answer different questions, so report both.
+
+Repeat at expected electron signals of 25, 100, 400 and 1600. Under the unsaturated model the temporal variance in DN squared is 0.25S+4, giving 10.25, 29, 104 and 404. The black-subtracted means are 12.5, 50, 200 and 800 DN. These four pairs lie exactly on a line of slope 0.5 and intercept 4 before sampling error. In a simulated experiment, draw independent noise realizations for each frame and retain the random seed and repeated estimates.
+
+Introduce a maximum reported digital value of 255 while retaining the black offset 64. The ideal noiseless clipping threshold is (255-64)/0.5=382 electrons. The 400- and 1600-electron levels are no longer valid points for fitting the original linear variance model. Around the threshold, some noisy samples may remain below saturation while others clip, distorting both mean and variance. Plot the saturation fraction beside the photon-transfer curve rather than fitting every observation indiscriminately.
+
+Use the native P24 simulator to understand its precise order of physical and digital operations before adapting the fixture. The simplified derivation here omits quantization and dark noise intentionally; introduce them one at a time. An eight-bit output near the noise floor does not behave exactly like a continuous DN value. A noisy estimate that disagrees with the ideal line could be a model effect rather than a bug.
+
+When fitting the slope, compare a regression using every nominal signal level with one using only the declared linear range. Report the fitted gain, read variance, residuals and seed-to-seed variation. Reserve one unsaturated level for validation. A successful experiment should recover the known parameters approximately within sampling uncertainty, and clearly explain why the saturated data cannot support the same claim. This is a complete answer key for the simplified synthetic model, not a measurement of a real commercial sensor.
+
 ## Exercises: measure before you trust
 
 **Reconstruct 24A.** Derive the photon equation by tracking units. Compute the incident count for the numerical example at 450 nm instead of 550 nm. Explain why equal energy does not mean equal photon number.

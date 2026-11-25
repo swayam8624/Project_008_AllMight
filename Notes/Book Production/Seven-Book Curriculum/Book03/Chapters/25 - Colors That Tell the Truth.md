@@ -306,6 +306,20 @@ Use two comparisons in an experiment: error relative to the linear reference bef
 
 **Research exercise.** Generate a synthetic set of linear camera responses under two illuminants. Fit one color matrix using only the first group and evaluate both groups using a declared reference white. Compare rank, held-out linear XYZ error, Lab difference and gamut clipping fraction. Add a chart containing only neutral patches and inspect the singular spectrum. The P25 native lab covers relative linear color spaces and transfer functions; this calibration and appearance experiment is an extension, not a validated physical camera profile.
 
+### Guided workshop: follow one patch through a color pipeline
+
+Take a linear camera response c=(0.2,0.4,0.3). Apply white-balance gains (2,1,1.5). The corrected vector is (0.4,0.4,0.45). It is not neutral, because the gains were chosen to neutralize some other reference patch; a color pipeline is supposed to preserve distinctions among nonneutral surfaces rather than turn everything gray.
+
+For the numerical fixture only, assume this corrected vector is already expressed in linear sRGB primaries. Real camera responses require a calibrated camera-to-working-space mapping, and a diagonal white balance is not a substitute for that mapping. Encode the three linear channels with the sRGB transfer. The first two become approximately 0.665185, and the third about 0.701411. Nearest eight-bit codes are therefore about (170,170,179). Decode those integer codes to linear values and measure the error due to quantization separately from the white-balance transformation.
+
+Now suppose the original camera response had been (0.8,0.4,0.3). The same white balance produces (1.6,0.4,0.45). If the output pipeline clamps linear channels to [0,1], red becomes one. A response of 0.6 in the original red channel would also map to a value above one and clip to the same output red. The clipping operation has made the distinct inputs indistinguishable in that channel. If you divide the clamped result by the gain, you recover 0.5, not either original input. The round trip cannot recover information that was discarded.
+
+For a matrix-calibration experiment, use three linear reference patches (1,0,0), (0,1,0), (0,0,1) and the artificial diagonal sensor response from the earlier example. Fit the inverse matrix from these three independent rows, then evaluate a fourth mixed-color patch. In the exact model its prediction should match the known reference. Add small independent noise to the calibration rows and repeat the fit. Check the sensitivity of the solution and the withheld error. Next train using only neutral patches. The design matrix becomes rank deficient; the correct outcome is a diagnostic of insufficient independent color support, not an arbitrary inverse.
+
+Compare color difference in encoded RGB, linear RGB and Lab relative to an explicitly specified reference white. These distances need not rank all candidate errors in the same order. A Lab conversion expects XYZ relative to a white, so first use the declared RGB-to-XYZ matrix. It is not correct to pass linear RGB straight into the XYZ-to-Lab function because the dimensions happen to agree.
+
+Build a small CSV trace containing raw camera values, black-subtracted values, white-balanced values, the working-space vector, pre-clamp extrema, clipping flags, transfer-encoded values and byte codes. Each output column should have its own convention. Compare the native P25 transfer and color-space functions with the relevant stages of this trace. The synthetic matrix-fit and clipping experiment are proposed extensions. Their purpose is to teach an independent check of a real color-management pipeline without confusing visual appearance, numeric equivalence and sensor calibration.
+
 ## Exercises — don't let the numbers fool you
 
 **Reconstruct 25A.** Use the four-bin toy instrument to find a third distinct nonnegative spectrum with responses (2,2,2). State the entire family.

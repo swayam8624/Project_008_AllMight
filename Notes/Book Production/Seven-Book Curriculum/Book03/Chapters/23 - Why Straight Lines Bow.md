@@ -346,6 +346,20 @@ Create three synthetic calibration groups: points only near the center, points d
 
 **Research exercise.** Use an equidistant camera as a synthetic truth model and fit a pinhole-plus-radial polynomial on successively wider angular domains. Compare training error, held-out angular error and the derivative sign over the full declared domain. Add noise with a known covariance and compare the observed angular spread to the linear prediction. The exercise should reveal why a model with more coefficients can fit observed data while behaving poorly outside the observed domain. The existing P23 laboratory implements the bounded normalized distortion model and inversion; the angular calibration study above is new extension material, not a claim of an existing full fisheye estimator.
 
+### Guided workshop: diagnose an inverse calibration without trusting a small residual
+
+Use a one-dimensional radial fixture first, with k_1=-0.2 and every other coefficient zero. The normalized forward map is x_d=x(1-0.2x²). At x=0.5 the result is 0.475. Let the target of the inverse be 0.475. Start Newton iteration at x=0.475, which is a plausible small-distortion initialization. The forward prediction there is 0.453565625 and the derivative is 0.864625. The first correction is approximately +0.0247906, so the new estimate is about 0.4997906. A second step brings it very close to 0.5. Compute the exact values in code rather than relying on the rounded intermediate numbers printed here.
+
+A useful iteration trace includes the old estimate, prediction, residual, derivative, proposed correction, accepted step fraction and new residual. The residual must decrease according to the declared acceptance policy. A valid domain must be checked at each proposed point. Convergence in one dimension is easier to inspect, but it does not establish the general two-dimensional inversion. Repeat with a tangential coefficient and verify both columns of the analytic Jacobian by central differences.
+
+Introduce a deliberately invalid radial model x_d=x-x³ on [0,1]. At x=0 the forward value is zero, and at x=1 it is also zero. The derivative crosses zero at 1/sqrt(3). An inverse returning zero for target zero is algebraically consistent but does not certify a unique inverse on that domain. Test the P23 bounded model's validation policy before starting an iterative solve. Do not modify the domain check merely to let the counterexample run through a valid-camera code path.
+
+For a pixel-level experiment, generate an ideal regular grid of landmarks in normalized coordinates. Apply the forward model and convert to pixels using a declared K. Independently evaluate the inverse and convert the recovered normalized coordinates to ideal pixels. Report the maximum round-trip coordinate error, the rejected count and the spatial distribution of errors. A global average can conceal a problem near the calibration boundary.
+
+To undistort an image, reverse the direction of the question: for every ideal output sample center, calculate its corresponding distorted input coordinate using the forward map. Read that input at the declared continuous position using a compatible reconstruction filter. A forward splat of input pixels into output storage can produce holes or multiple writes; it is a different sampling problem. The inverse coordinate solver is useful for converting observed feature locations to ideal rays, not necessarily for the output-to-input image resampling route.
+
+Compare the two approaches on a straight-line grid. Mark invalid samples and avoid extending the source by arbitrary clamping unless that is the intended image boundary condition. Measure both geometric round-trip error and image error against an independently rendered analytic reference. A perfect coordinate inverse does not guarantee exact recovery of an image whose original samples lost high-frequency information.
+
 ## Your turn
 
 **Reconstruct.** Convert a graphics-camera point (2,1,-4) to CV normalized coordinates.
