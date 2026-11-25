@@ -121,11 +121,11 @@ Think of a narrow street between two houses. One address says “travel from A t
 
 A half-edge record can store the IDs of its origin, destination and incident face, plus three navigation handles:
 
-- \`next\`: the next directed edge as we walk around the same face;
-- \`previous\`: the preceding edge around that face;
-- \`twin\`: the oppositely directed use belonging to the neighboring face.
+- `next`: the next directed edge as we walk around the same face;
+- `previous`: the preceding edge around that face;
+- `twin`: the oppositely directed use belonging to the neighboring face.
 
-For a triangle, following \`next\` three times must return us to the starting half-edge:
+For a triangle, following `next` three times must return us to the starting half-edge:
 
 \[
 \boxed{\operatorname{next}^3(h)=h.}
@@ -166,13 +166,13 @@ This is a case where *refusing to represent an invalid relationship* is better e
 
 ### Why engines care, and why handles have a lifetime
 
-Once a half-edge twin is valid, crossing from a face to its neighbor is essentially one indexed lookup. Walking around a face follows the \`next\` cycle. A vertex's incident region can be explored by combining \`twin\` and \`next\` under the declared orientation and boundary conventions.
+Once a half-edge twin is valid, crossing from a face to its neighbor is essentially one indexed lookup. Walking around a face follows the `next` cycle. A vertex's incident region can be explored by combining `twin` and `next` under the declared orientation and boundary conventions.
 
 The original longer mesh chapter develops a one-ring rotation formula: for an outgoing half-edge \(h\), a common interior traversal is \(\operatorname{next}(\operatorname{twin}(h))\). The exact expression depends on whether the data structure records the origin or destination vertex, how face cycles are oriented, and how boundary half-edges are represented. A boundary or missing twin changes the traversal rules.
 
-The reference code in \`include/book03/halfedge_mesh.hpp\` constructs three face-owned records for each valid indexed triangle, creates twins only for two opposite directed uses, and validates face cycles and symmetric twins. It does **not** implement a mutable modeling engine. If you edit the topology, you must rebuild its handles; old half-edge indices are no longer guaranteed to identify the same connection. Production libraries often use generations, stable handles and ownership rules to prevent stale references from silently pointing at new objects.
+The reference code in `include/book03/halfedge_mesh.hpp` constructs three face-owned records for each valid indexed triangle, creates twins only for two opposite directed uses, and validates face cycles and symmetric twins. It does **not** implement a mutable modeling engine. If you edit the topology, you must rebuild its handles; old half-edge indices are no longer guaranteed to identify the same connection. Production libraries often use generations, stable handles and ownership rules to prevent stale references from silently pointing at new objects.
 
-The most useful learning exercise is to break one link on purpose. Change a half-edge's \`next\` handle so that it points to itself, then run the validator. A good invariant reports the broken cycle before a later algorithm loops forever.
+The most useful learning exercise is to break one link on purpose. Change a half-edge's `next` handle so that it points to itself, then run the validator. A good invariant reports the broken cycle before a later algorithm loops forever.
 
 This is an important addition to our numerical discipline. Chapter 05 protected decisions about **coordinates**. Chapter 07 protects decisions about **relationships**. Both prevent silent, plausible-looking errors from spreading into later systems.
 
@@ -212,7 +212,7 @@ The surface might look like an hourglass pinched to one point. The two halves to
 
 Even if every edge has two opposite uses and every vertex has one well-formed fan, other geometric problems can remain. A mesh may self-intersect, contain coincident but disconnected shells, have bad triangle area due to numerical rounding, contain physically impossible geometry, or represent something other than the intended physical object.
 
-We can therefore use a careful name: \`closed_orientable_edge_candidate()\`. It means the object passed specified **necessary** local incidence, winding, nondegeneracy and vertex-fan checks. It is not a global proof of watertight geometry, embedded manifoldness, collision safety or intended outward normals.
+We can therefore use a careful name: `closed_orientable_edge_candidate()`. It means the object passed specified **necessary** local incidence, winding, nondegeneracy and vertex-fan checks. It is not a global proof of watertight geometry, embedded manifoldness, collision safety or intended outward normals.
 
 Choosing names that explain the scope of a guarantee is as important as writing the algorithm.
 
@@ -331,7 +331,7 @@ The more flexible conceptual model separates several layers:
 
 A **position vertex** identifies a point in the indexed geometry. A **face corner** is the use of that vertex by a particular face. Normal, tangent, UV and material-related attributes may belong to those face corners, faces, or another explicit domain.
 
-That is why our new \`Mesh3\` has indexed positions and faces, plus an optional array of three UVs **for each face**. The UVs belong to corners even when two corners refer to the same position ID.
+That is why our new `Mesh3` has indexed positions and faces, plus an optional array of three UVs **for each face**. The UVs belong to corners even when two corners refer to the same position ID.
 
 For GPU drawing we might later expand or split these data into a renderer-friendly vertex buffer. That expansion is an implementation choice, not proof that the original topology was different.
 
@@ -460,7 +460,7 @@ This is a **graph** Laplacian. It is not yet the cotangent-weighted discrete Lap
 
 ### Store neighbors without thousands of little allocations
 
-For a small example, a \`std::vector<std::vector<uint32_t>>\` is clear: one vector per vertex, containing its neighboring IDs.
+For a small example, a `std::vector<std::vector<uint32_t>>` is clear: one vector per vertex, containing its neighboring IDs.
 
 For a larger static mesh, we can flatten those neighbor lists into two arrays using **compressed sparse row**, or CSR. The first contains offsets:
 
@@ -483,7 +483,7 @@ The neighbors of vertex \(i\) occupy the half-open span
 
 This compact representation is the same general idea used in sparse matrices and graph algorithms. It is efficient when the graph is mostly read rather than repeatedly edited. If the mesh changes, rebuilding its CSR representation is often simpler and safer than trying to change offsets in place.
 
-Our P07 module includes \`build_vertex_csr()\` and a very small \`VertexCSR::laplacian()\`. The tests independently check the quad's neighbor IDs, total degree \(2E=10\), constant-field behavior and the fact that the seam's unused stored vertex has no neighbors. These are not claims about GPU performance or a production smoothing algorithm: they are precise, reproducible links between topology and mathematics.
+Our P07 module includes `build_vertex_csr()` and a very small `VertexCSR::laplacian()`. The tests independently check the quad's neighbor IDs, total degree \(2E=10\), constant-field behavior and the fact that the seam's unused stored vertex has no neighbors. These are not claims about GPU performance or a production smoothing algorithm: they are precise, reproducible links between topology and mathematics.
 
 ### Let the distances and angles influence the neighbours
 
@@ -515,7 +515,7 @@ The native P07 lab remains the uniform CSR graph operator; this extension derive
 
 ## The C++23 model: geometry and identity in their proper places
 
-We are not going to create a second incompatible engine. Our cumulative companion already knows \`Point3\`, \`Vector3\`, \`Triangle3\` and basic geometry from Chapter 06.
+We are not going to create a second incompatible engine. Our cumulative companion already knows `Point3`, `Vector3`, `Triangle3` and basic geometry from Chapter 06.
 
 P07 adds an **indexed topology layer**:
 
@@ -549,7 +549,7 @@ Good software keeps those guarantees separate, even when they appear next to eac
 
 ## A mesh inspector that asks useful questions
 
-The native companion is \`book03_mesh\`, with four modes:
+The native companion is `book03_mesh`, with four modes:
 
 ~~~text
 book03_mesh inspect [fixture]
@@ -558,7 +558,7 @@ book03_mesh csv OUTPUT.csv [fixture]
 book03_mesh repl
 ~~~
 
-There are eight built-in fixtures: \`house\`, \`quad\`, \`flipped\`, \`seam\`, \`nonmanifold\`, \`bowtie\`, \`degenerate\` and \`collinear\`.
+There are eight built-in fixtures: `house`, `quad`, `flipped`, `seam`, `nonmanifold`, `bowtie`, `degenerate` and `collinear`.
 
 The default is the closed house. Its numeric report explains each combinatorial count. Its SVG colors boundary, consistent interior, winding-conflict and nonmanifold edges differently. Its CSV writes one row per indexed undirected edge, including its two endpoint IDs, classification, incidence count and incident face IDs.
 
@@ -659,7 +659,7 @@ The later advanced geometry research material already contains substantial work 
 
 **Falsify — the bow-tie trap.** Draw two triangles that touch at one common vertex and share no edge. Demonstrate that every edge can have only one incident face while the central vertex still has two disconnected face fans. Explain why an edge-count-only manifold check is insufficient.
 
-**Transfer — a seam in texture space.** Take a pair of adjacent geometric faces that share one position vertex but require different UV coordinates there. Specify the data structure for \`U(face,corner)\`. Explain how a GPU-friendly expanded vertex buffer can duplicate a rendering vertex without changing the original conceptual surface identity.
+**Transfer — a seam in texture space.** Take a pair of adjacent geometric faces that share one position vertex but require different UV coordinates there. Specify the data structure for `U(face,corner)`. Explain how a GPU-friendly expanded vertex buffer can duplicate a rendering vertex without changing the original conceptual surface identity.
 
 **Transfer — read a different model.** An imported mesh contains a stored position that no face uses. Should it contribute to the Euler count of the *referenced triangle complex*? Our policy is no; it is reported as unused data. If your definition includes all isolated vertices as separate zero-dimensional cells, the Euler characteristic differs. State which complex you are counting before publishing the result.
 
@@ -721,10 +721,10 @@ The house has learned how to stay connected. Next we teach its garden how to cur
 
 **Necessary local test:** A condition a target manifold surface must satisfy, without claiming it suffices to establish globally valid geometry.
 
-**Companion code:** \`Code Parts/tools/labs/book03_cpp23/include/book03/mesh_topology.hpp\`, \`src/mesh_studio.cpp\`, \`tests/mesh_topology_tests.cpp\`.
+**Companion code:** `Code Parts/tools/labs/book03_cpp23/include/book03/mesh_topology.hpp`, `src/mesh_studio.cpp`, `tests/mesh_topology_tests.cpp`.
 
-The substantial original chapter \`Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md\` introduces indexed faces, incidence, adjacency, winding, half-edge and manifold concepts with a complete set of deeper examples. The present chapter is a new narrative on-ramp and independent C++23 reference. It must be reconciled with the complete original source in final composition, not substituted for the original's advanced portions. The companion also draws on the original \`24 - Ray–Triangle Intersection.md\` and \`27 - Mesh Queries, Classification and Clipping.md\` in planning future narrowphase, mesh selection and ray/raster chapters.
+The substantial original chapter `Notes/Chapter Edition/02 - Graphics Vision and XR/23 - Mesh Topology and Connectivity.md` introduces indexed faces, incidence, adjacency, winding, half-edge and manifold concepts with a complete set of deeper examples. The present chapter is a new narrative on-ramp and independent C++23 reference. It must be reconciled with the complete original source in final composition, not substituted for the original's advanced portions. The companion also draws on the original `24 - Ray–Triangle Intersection.md` and `27 - Mesh Queries, Classification and Clipping.md` in planning future narrowphase, mesh selection and ray/raster chapters.
 
 For deeper reference see Mario Botsch et al., *Polygon Mesh Processing* (2010); Keenan Crane's *Discrete Differential Geometry* lecture material; and the topology/attribute handling documentation of the graphics file formats we will discuss in Chapter 10. Check licenses and sources before importing examples. The diagrams and code here are newly authored teaching material.
 
-**Read next:** Chapter 08 — Drawing Smooth Things with Control Points (planned).
+**Read next:** Chapter 08 — Drawing Smooth Things with Control Points.
