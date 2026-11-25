@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check narrative, directory and figure source contracts
         run: python3 "Code Parts/tools/labs/book03_cpp23/editorial_gate.py"
-      - name: Verify continuous-master and mapped derived source custody
-        run: python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_source_custody.py"
+      - name: Verify pinned original source bytes and report historical manifest drift
+        run: python3 "Code Parts/tools/labs/book03_cpp23/scripts/verify_source_custody.py" --report-historical-drift
       - name: Configure pure C++23 laboratory
         run: |
           cmake -S "Code Parts/tools/labs/book03_cpp23" -B build/book03-p01 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
