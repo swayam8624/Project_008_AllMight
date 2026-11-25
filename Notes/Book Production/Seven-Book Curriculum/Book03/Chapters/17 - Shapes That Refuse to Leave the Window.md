@@ -284,6 +284,46 @@ This is deliberately conservative. It is not a certified robust clipper. The fin
 
 The opposite mistake is to use a broad epsilon to accept everything near a boundary. That silently changes the geometric region, and different triangles may make incompatible decisions. A tolerance can be a useful engineering policy, but it must have a clear meaning.
 
+## Can we leave the entire dragon in the toy box?
+
+Clipping a triangle is precise work. If the entire dragon is outside the viewing volume, we would rather reject its bounding shape before transforming every wing and scale. The two operations have different promises: culling rejects only objects that can safely be omitted, whereas clipping constructs the visible portion of a primitive.
+
+Let the combined world-to-clip matrix C act on homogeneous column points P. Denote its four rows by r0,r1,r2,r3. The left clip inequality is x_c+w_c >= 0. Substituting the matrix rows gives the world-space inward plane (r3+r0)P >= 0. Applying the same argument to each clip inequality yields:
+
+| Clip boundary | Inward plane row |
+|---|---|
+| Left, right | r3+r0, r3-r0 |
+| Bottom, top | r3+r1, r3-r1 |
+| Lower depth, zero-to-one | r2 |
+| Upper depth | r3-r2 |
+| Alternative lower depth, minus-one-to-one | r3+r2 |
+
+These are row combinations because of the column-vector multiplication convention, not because of memory layout. Reverse-Z exchanges which depth boundary is semantically near or far, but does not change the zero-to-one extraction identities. An infinite-far projection may yield a constant inequality with zero spatial normal. If its constant is nonnegative, it is redundant; a negative constant indicates an empty permitted region. Do not normalize a zero normal. Numerical near-degeneracy requires a separate scale-aware policy, rather than blindly discarding a plane that may matter.
+
+Write a finite inward plane as n dot X + d >= 0. The normal need not be unit length if we evaluate both the center and support radius in the same scale. A sphere centered at c with radius R has maximum plane value
+
+\[
+s_{\max}=n\cdot c+d+R\|n\|.
+\]
+
+If this is strictly negative, every point in the sphere is outside that half-space. The object may be culled. A value of zero is a touching case, not proof of exclusion. Finite precision needs a conservative uncertainty band or a certified bound; the strict comparison is an exact-arithmetic result.
+
+An axis-aligned box has center c and half-extents e. Its offsets delta satisfy |delta_i| <= e_i. Each term n_i delta_i is maximized by choosing the corresponding endpoint according to the sign of n_i, so
+
+\[
+s_{\max}=n\cdot c+d+|n_x|e_x+|n_y|e_y+|n_z|e_z.
+\]
+
+For the plane x>=0, a box centered at (-3,0,0) with half-extents (1,2,1) has maximum plane value -2: reject it. Moving the center to (-0.5,0,0) gives +0.5: retain it. Passing every individual frustum-plane test does not prove that a box or sphere intersects the finite frustum; it only means no tested plane independently proves exclusion. A false positive costs extra work. A false negative deletes geometry that ought to be rendered.
+
+For a transformed bounding sphere, a general linear transform A can turn it into an ellipsoid. Its enclosing world sphere needs radius at least R times the largest singular value of A. The Frobenius norm supplies a conservative, possibly looser upper bound. Taking only the largest diagonal entry is unsafe under shear. Alternatively extract the planes from the complete local-to-clip matrix and evaluate the original local bound. This avoids inventing an incorrect world-space radius.
+
+**Try it.** Use n=(2,0,0), d=0 and the second box above. The maximum becomes +1; the retain decision is unchanged. For A=[[1,2,0],[0,1,0],[0,0,1]], explain why the largest diagonal entry (1) cannot bound the stretch of the unit vector (0,1,0). Its image has length sqrt(5).
+
+This section derives the object-level early-rejection contract; the P17 native explorer still implements primitive clipping, not a production frustum-culling system.
+
+*Source route: Computing Foundations/34, derived lines 684–879 and 935–1304; see the full Pass 34 source map for additional frustum corner, oblique clipping and numerical material.*
+
 ## The native clipping explorer
 
 Open `include/book03/primitive_clipping.hpp`. The first section implements rectangular window outcodes, Cohen–Sutherland and Liang–Barsky. The next section defines homogeneous plane functions, a raw ClipVertex, source weights, symmetric edge crossing, single-plane polygon passes, final validation and fan triangulation.
