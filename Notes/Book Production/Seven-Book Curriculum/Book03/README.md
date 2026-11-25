@@ -255,3 +255,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 34 — cumulative engineering acceptance
 
 [Pass 34 evidence](PASS34_EVIDENCE.md) records the P10 fixture correction and successful full CI run. [Foundations source map](PASS34_FOUNDATIONS_SOURCE_MAP.md) routes 18,928 body lines and 627 headings from seven original derived chapters. Three selected reader additions in Chapters 14, 17 and 31 address pixel-center conventions, frustum culling and camera-relative arithmetic. Source reconciliation and publication acceptance remain open.
+
+
+## Pass 35 — graphics, vision and XR source reconciliation
+
+[Source map](PASS35_GRAPHICS_SOURCE_MAP.md) inventories fourteen primary Graphics Vision and XR derived sources (28,118 routed lines, 502 heading entries). Together with P34, 21 primary derived files and 47,046 source body lines are mapped. Four selected additions in Chapters 06, 07, 20 and 29 recover ray–triangle intersection, cotangent operators, texture addressing and rigid registration. [Evidence](PASS35_EVIDENCE.md) records the independently checked numerical witnesses and exact tested script. Full line-by-line reconciliation and publication remain pending.
