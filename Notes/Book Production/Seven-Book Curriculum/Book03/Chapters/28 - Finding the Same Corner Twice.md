@@ -243,7 +243,7 @@ To make the lab more realistic, take a set of verified images with known geometr
 
 **28C–D.** Two identical best descriptors have tied distances; neither wins a strict ratio test. If a source A chooses destination B but B chooses another source, mutual nearest-neighbour checking removes A-to-B. When rotating or rescaling a fixture, record detector repeatability separately from descriptor and geometric-verification success.
 
-**28E.** With eight distinct draws, the all-inlier probability is the product of (60-j)/(100-j) for j=0 through 7. Independent trials of that sampling procedure require the ceiling of log(0.01)/log(1-p_good) for a 99 percent chance of at least one uncontaminated sample. The approximation 0.6^8 assumes independent draws within a sample and is more optimistic here. An uncontaminated sample can still be geometrically degenerate.
+**28E.** With eight distinct draws, the all-inlier probability is the product of (60-j)/(100-j) for j=0 through 7. Independent trials of that sampling procedure require the ceiling of log(0.01)/log(1-p_good) for a 99 percent chance of at least one uncontaminated sample. Numerically p_good is about 0.01374953 and the planning budget is 333 trials. The approximation 0.6^8=0.01679616 assumes independent draws within a sample and gives only 272 trials, so it is more optimistic here. An uncontaminated sample can still be geometrically degenerate.
 
 **28F–H.** Compare precision, recall, failure count and held-out geometric error across thresholds. A repeated window may be appearance-identical to the correct one. Track membership requires a declared image identity and an explicit association policy; epipolar agreement alone is not an identity certificate.
 
