@@ -337,7 +337,7 @@ INDEX = {
 }
 
 def subject_index(blocks):
-    ids={b["c"][1][0] for b in blocks if b["t"]=="Header"}
+    ids={b["c"][1][0]:text_of(b["c"][2]) for b in blocks if b["t"]=="Header"}
     index=[{"t":"Header","c":[1,["subject-index",[],[]],words("Subject index")]},
            para("Select a chapter or section to return directly to the corresponding discussion. Printed page references are resolved by the typesetter.")]
     initial=None
@@ -352,6 +352,6 @@ def subject_index(blocks):
             chapter=re.search(r"\d{2}",target).group(0)
             if i: line.extend([{"t":"Str","c":";"},{"t":"Space"}])
             line.append({"t":"Link","c":[["",["index-reference"],[["data-chapter",chapter]]],
-                         words("Ch. "+chapter),["#"+target,""]]})
+                         words("Ch. "+chapter+(": "+ids[target] if target.startswith("c"+chapter+"-") else "")),["#"+target,""]]})
         index.append({"t":"Para","c":line})
     return index

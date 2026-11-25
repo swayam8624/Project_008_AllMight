@@ -184,9 +184,52 @@ def verify_pdf(path, ast, out, has_cover=False):
             "chapter_title_pages":starts,"sampled_pages":selected}
 
 
+def scan_pdf_geometry(path, expected_figures, has_cover):
+    """Inspect the actual finished PDF using PyMuPDF, without rasterizing all pages."""
+    import fitz
+    import collections
+    histogram = collections.Counter()
+    empty, overflow = [], []
+    images = set()
+    with fitz.open(path) as doc:
+        require(not doc.is_repaired, "PDF needed structural repair during opening")
+        for page in doc:
+            info = page.get_image_info(hashes=True)
+            for im in info:
+                images.add(im["digest"])
+            text = page.get_text("dict", flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES)
+            blocks = [b for b in text["blocks"] if b.get("type")==0]
+            if not info and not any(s["text"].strip() for b in blocks for line in b["lines"] for s in line["spans"]):
+                empty.append(page.number+1)
+            for bounds in [b["bbox"] for b in blocks] + [im["bbox"] for im in info]:
+                x0,y0,x1,y1=bounds
+                if min(x0,y0)<-0.75 or x1>page.rect.width+0.75 or y1>page.rect.height+0.75:
+                    overflow.append({"page":page.number+1,"bbox":list(bounds)})
+            for b in blocks:
+                for line in b["lines"]:
+                    for s in line["spans"]:
+                        font=re.sub(r"[^a-z]","",s["font"].casefold())
+                        if "dejavusansmono" in font:
+                            histogram[round(s["size"],2)] += len(s["text"].strip())
+        outline = doc.get_toc()
+        chapters={int(m[1]) for _,title,_ in outline if (m:=re.match(r"Chapter (\d{2})\b",title))}
+        require(chapters==set(range(1,33)),"PDF chapter bookmarks incomplete")
+    require(not empty,f"blank PDF pages: {empty}")
+    require(not overflow,f"out-of-page PDF content: {overflow[:12]}")
+    require(len(images)>=expected_figures+int(has_cover),"PDF illustration objects missing")
+    total=sum(histogram.values())
+    in_range=sum(count for size,count in histogram.items() if 8.0<=size<=8.6)
+    require(total and in_range/total>=.90,
+            f"effective monospaced size out of range: {dict(histogram)}")
+    return {"blank_pages":empty,"out_of_page_blocks":overflow,
+            "unique_embedded_images":len(images),"chapter_bookmarks":len(chapters),
+            "effective_monospace_pdf_pt":dict(histogram),
+            "monospace_characters_in_8_to_8_6_pt":in_range/total}
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("proof",type=Path)
+    p.add_argument("--strict-pdf",action="store_true",help="require PyMuPDF and scan every finished PDF page")
     a=p.parse_args()
     out=a.proof.resolve()
     receipt=json.loads((out/"source-proof.json").read_text())
@@ -199,6 +242,8 @@ def main():
             "pdf":verify_pdf(out/"Book03-From-Geometry-to-Images-PROOF.pdf",print_ast,out,bool(cover)),
             "accepted":False,
             "visual_review":"pending human review of samples and all publication pages"}
+    if a.strict_pdf:
+        result["pdf"]["whole_file_scan"]=scan_pdf_geometry(out/"Book03-From-Geometry-to-Images-PROOF.pdf",len(receipt["figures"]),bool(cover))
     (out/"format-audit.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps(result,indent=2))
 

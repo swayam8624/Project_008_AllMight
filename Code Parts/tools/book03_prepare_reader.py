@@ -379,7 +379,15 @@ def prepare(root, out):
         doc = json.loads(p.stdout)
         api = api or doc["pandoc-api-version"]
         require(doc["pandoc-api-version"] == api, "mixed Pandoc APIs")
-        doc["blocks"], relocated = edit_chapter(doc["blocks"], n)
+        before = doc["blocks"]
+        doc["blocks"], relocated = edit_chapter(before, n)
+        for kind in ("CodeBlock", "Image"):
+            original = [v["c"] for v in nodes(before) if v["t"] == kind]
+            edited = [v["c"] for v in nodes(doc["blocks"]) if v["t"] == kind]
+            require(original == edited, f"editorial pass changed {kind} in chapter {n}")
+        tagged_before = [v["c"] for v in nodes(before) if v["t"]=="Math" and TAG.search(v["c"][1])]
+        tagged_after = [v["c"] for v in nodes(doc["blocks"]) if v["t"]=="Math" and TAG.search(v["c"][1])]
+        require(tagged_before == tagged_after, f"editorial pass changed tagged equations in chapter {n}")
         provenance.append({"chapter":n,"relocated":relocated,"inline_math_edits":math_edits})
         counts = Counter(v["t"] for v in nodes(doc["blocks"]))
         # Check the actual parsed equations, not merely the Markdown delimiters.
