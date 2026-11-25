@@ -300,3 +300,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 34 — foundations source-unit inventory and selected reconciliation
 
 [PASS34_FOUNDATIONS_SOURCE_MAP.md](PASS34_FOUNDATIONS_SOURCE_MAP.md) records full-file retrieval, exact blob identities, 18,928 routed body lines, 627 headings, and declared master spans for seven Computing Foundations derived sources (32–38). Routes remain proposals until reviewed against the full destination content. Selected passages were read in detail and incorporated additively into Chapters 14, 17 and 31. [PASS34_EVIDENCE.md](PASS34_EVIDENCE.md) records the independent arithmetic witness and successful cumulative CI at the exact engineering revision. Next: Graphics Vision and XR source inventory and targeted gap reconciliation, followed by final source/notation/figure review. No original source or release artifacts changed.
+
+
+## Pass 35 — graphics, vision and XR source-unit inventory
+
+[PASS35_GRAPHICS_SOURCE_MAP.md](PASS35_GRAPHICS_SOURCE_MAP.md) records the fourteen primary derived source files, exact blobs, declared master spans, 28,118 routed body lines and 502 mechanically extracted headings. P34 and P35 together map the ledger's 21 primary derived files. Selected original passages have been developed additively in Chapters 06, 07, 20 and 29; [PASS35_EVIDENCE.md](PASS35_EVIDENCE.md) records exact ranges, four numerical witnesses and limitations. Routes do not certify that every original passage, equation, figure or code listing is present in the reader. Next: continuous-master span reconciliation, remaining specialized source gaps and systematic notation/figure/exercise review. Original source and published editions remain unchanged.
