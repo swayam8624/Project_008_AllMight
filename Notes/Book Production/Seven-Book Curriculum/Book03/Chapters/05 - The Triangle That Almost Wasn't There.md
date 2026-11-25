@@ -37,7 +37,7 @@ D = (b_x-a_x)(c_y-a_y)-(b_y-a_y)(c_x-a_x).
 
 Positive means counterclockwise in a Cartesian \(+Y\)-up frame; negative means clockwise; zero means collinear.
 
-Take the easy triangle \(A=(0,0)\), \(B=(6,0)\), \(C=(0,4)\). The determinant is \(24\). We can find it by hand. Every ordinary C++23 \`double\` compiler should handle these exact small integer operations without difficulty.
+Take the easy triangle \(A=(0,0)\), \(B=(6,0)\), \(C=(0,4)\). The determinant is \(24\). We can find it by hand. Every ordinary C++23 `double` compiler should handle these exact small integer operations without difficulty.
 
 Now consider why we use the sign. Suppose an algorithm is building a triangular mesh. It has a candidate face and must decide on which side of an edge a new vertex lies. If its predicate changes sign incorrectly, the algorithm might choose a different neighbor, connect an edge in the wrong orientation, or wrongly discard a valid skinny triangle.
 
@@ -103,7 +103,7 @@ That gives us a strong engineering principle:
 
 ## What a computer actually means by “a number”
 
-We often imagine a \`double\` as a very precise real number. It is not. It stores one value from a particular finite collection of binary fractions.
+We often imagine a `double` as a very precise real number. It is not. It stores one value from a particular finite collection of binary fractions.
 
 A useful analogy is a ruler with tick marks. Near zero, a typical floating-point ruler has extraordinarily fine tick marks. Far away, the spacing between representable numbers grows. At some large magnitudes, adding one to a number cannot move you to another representable tick mark.
 
@@ -131,7 +131,7 @@ where \(N_x\) is an ordinary signed integer—though potentially far too large t
 
 You might be wondering: “But doesn't the computer still have only 64 bits?” A single machine integer has a fixed width. A **big integer** is stored as a sequence of machine-sized pieces, much like writing an enormous decimal integer across several lines of paper. We can add, subtract and multiply those pieces without discarding carries.
 
-The clever part is that our geometry predicate does not need to convert the exact result back to a \`double\`. It needs only the **sign**. We can preserve all the required integer bits until the very last decision.
+The clever part is that our geometry predicate does not need to convert the exact result back to a `double`. It needs only the **sign**. We can preserve all the required integer bits until the very last decision.
 
 ### A carefully bounded word is different from a universal promise
 
@@ -193,15 +193,15 @@ D=\eta^2=2^{-2148}>0.
 
 The triangle exists in the exact geometry of the **represented coordinates**.
 
-But \(\eta^2\) is far below the smallest positive binary64 number. If we multiply in ordinary \`double\`, the result underflows to zero. Naive orientation reports collinearity again.
+But \(\eta^2\) is far below the smallest positive binary64 number. If we multiply in ordinary `double`, the result underflows to zero. Naive orientation reports collinearity again.
 
-An exact sign predicate does not need to store the determinant as a \`double\`. It can preserve the integer product of the dyadic significands at the appropriate scale, then return “positive.”
+An exact sign predicate does not need to store the determinant as a `double`. It can preserve the integer product of the dyadic significands at the appropriate scale, then return “positive.”
 
 ![An orientation determinant disappears through arithmetic underflow, although the represented input coordinates are nonzero.](../Assets/11-subnormal-area.svg)
 
 *Figure 5.2 — A small positive subnormal value is representable, but its squared area is not representable as a nonzero binary64 result. The exact sign is positive while the naive floating result is zero. The drawing exaggerates the dimensions to make the explanation visible.*
 
-At the other extreme, coordinates near the maximum finite \`double\` can overflow during multiplication. You may see infinity or even NaN instead of a meaningful orientation determinant. The original points can still be finite and their exact orientation can still have a perfectly definite sign.
+At the other extreme, coordinates near the maximum finite `double` can overflow during multiplication. You may see infinity or even NaN instead of a meaningful orientation determinant. The original points can still be finite and their exact orientation can still have a perfectly definite sign.
 
 Our algorithm must not confuse the range of the **result's magnitude** with the existence of the **result's sign**.
 
@@ -213,7 +213,7 @@ Here is the central construction of the chapter.
 
 **Step two: use the small-integer oracle when it applies.** If every coordinate is an exactly represented integer between \(-10^6\) and \(+10^6\), we reuse the Chapter 03 signed 64-bit determinant. Its range proof already covers the case.
 
-**Step three: decode each remaining binary64 value into a signed integer on the common \(2^{-1074}\) scale.** We use \`std::bit_cast<std::uint64_t>\` to see the actual sign, exponent and fraction bits. For a normal number, insert the hidden leading significand bit and shift it by the appropriate exponent. For a subnormal, use the stored fraction without that hidden bit. Both \(+0\) and \(-0\) become the exact integer zero.
+**Step three: decode each remaining binary64 value into a signed integer on the common \(2^{-1074}\) scale.** We use `std::bit_cast<std::uint64_t>` to see the actual sign, exponent and fraction bits. For a normal number, insert the hidden leading significand bit and shift it by the appropriate exponent. For a subnormal, use the stored fraction without that hidden bit. Both \(+0\) and \(-0\) become the exact integer zero.
 
 **Step four: calculate the determinant using integer arithmetic alone.** For our three points, form exact differences \(B_x-A_x\), \(B_y-A_y\), \(C_x-A_x\) and \(C_y-A_y\). Multiply the appropriate pairs as big integers, subtract them, and inspect the sign of the resulting exact integer.
 
@@ -235,7 +235,7 @@ Notice what we did **not** do. We did not calculate one rounded product and subt
 
 ### Big integers are not magic either
 
-Our educational \`Magnitude\` class stores a nonnegative integer as a little-endian list of 32-bit limbs. The number
+Our educational `Magnitude` class stores a nonnegative integer as a little-endian list of 32-bit limbs. The number
 
 \[
 M=m_0+m_1 2^{32}+m_2 2^{64}+\cdots
@@ -316,7 +316,7 @@ An epsilon can still have legitimate uses. A user interface may intentionally sn
 
 We must not silently substitute a policy for a predicate.
 
-The P03 floating triangle query exposes \`BoundaryUncertain\` and \`DegenerateOrUncertified\` to make its limitations visible. P05 adds an exact sign so a caller that truly needs a topological choice has a stronger tool.
+The P03 floating triangle query exposes `BoundaryUncertain` and `DegenerateOrUncertified` to make its limitations visible. P05 adds an exact sign so a caller that truly needs a topological choice has a stronger tool.
 
 ### Two separate answers can both be useful
 
@@ -324,7 +324,7 @@ Consider a nearly collinear triple. A drawing editor may sensibly say, “These 
 
 There is no contradiction. One answer describes an application-specific tolerance rule; the other describes an exact mathematical relation among the stored inputs.
 
-The bug appears when a program uses the same function name \`is_collinear()\` for both decisions and leaves its callers guessing.
+The bug appears when a program uses the same function name `is_collinear()` for both decisions and leaves its callers guessing.
 
 The API should say what kind of question it answers.
 
@@ -353,7 +353,7 @@ This is a small contract detail with a large engineering moral: early exits must
 
 ### Boundary ownership is still a policy
 
-An exact \`Edge\` answer does not decide whether a rasterizer should paint that edge. Adjacent triangles may meet on the same line. A renderer must adopt an explicit ownership rule so pixels are not claimed twice or missed.
+An exact `Edge` answer does not decide whether a rasterizer should paint that edge. Adjacent triangles may meet on the same line. A renderer must adopt an explicit ownership rule so pixels are not claimed twice or missed.
 
 Our future rasterization chapter will study the top-left rule and exact edge functions in detail. The predicate now tells us a geometric fact; the later rasterizer will use that fact under a declared **sample ownership** policy.
 
@@ -393,9 +393,9 @@ This division between *proof* and *experiment* is a theme of scientific software
 
 ## Our P05 observatory, and what it must show
 
-The project attaches to the same C++23 companion as the earlier chapters, under \`Code Parts/tools/labs/book03_cpp23/\`. It does not fork the geometry library or build a different coordinate convention.
+The project attaches to the same C++23 companion as the earlier chapters, under `Code Parts/tools/labs/book03_cpp23/`. It does not fork the geometry library or build a different coordinate convention.
 
-The core header is \`include/book03/exact_orient2d.hpp\`. The independent test file is \`tests/exact_orient2d_tests.cpp\`. A new command-line inspector, \`src/precision_studio.cpp\`, presents hard-coded reproducible fixtures and lets the reader enter arbitrary finite coordinates.
+The core header is `include/book03/exact_orient2d.hpp`. The independent test file is `tests/exact_orient2d_tests.cpp`. A new command-line inspector, `src/precision_studio.cpp`, presents hard-coded reproducible fixtures and lets the reader enter arbitrary finite coordinates.
 
 Our diagnostic output will show three different things clearly:
 
@@ -461,7 +461,7 @@ This is why our research-volume material distinguishes numerical exactness, cond
 
 **Reconstruct — the disappearing triangle.** Starting with \(N=10^{16}\), derive \(-4\) in equation (5.3) using exact integer algebra. Then explain why each of \(N\), \(N+2\), and \(N+4\) is representable in binary64. Predict the naive result before running a program. Do not use the actual computer output as your only proof.
 
-**Reconstruct — the world's smallest triangle.** Show why the subnormal triangle's exact signed twice-area is \(2^{-2148}\), and why ordinary binary64 cannot store that positive product. Explain how a sign test can still succeed without representing the magnitude as a \`double\`.
+**Reconstruct — the world's smallest triangle.** Show why the subnormal triangle's exact signed twice-area is \(2^{-2148}\), and why ordinary binary64 cannot store that positive product. Explain how a sign test can still succeed without representing the magnitude as a `double`.
 
 **Falsify — what went missing before the algorithm?** Evaluate \(N+1\) in binary64 near \(N=10^{16}\). Explain what the stored value becomes. Then show why no predicate—however exact—can distinguish an input that has already rounded to an identical representation.
 
@@ -527,10 +527,10 @@ The paper house is about to become a real model.
 
 ## Source lineage and bibliography
 
-The established long-form source \`Notes/Chapter Edition/01 - Computing Foundations/34 - Robust Predicates and Camera Sensitivity.md\` teaches the sign-versus-coordinate distinction, catastrophic cancellation, rigorous error-bound filtering, expansion arithmetic and the effects of camera uncertainty. It must remain intact and be reconciled at the source-unit level for final Book 03 composition. The new chapter is an accessible but technically genuine introduction and includes its own standard-C++23, structurally different exact-dyadic reference.
+The established long-form source `Notes/Chapter Edition/01 - Computing Foundations/34 - Robust Predicates and Camera Sensitivity.md` teaches the sign-versus-coordinate distinction, catastrophic cancellation, rigorous error-bound filtering, expansion arithmetic and the effects of camera uncertainty. It must remain intact and be reconciled at the source-unit level for final Book 03 composition. The new chapter is an accessible but technically genuine introduction and includes its own standard-C++23, structurally different exact-dyadic reference.
 
 **Primary research:** Jonathan Richard Shewchuk, *Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates*, *Discrete & Computational Geometry* 18 (1997), 305–363. Author research and implementations: https://www.cs.cmu.edu/~quake/robust.html and https://people.eecs.berkeley.edu/~jrs/jrspapers.html. His original fast filtered-expansion strategy and implementation are **not** claimed to be implemented or copied by this book's P05 lab. For binary format interpretation, refer to IEEE-754 and NIST DLMF §3.1, https://dlmf.nist.gov/3.1. Verify hardware/compiler assumptions before claiming portability beyond the supported binary64 targets.
 
-**Chapter bridge:** \`Code Parts/tools/labs/book03_cpp23/include/book03/exact_orient2d.hpp\` and the corresponding P05 test/visualization files.
+**Chapter bridge:** `Code Parts/tools/labs/book03_cpp23/include/book03/exact_orient2d.hpp` and the corresponding P05 test/visualization files.
 
-**Read next:** Chapter 06 — Step Out of the Page (planned).
+**Read next:** Chapter 06 — Step Out of the Page.
