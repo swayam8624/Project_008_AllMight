@@ -815,3 +815,17 @@ python3 scripts/verify_studio.py new-output-directory
 ~~~
 
 Standalone native GCC C++23/UBSan passed 230,400 pixel-pass checks; independent Python checked all exported pixels, OBJ, tracks and metrics. See PASS31_EVIDENCE.md. Controlled fixture, not automatic photo-to-mesh or a generic renderer frontend. Cumulative build pending.
+
+
+---
+
+## P32 — Final evidence capstone
+
+Read `include/book03/capstone.hpp`, `tests/capstone_tests.cpp` and `src/capstone_main.cpp`. Test metric scale ambiguity, finite-difference projection derivatives, degenerate rays and paired baseline sensitivity. Build and run:
+
+~~~text
+book03_capstone_tests
+book03_capstone capstone.csv
+~~~
+
+Standalone GCC C++23/UBSan passed the capstone and 20,000-reconstruction sweep. See PASS32_EVIDENCE.md in the manuscript directory. The test is not an end-to-end real-data benchmark and no performance timing was performed. Full cumulative CMake/CTest and publication gates remain separate.
