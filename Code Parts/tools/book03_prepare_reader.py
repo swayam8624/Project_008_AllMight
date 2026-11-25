@@ -219,8 +219,14 @@ def plain(inlines):
 
 
 def render_assets(book, out):
-    import cairosvg
+    import sys
     from PIL import Image, ImageChops, ImageDraw
+    # Pango supplies per-glyph fallback for scientific labels on macOS.
+    mac_renderer = shutil.which("rsvg-convert") if sys.platform == "darwin" else None
+    if sys.platform == "darwin":
+        require(mac_renderer, "rsvg-convert is required for macOS SVG font fallback")
+    else:
+        import cairosvg
     assets = sorted((book / "Assets").glob("*.svg"), key=lambda p: int(p.name.split("-")[0]))
     require(len(assets) == 172, "expected 172 source SVGs")
     target = out / "figures"
@@ -243,7 +249,10 @@ def render_assets(book, out):
         require(not re.search(r"url\(\s*['\"]?(?!#|data:)[^)]", raw),
                 f"external SVG URL: {source}")
         png = target / (source.stem + ".png")
-        cairosvg.svg2png(bytestring=source.read_bytes(), write_to=str(png), output_width=1680)
+        if mac_renderer:
+            run([mac_renderer, "--width", "1680", "--output", str(png), str(source)], out)
+        else:
+            cairosvg.svg2png(bytestring=source.read_bytes(), write_to=str(png), output_width=1680)
         with Image.open(png) as image:
             rgba = image.convert("RGBA")
             white = Image.new("RGBA", rgba.size, "white")
@@ -462,6 +471,8 @@ def prepare(root, out):
 
 
 def build(out, cover, author):
+    import sys
+    math_font = "TeX Gyre DejaVu Math" if sys.platform == "darwin" else "DejaVu Math TeX Gyre"
     check = shutil.which("epubcheck")
     require(check, "EPUBCheck 5.4.0 is required for a complete proof; use the official distribution")
     version = run([check,"--version"],out,out/"epubcheck-version.log")
@@ -516,7 +527,7 @@ def build(out, cover, author):
                "--lua-filter=print-breaks.lua",*cover_args,
                "-V","documentclass=book","-V","classoption=openany","-V","classoption=oneside","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
-               "-V","mainfont="+main_font,"-V","mathfont=DejaVu Math TeX Gyre",
+               "-V","mainfont="+main_font,"-V","mathfont="+math_font,
                "-V","monofont=DejaVu Sans Mono","-V","monofontoptions=Scale=1","--metadata","author="+author,
                "reader-print.json","-o","reader-proof.tex"],
               out,out/"pdf-conversion.log")
@@ -527,6 +538,9 @@ def build(out, cover, author):
     require(marker in tex and tex.count(r"\tableofcontents")==1, "unexpected print template")
     tex = tex.replace(r"\tableofcontents","",1).replace(r"\mainmatter","",1)
     tex = tex.replace(marker, r"\clearpage"+"\n"+r"{\setcounter{tocdepth}{1}\tableofcontents}"+"\n"+r"\mainmatter"+"\n"+marker,1)
+    index_heading = r"\chapter{Subject index}\label{subject-index}"
+    require(tex.count(index_heading)==1, "unexpected print subject index heading")
+    tex = tex.replace(index_heading, index_heading+"\n"+r"\setlength{\parskip}{0pt}", 1)
     tex_path.write_text(tex,encoding="utf-8")
     # Keep the real compiler logs; Pandoc's temporary PDF engine directory
     # otherwise disappears before the output can be inspected.

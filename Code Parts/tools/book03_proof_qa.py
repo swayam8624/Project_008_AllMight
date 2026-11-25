@@ -134,29 +134,29 @@ def verify_pdf(path, ast, out, has_cover=False):
         images = command(["pdfimages","-f","1","-l","1","-list",str(path)])
         require(re.search(r"(?m)^\s*1\s+\d+\s+image\s+",images),"approved print cover missing on first page")
     raw = command(["pdftotext","-layout",str(path),"-"])
-    # Normalize whitespace in each page; search for exact chapter titles,
-    # distinguishing the chapter-opening text from the TOC where possible.
+    # Compare extracted titles only at the destinations recorded by LaTeX.
     page_text = [" ".join(p.split()) for p in raw.split("\f")[:pages]]
     titles = [(v["c"][1][0],plain(v["c"][2])) for v in nodes(ast["blocks"])
               if v["t"]=="Header" and re.fullmatch(r"chapter-\d{2}",v["c"][1][0])]
     require(len(titles)==32,"print AST chapter count")
     starts = {}
-    cursor = 0
+    aux = (out/"reader-proof.aux").read_text(encoding="utf-8")
+    labels = dict(re.findall(r"(?m)^\\newlabel\{(chapter-\d{2})\}.*\{(chapter\*?\.\d+)\}\{\}\}$", aux))
+    destinations = {
+        name: int(page)
+        for page, name in re.findall(r'(?m)^\s*(\d+)\s+\[[^\n]*\]\s+"([^"]+)"', command(["pdfinfo","-dests",str(path)]))
+    }
     for anchor,title in titles:
-        # PDF font extraction can change a dash or ligature. Match chapter
-        # number plus title words, ignoring punctuation and spacing.
+        page = destinations.get(labels.get(anchor))
+        require(page and 1 <= page <= pages, f"missing PDF destination for {anchor}")
         key = re.sub(r"[^a-z0-9]","",title.casefold())
-        candidates = [i for i,p in enumerate(page_text) if i>=cursor and
-                      key in re.sub(r"[^a-z0-9]","",p.casefold())]
-        require(candidates,f"missing extracted chapter title: {title}")
-        # Exclude contents pages where several chapter titles appear together.
-        openings = [i for i in candidates
-                    if len(set(re.findall(r"\bChapter\s+\d{2}\b",page_text[i],re.I)))<=1]
-        page = (openings or candidates)[0]
-        starts[anchor]=page+1
-        cursor=page
+        require(key in re.sub(r"[^a-z0-9]","",page_text[page-1].casefold()),
+                f"missing extracted chapter title at PDF destination: {title}")
+        require(not starts or page > max(starts.values()), f"out-of-order PDF chapter: {anchor}")
+        starts[anchor] = page
     sparse = [i+1 for i,p in enumerate(page_text) if i+1 not in (1,2,3) and len(p.split())<55]
     selected=sorted(set([1,min(2,pages),pages]+sparse+list(starts.values())+
+                        [page-1 for page in list(starts.values())[1:]]+
                         [max(1,min(pages,round(pages*f/10))) for f in range(1,10)]))
     # Every opening plus distributed interiors. This is a sample, not an
     # exhaustive clipping/glyph or mathematical correctness certificate.
@@ -194,10 +194,13 @@ def scan_pdf_geometry(path, expected_figures, has_cover):
     with fitz.open(path) as doc:
         require(not doc.is_repaired, "PDF needed structural repair during opening")
         for page in doc:
+            require(abs(page.rect.width-576)<.1 and abs(page.rect.height-720)<.1,
+                    f"unexpected PDF trim on page {page.number+1}")
             info = page.get_image_info(hashes=True)
             for im in info:
                 images.add(im["digest"])
-            text = page.get_text("dict", flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES)
+            text = page.get_text("dict", flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES,
+                                 clip=fitz.INFINITE_RECT())
             blocks = [b for b in text["blocks"] if b.get("type")==0]
             if not info and not any(s["text"].strip() for b in blocks for line in b["lines"] for s in line["spans"]):
                 empty.append(page.number+1)
