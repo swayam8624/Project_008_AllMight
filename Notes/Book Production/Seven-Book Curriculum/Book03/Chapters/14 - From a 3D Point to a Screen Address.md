@@ -572,4 +572,4 @@ We still have only one viewpoint.
 
 The original `33 - Projection, Clipping, and Raster Sampling.md` contains the extended derivations, API convention comparisons, sample-coordinate material and depth precision discussion. The original `34 - Robust Predicates and Camera Sensitivity.md` develops homogeneous frustum boundaries, inverse corner reconstruction, predicate robustness and additional camera sensitivity. Both are preserved unmodified. Their actual inspected identities and outstanding specialized material are recorded in `PASS14_LEGACY_AUDIT.md`.
 
-This additive chapter and its laboratory establish the intended scalar contracts. Native compilation, runtime acceptance, full legacy integration, and final PDF/EPUB composition remain distinct gates.
+This additive chapter and its laboratory establish the intended scalar contracts. The cumulative Ubuntu CI gate subsequently passed at revision a54c4a1; full legacy integration and final PDF/EPUB composition remain distinct gates.
