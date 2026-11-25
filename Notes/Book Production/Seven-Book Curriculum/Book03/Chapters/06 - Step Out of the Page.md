@@ -408,9 +408,39 @@ A ray may intersect the plane containing the panel and still miss the actual pan
 
 The honest route is in two stages. First find the plane intersection point. Then classify that point within the triangle, using barycentric coordinates or equivalent edge predicates.
 
-The original long graphics manuscript already develops this method, and later derives the Möller–Trumbore algorithm for doing the full ray–triangle calculation more efficiently. Its mathematics deserves a complete chapter-length treatment, not an unexamined copy of a compact method.
+The original long graphics manuscript already develops this method, and later derives the Möller–Trumbore algorithm for doing the full ray–triangle calculation more efficiently. We will derive the bounded intersection next, rather than copying a compact method without explaining its assumptions.
 
-In this chapter we establish the ray-plane building block. Chapter 07 will teach actual indexed mesh faces; the later ray/raster chapters will compose the bounded triangle intersection and its exactness/edge-ownership policy. We will not call our current infinite-plane hit a triangle hit.
+In this chapter we establish the ray-plane building block. Chapter 07 will teach actual indexed mesh faces; the following derivation develops the bounded triangle intersection; later books revisit its numerical and edge-ownership policies. We will not call our current infinite-plane hit a triangle hit.
+
+### Ask the ray and the triangle the same question
+
+We can avoid separately constructing the supporting plane by solving for three unknowns at once. Write E1=B-A, E2=C-A and T=O-A. At an intersection,
+
+\[
+O+tD=A+uE_1+vE_2,\quad
+T=uE_1+vE_2-tD.
+\]
+
+Here u and v are the weights of B and C; A has weight 1-u-v. The ray parameter t is a distance only when D is unit length. Take the dot product with P=D cross E2. Since P is perpendicular to D and E2, both corresponding terms disappear. Thus u=(T dot P)/Delta, where Delta=E1 dot P. Taking the other scalar triple products gives the remaining two unknowns:
+
+\[
+\begin{aligned}
+P&=D\times E_2,&\Delta&=E_1\cdot P,\\
+Q&=T\times E_1,&
+u&=(T\cdot P)/\Delta,\\
+v&=(D\cdot Q)/\Delta,&t&=(E_2\cdot Q)/\Delta.
+\end{aligned}
+\]
+
+This is the core of Möller–Trumbore. In exact arithmetic a nonzero determinant gives a unique solution; accept it only when u>=0, v>=0, u+v<=1 and t lies in the declared ray interval. A zero determinant means the system is singular: the triangle may be degenerate, or the ray may be parallel or coplanar. Returning no unique point is not a proof that a coplanar ray never overlaps the triangle.
+
+For A=(0,0,0), B=(2,0,0), C=(0,2,0), O=(0.5,0.5,3), D=(0,0,-1), P=(2,0,0), Delta=4 and Q=(0,6,-1). Therefore u=v=0.25 and t=3. The hit is (0.5,0.5,0) with A's weight 0.5. Move the origin to (1.5,1.5,3), leaving D unchanged: the plane is still hit at t=3, but u+v=1.5 rejects the finite triangle. That is the difference between intersecting a wall's supporting plane and actually reaching the wall.
+
+The signed determinant is also -D dot (E1 cross E2). Under our winding convention, a positive determinant corresponds to approaching the triangle from its normal-facing side. A two-sided query accepts either nonzero sign. A front-only query rejects the back side. Keep the stored geometric normal and a front-face flag separate from a normal optionally flipped towards the ray. The rasterizer's projected winding convention is another boundary that needs explicit reconciliation.
+
+For finite-precision code, do not assume a universal absolute determinant epsilon: changing triangle scale or ray-direction length changes the determinant. A normalized angular parallelism test does not by itself bound all barycentric arithmetic error. Shared-edge hits are particularly dangerous: separate rounded barycentric calculations can reject both adjacent triangles. Production ray tracing needs a watertight intersection policy, not a promise that Möller–Trumbore alone solves every boundary case. The P06 native library still implements the plane and sphere queries; the separate Pass 35 arithmetic witness checks this derived triangle method only on controlled inputs. Book 04 builds the light-transport application.
+
+*Source route: Graphics Vision and XR/24, derived lines 14–462. The original ray-query policies and implementation context remain preserved.*
 
 ## What about the ball beside the house?
 
