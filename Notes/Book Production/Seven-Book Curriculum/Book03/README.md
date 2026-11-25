@@ -170,7 +170,7 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 07 | Indexed 3D mesh incidence, closed house reference, disconnected seam, winding/nonmanifold/bow-tie diagnostics, per-corner UVs, halfedge cycles/twins, CSR/Laplacian, five SVGs | Authored; original source preserved; compiler/CTest and final reader proof remain open |
 | 08 | Bézier de Casteljau/Bernstein, Hermite, B-spline span, C/G joins, adaptive tessellation and 16-control bicubic indexed patch; six figures and editable C++23 studio | Authored; C++23/CI native success and source-unit reconciliation pending |
 | 09 | Procedural heightfield/capped cylinder/UV sphere/strict implicit sphere, analytic normals, grid-edge shared extraction, independent counts and six original figures | Authored; native execution and source-unit reconciliation pending |
-| 10 | Trustworthy imported OBJ subset, per-corner UV/normal index domains, GPU tuple conversion, glTF buffer layout proof, topology audit, six original diagrams | Authored; native runtime and full original-source reconciliation pending |
+| 10 | Trustworthy imported OBJ subset, per-corner UV/normal index domains, GPU tuple conversion, glTF buffer layout proof, topology audit, six original diagrams | Authored; cumulative native runtime passed; full original-source reconciliation pending |
 | 11 | Shared mesh instances, parent forest, affine composition, world-preserving reparent, normal matrices and bounds | Authored; native runtime and original-source integration pending |
 | 12 | Proper rotations, Rodrigues, fixed XYZ, quaternion algebra, SLERP/NLERP and rigid SE(3) poses | Authored; native runtime and original-source integration pending |
 | 13 | Calibrated pinhole, camera frames, intrinsics, FOV, image coordinates, world rays and projection derivatives | Authored; native runtime and original-source integration pending |
@@ -181,7 +181,7 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 18 | Integer triangle coverage, top-left sample ownership and incremental edge evaluation | Authored; standalone native suite passed; integration pending |
 | 19 | Opaque visibility, depth storage and equal-depth policies | Authored; standalone native tests and studio passed; integration pending |
 | 20 | Sampling, aliasing, footprint integration and antialiasing foundations | Authored; standalone native tests and studio passed |
-| 21 | Integrated software renderer and native gallery | Backend validated; complete OBJ front-end acceptance pending |
+| 21 | Integrated software renderer and native gallery | Backend and OBJ front-end passed cumulative Ubuntu CI |
 | 22 | Thin-lens optics, focus tolerance and geometric defocus | Authored; standalone native tests and studio passed |
 | 23 | Distortion, Jacobians, numerical inversion and angular camera families | Authored; standalone native tests and studio passed |
 | 24 | Exposure, photon statistics, dark and read noise, full well, gain and ADC | Authored; standalone native tests and studio passed |
@@ -193,7 +193,7 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 | 30 | PCA normals, implicit fields, aligned depth TSDF and supported zero crossings | Authored; standalone native tests and studio passed |
 | 31 | Integrated optical fixture, sparse reconstruction, PCA check, render adapter and exports | Authored; standalone native integrated tests and independent export verifier passed |
 | 32 | Verification, scale ambiguity, independent derivative checks, paired baseline experiment and final evidence capstone | Authored; standalone native tests and sweep passed |
-| Release gates | Full cumulative build/CTest, source-unit reconciliation, math and figure audit, print/EPUB composition and acceptance | Open |
+| Release gates | Source-unit reconciliation, math and figure audit, print/EPUB composition and acceptance | Native build/CTest passed; remaining gates open |
 
 
 
@@ -260,3 +260,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Pass 35 — graphics, vision and XR source reconciliation
 
 [Source map](PASS35_GRAPHICS_SOURCE_MAP.md) inventories fourteen primary Graphics Vision and XR derived sources (28,118 routed lines, 502 heading entries). Together with P34, 21 primary derived files and 47,046 source body lines are mapped. Four selected additions in Chapters 06, 07, 20 and 29 recover ray–triangle intersection, cotangent operators, texture addressing and rigid registration. [Evidence](PASS35_EVIDENCE.md) records the independently checked numerical witnesses and exact tested script. Full line-by-line reconciliation and publication remain pending.
+
+
+## Passes 36–37 — reader refinement and verified source custody
+
+P36 adds selected answers for Chapters 24–32, repairs 336 inline-code delimiters and removes nine stale planned handoffs. P37 adds the [pinned source receipt](SOURCE_CUSTODY_BASELINE.json), derives the Chapter 08 surface metric and improves figures 129, 132 and 136. [Evidence](PASS37_EVIDENCE.md) records the full successful CI with 25 exact pinned source checks and all 34 CTests, while explicitly retaining 39 historical manifest discrepancies as unresolved. No release artifacts generated.
