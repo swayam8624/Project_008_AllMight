@@ -275,6 +275,10 @@ std::optional<double> refine_peak(double left, double centre,
 
 This deliberately small function requires a bounded, well-scaled response domain. A practical two-dimensional or scale-space implementation also checks the eigenvalues of the fitted Hessian, the residual and feature contrast. The test suite should include the exact quadratic case, a flat response, a convex response, and an asymmetric case whose optimum leaves the central cell.
 
+![A Gaussian blob has a characteristic scale](../Assets/163-scale-normalized-blob.svg)
+
+*Figure 28.5 — The scale-normalized Laplacian magnitude for ideal blobs of widths two and four peaks at their respective widths, with equal peak response one half.*
+
 ## A descriptor is a choice about what to forget
 
 The ideal descriptor would return the same representation for the same surface under every permitted observation change and different representations for distinct surfaces. These two wishes conflict. A descriptor that forgets everything is perfectly invariant but useless for matching. A descriptor that retains every raw pixel is highly discriminative under exact repetition but may fail under a small viewpoint or exposure change.
@@ -311,6 +315,10 @@ Design a controlled experiment with known image transformations and visible corr
 A near-perfect geometric inlier ratio can be achieved by rejecting almost everything. Report both precision and recall, the total number of valid correspondences, and the distribution of residuals. A useful model should generalize to held-out matches. If the same data chose the model and its threshold, a small training residual is optimistic.
 
 **Research exercise.** Build an analytic image family containing isolated blobs, corners, repeated windows and a textureless region. Vary scale, rotation, exposure, blur and noise separately before combining them. Evaluate fixed-scale Harris and normalized patches against a new scale-normalized detector or binary descriptor. Record repeatability, candidate retrieval, robust verification and reconstructed point error as separate stages. This is an extension project, not an observed comparison between full SIFT, ORB and the native P28 reference.
+
+![The matching stages use different denominators](../Assets/164-matching-denominators.svg)
+
+*Figure 28.6 — The illustrative twenty-feature fixture retains sixteen repeated detections, twelve correct retrievals, and eleven verified true matches. Two false matches survive separately.*
 
 ### Guided workshop: find the first stage at which matching fails
 

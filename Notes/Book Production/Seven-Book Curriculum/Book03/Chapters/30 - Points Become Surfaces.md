@@ -247,6 +247,10 @@ Negative voxel coordinates require floor division rather than truncating signed 
 
 Trilinear interpolation at a block boundary can access eight cells belonging to several different blocks. An unallocated block is unknown unless a separate free-space representation establishes otherwise. Treating an absent block as zero can create false surfaces. A normal estimated from central differences requires neighbouring support too. Sparse allocation and extraction share a boundary contract.
 
+![An edge can cross a sparse-block boundary](../Assets/167-sparse-block-boundaries.svg)
+
+*Figure 30.6 — Two allocated voxel blocks share a global edge crossing while a third unallocated block remains unknown. Local cell indices and global edge identity must not be confused.*
+
 ## Extracting a mesh is a second inference
 
 An isosurface algorithm examines field values at cell corners and locates edge crossings. Along an edge with values phi_0 and phi_1 of opposite sign, linear interpolation places the zero at fraction phi_0/(phi_0-phi_1) measured from the first endpoint. If phi_0=0.3 and phi_1=-0.1, the fraction is 0.75. The interpolation gives a position within the edge, but it does not supply a complete triangulation policy.
@@ -262,6 +266,10 @@ A reconstructed mesh may have a small nearest-neighbour error simply because it 
 For a tiny example, suppose the reference has points at 0, 1 and 2 on a line, and the reconstruction has 0 and 1. The mean nearest-reference distance from reconstruction is zero. The reverse mean is one third. A claim of perfect reconstruction from the first score alone would be wrong. In three dimensions, compare sampled surface geometry rather than relying solely on mesh vertex density, which can bias the result toward heavily tessellated regions.
 
 **Research exercise.** Build a perspective-depth simulator for two perpendicular walls, a thin object and an unobserved region. Fuse known registered views, then introduce depth bias, pose errors and missing observations separately. Compare dense and sparse storage using the same voxel and update policy. Verify matching field values where both are supported, extraction consistency across block boundaries, accuracy and completeness, memory and total runtime. P30's measured native results concern the aligned orthographic TSDF and plane normals; this larger perspective/sparse system is a proposed extension, not an existing benchmark result.
+
+![The zero must be supported by observations](../Assets/168-weighted-crossing-support.svg)
+
+*Figure 30.7 — The guided axial fixture gives field values one, one half and minus one half at depths 0.9, 1.0 and 1.1 metres. The 1.2 metre sample has zero weight and no defined observation.*
 
 ### Guided workshop: follow a surface through fusion and extraction
 

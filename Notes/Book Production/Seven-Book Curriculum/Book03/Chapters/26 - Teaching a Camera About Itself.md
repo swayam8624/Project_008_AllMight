@@ -306,6 +306,10 @@ The negative cross-product sign follows from a cross b = -b cross a. For the opt
 
 When applying a finite step, use a proper rotation exponential or a normalized quaternion construction with the corresponding pose update. Adding arbitrary entries to a rotation matrix will generally violate orthogonality. A Jacobian is a tangent-space derivative; the update maps that tangent displacement back to a valid state.
 
+![Calibration spread separates focal scale](../Assets/159-calibration-sensitivity.svg)
+
+*Figure 26.5 — Two centered three-point designs have normalized coordinate spread differing by ten. Their focal parameter variance differs by a factor of one hundred for equal pixel noise.*
+
 ## Why damping is not the same as observing more data
 
 For a residual vector r, linearize it as r+J delta. If the measurement errors have covariance Sigma, whitening transforms the residual by a matrix whose squared norm corresponds to Sigma inverse. In a simple independent equal-noise case this is just division by sigma. The weighted normal system is
@@ -341,6 +345,10 @@ Begin with validated correspondences and a target of known dimensions. Initializ
 Evaluate on withheld views, not merely withheld corners from the same board pose. Vary orientation, distance and image coverage. Record per-view residual vectors and parameter uncertainty. Compare a smaller distortion model with a larger one using the same training and validation protocol. Extra parameters should earn their place through predictive improvement rather than only a better training score.
 
 **Research exercise.** Use the P26 synthetic camera as the truth model and generate training sets with the same number of observations but different depth spread and field coverage. Compute the analytic pinhole Jacobian above, compare it to central differences, then study its singular spectrum under a fixed parameter scaling. Implement a damped refinement as a separate extension and evaluate on a held-out volume. The existing native P26 implementation is normalized spatial DLT and decomposition, not a completed nonlinear camera optimizer; the new material explains how to build and validate one.
+
+![Correlation creates a weak parameter direction](../Assets/160-normal-matrix-eigenvalues.svg)
+
+*Figure 26.6 — The strong eigenvalue is 1 plus correlation, and the weak eigenvalue is 1 minus correlation. At correlation 0.99 the weak eigenvalue falls to 0.01.*
 
 ### Guided workshop: design a well-conditioned calibration experiment
 

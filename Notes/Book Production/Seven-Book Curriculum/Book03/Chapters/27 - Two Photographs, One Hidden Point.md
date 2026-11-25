@@ -213,6 +213,10 @@ This is a rotation of ray directions around each original camera center; it does
 
 In the shared rectified coordinate frame, the center difference lies along the X axis. A physical point therefore has identical Y and Z coordinates relative to the two cameras, and its ideal vertical projected coordinate is the same. The horizontal coordinates differ by fB/Z if the virtual cameras share focal scale f and principal point. A different principal-point convention adds an offset. Rectification makes the correspondence search easier; it does not invent a correspondence or recover the missing depth by itself.
 
+![Rectification aligns epipolar rows](../Assets/161-rectification-rows.svg)
+
+*Figure 27.5 — Two image planes show corresponding points on a common horizontal row after rectification. Their horizontal separation is disparity, not a proof that the correspondence is correct.*
+
 ## Disparity is a measurement with its own uncertainty
 
 For rectified cameras, a horizontal match with corrected disparity d gives Z=fB/d. The derivative with respect to disparity is -fB/d². The sensitivity grows rapidly when d approaches zero.
@@ -250,6 +254,10 @@ Construct a synthetic rectified pair of a fronto-parallel textured plane at know
 Repeat at several baselines and texture frequencies. A wider baseline improves ideal triangulation sensitivity but may increase occlusion and appearance variation. The best baseline for a complete pipeline depends on both geometry and correspondence quality.
 
 **Research exercise.** Implement the rectified homography construction with two known camera poses, check that corresponding projected points have matching vertical coordinates, then compare the simple dense matching procedure on a unique texture and a repeated pattern. Include a pure-rotation control and a plane-only control. The P27 native lab estimates and verifies two-view epipolar geometry; the image-warping and dense stereo experiment is a proposed extension, and its results must not be confused with the existing sparse native acceptance.
+
+![Small disparities create asymmetric depth intervals](../Assets/162-disparity-nonlinearity.svg)
+
+*Figure 27.6 — Depth equals 80 divided by disparity for the stated focal scale and baseline. Near two pixels, a plus or minus half-pixel disparity interval maps to 32 through 53.33 metres.*
 
 ### Guided workshop: make the stereo answer key before matching
 

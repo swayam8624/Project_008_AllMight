@@ -231,6 +231,10 @@ A safe cache key includes every dependency affecting the result. A camera identi
 
 Test incremental rebuilds against a full rebuild after each edit. For a controlled deterministic scene, compare the actual arrays, not just whether an image was generated. Record which stages reran, which were reused and whether the dependency graph predicted that reuse. The cost of invalidating too much is additional computation. The cost of invalidating too little is a stale result that may be difficult to notice.
 
+![An encoding edit need not invalidate geometry](../Assets/169-dependency-invalidation.svg)
+
+*Figure 31.5 — A chain from geometry and camera to projection, coverage, linear color and encoding shows the dependencies. A transfer-only change invalidates only the final encoded output.*
+
 ## Separate interaction from numerical computation
 
 A user can drag a camera while reconstruction runs. The interface wants a responsive preview; the solver wants a stable set of inputs. If it reads mutable camera parameters while iterating, different residuals may correspond to different camera states. The resulting objective no longer describes a single mathematical problem.
@@ -250,6 +254,10 @@ Use a known synthetic house first. Make one deliberately wrong adapter at a time
 Then add a reproducible scene manifest with the camera and mesh identities, image dimensions, near/far convention and output hashes. An importer should validate a manifest before executing numerical work, and an exporter should record enough information to reproduce the result. Version the schema so that a future change does not silently reinterpret an old file.
 
 **Research exercise.** Build an extension around the P31 native studio with a small command-driven scene editor. Implement immutable snapshots and a dependency cache, then compare every incremental output against the full reference rebuild. Add deliberate stale-task and invalid-input cases. Export evidence containing the input revision, output hashes, numerical residuals and stage timing. The existing P31 fixture remains a controlled CPU studio with known topology and cameras; a full interactive GUI and asynchronous renderer are future engineering work. The book's contract tells us how to approach them without weakening the mathematics.
+
+![An old result must retain its own identity](../Assets/170-stale-snapshot-result.svg)
+
+*Figure 31.6 — Snapshot A starts first, snapshot B starts later and finishes first. The late A result cannot overwrite B as if it were the current camera state.*
 
 ### Guided workshop: prove that an incremental build is the same calculation
 

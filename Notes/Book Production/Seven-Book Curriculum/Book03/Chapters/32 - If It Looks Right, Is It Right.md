@@ -212,6 +212,10 @@ Let the reference time on scene i be a_i and the alternative time be b_i, both p
 
 Report individual ratios, the aggregation rule, workload support and uncertainty. For paired resampling, sample scene pairs together rather than breaking the pairing between reference and alternative. If scenes have a natural grouping such as a shared source geometry, a group-aware resampling scheme may be more appropriate. A confidence interval describes variation under its sampling assumptions; it does not establish that untested workload families will behave similarly.
 
+![Two valid summaries answer different questions](../Assets/171-speedup-aggregation.svg)
+
+*Figure 32.5 — For the two hypothetical workloads, scene-level speedups are two and 0.909. The geometric mean is about 1.348 while the ratio of total elapsed times is about 0.914.*
+
 ## A numerical claim needs an error budget
 
 Consider the full route from a calibrated image to a reconstructed point and then to a new projected image. Error can enter at several places: camera calibration, image-coordinate localization, correspondence ambiguity, numerical triangulation, world-frame alignment, storage precision and rendering. A single final pixel residual mixes these effects.
@@ -249,6 +253,10 @@ Run the existing Book03 native laboratories as individual contract checks. Build
 A final report should include the exact repository revision and environment, the data generator and its parameters, the evaluation protocol, the reference outputs, error and timing distributions, failure categories, the limits of the method, and enough artifacts to reproduce at least one experiment from scratch. If a new method loses, the experiment is still valuable when it explains why. If it wins, retain the counterexamples that bound the claim.
 
 **Check your intuition.** A method may reduce average reprojection error while worsening absolute geometry, accelerate a rasterizer while changing its edge ownership, or reduce reconstruction error by deleting difficult points. In each case a second measurement prevents a misleading conclusion. This is the essential lesson of the volume: geometry, images, measurements and evidence are connected, but none is automatically a substitute for another.
+
+![An ablation must preserve the question](../Assets/172-ablation-evidence.svg)
+
+*Figure 32.6 — A common input set feeds both baseline and modified pipelines. Their surviving support and numerical errors are compared before interpreting measured cost.*
 
 ### Guided workshop: write a mini research paper with a result you can defend
 

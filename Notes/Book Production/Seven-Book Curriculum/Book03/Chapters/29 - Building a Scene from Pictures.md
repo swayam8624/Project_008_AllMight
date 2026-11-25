@@ -248,6 +248,10 @@ As rho approaches zero, the projection tends to that of the direction R d. A poi
 
 **Worked example.** In rectified stereo with focal length 800 and baseline 0.1 m, inverse axial depth eta=1/Z gives disparity d=80 eta. A disparity observation of 0.5 pixels corresponds to eta=0.00625 inverse metres and nominal Z=160 m. An independent disparity standard deviation of 0.25 pixels corresponds to eta standard deviation 0.003125 inverse metres. The linear inverse-depth interval extends toward zero much more naturally than a symmetric Euclidean depth interval. Converting to Z still creates a skewed and potentially unbounded uncertainty range. Inverse depth improves the parameterization; it does not add information to a small-baseline observation.
 
+![Inverse depth linearizes rectified disparity](../Assets/165-inverse-depth-response.svg)
+
+*Figure 29.6 — For focal scale 800 pixels and baseline 0.1 metres, disparity is linear in inverse axial depth. A zero inverse depth is a limiting direction rather than a finite metric point.*
+
 ## Derive the weighted triangulation system
 
 The point-only ray-intersection method minimizes squared perpendicular distances to viewing rays. For unit directions d_i and camera centers C_i, define Q_i=I-d_i d_i^T. If each ray carries a positive scalar confidence w_i, consider
@@ -302,6 +306,10 @@ Consider a new camera with fifty proposed 3D-to-2D correspondences. Forty may ag
 A later loop closure can correct accumulated drift, but a false connection can move an entire map. Build a controlled graph with known camera poses and add one deliberately false high-confidence correspondence group. Compare ordinary least squares with a declared robust loss and a policy that verifies the proposed closure independently. A robust loss may reduce the influence of individual outliers without guaranteeing rejection of a coherent wrong model.
 
 **Research exercise.** Extend the controlled P29 three-view fixture using ten known cameras and a mixture of near and distant landmarks. Compare Euclidean and inverse-depth parameterizations, vary parallax, inspect the gauge-fixed singular spectrum, and verify a small Schur-eliminated system against a dense solve. Evaluate held-out image residuals, point error after a declared similarity alignment, metric-scale error and failure counts. The existing native P29 code implements fixed-pose point refinement and a bounded two-view seed, not a full incremental SfM or joint bundle-adjustment solver. This experiment defines the next independently checkable step.
+
+![Eliminate landmark variables, not their evidence](../Assets/166-schur-blocks.svg)
+
+*Figure 29.7 — The toy normal matrix has a camera block of two, two landmark diagonal blocks of two, and camera-landmark coupling one. Eliminating the landmarks leaves a scalar camera coefficient of one.*
 
 ### Guided workshop: compare bearing support and reprojection support
 
