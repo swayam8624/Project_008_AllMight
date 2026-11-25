@@ -195,6 +195,17 @@ Our studio produces synthetic data, not a measurement of a real sensor. In Chapt
 
 **Explain 24H.** Draw the units over every edge of the measurement chain, then explain to a camera engineer why 12-bit ADC output is not a claim of 12-stop dynamic range.
 
+### Selected answers and experiment criteria
+
+**24A–B.** Collected energy is EAt in joules, photon energy is hc/lambda in joules per photon, so their ratio is a photon count. At 450 nm the same energy gives about 22,653.52 photons, or 450/550 of the original count. For S=100 the SNR is 100/sqrt(111), approximately 9.49; for S=400 it is 400/sqrt(411), approximately 19.73. Their ratio is about 2.08: the fixed read and dark terms matter more at the smaller signal.
+
+**24C–D.** Ignoring read noise and rounding, the ADC reaches its top at (4095-64)/1=4031 electrons, below the 20,000-electron well. The two clipping fractions describe different mechanisms. Fit standard deviation against signal only in the unsaturated regime; under ideal Poisson statistics the log-log slope is 1/2. Use repeated trials to see how the fitted slope varies.
+
+**24E–F.** Doubling irradiance or exposure time doubles ideal signal, but only longer exposure doubles dark charge at a fixed dark-current rate. A stable per-pixel offset contributes spatial variation but cancels from the repeated-frame temporal variance at that same pixel. Report both estimators, their sample counts and the measurement units.
+
+**24G–H.** Digital gain remaps stored values, including their noise; it cannot replace photons that never arrived. Trace photons, electrons, analog noise, DN and quantized codes separately. Dynamic range needs a saturation limit and a stated usable noise floor, not merely a bit count.
+
+
 ## What happens next?
 
 Today the garden became a collection of numbers whose uncertainty we could explain. The numbers are not yet colours. In Chapter 25 we will ask why two equal-looking digital triplets can represent different physical lights, why encoded values cannot safely be averaged as though they were linear energy, and how white balance and response curves change the story.
