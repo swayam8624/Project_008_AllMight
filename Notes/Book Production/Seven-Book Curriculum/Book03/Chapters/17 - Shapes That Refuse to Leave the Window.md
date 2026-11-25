@@ -247,8 +247,8 @@ The laboratory gives each generated vertex a provenance triple \(\gamma=(\gamma_
 In exact arithmetic,
 
 \[
-h_{\rm generated}=\sum_i\gamma_i h_i,\quad
-a_{\rm generated}=\sum_i\gamma_i a_i,\quad
+h_\mathrm{generated}=\sum_i\gamma_i h_i,\quad
+a_\mathrm{generated}=\sum_i\gamma_i a_i,\quad
 \sum_i\gamma_i=1.
 \tag{17.10}
 \]
@@ -270,7 +270,7 @@ A very small disagreement can become a visible seam when the resulting screen po
 Our crossing routine always orders the outside endpoint first, independently of edge traversal. It computes the crossing parameter as
 
 \[
-s=\frac{|g_{\rm out}|}{|g_{\rm out}|+|g_{\rm in}|}.
+s=\frac{|g_\mathrm{out}|}{|g_\mathrm{out}|+|g_\mathrm{in}|}.
 \tag{17.11}
 \]
 
