@@ -290,3 +290,8 @@ The new reader [Chapter 11](Chapters/11%20-%20The%20Same%20Tree%20in%20Five%20Wo
 ## Pass 31 — integrated studio
 
 [Chapter 31](Chapters/31%20-%20A%20Studio%20for%20Geometry%20and%20Images.md) connects prior geometry/reconstruction and rendering modules with a controlled synthetic fixture and checked coordinate adapter. [PASS31_LEGACY_AUDIT.md](PASS31_LEGACY_AUDIT.md) records dependency custody. [PASS31_EVIDENCE.md](PASS31_EVIDENCE.md) records actual exact-hash-matched GCC/UBSan execution, 230,400 pixel-pass checks and independent Python export verification. Four figures bring the count to 138; the thirty-third CTest is registered. Full cumulative integration and publication remain pending.
+
+
+## Pass 32 — final evidence capstone
+
+[Chapter 32](Chapters/32%20-%20If%20It%20Looks%20Right%2C%20Is%20It%20Right.md) integrates numerical oracles, projective ambiguity, derivative checks and paired experiment design. [PASS32_EVIDENCE.md](PASS32_EVIDENCE.md) records exact-hash-matched standalone GCC/UBSan execution and 20,000 point reconstructions; [PASS32_LEGACY_AUDIT.md](PASS32_LEGACY_AUDIT.md) records dependency and chapter inventory custody. Four original figures bring the authoring count to 142; CMake registers the thirty-fourth contract test. All 32 planned chapter headings were fetched and verified individually. Original-source reconciliation and publication acceptance remain open, and no release artifacts have been generated.
