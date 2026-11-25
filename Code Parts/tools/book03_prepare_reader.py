@@ -64,7 +64,7 @@ TEX = r"""
 \fancyhead[LE,RO]{\small\thepage}
 \fancyhead[LO,RE]{\small\nouppercase{\leftmark}}
 \renewcommand{\headrulewidth}{0.3pt}
-\titleformat{\chapter}[display]{\normalfont\bfseries\color{BookInk}}{}{0pt}{\Huge}[\vspace{.5ex}{\color{BookAccent}\titlerule[1.5pt]}]
+\titleformat{\chapter}[display]{\normalfont\bfseries\color{BookInk}}{}{0pt}{\raggedright\huge}[\vspace{.5ex}{\color{BookAccent}\titlerule[1.5pt]}]
 \titlespacing*{\chapter}{0pt}{-1ex}{2ex}
 \titleformat{\section}{\Large\bfseries\color{BookInk}}{}{0pt}{}
 \titleformat{\subsection}{\large\bfseries\color{BookAccent}}{}{0pt}{}
@@ -368,6 +368,10 @@ def prepare(root, out):
 
 
 def build(out, cover, author):
+    check = shutil.which("epubcheck")
+    require(check, "EPUBCheck 5.4.0 is required for a complete proof; use the official distribution")
+    version = run([check,"--version"],out,out/"epubcheck-version.log")
+    require(re.search(r"\b5\.4\.0\b",version.stdout+"\n"+version.stderr), "EPUBCheck version must be 5.4.0")
     epub = ["pandoc","-f","json","-t","epub3","--mathml","--toc","--toc-depth=2",
             "--css=reader.css","--metadata","author="+author,
             "reader-epub.json","-o","Book03-From-Geometry-to-Images-PROOF.epub"]
@@ -408,12 +412,10 @@ def build(out, cover, author):
             tree = ET.fromstring(z.read(name))
             ids.update(el.attrib.get("id") for el in tree.iter())
         require(all(f"chapter-{n:02d}" in ids for n in range(1,33)), "EPUB chapter IDs incomplete")
-    check = shutil.which("epubcheck")
-    if check:
-        run([check,str(file)],out,out/"epubcheck.log")
+    run([check,str(file)],out,out/"epubcheck.log")
     print("Proof PDF and EPUB built. No promotion; formal EPUBCheck:",bool(check))
     proof = {"epub_sha256":digest(file),"pdf_sha256":digest(out/"Book03-From-Geometry-to-Images-PROOF.pdf"),
-             "epubcheck_ran":bool(check),"epub_warnings":e.stderr.splitlines(),
+             "epubcheck_ran":True,"epubcheck_version":"5.4.0","epub_warnings":e.stderr.splitlines(),
              "pdf_warnings":conversion.stderr.splitlines(),"final_layout_issues":issues,"latex_passes":len(passes),"cover_epub_only":bool(cover),
              "accepted":False}
     (out/"build-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")

@@ -1224,6 +1224,10 @@ This is an **additive** reader chapter, not a replacement for the original exten
 
 Important intellectual sources include Lorensen and Cline, *Marching Cubes: A High Resolution 3D Surface Construction Algorithm* (SIGGRAPH 1987), for the classical cube-case extraction family; the original marching-tetrahedra and tetrahedral-decomposition literature for ambiguity handling; and the differential and implicit-surface material in the existing source atlas. We implemented a deliberately restricted sphere extractor rather than copying third-party case tables or borrowing external meshes. The source contains explicit assumptions, testable numerical examples, and documented limitations.
 
-**Companion code:** `Code Parts/tools/labs/book03_cpp23/include/book03/procedural_geometry.hpp`, `tests/procedural_geometry_tests.cpp`, `src/procedural_studio.cpp`.
+**Companion code:** All paths below are relative to `Code Parts/tools/labs/book03_cpp23/`.
+
+- `include/book03/procedural_geometry.hpp`
+- `tests/procedural_geometry_tests.cpp`
+- `src/procedural_studio.cpp`
 
 **Read next:** Chapter 10 — A Mesh You Can Trust.
