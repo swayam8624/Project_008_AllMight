@@ -237,6 +237,17 @@ To make the lab more realistic, take a set of verified images with known geometr
 
 **Explain 28H.** Specify the data contract for feature tracks across three photographs, including frame identity, pixel convention, descriptor provenance, one observation per image, and geometrically rejected edges.
 
+### Selected answers and experiment criteria
+
+**28A–B.** For k=0.04, the Harris response det(M)-k tr(M)^2 is 0, -0.64 and 13.44 for the three eigenvalue pairs. Under I'=aI+b, subtracting the patch mean removes b; dividing by its nonzero norm removes positive a. Negative a reverses the normalized vector and a=0 makes the norm vanish. Clipping is not an affine change of the samples.
+
+**28C–D.** Two identical best descriptors have tied distances; neither wins a strict ratio test. If a source A chooses destination B but B chooses another source, mutual nearest-neighbour checking removes A-to-B. When rotating or rescaling a fixture, record detector repeatability separately from descriptor and geometric-verification success.
+
+**28E.** With eight distinct draws, the all-inlier probability is the product of (60-j)/(100-j) for j=0 through 7. Independent trials of that sampling procedure require the ceiling of log(0.01)/log(1-p_good) for a 99 percent chance of at least one uncontaminated sample. The approximation 0.6^8 assumes independent draws within a sample and is more optimistic here. An uncontaminated sample can still be geometrically degenerate.
+
+**28F–H.** Compare precision, recall, failure count and held-out geometric error across thresholds. A repeated window may be appearance-identical to the correct one. Track membership requires a declared image identity and an explicit association policy; epipolar agreement alone is not an identity certificate.
+
+
 ## Further reading
 
 Chris Harris and Mike Stephens, *A Combined Corner and Edge Detector*, 1988, DOI 10.5244/C.2.23. David G. Lowe, [Distinctive Image Features from Scale-Invariant Keypoints](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf), IJCV 60, 2004. Ethan Rublee et al., *ORB: An Efficient Alternative to SIFT or SURF*, ICCV 2011, DOI 10.1109/ICCV.2011.6126544. Martin Fischler and Robert Bolles, *Random Sample Consensus*, Communications of the ACM 24(6), 1981, DOI 10.1145/358669.358692. These are foundational references; P28 is an independently authored small teaching implementation.
