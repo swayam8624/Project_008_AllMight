@@ -13,7 +13,6 @@ from pathlib import Path
 import posixpath
 import re
 import subprocess
-import tempfile
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 import zipfile
@@ -78,10 +77,21 @@ def verify_epub(path, ast, receipt):
                         require(unquote(u.fragment) in ids[dest], f"broken EPUB anchor: {name}: {href}")
         navdoc = docs[location(nav[0])]
         nav_chapters = set()
+        # Pandoc may link a level-one chapter directly to its XHTML file
+        # instead of appending its heading ID. Resolve both representations.
+        nav_name = location(nav[0])
         for el in navdoc.iter(NS+"a"):
-            m = re.fullmatch(r"chapter-(\d{2})",urlsplit(el.attrib.get("href","")).fragment)
+            href = el.attrib.get("href","")
+            u = urlsplit(href)
+            m = re.fullmatch(r"chapter-(\d{2})",unquote(u.fragment))
             if m:
                 nav_chapters.add(int(m[1]))
+            elif u.path and not u.fragment and not u.scheme:
+                dest = resolve(posixpath.dirname(nav_name),href)
+                candidates = [re.fullmatch(r"chapter-(\d{2})",i) for i in ids.get(dest,set())]
+                exact = [m for m in candidates if m]
+                if len(exact)==1:
+                    nav_chapters.add(int(exact[0][1]))
         require(nav_chapters==set(range(1,33)), f"navigation chapters incomplete: {nav_chapters}")
         math_count = sum(1 for _,d in bodies for _ in d.iter(MATH+"math"))
         expected_math = sum(1 for v in nodes(ast["blocks"]) if v["t"]=="Math")
@@ -129,7 +139,6 @@ def verify_pdf(path, ast, out):
                       key in re.sub(r"[^a-z0-9]","",p.casefold())]
         require(candidates,f"missing extracted chapter title: {title}")
         # Exclude contents pages where several chapter titles appear together.
-        n = int(anchor[-2:])
         openings = [i for i in candidates
                     if len(set(re.findall(r"\bChapter\s+\d{2}\b",page_text[i],re.I)))<=1]
         page = (openings or candidates)[0]
