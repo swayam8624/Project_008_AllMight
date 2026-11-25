@@ -62,7 +62,7 @@ The displacement from \(A\) to \(B\) is
 \tag{6.2}
 \]
 
-Moving a point along a vector gives a new point: \(B=A+\mathbf{d}\). Adding a point to a point is deliberately not an operation in our companion C++23 types. We name the types \`Point3\` and \`Vector3\` and keep those contracts separate.
+Moving a point along a vector gives a new point: \(B=A+\mathbf{d}\). Adding a point to a point is deliberately not an operation in our companion C++23 types. We name the types `Point3` and `Vector3` and keep those contracts separate.
 
 As a concrete route through our garden, suppose
 
@@ -88,7 +88,7 @@ For a general vector
 \tag{6.3}
 \]
 
-You should not compute that formula carelessly for arbitrary huge and tiny floating-point inputs. Squaring a very large component can overflow even when the final magnitude is representable; squaring a tiny one can underflow. Our C++23 laboratory uses the standard library's three-argument \`std::hypot\` and checks that the result is finite before treating it as a usable magnitude. This is safer, although it does not turn all geometry into exact arithmetic.
+You should not compute that formula carelessly for arbitrary huge and tiny floating-point inputs. Squaring a very large component can overflow even when the final magnitude is representable; squaring a tiny one can underflow. Our C++23 laboratory uses the standard library's three-argument `std::hypot` and checks that the result is finite before treating it as a usable magnitude. This is safer, although it does not turn all geometry into exact arithmetic.
 
 ### A direction is a promise about orientation, not a distance
 
@@ -282,7 +282,7 @@ If \(\mathbf n\) is not unit length, divide by \(\|\mathbf n\|\). Forgetting tha
 
 This matters for collision and geometric validation. A program that stores \((0,10,0)\) as the floor normal but forgets to normalize can report a height of ten metres when the point is actually one metre above the floor.
 
-Our \`Plane3::through\` factory therefore takes a nonzero normal, normalizes it, and stores a unit normal and the corresponding offset. Its \`signed_distance\` function reports the correct physical units for well-conditioned finite inputs.
+Our `Plane3::through` factory therefore takes a nonzero normal, normalizes it, and stores a unit normal and the corresponding offset. Its `signed_distance` function reports the correct physical units for well-conditioned finite inputs.
 
 Signed distance is not a universal exact predicate. For enormous or nearly cancelling operands it can suffer floating-point error, which we label explicitly. It is the correct **geometric formula**, not a promise that every evaluation is perfectly rounded.
 
@@ -305,7 +305,7 @@ For a **segment**, \(0\le t\le1\) when \(D=B-A\) is the full segment displacemen
 
 It is crucial not to confuse those meanings. If we normalize \(D\) to unit length, then \(t\) becomes distance in metres. If we leave \(D\) unnormalized, \(t\)'s units depend on the magnitude of \(D\). Both conventions are valid, but the library should say which one it uses.
 
-Our Chapter 06 \`Ray3::from\` normalizes the supplied direction. That makes every hit parameter a travelled distance in metres.
+Our Chapter 06 `Ray3::from` normalizes the supplied direction. That makes every hit parameter a travelled distance in metres.
 
 You can imagine a tiny laser pointer at the house's window. Its origin is the window and its direction is where the beam points. The line continues backwards into the room; the ray does not.
 
@@ -597,9 +597,9 @@ The real C++23 project will generate its own SVG using this same source geometry
 
 ## Build P06 — the 3D geometry workbench
 
-Here is the laboratory contract. It builds on the same \`book03_cpp23\` CMake project rather than creating another repository.
+Here is the laboratory contract. It builds on the same `book03_cpp23` CMake project rather than creating another repository.
 
-The new header \`include/book03/geometry3d.hpp\` introduces \`Point3\`, \`Vector3\`, \`Triangle3\`, \`Plane3\`, \`Ray3\` and \`Sphere3\`. Points and displacement vectors remain different types, and there is no point-plus-point operator. Lengths use \`std::hypot\`, directions reject zero magnitude, and geometrically impossible constructions return deliberate errors instead of quietly dividing by zero.
+The new header `include/book03/geometry3d.hpp` introduces `Point3`, `Vector3`, `Triangle3`, `Plane3`, `Ray3` and `Sphere3`. Points and displacement vectors remain different types, and there is no point-plus-point operator. Lengths use `std::hypot`, directions reject zero magnitude, and geometrically impossible constructions return deliberate errors instead of quietly dividing by zero.
 
 A ray constructor normalizes its direction so \(t\) is measured in metres. Planes store a unit normal so signed distances have metres as their units. Intersections return an explicit status together with a hit point and distance **only when a trustworthy intersection was found under the stated floating policy**.
 
@@ -672,7 +672,7 @@ Finally, we should compare the analytic ray-plane solution against direct substi
 
 The two-trip displacement is \((3,4,12)\), length \(13\), with final point \((4,5,14)\). The triangle's cross product is \((0,-6,0)\), area \(3\) and unit normal \((0,-1,0)\); reversing winding changes the normal's sign but not unsigned area. The normalized floor plane reports signed distance \(1\) metre above \(Y=0\). An upward ray from height three has line intersection \(t=-3\), behind the ray. A collinear triple has zero cross product and no unique unit face normal. The embedded 2D triangle's 3D cross-product Z component is \(+24\), matching the previous chapter's signed twice-area. The sphere's roots are \(4\) and \(6\); starting at its center gives an exit at \(t=1\).
 
-An implementation that returns a finite hit point for an input it explicitly marked \`NearParallelUncertain\` has contradicted its own result contract. An implementation that computes the wrong normal sign when vertex order is reversed is not fixed by changing the illustration.
+An implementation that returns a finite hit point for an input it explicitly marked `NearParallelUncertain` has contradicted its own result contract. An implementation that computes the wrong normal sign when vertex order is reversed is not fixed by changing the illustration.
 
 ## Why this matters for the camera we will build
 
@@ -718,11 +718,11 @@ Next comes **Chapter 07 — One Shape, Many Triangles**. We will build the house
 
 ## Source custody and further study
 
-The original long graphics manuscript, especially \`Notes/Chapter Edition/02 - Graphics Vision and XR/24 - Ray–Triangle Intersection.md\` (source-master lines 59763–62972) and \`27 - Mesh Queries, Classification and Clipping.md\` (source-master lines 68892–71960), already derives plane-then-barycentric intersections, Möller–Trumbore, candidate filtering, and meaningful ray-query policies. This chapter provides the accessible 3D entry and first primitive implementations; it does **not** replace that advanced material. The existing \`23 - Mesh Topology and Connectivity.md\` (source-master lines 57090–59762) belongs to Chapter 07.
+The original long graphics manuscript, especially `Notes/Chapter Edition/02 - Graphics Vision and XR/24 - Ray–Triangle Intersection.md` (source-master lines 59763–62972) and `27 - Mesh Queries, Classification and Clipping.md` (source-master lines 68892–71960), already derives plane-then-barycentric intersections, Möller–Trumbore, candidate filtering, and meaningful ray-query policies. This chapter provides the accessible 3D entry and first primitive implementations; it does **not** replace that advanced material. The existing `23 - Mesh Topology and Connectivity.md` (source-master lines 57090–59762) belongs to Chapter 07.
 
-The long Computing Foundations \`32 - Geometry Becomes an Image and an Inverse Problem.md\` declares the later right-handed camera looking along local \(-Z\), with column vectors, a separate view transform and camera/clip/raster contracts. Our current oblique SVG projection is an illustrative map, **not** that full camera pipeline.
+The long Computing Foundations `32 - Geometry Becomes an Image and an Inverse Problem.md` declares the later right-handed camera looking along local \(-Z\), with column vectors, a separate view transform and camera/clip/raster contracts. Our current oblique SVG projection is an illustrative map, **not** that full camera pipeline.
 
 For further learning, see Keenan Crane's *Discrete Differential Geometry* lectures and course notes; Christer Ericson, *Real-Time Collision Detection* (plane, ray and sphere queries); Schneider and Eberly, *Geometric Tools for Computer Graphics*; and the original ray–triangle work of Möller and Trumbore. Validate edition, source license and individual claims before importing external code or reproducing third-party figures. This chapter's C++23 implementation and figures are original.
 
-**Companion:** \`Code Parts/tools/labs/book03_cpp23/\`, P06 geometry and spatial studio.  
-**Read next:** Chapter 07 — One Shape, Many Triangles (planned).
+**Companion:** `Code Parts/tools/labs/book03_cpp23/`, P06 geometry and spatial studio.  
+**Read next:** Chapter 07 — One Shape, Many Triangles.
