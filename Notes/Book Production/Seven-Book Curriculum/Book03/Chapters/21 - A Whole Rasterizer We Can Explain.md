@@ -179,7 +179,7 @@ book03_renderer_gallery gallery.ppm
 book03_renderer obj mesh.obj result.ppm
 ~~~
 
-The first command and the backend suite passed local GCC 14.2.0 C++23 execution with UBSan. The exact committed source hashes and earlier dependency hashes were checked. The second executable and its full integration test remain unexecuted because the local environment could not retrieve the complete dependency tree from GitHub. Do not mistake that blocker for a successful full build.
+The first command and the backend suite passed local GCC 14.2.0 C++23 execution with UBSan. The exact committed source hashes and earlier dependency hashes were checked. The second executable and its full integration test were initially blocked by incomplete dependency retrieval in the local environment. The later cumulative Ubuntu CI run 45562690493 at revision a54c4a1cf9041b9bca505a78fce6208ac711b305 completed successfully, including the OBJ frontend and its integration checks. That verified run does not establish a macOS build.
 
 A useful next experiment is to reverse draw submission order for non-tied surfaces, compare full images, introduce an outside triangle and check its surviving clipped mask, and compare different model poses. Each test should state exactly which stage it exercises.
 
