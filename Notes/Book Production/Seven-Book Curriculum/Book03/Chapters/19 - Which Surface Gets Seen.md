@@ -317,6 +317,10 @@ A triangle's divided depth is affine on the screen inside the projected triangle
 
 For example, let q=0.4+0.02x-0.01y for pixel coordinates in a tile covering x=0 through 7 and y=0 through 7. Its range is [0.33,0.54]. If a forward tile's maximum stored depth is 0.32, this triangle cannot win. If the maximum is 0.35, it may win. A rounded lower bound of 0.34 would be unsafe if the true minimum were 0.33 and the stored bound were 0.335. The guarantee concerns numerical values, not just the ideal formula.
 
+![The depth hierarchy keeps a conservative bound](../Assets/145-depth-pyramid.svg)
+
+*Figure 19.6 — Four leaf maxima 0.35, 0.55, 0.75, and 1.00 feed a root maximum of 1.00. A candidate depth of 0.58 can reject only the first two leaves under strict forward depth.*
+
 ## Why depth precision changes across the picture
 
 A depth buffer does not normally store metres. With near n and far f, forward perspective depth can be written as
@@ -349,6 +353,10 @@ For an opaque black background, red with alpha 0.5 in front of blue with alpha 0
 Depth testing remains useful for rejecting transparent fragments behind known opaque surfaces. Writing every transparent fragment into the opaque depth buffer, however, can incorrectly hide another transparent layer. Sorting entire triangles by a single depth also fails for crossing polygons. Per-pixel sorting, depth peeling and approximate order-independent methods have different memory, latency and accuracy trade-offs. The important lesson here is the contract, rather than a promise that a particular blending algorithm solves all light transport.
 
 **Research exercise.** Render two crossing semitransparent triangles with distinct colors, using three policies: submission order, primitive-center sorting, and per-sample depth sorting. Use an exact ordered reference for the simplified source-over model. Record per-sample error, fragment count and memory. Repeat with alpha one to recover the opaque case. This experiment belongs to a new transparent extension, not the original native opaque renderer.
+
+![Depth resolution grows quadratically](../Assets/146-depth-interval-scaling.svg)
+
+*Figure 19.7 — The plotted relative axial interval follows d squared for fixed uniformly spaced depth values. Distances of 1, 10 and 100 units give interval ratios of 1, 100 and 10000.*
 
 ### Guided workshop: the conservative depth pyramid
 

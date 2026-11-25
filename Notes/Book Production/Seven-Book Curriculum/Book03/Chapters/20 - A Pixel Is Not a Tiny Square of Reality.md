@@ -297,6 +297,10 @@ std::vector<double> smooth_linear(std::span<const double> src) {
 
 Test a constant, impulse, ramp and alternating zero-one sequence. The interior ramp should remain unchanged because the weights are symmetric. An alternating signal has frequency one-half cycle per sample and should become 0.5 at interior points. At the boundary, compare the actual values to the stated extension policy rather than asserting that the interior proof holds unchanged.
 
+![Averaging restores the correct light](../Assets/147-reconstruction-aliasing.svg)
+
+*Figure 20.6 — An alternating linear signal gives phase-dependent point samples of zero or one, while the exact two-texel average is one half for each output sample.*
+
 ## Choose a texture level from a projected footprint
 
 In Chapter 18 we derived the screen derivatives of a perspective-correct scalar f=N/H. Apply that calculation twice, once for u and once for v, and multiply the rows by the texture width and height to obtain a Jacobian in texels per screen pixel:
@@ -326,6 +330,10 @@ The fence that looked static can flicker when the camera moves by a fraction of 
 Increasing frame rate changes the displacement per frame for a fixed physical speed. Spatial prefiltering can reduce the troublesome frequencies before temporal sampling. A temporal accumulation scheme may use several jittered spatial samples and a motion estimate to combine frames, but moving occluders can invalidate old observations. The old color at a reprojected address may belong to a different surface. Good temporal filtering therefore needs a visibility and confidence policy, not just an average.
 
 **Research exercise.** Generate an analytic moving stripe field, compare point samples, box-integrated samples, and a motion-compensated average using an exact displacement. Vary spatial frequency and speed independently. Record absolute error against a space-time integral, not merely the smoothness of a GIF. Introduce an occluding rectangle and measure the trail left by a history buffer that lacks rejection. This is a new controlled extension of P20; it is not an implemented temporal antialiasing system.
+
+![One screen pixel, unequal texel stretches](../Assets/148-anisotropic-footprint.svg)
+
+*Figure 20.7 — The eight by one ellipse spans eight texels horizontally and one vertically, while an isotropic footprint of equal major radius also averages across the short axis.*
 
 ### Guided workshop: predict the filter output before rendering
 

@@ -241,6 +241,10 @@ If every calibration patch is neutral, its camera response may be close to a sca
 
 **Worked example.** Consider a deliberately artificial sensor whose response is twice the reference red, equal to green, and half the reference blue. With three linearly independent calibration patches, the inverse transform is diagonal with entries 0.5, 1 and 2. A response (0.8,0.3,0.2) maps to (0.4,0.3,0.4). If all training patches are proportional to (2,1,0.5), this diagonal solution is one of infinitely many matrices agreeing with the training data. The solution looks simple only because we assumed the sensor model.
 
+![Independent color directions constrain a matrix](../Assets/157-color-calibration-rank.svg)
+
+*Figure 25.5 — Three independent artificial sensor responses constrain a three-channel transform. Neutral observations remain on one line and cannot identify the other two directions.*
+
 ## White adaptation is a change of viewing condition, not a universal correction
 
 A neutral object photographed under warm illumination may produce unequal camera channel responses. White balance compensates for an estimated neutral under a chosen model. But the spectrum of a light source can change the relationship between camera responses and standard-observer tristimulus coordinates. Two lights with the same apparent chromaticity can have very different spectra. No three-channel gain rule guarantees identical colors for every surface under both lights.
@@ -305,6 +309,10 @@ For example, an ideal diagonal white-balance gain with nonzero gains is algebrai
 Use two comparisons in an experiment: error relative to the linear reference before display processing, and error after the declared display mapping. A tone mapper can make large radiometric errors look small in the displayed image; a correct wide-gamut signal may look wrong if interpreted using the wrong primaries. These are different failures.
 
 **Research exercise.** Generate a synthetic set of linear camera responses under two illuminants. Fit one color matrix using only the first group and evaluate both groups using a declared reference white. Compare rank, held-out linear XYZ error, Lab difference and gamut clipping fraction. Add a chart containing only neutral patches and inspect the singular spectrum. The P25 native lab covers relative linear color spaces and transfer functions; this calibration and appearance experiment is an extension, not a validated physical camera profile.
+
+![Clipping destroys invertibility](../Assets/158-color-clipping-loss.svg)
+
+*Figure 25.6 — With gain two, input red channels 0.6 and 0.8 both map to output one after clipping. The unclipped linear transform is invertible, but its clipped form is not.*
 
 ### Guided workshop: follow one patch through a color pipeline
 

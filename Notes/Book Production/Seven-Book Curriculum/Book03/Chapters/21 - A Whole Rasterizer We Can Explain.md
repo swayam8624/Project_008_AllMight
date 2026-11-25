@@ -221,6 +221,10 @@ struct PixelTrace {
 
 This is a proposed diagnostic record rather than a new API promised by P21. A production trace would also carry numeric mode, frame identity, input asset identity and error status. Record the trace only for selected samples; otherwise the debugging instrumentation may dominate the entire render. Never compare an instrumented slow build against an uninstrumented optimized build and call the difference an algorithmic speedup.
 
+![One sample, five independently testable stages](../Assets/149-sample-pipeline.svg)
+
+*Figure 21.4 — The single triangle witness is followed from optical coordinates through projected barycentrics, reciprocal-w, depth, and the final color encoding decision.*
+
 ## A small scene is a better specification than a large screenshot
 
 Build a renderer verification suite out of scenes that each isolate one failure. A rectangle split into two triangles checks shared-edge ownership. A triangle crossing the near plane checks clipping and newly generated varying values. Two sloping, intersecting triangles check per-sample visibility. A texture projected onto a foreshortened plane checks perspective interpolation. A constant linear-gray image checks the encoder. A repeated asset with two transforms checks instance identity. A rejected malformed mesh checks input validation.
@@ -244,6 +248,10 @@ The sequence of contracts survives: indexed vertex data, vertex processing, prim
 The CPU renderer is valuable precisely because its small, controlled cases provide an independent reference. To compare a GPU port, define the same coordinate conventions, depth range, sample locations, winding policy, interpolation and color encoding. Where the API specifies a different raster precision or sample pattern, account for that explicitly. Require exact agreement for cases where the contracts coincide, and a declared tolerance or region-based comparison where they do not.
 
 **Research exercise.** Pick the single triangle above and a second scene with a shared edge. Implement a future graphics-API adapter that exports linear color, depth and surface IDs. Compare its outputs to the software reference. Report which discrepancies are due to different declared API conventions and which reveal implementation bugs. Do not expand a tolerance simply until the images pass. Chapter 21's validated native renderer is a CPU reference; the hardware adapter and timing study remain extension work for a later volume.
+
+![Screen weights are not surface weights](../Assets/150-perspective-weight-witness.svg)
+
+*Figure 21.5 — Paired horizontal bars contrast the screen barycentric weights with perspective-correct weights for the numerical triangle witness. The latter reconstruct the original viewing ray.*
 
 ### Guided workshop: build a stage-by-stage renderer acceptance dossier
 

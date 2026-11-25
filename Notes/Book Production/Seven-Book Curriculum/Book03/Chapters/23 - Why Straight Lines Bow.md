@@ -296,6 +296,10 @@ Why call one of these equisolid-angle? A small spherical strip at polar angle th
 
 **Worked example.** At theta=60 degrees, the five normalized radii are approximately 1.73205, 1.04720, 1.00000, 0.86603 and 1.15470 respectively. All five have derivative one at the forward axis when normalized by f. A narrow central calibration may therefore fit several models almost equally well, but the predictions diverge toward the edge. This is a model-selection problem, not merely a matter of adding more radial coefficients.
 
+![Different angular maps agree near the axis](../Assets/153-angular-projection-comparison.svg)
+
+*Figure 23.6 — Five normalized angular projection laws are plotted from zero to sixty degrees. Their common slope at zero hides important differences at the edge of the field.*
+
 ## Inverse angular projection returns a ray, not a point
 
 For the equidistant law, divide the image radius by focal scale to recover theta. The world point is somewhere along the corresponding optical ray:
@@ -345,6 +349,10 @@ Imagine estimating a radial coefficient from features confined to the center of 
 Create three synthetic calibration groups: points only near the center, points distributed across the field, and points concentrated in an off-center patch. Hold the camera model and noise distribution fixed. Fit using one group and evaluate on a separately generated full-field grid. Plot residual vectors over position, and record radial and tangential components as functions of radius. A systematic radial residual may indicate an inadequate radial law; a directional pattern may arise from decentering, incorrect principal point or a different unmodeled effect. The pattern is a diagnostic clue, not a unique causal identification.
 
 **Research exercise.** Use an equidistant camera as a synthetic truth model and fit a pinhole-plus-radial polynomial on successively wider angular domains. Compare training error, held-out angular error and the derivative sign over the full declared domain. Add noise with a known covariance and compare the observed angular spread to the linear prediction. The exercise should reveal why a model with more coefficients can fit observed data while behaving poorly outside the observed domain. The existing P23 laboratory implements the bounded normalized distortion model and inversion; the angular calibration study above is new extension material, not a claim of an existing full fisheye estimator.
+
+![Undistortion stretches uncertainty unequally](../Assets/154-inverse-uncertainty.svg)
+
+*Figure 23.7 — An isotropic half-pixel input uncertainty becomes an ellipse whose radial standard deviation is approximately 0.588 pixels and tangential standard deviation 0.526 pixels in the given local model.*
 
 ### Guided workshop: diagnose an inverse calibration without trusting a small residual
 

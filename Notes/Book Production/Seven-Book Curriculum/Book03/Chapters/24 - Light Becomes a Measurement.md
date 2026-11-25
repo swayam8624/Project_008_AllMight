@@ -224,6 +224,10 @@ double paired_variance(std::span<const double> a,
 
 For differences [-2,0,2], the unbiased sample variance of the differences is 4, so the function returns 2. A common offset added to both frames leaves the result unchanged. A common offset added to only one frame also disappears from the centered variance, which is why the mean difference should be recorded separately. The estimator is not a detector of every exposure mismatch.
 
+![The slope measures conversion gain](../Assets/155-photon-transfer-fit.svg)
+
+*Figure 24.4 — The analytic unsaturated temporal variance line has slope 0.5 digital units per electron and intercept 4 digital units squared. The four plotted points are model values, not camera measurements.*
+
 ## A saturated value carries an inequality
 
 Let an ideal charge-well limit be Q_max. If the sensor returns the maximum value, the unknown preclipped charge may equal the limit or be greater. This is a censored observation. It cannot be treated as an ordinary precise measurement of Q_max.
@@ -247,6 +251,10 @@ A rolling shutter adds another complication: rows can start exposure at differen
 A defensible experimental report includes a dark series at several exposure settings, a stable uniform target, repeated frame pairs, saturation masks, a temporal variance plot and residuals from the proposed gain model. Record temperature if dark current is important. Keep automatic white balance, tone mapping and denoising disabled where raw access permits. If the camera cannot provide linear measurements, state the limitation instead of fitting a Poisson model directly to compressed display values.
 
 **Research exercise.** Extend the sensor simulator to create a stable per-pixel offset field in addition to independent temporal noise. Compare spatial variance, paired temporal variance and the known noise parameters at increasing signal. Introduce an exposure-dependent illumination fluctuation and observe how the paired estimate changes. Fit gain using only unsaturated data, hold out some exposure settings, and report the parameter uncertainty across repeated fits. The existing P24 laboratory supplies the bounded physical and stochastic sensor model; these characterization experiments are proposed extensions and not reported as completed camera measurements.
+
+![A saturated code gives an inequality](../Assets/156-sensor-clipping-bound.svg)
+
+*Figure 24.5 — For gain 0.5 and black offset 64, a maximum code of 255 is reached at 382 electrons. Larger signals map to the same output in this noiseless model.*
 
 ### Guided workshop: separate bias, temporal noise and saturation
 

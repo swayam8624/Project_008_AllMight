@@ -287,6 +287,10 @@ This assumes a circular aperture in the lens plane and a paraxial thin lens. Usi
 
 Now choose an acceptable blur diameter of 0.010 mm. The aperture fraction is c/A=0.0008. From the above equation, allowable image distances lie in the interval v_0/(1+c/A) to v_0/(1-c/A) if the upper denominator is positive. Invert each boundary with s=fv/(v-f), keeping only physical image distances v>f for finite real objects. For the numerical fixture the acceptable object range is roughly 985 mm to 1015 mm. The near and far intervals need not be symmetric in object space. A fixed blur threshold defines an engineering tolerance, not an absolute boundary of human perception.
 
+![Near and far focus blur are asymmetric](../Assets/151-focus-sweep.svg)
+
+*Figure 22.6 — At the fixed sensor position for a 1000 mm object, a 50 mm thin lens and 12.5 mm aperture produce geometric blur diameters that vanish at focus and increase asymmetrically with object distance.*
+
 ## A camera records a spread, not a perfect point
 
 A point-spread function describes the spatial distribution produced by an idealized point source. In a linear, shift-invariant imaging model, an extended scene image is the convolution of its ideal irradiance field with this response. Normalizing the response preserves total collected energy in the modeled region, provided the boundary does not discard energy. Shift invariance is an approximation: real lenses can have different blur near the image corners, different wavelengths, and different depth planes.
@@ -333,6 +337,10 @@ A practical optical experiment might photograph a known high-contrast edge or a 
 Use the same target and sensor sampling for each comparison. Keep the exposure within the linear unsaturated range; changing aperture may require a compensating exposure time, which can change motion blur. Repeat measurements, report their variation, and separate the effect of digital sharpening from the lens itself.
 
 **Research exercise.** Compare the ideal geometric defocus model with a measured center-field edge response at three apertures. Fit a blur parameter using one target, then test a different target at the same distance. Repeat near an image corner. Record when the simple shift-invariant model becomes inadequate. P22's native simulator implements the geometric thin-lens reference, not a calibrated diffraction or aberration solver; this experiment establishes what a more complete model would need to explain.
+
+![Uniform radius is not uniform area](../Assets/152-aperture-area-sampling.svg)
+
+*Figure 22.7 — Equal-width radial bands have areas proportional to 1, 3, 5 and 7. Equal probabilities per band overrepresent the central region; uniform-area sampling gives probabilities proportional to band area.*
 
 ### Guided workshop: build a focus sweep with measurable units
 
