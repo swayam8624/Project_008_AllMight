@@ -74,7 +74,47 @@ TEX = r"""
   \ifcsdef{Shaded}{\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced,breakable,colback=BookWash,colframe=BookAccent,boxrule=.25pt,arc=1pt,left=5pt,right=5pt,top=3pt,bottom=3pt]}{\end{tcolorbox}}}{}%
 }
 \AtBeginEnvironment{quote}{\small\color{BookAccent}}
+\usepackage{caption}
+\usepackage{float}
+\captionsetup[figure]{labelformat=empty,font=small}
+\makeatletter
+\def\fps@figure{H}
+\makeatother
+\setkeys{Gin}{width=\maxwidth,height=.42\textheight,keepaspectratio}
+\raggedbottom
+\setlength{\emergencystretch}{4em}
 """
+
+PRINT_BREAKS = r"""
+function Code(el)
+  if #el.text < 16 then return nil end
+  local result = pandoc.List()
+  local start = 1
+  for i=1,#el.text do
+    if el.text:sub(i,i):match('[/_:%-]') and i<#el.text then
+      result:insert(pandoc.Code(el.text:sub(start,i)))
+      result:insert(pandoc.RawInline('latex','\\allowbreak{}'))
+      start=i+1
+    end
+  end
+  if start==1 then return nil end
+  if start<=#el.text then result:insert(pandoc.Code(el.text:sub(start))) end
+  return result
+end
+function Math(el)
+  if el.mathtype ~= 'InlineMath' then return nil end
+  local depth, out = 0, {}
+  for i=1,#el.text do
+    local c=el.text:sub(i,i)
+    if c=='{' then depth=depth+1 elseif c=='}' then depth=depth-1 end
+    out[#out+1]=c
+    if c==',' and depth==0 then out[#out+1]='\\allowbreak{}' end
+  end
+  el.text=table.concat(out)
+  return el
+end
+"""
+
 
 
 def require(ok, message):
@@ -304,6 +344,7 @@ def prepare(root, out):
     (out/"reader-epub.json").write_text(json.dumps(ebook,ensure_ascii=False),encoding="utf-8")
     (out/"reader.css").write_text(CSS,encoding="utf-8")
     (out/"reader.tex").write_text(TEX,encoding="utf-8")
+    (out/"print-breaks.lua").write_text(PRINT_BREAKS,encoding="utf-8")
     report["ast_sha256"] = {f:digest(out/f) for f in ("reader-print.json","reader-epub.json")}
     # HTML preview also exercises the actual MathML writer before PDF/EPUB.
     p = run(["pandoc","-f","json","-t","html5","--standalone","--mathml","--toc",
@@ -327,7 +368,7 @@ def build(out, cover, author):
         epub.extend(["--epub-cover-image",str(cover.resolve())])
     e = run(epub,out,out/"epub-build.log")
     pdf = run(["pandoc","-f","json","--pdf-engine=lualatex","--top-level-division=chapter",
-               "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex",
+               "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex","--lua-filter=print-breaks.lua",
                "-V","documentclass=book","-V","classoption=openany","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
                "-V","mainfont=TeX Gyre Pagella","-V","mathfont=TeX Gyre Pagella Math",
