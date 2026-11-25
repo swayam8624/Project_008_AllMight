@@ -71,7 +71,7 @@ The essential idea is that a homogeneous tuple with nonzero w represents an ordi
 For example,
 
 \[
-(2,4,6,2)\quad\hbox{and}\quad(1,2,3,1)
+(2,4,6,2)\quad\text{and}\quad(1,2,3,1)
 \]
 
 both represent the divided point \((1,2,3)\).
