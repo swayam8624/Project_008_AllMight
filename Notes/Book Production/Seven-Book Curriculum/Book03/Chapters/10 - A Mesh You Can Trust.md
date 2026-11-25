@@ -464,7 +464,7 @@ The P10 importer is therefore **nonrepairing by design**. It keeps the original 
 
 ![A five-stage repair procedure preserves the original asset, diagnoses the issue, chooses a policy, edits an explicit copy and revalidates the required invariants.](../Assets/39-deliberate-repair-transaction.svg)
 
-*Figure 10.6 — A repair needs an explicit target contract and before/after evidence. Silently welding or deleting data during parsing can hide both the problem and the user's original intent.*
+*Figure 10.4 — A repair needs an explicit target contract and before/after evidence. Silently welding or deleting data during parsing can hide both the problem and the user's original intent.*
 
 ### Why Euler characteristic alone is not a repair certificate
 
@@ -623,7 +623,7 @@ An implementation that forgets either offset or confuses stride with packed elem
 
 ![A 256-byte buffer, a 128-byte bufferView at offset 16 and five interleaved VEC3 float entries with accessor offset 8, stride 24 and exclusive end 132.](../Assets/37-gltf-buffer-view-accessor.svg)
 
-*Figure 10.4 — A binary accessor is an address calculation with two offsets, an element size, a count and an effective stride. These all need bounds and alignment validation.*
+*Figure 10.5 — A binary accessor is an address calculation with two offsets, an element size, a count and an effective stride. These all need bounds and alignment validation.*
 
 ### Overflow makes naive bounds checks unsafe
 
@@ -857,7 +857,7 @@ One visualization should never pretend to be all the evidence.
 
 ![An imported OBJ square and a reversed-edge counterexample, with diagnostic edge colors and explicit distinction between geometry and rendering tuples.](../Assets/38-asset-studio-trust-witnesses.svg)
 
-*Figure 10.5 — Source-visible failure cases teach why a green “loaded” banner is insufficient. Different problems require different diagnostics and repair policies.*
+*Figure 10.6 — Source-visible failure cases teach why a green “loaded” banner is insufficient. Different problems require different diagnostics and repair policies.*
 
 ## A lab we can falsify, not merely admire
 
