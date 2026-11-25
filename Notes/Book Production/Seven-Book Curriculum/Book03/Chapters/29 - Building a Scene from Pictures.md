@@ -189,6 +189,26 @@ Bundle adjustment needs gauge constraints. For calibrated monocular reconstructi
 
 The native point-only solver exercises the projection Jacobian and descent rule that appear inside bundle adjustment, but does not implement the joint sparse camera-point optimization. Do not call a point-only descent full bundle adjustment.
 
+## Put two reconstructed houses in the same frame
+
+Two reconstructions may describe the same object with different coordinate origins and orientations. Comparing their vertex coordinates directly would confuse a coordinate choice with geometric error. Suppose we know corresponding three-dimensional points x_i and y_i and that both clouds have the same trusted metric scale. We seek a proper rigid transform minimizing
+
+\[
+\sum_i\|Rx_i+t-y_i\|^2,\qquad R^TR=I,\quad\det R=1.
+\]
+
+Differentiate with respect to t. The stationary translation is y_bar-R x_bar, where the bars are the cloud centroids. Subtract each centroid from its cloud. Expanding the remaining squared differences leaves two constant sums of squared norms and the term -2 sum_i y_i'^T R x_i'. Consequently minimize the error by maximizing tr(RH), with H=sum_i x_i' y_i'^T.
+
+Let H=U S V^T be its singular value decomposition, with descending nonnegative singular values. Put D=diag(1,1,det(VU^T)). The proper rotation is R=VDU^T. To see why the sign matters, write tr(RH)=tr(V^T R U S). The orthogonal matrix V^T R U has determinant det(V^T U), and each diagonal entry is at most one. When the determinant constraint is negative, the optimal sign correction sacrifices the smallest singular direction. This is the proper-rotation orthogonal Procrustes solution; accepting an unconstrained orthogonal matrix can instead mirror the house. Repeated or deficient singular directions can make the solution nonunique or poorly constrained, so inspect the geometry, not only the returned matrix.
+
+For source points (0,0,0), (1,0,0), (0,1,0), let a positive quarter-turn about +Z and a translation (2,3,4) generate targets (2,3,4), (2,4,4), (1,3,4). Centering removes the translation, the two independent in-plane directions fix the proper rotation, and the centroid formula recovers (2,3,4). The planar cloud can determine this exact rigid transform because the two noncollinear edges also determine an oriented normal. Two distinct points alone leave rotation about their connecting line unresolved. A general affine fit is a different problem; it can introduce shear and independent scales.
+
+If monocular scale is unknown, a similarity alignment can estimate a single positive scale as well, but its objective must be explicit. For fixed proper R, one-sided squared metric error yields s=sum_i y_i'^T R x_i'/sum_i ||x_i'||^2 before imposing a positive-scale constraint. This differs from the symmetric objective that compares y'/sqrt(s) with sqrt(s)R x', which yields s=sqrt(sum_i||y_i'||^2/sum_i||x_i'||^2) when both spreads are nonzero. The two error models answer different questions. Do not use alignment to quietly correct a metric calibration error you intended to measure. In an evaluation, report the estimated alignment and compare the aligned point error with the unaligned physical-scale evidence.
+
+Known 3D correspondences are a different input from the 2D–2D or 3D–2D observations used in earlier pose estimators. Outliers can corrupt the alignment, and a robust subset approach needs a noncollinear sample and a residual threshold in declared length units. P29's native reconstruction lab does not implement this registration solver; the independent Pass 35 numerical witness verifies the rigid fit and reflection constraint on small fixtures.
+
+*Source route: Graphics Vision and XR/32, derived lines 68–110, with the quaternion alternative and robust fitting retained in the original source. See Chapters 12 and 27 for proper rotations and gauge.*
+
 ## The experiment that refused to flatter us
 
 The exact test generates eighty noncoplanar landmarks, projects them into an ideal camera pair, estimates F and recovers one of the four pose candidates. It checks every rotation row and translation direction against the generating pose. The vote count was (80,0,0,0) in this run; the candidate order is implementation-dependent. With known poses, the maximum three-view triangulation error was about 5.67e-13 baseline units. Repeated camera observations and exactly parallel rays are rejected.
