@@ -15,7 +15,7 @@ We want to make this image with our own code, not by calling a black-box Draw fu
 
 The challenge is no longer to derive another isolated equation. The challenge is to ensure that every stage agrees with the next one. A wonderful clipper and a wonderful rasterizer cannot cooperate if they disagree about the meaning of an image coordinate. A depth comparison can be mathematically correct and still choose the wrong object if its input uses the opposite convention.
 
-We will therefore assemble a deliberately modest opaque software rasterizer. Its first native picture is a perspective checkerboard with an opaque triangular foreground. The code also contains an OBJ-to-image adapter using our previous model, camera and clipping stages. The native backend has been executed and independently checked; the earlier-stage integration must still pass its own build and tests. That distinction matters more than pretending the entire project is finished.
+We will therefore assemble a deliberately modest opaque software rasterizer. Its first native picture is a perspective checkerboard with an opaque triangular foreground. The code also contains an OBJ-to-image adapter using our previous model, camera and clipping stages. The native backend and its OBJ front-end integration passed the cumulative Ubuntu build and all 34 registered tests at revision 7a63fec96b3632f6e0c298227e43f6ed7d682d5e. Re-run the tests for a new compiler or revision. That distinction matters more than pretending the entire project is finished.
 
 ## The conveyor belt
 

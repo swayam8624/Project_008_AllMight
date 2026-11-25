@@ -147,7 +147,7 @@ def numeric_witnesses():
     check(gain,.5)
     check(math.sqrt(54-gain*100)/gain,4)
     # 25: reference-relative lightness.
-    check(116*math.cbrt(.5)-16,76.06926101415557)
+    check(116*(.5**(1/3))-16,76.06926101415557)
     # 26: finite-difference pose derivative, same optical convention.
     def project(t):
         x=.5*math.cos(t)-.25*math.sin(t)
@@ -181,6 +181,88 @@ def numeric_witnesses():
     print("15 chapter-specific analytic witness families passed")
 
 
+
+def workshop_witnesses():
+    def near(a,b,tol=1e-8):
+        assert math.isclose(a,b,rel_tol=tol,abs_tol=tol), (a,b)
+    # 18: exact masks for the two halves of the 16 by 16 square.
+    a={(x,y) for x in range(16) for y in range(16) if y<=x}
+    b={(x,y) for x in range(16) for y in range(16) if y>x}
+    assert len(a)==136 and len(b)==120 and not (a&b) and len(a|b)==256
+    # 19: full tile rejection and order reversal.
+    z=[.20,.25,.30,.35,.40,.45,.50,.55,.60,.65,.70,.75,.80,.85,.90,1.]
+    assert sum(.58<v for v in z)==8
+    assert [max(z[i:i+4]) for i in range(0,16,4)]==[.35,.55,.75,1.]
+    assert all((.58<v)==(1-.58>1-v) for v in z)
+    # 20: boundary-sensitive clamp filtering and exact box integration.
+    s=[0,1]*4
+    dst=[.25*s[max(0,i-1)]+.5*s[i]+.25*s[min(7,i+1)] for i in range(8)]
+    assert dst==[.25,.5,.5,.5,.5,.5,.5,.75]
+    assert [(s[i]+s[i+1])/2 for i in range(0,8,2)]==[.5]*4
+    # 21: perspective reconstruction must return the original screen sample.
+    p=[(-1,-.5,2),(1,-.5,2),(0,1,4)]
+    screen=[.24,.25,.51]
+    h=sum(w/v[2] for w,v in zip(screen,p))
+    weights=[w/v[2]/h for w,v in zip(screen,p)]
+    X,Y,Z=(sum(w*v[k] for w,v in zip(weights,p)) for k in range(3))
+    near(100+100*X/Z,100.5)
+    near(50+100*Y/Z,50.5)
+    # 22: physical blur in mm.
+    v=lambda s:50*s/(s-50)
+    for distance,expected in [(500,.657894736842),(1000,0),(2000,.328947368421)]:
+        near(12.5*abs(1-v(1000)/v(distance)),expected)
+    # 23: Newton residual decreases on the declared radial branch.
+    f=lambda x:x*(1-.2*x*x)
+    x=.475
+    y=x+(.475-f(x))/(1-.6*x*x)
+    near(y,.4997903715483591)
+    assert abs(f(y)-.475)<abs(f(x)-.475)
+    # 24: temporal variance and noiseless saturation.
+    assert [.25*S+4 for S in (25,100,400,1600)]==[10.25,29,104,404]
+    assert (255-64)/.5==382
+    # 25: sRGB byte witness.
+    assert [round(255*(1.055*v**(1/2.4)-.055)) for v in (.4,.4,.45)]==[170,170,179]
+    # 26: centered design variance; exact 100x inflation of weak column.
+    near(1/(2*.5**2),2)
+    near(1/(2*.05**2),200)
+    # 27: two known ideal cameras.
+    def project(p,C):
+        x,y,z=(p[i]-C[i] for i in range(3))
+        return (320+800*x/z,240+800*y/z)
+    left=(0,0,0); right=(.2,0,0)
+    for p,l,r,d in [((0,0,2),(320,240),(240,240),2.0125786163522),
+                    ((.2,.1,4),(360,260),(320,260),4.0506329113924),
+                    ((-.1,-.2,8),(310,220),(290,220),8.2051282051282)]:
+        for a,b in zip(project(p,left),l): near(a,b)
+        for a,b in zip(project(p,right),r): near(a,b)
+        near(160/(l[0]-r[0]-.5),d)
+    # 28: distinct denominators.
+    near(16/20,.8); near(12/16,.75); near(11/13,.8461538461538461)
+    near(11/20,.55)
+    # 29: known three-view projections; ray support is analytic.
+    p=(.1,.15,4)
+    for C,pred in [((0,0,0),(340,270)),((.2,0,0),(300,270)),((0,.2,0),(340,230))]:
+        for a,b in zip(project(p,C),pred): near(a,b)
+    # 30: skip behind truncation, including a wholly unknown sample.
+    field=[]; counts=[]
+    for z in (.9,1.,1.1,1.2):
+        obs=[(max(-1.,min(1.,(d-z)/.1)),w)
+             for d,w in [(1.02,1),(1.06,3)] if d-z>=-.1]
+        n=sum(w for _,w in obs)
+        counts.append(n)
+        field.append(sum(v*w for v,w in obs)/n if n else None)
+    assert counts==[4,4,4,0] and field[-1] is None
+    for a,b in zip(field[:3],[1,.5,-.5]): near(a,b)
+    near(1+.1*field[1]/(field[1]-field[2]),1.05)
+    # 31: metres first, then the transform.
+    near(1000*.001+2,3)
+    # 32: hypothetical statistics, not benchmark data.
+    a=[8,20,200]; b=[7,25,130]
+    near(sum(a)/sum(b),228/162)
+    near(math.exp(sum(math.log(x/y) for x,y in zip(a,b))/3),1.1204423758946702)
+    print("15 guided-workshop numeric answer families passed")
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--compiler",default="c++")
@@ -195,6 +277,7 @@ def main():
         snippets.extend(re.findall(r"~~~cpp\n([\s\S]*?)\n~~~",text[start:end]))
     assert len(snippets)==11, f"expected 11 exact snippets, got {len(snippets)}"
     numeric_witnesses()
+    workshop_witnesses()
     with tempfile.TemporaryDirectory(prefix="book03-depth-") as tmp:
         cpp=Path(tmp)/"witness.cpp"
         exe=Path(tmp)/"witness"

@@ -270,3 +270,8 @@ P36 adds selected answers for Chapters 24–32, repairs 336 inline-code delimite
 ## Pass 38 — complete reader composition
 
 [Preface and reading route](FRONT_MATTER.md), [companion and notation guide](BACK_MATTER.md) and the new Book 03 proof driver now assemble the entire reader from a common Pandoc AST. [Preparation CI](https://github.com/swayam8624/Project_008_AllMight/actions/runs/45571742458) passed 32 chapters, 142 rendered SVGs, 2,533 math nodes and 64 code blocks. [Evidence and commands](PASS38_EVIDENCE.md) explain the new proof workflow, caption/reference checks, print smoke test and actual-output QA. Full proof compilation, visual reader acceptance, cover integration and historical manifest reconciliation remain open. No published PDF/EPUB was changed.
+
+
+## Pass 42 — substantive depth expansion before Mac handoff
+
+Chapters 18–32 now have 25,739 added whitespace-delimited words/code/math tokens: deeper derivations, eleven standalone C++23 teaching blocks and fifteen guided workshops with numerical answer keys. [Expansion evidence](PASS42_EVIDENCE.md) records scope, local GCC/UBSan and independent mathematical checks, the checkout-side verifier and remaining publication gates. Native libraries, original source files, existing illustrations, approved cover identity and the established Book 03 design remain unchanged. The previous invalid EPUB date metadata and stray markup were repaired. Rebuild through the existing publication driver before author review; no expanded page count or release certification is claimed.
