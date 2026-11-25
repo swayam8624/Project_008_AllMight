@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 from pathlib import Path
+from book03_editorial import edit_chapter, format_math, subject_index, INDEX
 
 ROOT = Path(__file__).resolve().parents[2]
 BOOK = Path("Notes/Book Production/Seven-Book Curriculum/Book03")
@@ -44,6 +45,9 @@ th,td { border-bottom: 1px solid #ccd5da; padding: .35em; vertical-align: top; }
 math[display="block"] { margin: .75em 0; }
 .eq-label { display: inline; font-size: .9em; }
 a { color: #087fa0; }
+.index-reference { white-space: nowrap; }
+#subject-index { break-before: page; }
+.book-callout.concept { break-inside: avoid; }
 h1,h2,h3 {color:#087fa0;}
 pre {background:#f0f7fa;border-left:0.19em solid #087fa0;}
 .book-callout {background:#eaf5f7;border-left:0.19em solid #087fa0;padding:.65em .8em;margin:.8em 0;}
@@ -77,9 +81,10 @@ TEX = r"""
 \AtBeginDocument{%
   \fvset{fontsize=\fontsize{8.3}{10.5}\selectfont,breaklines=true,breakanywhere=true}%
   \RecustomVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\fontsize{8.3}{10.5}\selectfont,breaklines=true,breakanywhere=true}%
+  \ifcsdef{Highlighting}{\RecustomVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},fontsize=\fontsize{8.3}{10.5}\selectfont,breaklines=true,breakanywhere=true}}{}%
   \ifcsdef{Shaded}{\renewenvironment{Shaded}{}{}}{}%
   \let\BookOriginalTexttt\texttt
-  \renewcommand{\texttt}[1]{{\small\BookOriginalTexttt{#1}}}%
+  \renewcommand{\texttt}[1]{{\fontsize{8.5}{10.5}\selectfont\BookOriginalTexttt{#1}}}%
 }
 \AtBeginEnvironment{quote}{\small\color{BookAccent}}
 \usepackage{caption}
@@ -98,6 +103,26 @@ TEX = r"""
 \renewcommand{\pandocbounded}[1]{\adjustbox{max width=\linewidth,max totalheight=.42\textheight}{#1}}
 \raggedbottom
 \setlength{\emergencystretch}{4em}
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\makeatletter
+\AtBeginDocument{%
+\renewcommand{\maketitle}{%
+  \begin{titlepage}\thispagestyle{empty}\raggedright
+  {\color{BookAccent}\rule{\textwidth}{1.5pt}\par}
+  \vspace{9pt}{\sffamily\large\bfseries\color{BookAccent} FROM BITS TO RESEARCH\par}
+  \vspace{4pt}{\sffamily\small BOOK THREE OF SEVEN\par}
+  \vspace{0.16\textheight}
+  {\fontsize{32}{36}\selectfont\bfseries From Geometry\par to Images\par}
+  \vspace{10pt}{\color{BookAccent}\rule{.6\textwidth}{1.1pt}\par}
+  \vspace{10pt}{\large 3D Geometry, Transformations, Cameras,\par Projection, and Image Formation\par}
+  \vfill
+  {\Large\bfseries\@author\par}
+  \vspace{6pt}{\small Digital reader edition \textbullet\ November 2026\par}
+  \vspace{12pt}{\color{BookAccent}\rule{\textwidth}{1.5pt}\par}
+  \end{titlepage}}}
+\makeatother
 \newtcolorbox{BookCode}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=BookWash,borderline west={1.4pt}{0pt}{BookAccent},left=6pt,right=5pt,top=4pt,bottom=4pt,before skip=5pt,after skip=5pt}
 \newtcolorbox{BookConcept}{enhanced,breakable,frame hidden,boxrule=0pt,arc=0pt,colback=BookNote,borderline west={1.4pt}{0pt}{BookAccent},left=7pt,right=6pt,top=5pt,bottom=5pt}
 \definecolor{ExampleWash}{HTML}{F7F4E9}
@@ -137,6 +162,13 @@ function Math(el)
 end
 function CodeBlock(el)
   return {pandoc.RawBlock('latex','\\begin{BookCode}'), el, pandoc.RawBlock('latex','\\end{BookCode}')}
+end
+function Link(el)
+  if el.classes:includes('index-reference') then
+    local id=el.target:sub(2)
+    local chapter=el.attributes['data-chapter']
+    return pandoc.RawInline('latex','\\hyperref['..id..']{Ch. '..chapter..', p.~\\pageref*{'..id..'}}')
+  end
 end
 function Div(el)
   if el.classes:includes('book-callout') then
@@ -190,7 +222,7 @@ def render_assets(book, out):
     import cairosvg
     from PIL import Image, ImageChops, ImageDraw
     assets = sorted((book / "Assets").glob("*.svg"), key=lambda p: int(p.name.split("-")[0]))
-    require(len(assets) == 142, "expected 142 source SVGs")
+    require(len(assets) == 172, "expected 172 source SVGs")
     target = out / "figures"
     target.mkdir()
     report = {}
@@ -337,14 +369,18 @@ def prepare(root, out):
     figures = render_assets(book, out)
     report = {"schema": 1, "title": TITLE, "chapters": [], "figures": figures}
     combined, api, all_used = [], None, []
+    provenance = []
     for n, chapter in enumerate(chapters, 1):
         require(chapter.name.startswith(f"{n:02d} - "), f"chapter order: {chapter}")
         source = chapter.read_text(encoding="utf-8")
+        source, math_edits = format_math(source, n)
         p = run(["pandoc", "-f", READER, "-t", "json"], out, input_text=source)
         require(not p.stderr.strip(), f"Pandoc input warning {chapter.name}: {p.stderr}")
         doc = json.loads(p.stdout)
         api = api or doc["pandoc-api-version"]
         require(doc["pandoc-api-version"] == api, "mixed Pandoc APIs")
+        doc["blocks"], relocated = edit_chapter(doc["blocks"], n)
+        provenance.append({"chapter":n,"relocated":relocated,"inline_math_edits":math_edits})
         counts = Counter(v["t"] for v in nodes(doc["blocks"]))
         # Check the actual parsed equations, not merely the Markdown delimiters.
         labels = [label for v in nodes(doc["blocks"]) if v["t"]=="Math"
@@ -378,6 +414,11 @@ def prepare(root, out):
         matter.append(doc["blocks"])
         report.setdefault("matter", {})[name] = digest(file)
     combined = matter[0] + matter[1] + [semantic_box(b) for b in combined] + matter[2] + matter[3]
+    combined.extend(subject_index(combined))
+    report["subject_index_entries"] = len(INDEX)
+    report["editorial_paragraphs_relocated"] = sum(len(v["relocated"]) for v in provenance)
+    report["inline_math_edits"] = sum(e["count"] for v in provenance for e in v["inline_math_edits"])
+    (out/"reader-editorial-provenance.json").write_text(json.dumps(provenance,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     ids = [v["c"][1][0] for v in nodes(combined) if v["t"]=="Header"]
     require(len(ids)==len(set(ids)), "duplicate combined reader header IDs")
     for v in nodes(combined):
@@ -452,13 +493,23 @@ def build(out, cover, author):
     e = run(epub,out,out/"epub-build.log")
     file = out/"Book03-From-Geometry-to-Images-PROOF.epub"
     run([check,str(file)],out,out/"epubcheck.log")
+    # Probe real fontspec family names rather than assuming every OS exposes STIX identically.
+    font_probe = r"\documentclass{article}\usepackage{fontspec}\begin{document}" + "\n"
+    for name in ("STIX", "STIX Two Text", "STIXGeneral"):
+        font_probe += r"\IfFontExistsTF{"+name+r"}{\typeout{BOOKFONT="+name+r"}}{}"+"\n"
+    font_probe += r"\end{document}"
+    (out/"font-probe.tex").write_text(font_probe,encoding="utf-8")
+    probe = run(["lualatex","-interaction=nonstopmode","-halt-on-error","font-probe.tex"],out,out/"font-probe.log")
+    families = re.findall(r"(?m)^BOOKFONT=(.+)$",probe.stdout)
+    require(families,"Install STIX, STIX Two Text, or STIXGeneral before the print build")
+    main_font = families[0].strip()
     conversion = run(["pandoc","-f","json","-t","latex","--standalone","--top-level-division=chapter",
                "--toc","--toc-depth=2","--highlight-style=tango","--include-in-header=reader.tex",
                "--lua-filter=print-breaks.lua",*cover_args,
                "-V","documentclass=book","-V","classoption=openany","-V","classoption=oneside","-V","fontsize=10pt",
                "-V","geometry=paperwidth=8in,paperheight=10in,inner=0.85in,outer=0.70in,top=0.72in,bottom=0.75in",
-               "-V","mainfont=STIX","-V","mathfont=DejaVu Math TeX Gyre",
-               "-V","monofont=DejaVu Sans Mono","--metadata","author="+author,
+               "-V","mainfont="+main_font,"-V","mathfont=DejaVu Math TeX Gyre",
+               "-V","monofont=DejaVu Sans Mono","-V","monofontoptions=Scale=1","--metadata","author="+author,
                "reader-print.json","-o","reader-proof.tex"],
               out,out/"pdf-conversion.log")
     # Make copyright/preface genuine front matter; TOC precedes Chapter 01.
@@ -497,7 +548,7 @@ def build(out, cover, author):
     print("Proof PDF and EPUB built. No promotion; formal EPUBCheck:",bool(check))
     proof = {"epub_sha256":digest(file),"pdf_sha256":digest(out/"Book03-From-Geometry-to-Images-PROOF.pdf"),
              "epubcheck_ran":True,"epubcheck_version":"5.4.0","epub_warnings":e.stderr.splitlines(),
-             "pdf_warnings":conversion.stderr.splitlines(),"final_layout_issues":issues,"latex_passes":len(passes),"cover_in_both_formats":bool(cover),"approved_cover_sha256":cover_sha256,
+             "pdf_warnings":conversion.stderr.splitlines(),"main_font":main_font,"code_size_tex_pt":8.3,"final_layout_issues":issues,"latex_passes":len(passes),"cover_in_both_formats":bool(cover),"approved_cover_sha256":cover_sha256,
              "accepted":False}
     (out/"build-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
 

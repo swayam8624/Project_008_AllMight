@@ -275,3 +275,8 @@ P36 adds selected answers for Chapters 24–32, repairs 336 inline-code delimite
 ## Pass 42 — substantive depth expansion before Mac handoff
 
 Chapters 18–32 now have 25,739 added whitespace-delimited words/code/math tokens: deeper derivations, eleven standalone C++23 teaching blocks and fifteen guided workshops with numerical answer keys. [Expansion evidence](PASS42_EVIDENCE.md) records scope, local GCC/UBSan and independent mathematical checks, the checkout-side verifier and remaining publication gates. Native libraries, original source files, existing illustrations, approved cover identity and the established Book 03 design remain unchanged. The previous invalid EPUB date metadata and stray markup were repaired. Rebuild through the existing publication driver before author review; no expanded page count or release certification is claimed.
+
+
+## Pass 43 — professional editorial and reader design
+
+Thirty authored teaching figures (143–172) now accompany the expanded chapters, for 172 illustrations total. The reader staging editor provides 32 chapter orientation panels, a curated linked subject index, targeted mathematical notation copyediting and reader-facing further-reading notes. Original source paragraphs and exact edits are retained in the generated reader-editorial-provenance.json receipt. The print profile explicitly disables monospace font scaling, fixes highlighted code to 8.3pt, brands the interior title page, checks installed STIX-family names, and resolves index pages during typesetting. See PASS43_EVIDENCE.md for acceptance scope and Mac promotion instructions.

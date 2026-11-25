@@ -84,7 +84,7 @@ def complete_inventory() -> None:
                 check(bool(alt.strip()), f"{path.name}: empty alt for {filename}")
     figures = sorted((BOOK / "Assets").glob("*.svg"),
                      key=lambda p: int(p.name.split("-", 1)[0]))
-    check(len(figures) == 142, f"expected 142 SVGs, got {len(figures)}")
+    check(len(figures) == 172, f"expected 172 SVGs, got {len(figures)}")
     for number, figure in enumerate(figures, 1):
         check(int(figure.name.split("-", 1)[0]) == number,
               f"figure numbering gap/duplicate: {figure.name}")

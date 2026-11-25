@@ -113,7 +113,10 @@ def verify_epub(path, ast, receipt, approved_cover_sha256=None):
         embedded = {sha(z.read(location(a))) for a in manifest.values()
                     if a.get("media-type")=="image/png"}
         require(expected_images <= embedded,"one or more staged figure PNGs absent from EPUB")
-        return {"chapter_navigation":len(nav_chapters),"mathml":math_count,
+        index_links = [e for _,d in bodies for e in d.iter(NS+"a") if "index-reference" in e.attrib.get("class","").split()]
+        expected_index = sum(1 for v in nodes(ast["blocks"]) if v["t"]=="Link" and "index-reference" in v["c"][0][1])
+        require(expected_index>0 and len(index_links)==expected_index,"subject index links missing")
+        return {"subject_index_links":len(index_links),"chapter_navigation":len(nav_chapters),"mathml":math_count,
                 "equation_labels":len(labels),"code_blocks":len(code),
                 "figure_hashes_matched":len(expected_images),"spine_documents":len(spine)}
 
@@ -152,7 +155,8 @@ def verify_pdf(path, ast, out, has_cover=False):
         page = (openings or candidates)[0]
         starts[anchor]=page+1
         cursor=page
-    selected=sorted(set([1,min(2,pages),pages]+list(starts.values())+
+    sparse = [i+1 for i,p in enumerate(page_text) if i+1 not in (1,2,3) and len(p.split())<55]
+    selected=sorted(set([1,min(2,pages),pages]+sparse+list(starts.values())+
                         [max(1,min(pages,round(pages*f/10))) for f in range(1,10)]))
     # Every opening plus distributed interiors. This is a sample, not an
     # exhaustive clipping/glyph or mathematical correctness certificate.
@@ -175,7 +179,8 @@ def verify_pdf(path, ast, out, has_cover=False):
             sheet.paste(im,(x+(280-im.width)//2,y))
             d.text((x,y+354),f"PDF page {n}",fill="#183344")
         sheet.save(out/f"pdf-contact-{start//12+1:02d}.png")
-    return {"pages":pages,"page_size_pt":[float(size[1]),float(size[2])],
+    require("Subject index" in raw,"print subject index missing")
+    return {"sparse_text_pages_for_review":sparse,"pages":pages,"page_size_pt":[float(size[1]),float(size[2])],
             "chapter_title_pages":starts,"sampled_pages":selected}
 
 

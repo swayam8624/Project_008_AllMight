@@ -7,6 +7,7 @@ on:
     paths:
       - "Notes/Book Production/Seven-Book Curriculum/Book03/**"
       - "Code Parts/tools/book03_prepare_reader.py"
+      - "Code Parts/tools/book03_editorial.py"
       - "Code Parts/tools/book03_proof_qa.py"
       - ".github/workflows/book03-publication-proof.yml"
   workflow_dispatch:
@@ -34,7 +35,7 @@ jobs:
       - name: Install optional complete proof compiler
         if: github.event_name == 'push' || inputs.compile_proof
         run: |
-          sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-science fonts-texgyre fonts-texgyre-math fonts-dejavu fonts-stix poppler-utils default-jre-headless
+          sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-science fonts-texgyre fonts-texgyre-math fonts-dejavu fonts-stix fontconfig poppler-utils default-jre-headless
           curl -fL --retry 3 https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip -o "$RUNNER_TEMP/epubcheck-5.4.0.zip"
           echo "33350c61038e71dfb3d45a76aed04bf5481e6d5500cb780f6e98db8bbd15a28c  $RUNNER_TEMP/epubcheck-5.4.0.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/epubcheck-5.4.0.zip" -d "$RUNNER_TEMP"
