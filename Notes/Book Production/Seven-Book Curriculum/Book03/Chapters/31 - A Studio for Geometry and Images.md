@@ -114,6 +114,30 @@ The expected counts are 56,000 background, 13,600 visible wall, 4,800 roof and 2
 
 The fixture deliberately keeps surfaces at constant axial depth. It tests the module boundary, screen coverage, depth ordering and encoding; it is not a new comprehensive test of perspective-correct texture interpolation or general clipping. Those need their own fixtures.
 
+## The world's biggest coordinate can hide its smallest movement
+
+The studio uses a little house four metres in front of its camera. What happens when a city simulator places the same house at a world coordinate near one hundred million metres? In exact mathematics, translating camera and geometry together preserves the relative displacement. In finite arithmetic the order in which we convert and subtract matters.
+
+Consider world X = 100000000.125 and camera X = 100000000. Both can be represented exactly in binary64. Binary32 has 24 bits of significand precision; in the interval from 2^26 to 2^27 the spacing between adjacent values is 2^(26-23)=8. Converting each absolute position to binary32 first rounds both to the same value. Subtraction then gives zero instead of 0.125 metres. Computing the difference in binary64 first gives exactly 0.125, also exactly representable in binary32.
+
+~~~cpp
+// C++23, assuming IEEE binary32 and binary64, round-to-nearest.
+const double world = 100000000.125;
+const double camera = 100000000.0;
+const float lost = static_cast<float>(world) -
+                   static_cast<float>(camera);
+const float preserved = static_cast<float>(world - camera);
+// lost == 0; preserved == 0.125f
+~~~
+
+With a camera-to-world proper rotation R, the optical displacement is R^T(p_W-c_W). Calculate the relative displacement while sufficient precision remains, then rotate and convert according to the renderer's numerical contract. Converting an already rounded absolute position back to double cannot restore lost bits. Neither can replacing only the final matrix multiplication with double arithmetic.
+
+An origin rebase changes the coordinate representation of the world and must keep geometry, camera states and any previous-frame transforms consistent. Camera-relative rendering can instead leave authoritative world coordinates intact and form a local representation for rendering. These are not interchangeable implementation policies. Motion vectors, cached acceleration structures and temporal histories need explicit invalidation or coordinate conversion when the reference origin changes.
+
+**Try it.** At 4 metres optical depth and 160-pixel focal scale, a 0.125-metre transverse difference produces a 5-pixel shift. Losing it in an absolute coordinate conversion can erase a visibly measurable displacement even though the projection and rasterizer themselves are correct. This is a separate arithmetic witness, not an extension of the P31 house experiment to a large-world renderer.
+
+*Source route: Computing Foundations/36, derived lines 1982–2100, with the wider origin-rebasing and temporal-history material routed in the Pass 34 source map.*
+
 ## Give the studio a front door
 
 Separate computational libraries from the interface. The header studio.hpp defines the fixture, projection adapter, reconstruction, rendering and OBJ serialization. The command-line executable studio_main.cpp orchestrates those operations and writes files. The separate test executable studio_tests.cpp verifies the pipeline without depending on a graphical event loop.
