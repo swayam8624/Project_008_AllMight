@@ -265,3 +265,8 @@ When the manuscript, project labs and figure proofs are genuinely complete, comp
 ## Passes 36–37 — reader refinement and verified source custody
 
 P36 adds selected answers for Chapters 24–32, repairs 336 inline-code delimiters and removes nine stale planned handoffs. P37 adds the [pinned source receipt](SOURCE_CUSTODY_BASELINE.json), derives the Chapter 08 surface metric and improves figures 129, 132 and 136. [Evidence](PASS37_EVIDENCE.md) records the full successful CI with 25 exact pinned source checks and all 34 CTests, while explicitly retaining 39 historical manifest discrepancies as unresolved. No release artifacts generated.
+
+
+## Pass 38 — complete reader composition
+
+[Preface and reading route](FRONT_MATTER.md), [companion and notation guide](BACK_MATTER.md) and the new Book 03 proof driver now assemble the entire reader from a common Pandoc AST. [Preparation CI](https://github.com/swayam8624/Project_008_AllMight/actions/runs/45571742458) passed 32 chapters, 142 rendered SVGs, 2,533 math nodes and 64 code blocks. [Evidence and commands](PASS38_EVIDENCE.md) explain the new proof workflow, caption/reference checks, print smoke test and actual-output QA. Full proof compilation, visual reader acceptance, cover integration and historical manifest reconciliation remain open. No published PDF/EPUB was changed.
