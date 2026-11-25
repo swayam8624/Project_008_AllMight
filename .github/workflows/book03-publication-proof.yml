@@ -15,6 +15,10 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: book03-proof-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   reader:
     runs-on: ubuntu-latest
@@ -27,13 +31,13 @@ jobs:
           sudo apt-get install -y pandoc python3-cairosvg python3-pil
           pandoc --version
       - name: Install optional complete proof compiler
-        if: github.event_name == 'workflow_dispatch' && inputs.compile_proof
+        if: github.event_name == 'push' || inputs.compile_proof
         run: |
-          sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-science fonts-texgyre fonts-texgyre-math fonts-dejavu-core epubcheck
+          sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-science fonts-texgyre fonts-texgyre-math fonts-dejavu-core epubcheck poppler-utils
       - name: Prepare every chapter, figure and shared source AST
         run: |
           args=()
-          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.compile_proof }}" == "true" ]]; then
+          if [[ "${{ github.event_name == 'push' || inputs.compile_proof }}" == "true" ]]; then
             args+=(--build)
           fi
           /usr/bin/python3 "Code Parts/tools/book03_prepare_reader.py" "${args[@]}"
