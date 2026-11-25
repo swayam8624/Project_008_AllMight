@@ -220,7 +220,7 @@ The ruler reports \((3,-1)\) even though the vector remains physically at \((4,2
 
 Now ask a *different* question: what happens if we actively apply the linear map \(C\) to the world vector \((4,2)\) while keeping the world ruler fixed? Then we get \(C(4,2)=(2,6)\). The physical vector has changed. We have performed an action rather than a coordinate conversion.
 
-These are different operations with different inputs, and both are useful. Our \`Affine2::transform_point\` API computes the forward application of a declared map. When used as a local-to-world conversion, that map also changes the **description** of an unchanged local point; the interpretation comes from the named source and destination frames, not the six bytes of a matrix name.
+These are different operations with different inputs, and both are useful. Our `Affine2::transform_point` API computes the forward application of a declared map. When used as a local-to-world conversion, that map also changes the **description** of an unchanged local point; the interpretation comes from the named source and destination frames, not the six bytes of a matrix name.
 
 For Book 03 we will always say whether an example is a *motion of an object inside a fixed reference frame* or a *change of coordinates describing an unchanged object*. Later, the camera's view transform is a classic inverse coordinate conversion: we want to describe a world point relative to a moving camera frame. This distinction is why a camera's location cannot generally be copied straight into the world-to-view translation column.
 
@@ -363,7 +363,7 @@ P_{\mathrm{window}}.
 \tag{4.14}
 \]
 
-The little arrows on the subscripts mean “from which space, into which space.” That naming is more meaningful than three unrelated variables called \`model\`, \`temp\`, and \`matrix2\`.
+The little arrows on the subscripts mean “from which space, into which space.” That naming is more meaningful than three unrelated variables called `model`, `temp`, and `matrix2`.
 
 There is an easy mistake here. If you multiply the house transform by the window transform in the wrong order, you may rotate the house around the window instead of rotating the window within the house. This often produces an image that is *almost plausible* until the camera moves.
 
@@ -603,7 +603,7 @@ const auto direction = combined.transform_vector({1.0, 0.0});
 
 The multiplication operator must be documented as **matrix composition**, not element-by-element multiplication. The API must reject nonfinite inputs. The inverse must reject singular or insufficiently conditioned cases and explain its stated numerical policy.
 
-To prove we have not broken the earlier chapters, tests must compare the new affine matrix representation with \`Frame2\` on a compatible frame, verify equivalence of sequential and composed transforms, and transform the Chapter 03 reference triangle through reflection and shear while checking the signed-area law.
+To prove we have not broken the earlier chapters, tests must compare the new affine matrix representation with `Frame2` on a compatible frame, verify equivalence of sequential and composed transforms, and transform the Chapter 03 reference triangle through reflection and shear while checking the signed-area law.
 
 A test that shows a lovely picture but never checks these invariants would be an illustration, not engineering evidence.
 
@@ -686,9 +686,9 @@ The house is still standing. We simply want to be certain the computer knows whi
 
 ## Source lineage and the book boundary
 
-The original AllMight material in \`Notes/Chapter Edition/01 - Computing Foundations/19 - Coordinate Frames and Linear Systems.md\`, \`32 - Geometry Becomes an Image and an Inverse Problem.md\`, and \`37 - Camera Contracts and Transform-Chain Debugging.md\` contains substantial vector, matrix, pose and camera proofs. Its complete long-form source must be integrated, not discarded, when the final Book 03 reader is composed. The Chapter 04 transformation laboratory remains an additive C++23 teaching implementation, not a claim that KairoRenderer or Maveb uses the same matrix storage or clipping conventions.
+The original AllMight material in `Notes/Chapter Edition/01 - Computing Foundations/19 - Coordinate Frames and Linear Systems.md`, `32 - Geometry Becomes an Image and an Inverse Problem.md`, and `37 - Camera Contracts and Transform-Chain Debugging.md` contains substantial vector, matrix, pose and camera proofs. Its complete long-form source must be integrated, not discarded, when the final Book 03 reader is composed. The Chapter 04 transformation laboratory remains an additive C++23 teaching implementation, not a claim that KairoRenderer or Maveb uses the same matrix storage or clipping conventions.
 
 Book 2 owns general numerical conditioning and abstract linear algebra. This chapter uses their results but does not replace them. Book 3 will carry the full meaning into 3D objects and cameras. Book 4 handles physically based lighting, Book 5 game and physics world updates, Book 6 actual Metal/Vulkan GPU execution, and Book 7 advanced vision/neural/XR research.
 
-**Read next:** Chapter 05 — The Triangle That Almost Wasn't There (planned).  
-**Lab:** \`Code Parts/tools/labs/book03_cpp23/\` — P04 affine transformation studio and tests.
+**Read next:** Chapter 05 — The Triangle That Almost Wasn't There.  
+**Lab:** `Code Parts/tools/labs/book03_cpp23/` — P04 affine transformation studio and tests.
