@@ -841,6 +841,37 @@ Of course, the mathematical patch is continuous. We still need a finite mesh to 
 
 *Figure 8.6 — Sixteen controls define an entire parametric surface. A rectangular sampling grid approximates it by triangles, reusing indexed vertices at shared edges rather than duplicating every corner.*
 
+### A patch can stretch even when its outline looks correct
+
+Put a square of graph paper on a rubber sheet. Mark two perpendicular unit arrows on it, and then stretch the sheet. The resulting arrows might have different lengths and might no longer meet at a right angle. A surface parameterization does exactly this to infinitesimal arrows in its parameter domain.
+
+For a differentiable regular surface S(u,v), write its two tangent derivatives as the columns of a 3-by-2 Jacobian J=[S_u,S_v]. A small parameter displacement h produces a surface displacement approximately Jh. Its squared length is therefore
+
+\[
+\|Jh\|^2=h^TGh,\qquad
+G=J^TJ=
+\begin{bmatrix}
+S_u\cdot S_u&S_u\cdot S_v\\
+S_v\cdot S_u&S_v\cdot S_v
+\end{bmatrix}.
+\]
+
+G is the first fundamental form in these coordinates. Its eigenvalues are the squared singular values of J. Let the principal stretches be sigma_1 >= sigma_2 > 0. An infinitesimal unit circle in the parameter plane maps to a tangent ellipse with those semiaxis lengths. The area scale is
+
+\[
+\sqrt{\det G}=\|S_u\times S_v\|=\sigma_1\sigma_2.
+\]
+
+Equal principal stretches preserve angles locally (conformality), product one preserves area relative to the parameter-domain measure, and both stretches one preserve lengths and angles (local isometry). These conditions assume compatible units or an explicitly normalized reference length. A global isometry also requires appropriate topology and compatibility across the entire chart; these local tests alone cannot certify it.
+
+For S(u,v)=(2u,v,0), G=diag(4,1), the stretches are 2 and 1, and area doubles. For S(u,v)=(2u,v/2,0), the area scale is one, but the stretch ratio is four: a circle becomes a long narrow ellipse. The second patch is area-preserving but not conformal. For S(u,v)=(3u,3v,0), angles are preserved while area grows by nine. If the two tangent columns become dependent, sigma_2 becomes zero, so the mapping ceases to be a regular surface chart at that location. A tessellator must not mistake a finite evaluation at such a point for a valid tangent frame.
+
+This explains why a seemingly neat UV layout can produce distorted texture detail. Directional artwork may need angular fidelity; a density measurement may need area fidelity; a texture filter cares about the local footprint. The inverse chart reverses the principal stretches when it exists. Always say whether the map being measured goes from UV to the surface or from the surface to UV.
+
+**Check your intuition.** For S(u,v)=(u+v,v,0), the area scale is one, although the parameter axes no longer meet at right angles. G has entries 1,1,1,2, so the squared stretches are (3+sqrt(5))/2 and (3-sqrt(5))/2. This is shear, not a rigid change of coordinates. It gives a small exact test for a future distortion inspector.
+
+*Source route: Graphics Vision and XR/02, derived lines 195–234. The P08 native workbench still implements curves and patch evaluation; no general UV optimization solver is claimed here.*
+
 ## A patch becomes the indexed mesh we already know
 
 Choose \(m\) subdivisions along \(u\), and \(n\) along \(v\). Evaluate
