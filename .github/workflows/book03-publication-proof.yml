@@ -1,0 +1,48 @@
+name: Book 03 - Complete reader preparation and proof
+
+on:
+  push:
+    branches:
+      - curriculum/book03-geometry-images-pass01
+    paths:
+      - "Notes/Book Production/Seven-Book Curriculum/Book03/**"
+      - "Code Parts/tools/book03_prepare_reader.py"
+      - ".github/workflows/book03-publication-proof.yml"
+  workflow_dispatch:
+    inputs:
+      compile_proof:
+        description: "Also compile the complete PDF and EPUB proofs (no release promotion)"
+        type: boolean
+        default: false
+
+jobs:
+  reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install publication preparation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc python3-cairosvg python3-pil
+          pandoc --version
+      - name: Install optional complete proof compiler
+        if: github.event_name == 'workflow_dispatch' && inputs.compile_proof
+        run: |
+          sudo apt-get install -y texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-science fonts-texgyre fonts-texgyre-math fonts-dejavu-core epubcheck
+      - name: Prepare every chapter, figure and shared source AST
+        run: |
+          args=()
+          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.compile_proof }}" == "true" ]]; then
+            args+=(--build)
+          fi
+          /usr/bin/python3 "Code Parts/tools/book03_prepare_reader.py" "${args[@]}"
+      - name: Retain source proof and contact sheets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book03-reader-proof
+          path: |
+            Code Parts/build/book03-reader-proof/
+          if-no-files-found: warn
+          retention-days: 14
