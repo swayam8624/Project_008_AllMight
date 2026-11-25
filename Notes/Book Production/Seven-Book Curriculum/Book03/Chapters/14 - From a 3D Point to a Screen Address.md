@@ -388,6 +388,26 @@ That is exactly the pinhole result from the previous chapter. Reversed depth lea
 
 When an engine's picture differs from the expected result, print the camera-local point, clip tuple, per-plane classification, divided position and viewport address. Each value narrows down the location of the bug.
 
+### The center of the photograph may lie between pixels
+
+Imagine a photograph four pixels wide. Its continuous horizontal interval is [0,4], but the sample centers are 0.5, 1.5, 2.5 and 3.5. The center of the photograph is 2, exactly between two sample centers. Nothing has been lost. The center is a location in a continuous coordinate system, not necessarily an address in a discrete array.
+
+For the full viewport of width W and height H with top-left origin and downward raster Y, invert the viewport transform at sample center (i+0.5,j+0.5):
+
+\[
+x_n=2(i+0.5)/W-1,\qquad y_n=1-2(j+0.5)/H.
+\]
+
+At 1920 by 1080, the first sample is approximately (-0.999479167,0.999074074), not (-1,1). A centered ideal camera's optical axis crosses the boundary shared by the four central samples of that even-sized image. For an odd-sized, centered image there is a central sample. An off-center principal point changes this conclusion; viewport center and optical center are not universally the same.
+
+For a normalized texture with four texels along an axis, their center coordinates are 0.125, 0.375, 0.625 and 0.875. The values 0, 0.25, 0.5, 0.75 are cell edges under the stated mapping. A shader that already derives UV from the pixel-center coordinate must not add another half texel. That would sample halfway between the intended texel centers, and bilinear filtering would mix neighbouring texels instead of recovering their original values. The exact result also depends on edge addressing and filtering policy.
+
+Historically, some old graphics pipelines used integer-centered raster coordinates. Do not transport their corrective offset into a different coordinate convention. A fullscreen pass, picking operation, depth reconstruction and temporal reprojection must agree on precisely where the sample lies. The invariant is not “add 0.5 everywhere”; it is “convert the declared input convention to the declared output convention exactly once.”
+
+**Try it.** For a 5-by-3 viewport, map the center sample (index 2,1) to NDC. For a 4-by-4 texture, find the normalized coordinates of texel (2,1). Answers: (0,0) and (0.625,0.375). If a program instead adds a second half-texel correction in both directions, the latter becomes (0.75,0.5), a cell-boundary intersection.
+
+*Source route: Computing Foundations/33, derived lines 3132–3410. The source also records historical API-specific conventions; those remain available for the Book 06 implementation comparison.*
+
 ## The mountain and the depth buffer
 
 A depth buffer has finite storage precision. Two different surfaces can map to depth values that round to the same stored number. Their subsequent visibility ordering may become sensitive to numerical details, a problem often associated with Z-fighting.
